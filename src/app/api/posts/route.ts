@@ -108,7 +108,44 @@ function flattenBlogPost(post: any) {
   };
 }
 
-// GET handler for listing all posts
+// In-memory cache + single-flight handling
+const POSTS_CACHE_TTL_MS = 30_000; // 30s TTL (adjust as needed)
+type PostsCacheEntry = { payload: any; expires: number };
+const postsCache = new Map<string, PostsCacheEntry>();
+const inflightPosts = new Map<string, Promise<any>>();
+
+function buildCacheKey(org: string, limit: string | null, offset: string | null) {
+  return `${org}:${limit || '8'}:${offset || '0'}`;
+}
+
+async function fetchPostsFromDB(organizationId: string, limit: string | null, offset: string | null) {
+  let query = supabase
+    .from('blog_post')
+    .select(
+      `id, slug, title, description, display_config, organization_config, media_config`,
+      { count: 'exact' }
+    )
+    .eq('organization_id', organizationId)
+    .order('organization_config->order', { ascending: true, nullsFirst: false });
+
+  const parsedLimit = parseInt(limit || '8');
+  const parsedOffset = parseInt(offset || '0');
+
+  if (parsedLimit > 0) {
+    query = query.range(parsedOffset, parsedOffset + (parsedLimit - 1));
+  }
+
+  const { data: posts, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    posts: (posts || []).map(flattenBlogPost),
+    total: count || 0,
+    hasMore: count ? (parsedOffset + (posts?.length || 0)) < count : false
+  };
+}
+
+// GET handler for listing all posts (cached)
 export async function GET(request: NextRequest) {
   if (!hasEnvVars) return envErrorResponse();
 
@@ -116,51 +153,47 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organization_id');
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
-  
-  console.log('Received GET request for /api/posts, organization_id:', organizationId, 'limit:', limit, 'offset:', offset);
+  const nocache = searchParams.get('nocache') === '1';
 
   if (!organizationId) {
-    console.error('Missing organization_id in query parameters');
     return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 });
   }
 
-  try {
-    let query = supabase
-      .from('blog_post')
-      .select(`
-        id, slug, title, description,
-        display_config,
-        organization_config,
-        media_config,
-        faq_section_is_title,
-        organization_id, created_on
-      `, { count: 'exact' })
-      .eq('organization_id', organizationId)
-      .order('organization_config->order', { ascending: true, nullsFirst: false });
+  const key = buildCacheKey(organizationId, limit, offset);
 
-    // Add pagination if limit and offset are provided
-    if (limit) {
-      query = query.limit(parseInt(limit));
+  if (!nocache) {
+    const cached = postsCache.get(key);
+    if (cached && cached.expires > Date.now()) {
+      return NextResponse.json(cached.payload, { status: 200 });
     }
-    if (offset) {
-      query = query.range(parseInt(offset), parseInt(offset) + (parseInt(limit || '8') - 1));
-    }
+  }
 
-    const { data: posts, error: fetchError, count } = await query;
-
-    if (fetchError) {
-      console.error('Supabase fetch error:', fetchError);
+  if (!nocache && inflightPosts.has(key)) {
+    try {
+      const payload = await inflightPosts.get(key)!;
+      return NextResponse.json(payload, { status: 200 });
+    } catch (err) {
       return NextResponse.json(
-        { error: 'Failed to fetch posts', details: fetchError.message },
+        { error: 'Failed to fetch posts', details: err instanceof Error ? err.message : 'Unknown error' },
         { status: 500 }
       );
     }
+  }
 
-    return NextResponse.json({
-      posts: (posts || []).map(flattenBlogPost),
-      total: count || 0,
-      hasMore: count ? (parseInt(offset || '0') + (posts?.length || 0)) < count : false
-    }, { status: 200 });
+  const promise = fetchPostsFromDB(organizationId, limit, offset)
+    .then((payload) => {
+      postsCache.set(key, { payload, expires: Date.now() + POSTS_CACHE_TTL_MS });
+      return payload;
+    })
+    .finally(() => {
+      inflightPosts.delete(key);
+    });
+
+  inflightPosts.set(key, promise);
+
+  try {
+    const payload = await promise;
+    return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/posts:', error);
     return NextResponse.json(

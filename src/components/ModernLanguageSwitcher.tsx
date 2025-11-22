@@ -118,7 +118,7 @@ export default function ModernLanguageSwitcher({
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items 
-          className={`absolute right-0 ${openUpward ? 'bottom-full mb-2' : 'mt-2'} w-48 sm:w-56 ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} rounded-lg bg-white shadow-lg focus:outline-none`}
+          className={`absolute right-0 ${openUpward ? 'bottom-full mb-2' : 'mt-2'} w-56 ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} rounded-lg bg-white shadow-lg focus:outline-none`}
           style={{ zIndex }}
         >
           <div className="py-1">
@@ -131,21 +131,21 @@ export default function ModernLanguageSwitcher({
                       active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                     } ${
                       locale === currentLocale ? 'bg-gray-50 font-semibold' : ''
-                    } flex items-center w-full px-3 sm:px-4 py-2 text-sm transition-colors duration-150`}
+                    } flex items-center w-full px-4 py-2 text-sm transition-colors duration-150`}
                   >
-                    <span className="mr-2 sm:mr-3 text-xs font-medium text-gray-500 w-6 sm:w-8 text-center">
+                    <span className="mr-3 text-xs font-medium text-gray-500 w-8 text-center">
                       {locale.toUpperCase()}
                     </span>
-                    <span className="flex-1 text-left text-xs sm:text-sm">
+                    <span className="flex-1 text-left">
                       {getLanguageName(locale)}
                     </span>
                     {locale === currentLocale && (
-                      <span className="ml-1 sm:ml-2">
+                      <span className="ml-2">
                         <div className="w-2 h-2 bg-gray-700 rounded-full"></div>
                       </span>
                     )}
                     {locale === defaultLanguage && (
-                      <span className="ml-1 sm:ml-2 text-xs text-gray-400 hidden sm:inline">(Default)</span>
+                      <span className="ml-2 text-xs text-gray-400">(Default)</span>
                     )}
                   </button>
                 )}

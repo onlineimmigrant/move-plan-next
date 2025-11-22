@@ -319,9 +319,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   
   // Use dynamic locale instead of static language from settings
   const language = currentLocale;
-  
-  // Convert locale to BCP 47 format for HTML lang attribute (en_GB -> en-GB)
-  const langAttribute = language.replace(/_/g, '-');
 
   const headerData = {
     image_for_privacy_settings: settings.image,
@@ -399,7 +396,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const fontVarsClass = getFontVariables();
 
   return (
-    <html lang={langAttribute} data-scroll-behavior="smooth">
+    <html lang={language} data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} />
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}

@@ -5,7 +5,7 @@ import parse from 'html-react-parser';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { FaPlayCircle } from 'react-icons/fa';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { HoverEditButtons } from '@/ui/Button';
@@ -124,10 +124,11 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const [isVisible, setIsVisible] = useState(false);
   const { isAdmin, organizationId } = useAuth();
   const [hero, setHero] = useState(initialHero); // Local state for hero data
-  const [isMounted, setIsMounted] = useState(false); // Track client-side mount
+  const [shouldRenderAnimation, setShouldRenderAnimation] = useState(false); // Defer animation rendering
   const heroRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { openModal } = useHeroSectionEdit();
+  const router = useRouter();
   
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -137,10 +138,41 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
     setHero(initialHero);
   }, [initialHero]);
 
-  // Defer animation rendering until after mount (client-side only, prevents hydration mismatch)
+  // Immediate route prefetch + idle API summary prefetch to warm navigation
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    const target = hero.button_style?.url || '/products';
+    try {
+      if (router && typeof router.prefetch === 'function') {
+        router.prefetch(target);
+      }
+    } catch {}
+    // Idle fetch products summary (non-blocking)
+    const idleFetch = () => {
+      try {
+        fetch('/api/products-summary').catch(() => {});
+      } catch {}
+    };
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(idleFetch, { timeout: 2000 });
+    } else {
+      setTimeout(idleFetch, 500);
+    }
+  }, [router, hero.button_style?.url]);
+
+  // Defer animation rendering until after route prefetch window (avoid competing with navigation resources)
+  useEffect(() => {
+    const idleDelay = 2200; // Slightly after potential prefetch
+    const timeoutId = typeof requestIdleCallback !== 'undefined'
+      ? requestIdleCallback(() => setShouldRenderAnimation(true), { timeout: idleDelay })
+      : setTimeout(() => setShouldRenderAnimation(true), idleDelay);
+    return () => {
+      if (typeof requestIdleCallback !== 'undefined') {
+        cancelIdleCallback(timeoutId as number);
+      } else {
+        clearTimeout(timeoutId as number);
+      }
+    };
+  }, [hero.button_style?.url]);
 
   // Listen for hero section updates from modal
   useEffect(() => {
@@ -304,8 +336,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
         />
       )}
       
-      {/* Render animations only on client-side after mount (prevents hydration mismatch, improves LCP) */}
-      {isMounted && (() => {
+      {/* Defer animation rendering to improve LCP (animations load after content) */}
+      {shouldRenderAnimation && (() => {
         switch (hero.animation_element) {
           case 'DotGrid':
             return (
@@ -396,6 +428,15 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 {hero.background_style.seo_title}
                 <Link
                   href="/blog"
+                  prefetch
+                  onClick={() => {
+                    try {
+                      performance.mark('PerfBlog-click');
+                      const ts = performance.now().toFixed(0);
+                      // eslint-disable-next-line no-console
+                      console.log(`[PerfBlog] click at ${ts}ms from hero`);
+                    } catch {}
+                  }}
                   aria-label={`Explore ${hero.background_style.seo_title}`}
                   className="ml-2 flex items-center transition-all duration-300 group font-semibold text-gray-700 hover:text-gray-300"
                 >
@@ -424,6 +465,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 {hero.button_style?.isVideo ? (
                   <Link
                     href={hero.button_style?.url || '/products'}
+                    prefetch
+                    onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
                   >
                     <FaPlayCircle className="h-16 w-16 text-white hover:text-gray-200" />
@@ -431,6 +474,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 ) : (
                   <Link
                     href={hero.button_style?.url || '/products'}
+                    prefetch
+                    onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`rounded-full py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
                     style={buttonStyle}
                   >
@@ -460,6 +505,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 {hero.button_style?.isVideo ? (
                   <Link
                     href={hero.button_style?.url || '/products'}
+                    prefetch
+                    onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
                   >
                     <FaPlayCircle className="h-4 w-4 text-white hover:text-gray-200" />
@@ -467,6 +514,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 ) : (
                   <Link
                     href={hero.button_style?.url || '/products'}
+                    prefetch
+                    onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`rounded-full py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
                     style={buttonStyle}
                   >
@@ -506,93 +555,77 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
 
       {/* CSS for animations */}
       <style jsx>{`
-        /* Mobile-first: Elements visible by default for fast LCP */
+        @keyframes hero-title {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-hero-title.animate {
+          animation: hero-title 1.5s ease-in-out forwards;
+        }
+
+        @keyframes hero-description {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-hero-description.animate {
+          animation: hero-description 1.5s ease-in-out 0.5s forwards;
+        }
+
+        @keyframes hero-button-get-started {
+          0% {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-hero-button-get-started.animate {
+          animation: hero-button-get-started 1.2s ease-in-out 0.8s forwards;
+        }
+
+        @keyframes hero-button-explore {
+          0% {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-hero-button-explore.animate {
+          animation: hero-button-explore 1.2s ease-in-out 1.0s forwards;
+        }
+
         .animate-hero-title,
         .animate-hero-description,
         .animate-hero-button-get-started,
         .animate-hero-button-explore {
-          opacity: 1;
-          transform: none;
+          opacity: 0;
+          transform: translateY(20px);
         }
-
-        /* Desktop only: Animate on larger screens */
-        @media (min-width: 768px) {
-          @keyframes hero-title {
-            0% {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            100% {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-hero-title.animate {
-            animation: hero-title 1.5s ease-in-out forwards;
-          }
-
-          @keyframes hero-description {
-            0% {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            100% {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-hero-description.animate {
-            animation: hero-description 1.5s ease-in-out 0.5s forwards;
-          }
-
-          @keyframes hero-button-get-started {
-            0% {
-              opacity: 0;
-              transform: scale(0.8);
-            }
-            50% {
-              transform: scale(1.05);
-            }
-            100% {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-          .animate-hero-button-get-started.animate {
-            animation: hero-button-get-started 1.2s ease-in-out 0.8s forwards;
-          }
-
-          @keyframes hero-button-explore {
-            0% {
-              opacity: 0;
-              transform: translateX(-10px);
-            }
-            100% {
-              opacity: 1;
-            transform: translateX(0);
-          }
+        .animate-hero-button-get-started {
+          transform: scale(0.8);
         }
-          .animate-hero-button-explore.animate {
-            animation: hero-button-explore 1.2s ease-in-out 1.0s forwards;
-          }
-
-          /* Initial hidden state for animations (desktop only) */
-          .animate-hero-title,
-          .animate-hero-description,
-          .animate-hero-button-get-started,
-          .animate-hero-button-explore {
-            opacity: 0;
-          }
-          .animate-hero-title,
-          .animate-hero-description {
-            transform: translateY(20px);
-          }
-          .animate-hero-button-get-started {
-            transform: scale(0.8);
-          }
-          .animate-hero-button-explore {
-            transform: translateX(-10px);
-          }
+        .animate-hero-button-explore {
+          transform: translateX(-10px);
         }
 
         /* Wave animation for LetterGlitch */

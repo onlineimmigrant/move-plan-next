@@ -1,10 +1,11 @@
 // /src/components/TemplateHeadingSections.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import TemplateHeadingSection from './TemplateHeadingSection';
 import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
+import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
 
 interface TemplateHeadingSectionData {
   id: number;
@@ -39,40 +40,39 @@ const TemplateHeadingSections: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { refreshKey } = useTemplateHeadingSectionEdit();
+  const cachedHeadings = useRef<Map<string, { data: TemplateHeadingSectionData[]; timestamp: number }>>(new Map());
+  const CACHE_DURATION = 60000; // 60s client cache
+  const basePath = useMemo(() => getBasePathFromLocale(pathname), [pathname]);
 
   useEffect(() => {
     const fetchHeadings = async () => {
+      const now = Date.now();
+      const cached = cachedHeadings.current.get(basePath);
+      if (cached && now - cached.timestamp < CACHE_DURATION && !refreshKey) {
+        setHeadings(cached.data);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
-
       if (!pathname) {
         setError('Pathname is undefined');
         setIsLoading(false);
         return;
       }
-
-      // Strip locale from pathname for API call
-      const pathSegments = pathname.split('/').filter(Boolean);
-      const firstSegment = pathSegments[0];
-      const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
-      
-      // If first segment is a locale, remove it to get the base path
-      const basePath = firstSegment && firstSegment.length === 2 && supportedLocales.includes(firstSegment)
-        ? '/' + pathSegments.slice(1).join('/')
-        : pathname;
-
-      const encodedPathname = encodeURIComponent(basePath);
-      const url = `/api/template-heading-sections?url_page=${encodedPathname}`;
-
+      const encoded = encodeURIComponent(basePath);
+      const url = `/api/template-heading-sections?url_page=${encoded}`;
       try {
-        const response = await fetch(url, { method: 'GET' });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to fetch template heading sections: ${response.statusText} - ${errorData.details || 'No details available'}`);
-        }
-
-        const data: TemplateHeadingSectionData[] = await response.json();
+        const data = await singleFlight<TemplateHeadingSectionData[]>(`templateHeadingSections:${basePath}`, async () => {
+          const response = await fetch(url, { method: 'GET' });
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to fetch template heading sections: ${response.status} - ${errorData.details || response.statusText}`);
+          }
+          return response.json();
+        });
+        cachedHeadings.current.set(basePath, { data, timestamp: now });
         setHeadings(data);
       } catch (err) {
         console.error('Error fetching template heading sections:', err);
@@ -81,9 +81,8 @@ const TemplateHeadingSections: React.FC = () => {
         setIsLoading(false);
       }
     };
-
     fetchHeadings();
-  }, [pathname, refreshKey]); // Added refreshKey dependency
+  }, [basePath, refreshKey]);
 
   if (error) {
     return (

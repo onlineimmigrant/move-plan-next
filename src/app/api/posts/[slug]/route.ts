@@ -125,6 +125,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
   const organizationId = searchParams.get('organization_id');
   console.log('Received GET request for /api/posts/[slug]:', slug, 'organization_id:', organizationId);
 
+  const nocache = searchParams.get('nocache') === '1';
+
   if (!organizationId) {
     console.error('Missing organization_id in query parameters');
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -136,10 +138,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     try {
       const { data: postData, error: postError } = await supabase
         .from('blog_post')
-        .select('*, content, content_type') // Explicitly include content fields
+        .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config')
         .eq('slug', slug)
-        .or(`organization_id.eq.${fallbackOrgId},organization_id.is.null`)
-        .single();
+        .eq('organization_id', fallbackOrgId)
+        .maybeSingle();
 
       if (postError) {
         console.error('Supabase query error:', postError);
@@ -154,8 +156,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
         return NextResponse.json({ error: 'Post not found' }, { status: 404 });
       }
 
-      if (postData.display_this_post === false) {
-        console.log('Post hidden due to display_this_post being false:', slug);
+      if ((postData.display_config as any)?.display_this_post === false) {
+        console.log('Post hidden via display_config.display_this_post false:', slug);
         return NextResponse.json({ error: 'Post not found' }, { status: 404 });
       }
 
@@ -168,10 +170,14 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       });
       return NextResponse.json(flattenBlogPost(postData), {
         status: 200,
-        headers: { 
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        headers: nocache ? {
+          'Cache-Control': 'no-store',
           'CDN-Cache-Control': 'no-store',
           'Vercel-CDN-Cache-Control': 'no-store',
+        } : {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
         },
       });
     } catch (error) {
@@ -187,10 +193,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     console.log('Fetching post from Supabase for slug:', slug, 'organization_id:', organizationId);
     const { data: postData, error: postError } = await supabase
       .from('blog_post')
-      .select('*, content, content_type') // Explicitly include content fields
+      .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config')
       .eq('slug', slug)
-      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-      .single();
+      .eq('organization_id', organizationId)
+      .maybeSingle();
 
     if (postError) {
       console.error('Supabase query error:', postError);
@@ -205,8 +211,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    if (postData.display_this_post === false || postData.display_config?.display_this_post === false) {
-      console.log('Post hidden due to display_this_post being false:', slug);
+    if ((postData.display_config as any)?.display_this_post === false) {
+      console.log('Post hidden via display_config.display_this_post false:', slug);
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -227,10 +233,14 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     
     return NextResponse.json(flattenedPost, {
       status: 200,
-      headers: { 
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      headers: nocache ? {
+        'Cache-Control': 'no-store',
         'CDN-Cache-Control': 'no-store',
         'Vercel-CDN-Cache-Control': 'no-store',
+      } : {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     });
   } catch (error) {

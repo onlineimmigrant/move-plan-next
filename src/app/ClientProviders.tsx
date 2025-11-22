@@ -19,27 +19,25 @@ import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context'
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { ProductModalProvider } from '@/components/modals/ProductModals/ProductCreditEditModal';
+import ProductCreditEditModal from '@/components/modals/ProductModals/ProductCreditEditModal/ProductCreditEditModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
-
-// Lazy load all admin modals - they're only needed for admin users
-const PostEditModal = dynamic(() => import('@/components/modals/PostEditModal/PostEditModal'), { ssr: false });
-const TemplateSectionEditModal = dynamic(() => import('@/components/modals/TemplateSectionModal/TemplateSectionEditModal'), { ssr: false });
-const TemplateHeadingSectionEditModal = dynamic(() => import('@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal'), { ssr: false });
-const PageCreationModal = dynamic(() => import('@/components/modals/PageCreationModal/PageCreationModal'), { ssr: false });
-const SiteMapModal = dynamic(() => import('@/components/modals/SiteMapModal/SiteMapModal'), { ssr: false });
-const GlobalSettingsModal = dynamic(() => import('@/components/modals/GlobalSettingsModal/GlobalSettingsModal'), { ssr: false });
-const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSectionModal/HeroSectionEditModal'), { ssr: false });
-const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'), { ssr: false });
-const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'), { ssr: false });
-const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'), { ssr: false });
-const ProductCreditEditModal = dynamic(() => import('@/components/modals/ProductModals/ProductCreditEditModal/ProductCreditEditModal'), { ssr: false });
+import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
 
 // Lazy load ManagedVideoCall to prevent loading twilio-video (~150KB) on every page
 const ManagedVideoCall = dynamic(() => import('@/components/modals/MeetingsModals/ManagedVideoCall'), {
   ssr: false,
   loading: () => null
 });
+import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
+import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal';
+import PageCreationModal from '@/components/modals/PageCreationModal/PageCreationModal';
+import SiteMapModal from '@/components/modals/SiteMapModal/SiteMapModal';
+import GlobalSettingsModal from '@/components/modals/GlobalSettingsModal/GlobalSettingsModal';
+import HeroSectionEditModal from '@/components/modals/HeroSectionModal/HeroSectionEditModal';
+import HeaderEditModal from '@/components/modals/HeaderEditModal/HeaderEditModal';
+import FooterEditModal from '@/components/modals/FooterEditModal/FooterEditModal';
+import LayoutManagerModal from '@/components/modals/LayoutManagerModal/LayoutManagerModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import dynamic from 'next/dynamic';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -49,15 +47,15 @@ import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
+import ChatHelpWidget from '@/components/ChatHelpWidget';
 import { ThemeProvider } from '@/components/ThemeProvider';
-
-// Lazy load admin/interactive components
-const UnifiedModalManager = dynamic(() => import('@/components/modals/UnifiedMenu').then(mod => ({ default: mod.UnifiedModalManager })), { ssr: false });
-const CommandPalette = dynamic(() => import('@/components/AdminQuickActions/CommandPalette'), { ssr: false });
 
 // Create lazy wrapper components to avoid SSR bailout error
 import CookieBannerComponent from '@/components/cookie/CookieBanner';
 import CookieSettingsComponent from '@/components/cookie/CookieSettings';
+
+import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
+import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
 import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -65,39 +63,8 @@ import { TemplateHeadingSection } from '@/types/template_heading_section';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
 import { MenuItem } from '@/types/menu';
-
-// Admin-only providers wrapper - lazy loaded to reduce initial bundle
-function AdminProvidersWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <HeaderEditProvider>
-      <FooterEditProvider>
-        <LayoutManagerProvider>
-          <PostEditModalProvider>
-            <TemplateSectionEditProvider>
-              <TemplateHeadingSectionEditProvider>
-                <HeroSectionEditProvider>
-                  <PageCreationProvider>
-                    <SiteMapModalProvider>
-                      <GlobalSettingsModalProvider>
-                        <ProductModalProvider>
-                          {children}
-                        </ProductModalProvider>
-                      </GlobalSettingsModalProvider>
-                    </SiteMapModalProvider>
-                  </PageCreationProvider>
-                </HeroSectionEditProvider>
-              </TemplateHeadingSectionEditProvider>
-            </TemplateSectionEditProvider>
-          </PostEditModalProvider>
-        </LayoutManagerProvider>
-      </FooterEditProvider>
-    </HeaderEditProvider>
-  );
-}
-
-// Lazy load admin providers
-const LazyAdminProviders = dynamic(() => Promise.resolve({ default: AdminProvidersWrapper }), { ssr: false });
-
+import { MeetingsAccountToggleButton } from '@/components/modals/MeetingsModals';
+import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 
 // Wrapper component for standalone CookieSettings modal (opened from Footer)
 function StandaloneCookieSettings({ 
@@ -299,55 +266,75 @@ export default function ClientProviders({
               <ThemeProvider>
                 <MeetingProvider>
                   <ToastProvider>
-                    <LazyAdminProviders>
-                      <DynamicLanguageUpdater />
-                      <DefaultLocaleCookieManager />
-                      <CookieSettingsProvider>
-                        {/* VideoCall Modal - Renders at root level (z-2000) */}
-                        <ManagedVideoCall />
-                        <BannerAwareContent
-                          showNavbarFooter={showNavbarFooter}
-                          menuItems={menuItems}
-                          loading={loading}
-                          headerData={headerData}
-                          activeLanguages={activeLanguages}
-                          cookieCategories={cookieCategories}
-                          cookieAccepted={cookieAccepted}
-                          pathname={pathname}
-                        >
-                          {children}
-                        </BannerAwareContent>
-                        {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
-                        {showCookieBanner && (
-                          <Suspense fallback={null}>
-                            <CookieBannerComponent 
-                              headerData={headerData} 
-                              activeLanguages={activeLanguages}
-                              categories={cookieCategories}
-                            />
-                          </Suspense>
-                        )}
-                        {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
-                        <Suspense fallback={null}>
-                          <StandaloneCookieSettings 
-                            headerData={headerData}
-                            activeLanguages={activeLanguages}
-                            cookieCategories={cookieCategories}
-                          />
-                        </Suspense>
-                      </CookieSettingsProvider>
-                      <PostEditModal />
-                      <TemplateSectionEditModal />
-                      <TemplateHeadingSectionEditModal />
-                      <HeroSectionEditModal />
-                      <PageCreationModal />
-                      <SiteMapModal />
-                      <GlobalSettingsModal />
-                      <ProductCreditEditModal />
-                      <HeaderEditModal />
-                      <FooterEditModal />
-                      <LayoutManagerModal />
-                    </LazyAdminProviders>
+                  <HeaderEditProvider>
+                    <FooterEditProvider>
+                      <LayoutManagerProvider>
+                        <PostEditModalProvider>
+                          <TemplateSectionEditProvider>
+                            <TemplateHeadingSectionEditProvider>
+                              <HeroSectionEditProvider>
+                                <PageCreationProvider>
+                                  <SiteMapModalProvider>
+                                    <GlobalSettingsModalProvider>
+                                      <ProductModalProvider>
+                                    <DynamicLanguageUpdater />
+                                    <DefaultLocaleCookieManager />
+                                    <CookieSettingsProvider>
+                                {/* VideoCall Modal - Renders at root level (z-2000) */}
+                                <ManagedVideoCall />
+                                <BannerAwareContent
+                                  showNavbarFooter={showNavbarFooter}
+                                  menuItems={menuItems}
+                                  loading={loading}
+                                  headerData={headerData}
+                                  activeLanguages={activeLanguages}
+                                  cookieCategories={cookieCategories}
+                                  cookieAccepted={cookieAccepted}
+                                  pathname={pathname}
+                                >
+                                  {children}
+                                </BannerAwareContent>
+                              {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
+                              {showCookieBanner && (
+                                <Suspense fallback={null}>
+                                  <CookieBannerComponent 
+                                    headerData={headerData} 
+                                    activeLanguages={activeLanguages}
+                                    categories={cookieCategories}
+                                  />
+                                </Suspense>
+                              )}
+                              {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
+                              <Suspense fallback={null}>
+                                <StandaloneCookieSettings 
+                                  headerData={headerData}
+                                  activeLanguages={activeLanguages}
+                                  cookieCategories={cookieCategories}
+                                />
+                              </Suspense>
+                            </CookieSettingsProvider>
+                            <PostEditModal />
+                            <TemplateSectionEditModal />
+                            <TemplateHeadingSectionEditModal />
+                            <HeroSectionEditModal />
+                            <PageCreationModal />
+                            <SiteMapModal />
+                            <GlobalSettingsModal />
+                            <ProductCreditEditModal />
+                            <HeaderEditModal />
+                            <FooterEditModal />
+                            <LayoutManagerModal />
+                          </ProductModalProvider>
+                          </GlobalSettingsModalProvider>
+                        </SiteMapModalProvider>
+                      </PageCreationProvider>
+                    </HeroSectionEditProvider>
+                  </TemplateHeadingSectionEditProvider>
+                  </TemplateSectionEditProvider>
+                </PostEditModalProvider>
+              </LayoutManagerProvider>
+            </FooterEditProvider>
+          </HeaderEditProvider>
         </ToastProvider>
               </MeetingProvider>
             </ThemeProvider>

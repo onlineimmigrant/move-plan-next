@@ -8,13 +8,23 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { StandardModalContainerProps } from '../types';
 import { ModalBackdrop } from './ModalBackdrop';
 import { ResponsiveWrapper } from './ResponsiveWrapper';
 import { DraggableWrapper } from './DraggableWrapper';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { useModalKeyboard } from '../hooks/useModalKeyboard';
+
+// Lazy load framer-motion pieces (avoid incorrect object shape causing runtime error)
+const MotionDiv = dynamic(
+  () => import('framer-motion').then((mod) => mod.motion.div),
+  { ssr: false }
+) as any;
+const AnimatePresence = dynamic(
+  () => import('framer-motion').then((mod) => mod.AnimatePresence),
+  { ssr: false }
+) as any;
 
 import {
   MODAL_Z_INDEX,
@@ -55,18 +65,17 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
   ariaLabel,
   ariaLabelledBy,
 }) => {
-  const [isMounted, setIsMounted] = useState(false);
+  // Mount gating to ensure server and initial client render match (avoid hydration mismatch)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Focus management
   const { modalRef, restoreFocus } = useModalFocus(isOpen);
 
   // Keyboard handling
   useModalKeyboard(isOpen, onClose, closeOnEscape);
-
-  // Track client-side mount to prevent hydration mismatch
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Handle close with focus restoration
   const handleClose = () => {
@@ -121,8 +130,8 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
     ${GLASS_MORPHISM_STYLES.rounded}
   `.trim();
 
-  // Prevent hydration mismatch by only rendering on client
-  if (!isMounted) return null;
+  // Ensure first client render matches server (null) to prevent hydration mismatch
+  if (!mounted) return null;
 
   return createPortal(
     <>
@@ -145,7 +154,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                     className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center p-4 z-[10001]"
                     style={{ zIndex }}
                   >
-                    <motion.div
+                    <MotionDiv
                       ref={modalRef}
                       role="dialog"
                       aria-modal="true"
@@ -162,7 +171,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                       <div className="h-full overflow-hidden flex flex-col">
                         {children}
                       </div>
-                    </motion.div>
+                    </MotionDiv>
                   </div>
                 ) : (
                   // Desktop: Draggable/Resizable modal
@@ -174,7 +183,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                     minSize={finalMinSize}
                     zIndex={zIndex}
                   >
-                    <motion.div
+                    <MotionDiv
                       ref={modalRef}
                       role="dialog"
                       aria-modal="true"
@@ -190,7 +199,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                       <div className="h-full overflow-hidden flex flex-col">
                         {children}
                       </div>
-                    </motion.div>
+                    </MotionDiv>
                   </DraggableWrapper>
                 )}
               </>

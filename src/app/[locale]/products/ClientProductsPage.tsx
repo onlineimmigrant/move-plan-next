@@ -218,6 +218,22 @@ const ClientProductsPage = memo(function ClientProductsPage({
     );
   }
 
+  // Instrument initial mount relative to hero CTA click
+  useEffect(() => {
+    try {
+      const clickEntries = performance.getEntriesByName('hero-cta-click');
+      if (clickEntries && clickEntries.length) {
+        const clickTime = clickEntries[clickEntries.length - 1].startTime;
+        const now = performance.now();
+        const delta = (now - clickTime).toFixed(0);
+        // eslint-disable-next-line no-console
+        console.log(`[Perf] Products page mounted ~${delta}ms after hero CTA click`);
+        performance.mark('products-page-mounted');
+        performance.measure('hero-cta-to-products-mounted', 'hero-cta-click', 'products-page-mounted');
+      }
+    } catch {}
+  }, []);
+
   return (
     <div className="bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-24">
@@ -292,7 +308,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
             {filteredProducts.slice(0, visibleItemsCount).map((product, index) => {
               const productUrl = product.slug ? `/products/${product.slug}` : '#';
               const unsplashAttr = product.attrs?.unsplash_attribution;
-              const isAboveFold = index < 8; // First 8 products are above the fold
+              const isFirst = index === 0; // Only first gets priority
               
               return (
                 <div key={product.id} className="group w-full relative">
@@ -312,7 +328,8 @@ const ClientProductsPage = memo(function ClientProductsPage({
                           src={product.links_to_image}
                           alt={product.product_name ?? t.productImage}
                           fill
-                          priority={isAboveFold}
+                          priority={isFirst}
+                          loading={isFirst ? 'eager' : 'lazy'}
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                           onError={(e) => handleImageError(e, product.links_to_image || undefined)}
@@ -329,8 +346,20 @@ const ClientProductsPage = memo(function ClientProductsPage({
                       </div>
                     )}
                     
-                    {/* Content Link */}
-                    <Link href={productUrl} className="p-4 sm:p-6 flex flex-col flex-grow">
+                    {/* Content Link with perf instrumentation */}
+                    <Link
+                      href={productUrl}
+                      className="p-4 sm:p-6 flex flex-col flex-grow"
+                      prefetch
+                      onClick={() => {
+                        try {
+                          performance.mark('PerfProdDetail-click');
+                          const ts = performance.now().toFixed(0);
+                          // eslint-disable-next-line no-console
+                          console.log(`[PerfProdDetail] click at ${ts}ms product ${product.id}`);
+                        } catch {}
+                      }}
+                    >
                       <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
                         {product.product_name ?? t.unnamedProduct}
                       </h2>

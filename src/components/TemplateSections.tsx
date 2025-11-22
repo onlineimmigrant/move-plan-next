@@ -7,6 +7,7 @@ import TemplateSection from './TemplateSection';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { TemplateSectionSkeleton } from '@/components/skeletons/TemplateSectionSkeletons';
 import { debug } from '@/lib/debug';
+import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
 
 // Types
 interface Metric {
@@ -50,7 +51,6 @@ interface TemplateSectionData {
 }
 
 // Constants
-const SUPPORTED_LOCALES = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
 const CACHE_DURATION = 60000; // 60 seconds
 
 // Inner component that uses the context
@@ -68,17 +68,7 @@ const TemplateSections: React.FC = () => {
   }>>(new Map());
 
   // Memoize locale parsing to avoid recalculation on every render
-  const basePath = useMemo(() => {
-    if (!pathname) return '/';
-    
-    const pathSegments = pathname.split('/').filter(Boolean);
-    const firstSegment = pathSegments[0];
-    
-    // If first segment is a locale, remove it to get the base path
-    return firstSegment && firstSegment.length === 2 && SUPPORTED_LOCALES.includes(firstSegment)
-      ? '/' + pathSegments.slice(1).join('/')
-      : pathname;
-  }, [pathname]);
+  const basePath = useMemo(() => getBasePathFromLocale(pathname), [pathname]);
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -107,23 +97,18 @@ const TemplateSections: React.FC = () => {
       const url = `/api/template-sections?url_page=${encodedPathname}`;
 
       try {
-        const response = await fetch(url, {
-          method: 'GET',
-          next: { revalidate: 60 } // Cache for 60 seconds on server
+        const data = await singleFlight<TemplateSectionData[]>(`templateSections:${basePath}`, async () => {
+          const response = await fetch(url, {
+            method: 'GET'
+          });
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to fetch template sections: ${response.status} - ${errorData.details || response.statusText}`);
+          }
+          return response.json();
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to fetch template sections: ${response.statusText} - ${errorData.details || 'No details available'}`);
-        }
-
-        const data: TemplateSectionData[] = await response.json();
-        
-        // Update client-side cache
-        cachedSections.current.set(basePath, {
-          data,
-          timestamp: now
-        });
+        cachedSections.current.set(basePath, { data, timestamp: now });
         setSections(data);
       } catch (err) {
         console.error('Error fetching template sections:', err);
@@ -134,11 +119,11 @@ const TemplateSections: React.FC = () => {
     };
 
     fetchSections();
-  }, [pathname, refreshKey, basePath]); // Added refreshKey and basePath dependencies
+  }, [refreshKey, basePath]);
 
   // Listen for template-section-updated events (EXACTLY like Hero component does)
   useEffect(() => {
-    const handleSectionUpdate = async (event: Event) => {
+    const handleSectionUpdate = async (_event: Event) => {
       const customEvent = event as CustomEvent;
       // Received template-section-updated event
       
@@ -151,27 +136,22 @@ const TemplateSections: React.FC = () => {
         
         // Fetching fresh sections after update
         
-        const response = await fetch(url, {
-          method: 'GET',
-          cache: 'no-store', // Force fresh data
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
+        const data = await singleFlight<TemplateSectionData[]>(`templateSections-update:${basePath}`, async () => {
+          const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
+          if (!response.ok) return [];
+          return response.json();
         });
 
-        if (response.ok) {
-          const data: TemplateSectionData[] = await response.json();
-          // Fetched fresh sections after update
-          
-          // Update client-side cache with fresh data
-          cachedSections.current.set(basePath, {
-            data,
-            timestamp: Date.now()
-          });
+        if (data && data.length) {
+          cachedSections.current.set(basePath, { data, timestamp: Date.now() });
           setSections(data);
-        } else {
-          console.error('[TemplateSections] Failed to fetch updated sections:', response.status);
         }
       } catch (err) {
         console.error('[TemplateSections] Error fetching updated sections:', err);

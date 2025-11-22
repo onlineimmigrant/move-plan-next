@@ -7,6 +7,14 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
+// Enable ISR for this page (improves repeat navigation time)
+export const revalidate = 30;
+
+// Simple in-memory cache (ephemeral) for server-side fetches to speed hot navigations
+type CacheEntry<T> = { timestamp: number; data: T };
+const SERVER_CACHE_TTL = 30_000; // 30s
+const productsCache = new Map<string, CacheEntry<any>>();
+
 // Enhanced type definitions with better type safety
 type Product = {
   id: number;
@@ -37,6 +45,12 @@ type ProductSubType = {
 
 // Optimized product fetching with multi-currency support and backward compatibility
 async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency: string = 'USD'): Promise<Product[]> {
+  const cacheKey = `products|${baseUrl}|${categoryId || 'all'}|${userCurrency}`;
+  const now = Date.now();
+  const cached = productsCache.get(cacheKey);
+  if (cached && now - cached.timestamp < SERVER_CACHE_TTL) {
+    return cached.data;
+  }
   try {
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -162,7 +176,9 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
     });
 
     // console.log('Successfully fetched products:', processedProducts?.length || 0, 'items for organization:', organizationId, 'currency:', userCurrency);
-    return processedProducts || [];
+    const result = processedProducts || [];
+    productsCache.set(cacheKey, { timestamp: now, data: result });
+    return result;
   } catch (err) {
     console.error('Error in fetchProducts:', err);
     throw err;
@@ -170,7 +186,14 @@ async function fetchProducts(baseUrl: string, categoryId?: string, userCurrency:
 }
 
 // Optimized product sub-types fetching
+const subTypesCache = new Map<string, CacheEntry<any>>();
 async function fetchProductSubTypes(baseUrl: string): Promise<ProductSubType[]> {
+  const cacheKey = `subTypes|${baseUrl}`;
+  const now = Date.now();
+  const cached = subTypesCache.get(cacheKey);
+  if (cached && now - cached.timestamp < SERVER_CACHE_TTL) {
+    return cached.data;
+  }
   try {
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -191,7 +214,9 @@ async function fetchProductSubTypes(baseUrl: string): Promise<ProductSubType[]> 
     }
 
     // console.log('Successfully fetched product sub-types:', data?.length || 0, 'items for organization:', organizationId);
-    return data || [];
+    const result = data || [];
+    subTypesCache.set(cacheKey, { timestamp: now, data: result });
+    return result;
   } catch (err) {
     console.error('Error in fetchProductSubTypes:', err);
     throw err;
@@ -311,13 +336,11 @@ export default async function ProductsPage({
   const categoryId = resolvedSearchParams.category;
 
   try {
-    // Parallel data fetching for better performance
     const [products, subTypes, organizationData] = await Promise.all([
       fetchProducts(baseUrl, categoryId, userCurrency),
       fetchProductSubTypes(baseUrl),
       getOrganizationWithType(baseUrl)
     ]);
-    
     allProducts = products;
     productSubTypes = subTypes;
     organizationType = organizationData?.type || 'services';

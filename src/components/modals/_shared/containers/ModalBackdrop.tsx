@@ -6,8 +6,18 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Lazy load framer-motion pieces with correct exports
+const MotionDiv = dynamic(
+  () => import('framer-motion').then((mod) => mod.motion.div),
+  { ssr: false }
+) as any;
+const AnimatePresence = dynamic(
+  () => import('framer-motion').then((mod) => mod.AnimatePresence),
+  { ssr: false }
+) as any;
 import { BACKDROP_STYLES, MODAL_Z_INDEX } from '../utils/modalConstants';
 import { backdropVariants } from '../utils/modalAnimations';
 
@@ -28,7 +38,6 @@ interface ModalBackdropProps {
 /**
  * Backdrop component for modals
  * Renders a semi-transparent overlay with blur effect
- * Uses client-side only rendering to prevent hydration issues
  */
 export const ModalBackdrop: React.FC<ModalBackdropProps> = ({
   isOpen,
@@ -36,31 +45,22 @@ export const ModalBackdrop: React.FC<ModalBackdropProps> = ({
   zIndex = MODAL_Z_INDEX.backdrop,
   className = '',
 }) => {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Don't render on server to avoid hydration mismatch
-  if (!isMounted) {
-    return null;
-  }
-
+  // Mount gating: server renders null; first client pass also null; prevents hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || !isOpen) return null;
   return (
     <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className={`fixed inset-0 ${BACKDROP_STYLES.base} ${BACKDROP_STYLES.animation} ${className}`}
-          style={{ zIndex }}
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          onClick={onClick}
-          aria-hidden="true"
-        />
-      )}
+      <MotionDiv
+        className={`fixed inset-0 ${BACKDROP_STYLES.base} ${BACKDROP_STYLES.animation} ${className}`}
+        style={{ zIndex }}
+        variants={backdropVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        onClick={onClick}
+        aria-hidden="true"
+      />
     </AnimatePresence>
   );
 };

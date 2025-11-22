@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import PerfDetailMount from '@/components/perf/PerfDetailMount';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { detectUserCurrency, getPriceForCurrency } from '@/lib/currency';
@@ -315,6 +316,8 @@ function ProductDetailLoading() {
   );
 }
 
+// PerfDetailMount moved to client component file to avoid ssr:false dynamic import in server component
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Skip Supabase queries during Vercel static build
   const isBuild = process.env.VERCEL_ENV === 'production' && !process.env.VERCEL_URL;
@@ -388,6 +391,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <Suspense fallback={<ProductDetailLoading />}>
+      <PerfDetailMount />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
         <div className="md:hidden">

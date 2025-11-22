@@ -311,6 +311,10 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
     if (!contentRef.current || !post || !isAdmin) return;
 
     const updatedContent = contentRef.current.innerHTML;
+    if (updatedContent === post.content) {
+      debug.log('PostPageClient', 'Skipped PATCH (content unchanged)');
+      return;
+    }
 
     try {
       const organizationId = await getOrganizationId(baseUrl);

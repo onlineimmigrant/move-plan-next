@@ -1,9 +1,12 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import '@/styles/print.css';
-import { getOrganizationId } from '@/lib/supabase';
+import { getOrganizationId, supabase } from '@/lib/supabase';
 import PostPageClient from './PostPageClient';
 import { PostPageErrorBoundary } from '@/components/PostPage/PostPageErrorBoundary';
+import PerfPostMount from '../../../components/perf/PerfPostMount';
+
+export const revalidate = 60;
 
 interface Post {
   id: string;
@@ -32,33 +35,68 @@ interface Post {
   doc_set?: string | null;
   doc_set_order?: number | null;
   doc_set_title?: string | null;
+  type?: 'default' | 'minimal' | 'landing' | 'doc_set';
 }
 
-// Server-side function to fetch post data
+// Flatten JSONB style fields similar to API route
+function flattenPost(raw: any): Post | null {
+  if (!raw) return null;
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    title: raw.title,
+    description: raw.description,
+    content: raw.content,
+    content_type: raw.content_type,
+    section: raw.section,
+    subsection: raw.organization_config?.subsection ?? raw.subsection,
+    created_on: raw.created_on,
+    is_with_author: raw.author_config?.is_with_author ?? raw.is_with_author ?? false,
+    is_company_author: raw.author_config?.is_company_author ?? raw.is_company_author ?? false,
+    author: raw.author,
+    excerpt: raw.excerpt,
+    featured_image: raw.featured_image,
+    keywords: raw.keywords,
+    section_id: raw.organization_config?.section_id ?? raw.section_id ?? null,
+    last_modified: raw.last_modified,
+    display_this_post: raw.display_config?.display_this_post ?? raw.display_this_post ?? true,
+    organization_id: raw.organization_id,
+    main_photo: raw.media_config?.main_photo ?? raw.main_photo,
+    additional_photo: raw.additional_photo,
+    doc_set: raw.organization_config?.doc_set ?? raw.doc_set ?? null,
+    doc_set_order: raw.organization_config?.doc_set_order ?? raw.doc_set_order ?? null,
+    doc_set_title: raw.organization_config?.doc_set_title ?? raw.doc_set_title ?? null,
+    type: raw.display_config?.type ?? raw.type,
+    reviews: raw.reviews,
+    faqs: raw.faqs,
+  } as Post;
+}
+
+// Direct Supabase fetch (avoids extra API hop)
 async function fetchPostData(slug: string): Promise<Post | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
   try {
-    const organizationId = await getOrganizationId(baseUrl);
-    console.log('🔍 [ServerSide] Fetching post for slug:', slug, 'organizationId:', organizationId);
-    
-    const response = await fetch(
-      `${baseUrl}/api/posts/${slug}?organization_id=${organizationId}`,
-      { 
-        next: { revalidate: 60 } // Cache for 60 seconds, then revalidate
-      }
-    );
-    
-    if (!response.ok) {
-      console.log('❌ [ServerSide] Post API response not ok:', response.status);
+    const organizationId = await getOrganizationId();
+    if (!organizationId) {
+      console.warn('[PostPage] No organization id resolved');
       return null;
     }
-    
-    const data = await response.json();
-    console.log('✅ [ServerSide] Post data fetched successfully:', data?.title);
-    return data;
-  } catch (error) {
-    console.error('❌ [ServerSide] Error fetching post:', error);
+    console.log('🔍 [ServerSide] Fetching post (direct) slug:', slug, 'org:', organizationId);
+    const { data, error } = await supabase
+      .from('blog_post')
+      .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config')
+      .eq('slug', slug)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (error) {
+      console.error('[PostPage] Supabase error:', error.message);
+      return null;
+    }
+    if (!data) return null;
+    const flattened = flattenPost(data);
+    if (!flattened?.display_this_post) return null;
+    return flattened;
+  } catch (err) {
+    console.error('[PostPage] Unexpected fetch error:', err);
     return null;
   }
 }
@@ -92,6 +130,7 @@ export default async function PostPage({ params }: PostPageProps) {
   return (
     <>
       {/* Client component for interactive functionality */}
+      <PerfPostMount />
       <PostPageErrorBoundary>
         <PostPageClient post={post} slug={slug} />
       </PostPageErrorBoundary>

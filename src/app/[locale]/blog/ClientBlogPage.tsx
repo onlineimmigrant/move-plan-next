@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
@@ -46,21 +47,33 @@ interface BlogPost {
 
 interface ClientBlogPageProps {
   organizationType: string;
+  initialPosts?: BlogPost[];
+  initialTotal?: number;
+  initialHasMore?: boolean;
+  organizationIdProp?: string | null;
 }
 
 const POSTS_PER_PAGE = 8;
 
-const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => {
+const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
+  organizationType,
+  initialPosts,
+  initialTotal,
+  initialHasMore,
+  organizationIdProp,
+}) => {
   const { t } = useProductTranslations();
+  const router = useRouter();
   const { settings } = useSettings();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts || []);
+  const [loading, setLoading] = useState(!initialPosts || initialPosts.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(initialHasMore || false);
+  const [total, setTotal] = useState(initialTotal || (initialPosts ? initialPosts.length : 0));
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   // Read search parameter from URL on mount
   useEffect(() => {
@@ -101,32 +114,31 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
     }
   };
 
+  // Initial fetch only if no server-provided posts
   useEffect(() => {
+    if (initialPosts && initialPosts.length > 0) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
     const fetchPosts = async () => {
       try {
-        // Fetch organization_id
-        const organizationId = await getOrganizationId(baseUrl);
-        if (!organizationId) {
-          throw new Error('Organization not found');
-        }
-
-        const response = await fetch(
-          `/api/posts?organization_id=${organizationId}&limit=${POSTS_PER_PAGE}&offset=0`
-        );
+        const organizationId = organizationIdProp || await getOrganizationId(baseUrl);
+        if (!organizationId) throw new Error('Organization not found');
+        const response = await fetch(`/api/posts?organization_id=${organizationId}&limit=${POSTS_PER_PAGE}&offset=0`);
         if (response.ok) {
           const data = await response.json();
-          // Validate that data contains posts array
-          if (!data.posts || !Array.isArray(data.posts)) {
-            console.error('Expected posts array, got:', data);
-            setError('Invalid data format');
-            return;
+          if (!cancelled) {
+            if (!data.posts || !Array.isArray(data.posts)) {
+              console.error('Expected posts array, got:', data);
+              setError('Invalid data format');
+              return;
+            }
+            setPosts(data.posts);
+            setHasMore(data.hasMore || false);
+            setTotal(data.total || 0);
           }
-          // console.log('📊 Blog posts loaded:', data.posts.length, 'Sample post:', data.posts[0]);
-          setPosts(data.posts);
-          setHasMore(data.hasMore || false);
-          setTotal(data.total || 0);
         } else {
-          // Handle empty response body
           let errorMessage = 'Failed to fetch posts';
           try {
             const text = await response.text();
@@ -146,18 +158,25 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
         console.error('An error occurred:', error);
         setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchPosts();
-  }, []);
+    return () => { cancelled = true; };
+  }, [initialPosts, organizationIdProp, baseUrl]);
+
+  // Debounce search query
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedQuery(searchQuery), 180);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
 
   const loadMorePosts = async () => {
     if (loadingMore || !hasMore) return;
 
     setLoadingMore(true);
     try {
-      const organizationId = await getOrganizationId(baseUrl);
+      const organizationId = organizationIdProp || await getOrganizationId(baseUrl);
       if (!organizationId) {
         throw new Error('Organization not found');
       }
@@ -188,7 +207,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
       const title = post.title ?? '';
       const description = post.description ?? '';
       const subsection = post.subsection ?? '';
-      const query = searchQuery.toLowerCase();
+      const query = debouncedQuery.toLowerCase();
       const shouldDisplay = post.display_this_post !== false;
       const isBlogPost = post.display_as_blog_post !== false;
       // console.log('Post:', post, 'display_this_post:', post.display_this_post, 'Should display:', shouldDisplay);
@@ -278,14 +297,16 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {imageUrl ? (
                     <div className="relative w-full h-48 flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
-                      <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
+                      <Link href={getPostUrl(post)} prefetch={false} className="absolute inset-0 z-0"
+                        onMouseEnter={() => router.prefetch(getPostUrl(post))}
+                      >
                         <span className="sr-only">View post: {post.title}</span>
                       </Link>
                       <Image
                         src={imageUrl}
                         alt={post.title ?? 'Blog post image'}
                         fill
-                        priority={posts.indexOf(post) < 4}
+                        priority={posts.indexOf(post) < 2}
                         className={isSvg ? 'max-w-[60%] max-h-[60%] object-contain' : 'object-cover'}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         onError={(e) => {
@@ -356,7 +377,9 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                       <span className="text-6xl">📄</span>
                     </Link>
                   )}
-                  <Link href={getPostUrl(post)} className="flex flex-col p-6 flex-grow">
+                  <Link href={getPostUrl(post)} prefetch={false}
+                    onMouseEnter={() => router.prefetch(getPostUrl(post))}
+                    className="flex flex-col p-6 flex-grow">
                     <h2 className="tracking-tight text-lg line-clamp-1 font-semibold text-gray-900 mb-3 group-hover:text-sky-400">
                       {post.title ?? 'Untitled'}
                     </h2>
@@ -364,7 +387,9 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({ organizationType }) => 
                       {post.description ?? 'No description available'}
                     </p>
                   </Link>
-                  <Link href={getPostUrl(post)} className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end">
+                  <Link href={getPostUrl(post)} prefetch={false}
+                    onMouseEnter={() => router.prefetch(getPostUrl(post))}
+                    className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-end">
                     <span className="inline-flex items-center text-xs tracking-wider font-semibold text-sky-500 group-hover:text-sky-600 transition-colors uppercase">
                       Read More
                       <ArrowRightIcon className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" />
