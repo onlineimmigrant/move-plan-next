@@ -262,6 +262,7 @@ export default function HeroSectionEditModal() {
     },
     toggleColorPicker,
     primaryColor: primary.base,
+    openImageGallery,
   };
 
   const animationSectionProps = {
@@ -525,9 +526,30 @@ export default function HeroSectionEditModal() {
         <ImageGalleryModal
           isOpen={isImageGalleryOpen}
           onClose={closeImageGallery}
-          onSelectImage={(url) => handleImageSelect(url, (imageUrl) => {
-            setFormData({ ...formData, image: imageUrl });
-          })}
+          onSelectImage={(url, attribution, isVideo, videoData) => {
+            if (isVideo && videoData) {
+              // Video selected
+              setFormData({
+                ...formData,
+                is_video: true,
+                video_url: videoData.video_url || url,
+                video_player: videoData.video_player || 'r2',
+                video_thumbnail: videoData.thumbnail_url || null,
+                image: null, // Clear image when video is selected
+              });
+            } else {
+              // Image selected
+              setFormData({
+                ...formData,
+                image: url,
+                is_video: false,
+                video_url: undefined,
+                video_player: undefined,
+                video_thumbnail: undefined,
+              });
+            }
+            closeImageGallery();
+          }}
         />
       )}
 

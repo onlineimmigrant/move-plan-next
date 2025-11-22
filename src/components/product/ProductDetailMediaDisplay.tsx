@@ -97,11 +97,12 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
   const [showFullPlayer, setShowFullPlayer] = useState<number | null>(null);
   const [snapshotVersion, setSnapshotVersion] = useState(0); // Track snapshot updates to trigger re-renders
-  const videoProgressRef = useRef<Map<number, number>>(new Map());
+  const videoProgressRef = useRef<Map<string | number, number>>(new Map());
   const videoSnapshotsRef = useRef<Map<number, string>>(new Map()); // Store video frame snapshots
-  const videoElementsRef = useRef<Map<number, HTMLVideoElement>>(new Map()); // Store video element references
+  const videoElementsRef = useRef<Map<string | number, HTMLVideoElement>>(new Map()); // Store video element references
   const reactPlayerRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const doubleClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Helper to compute a thumbnail when missing
   const getDerivedThumbnail = (media: MediaItem): string | null => {
@@ -169,7 +170,15 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
   };
 
   // Capture current video frame as snapshot
-  const captureVideoSnapshot = useCallback((videoElement: HTMLVideoElement, mediaId: number) => {
+  const captureVideoSnapshot = useCallback((mediaId: number) => {
+    // Try to get video from hover element first, then player
+    const videoElement = videoElementsRef.current.get(`hover-${mediaId}`) || videoElementsRef.current.get(`player-${mediaId}`);
+    
+    if (!videoElement) {
+      console.log('[Snapshot] No video element found for media:', mediaId);
+      return;
+    }
+
     try {
       // Check if video has valid dimensions and is ready
       if (!videoElement.videoWidth || !videoElement.videoHeight || videoElement.readyState < 2) {
@@ -185,9 +194,16 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
       if (!ctx) return;
       
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      videoSnapshotsRef.current.set(mediaId, dataUrl);
-      setSnapshotVersion(prev => prev + 1); // Trigger re-render to show new snapshot
+      
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        videoSnapshotsRef.current.set(mediaId, dataUrl);
+        setSnapshotVersion(prev => prev + 1); // Trigger re-render to show new snapshot
+      } catch (canvasError) {
+        // Canvas is tainted due to CORS - this is expected for R2 videos with crossOrigin
+        console.warn('[Snapshot] Cannot capture due to CORS restrictions:', canvasError);
+        // Don't update snapshot - keep using the original thumbnail
+      }
     } catch (error) {
       console.error('Failed to capture video snapshot:', error);
     }
@@ -210,12 +226,14 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
         if (showFullPlayer !== null) {
           event.preventDefault();
           // Capture current frame before closing
-          const videoEl = videoElementsRef.current.get(showFullPlayer);
-          if (videoEl) {
-            captureVideoSnapshot(videoEl, showFullPlayer);
-          }
+          captureVideoSnapshot(showFullPlayer);
           setIsPlaying(false);
           setShowFullPlayer(null);
+          // Clear debounce when closing
+          if (doubleClickTimeoutRef.current) {
+            clearTimeout(doubleClickTimeoutRef.current);
+            doubleClickTimeoutRef.current = null;
+          }
           return;
         }
         return;
@@ -277,18 +295,44 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
               if (!showPlayer) {
                 // Capture current frame before leaving for Pexels/R2
                 if (media.video_player === 'pexels' || media.video_player === 'r2') {
-                  const videoEl = videoElementsRef.current.get(media.id);
-                  if (videoEl) {
-                    captureVideoSnapshot(videoEl, media.id);
-                  }
+                  captureVideoSnapshot(media.id);
                 }
                 setHoveredVideoId(null);
               }
             }}
-            onDoubleClick={() => {
-              if (media.video_player === 'pexels' || media.video_player === 'r2') {
+            onDoubleClick={(e) => {
+              // Debounce double-clicks to prevent multiple instances
+              if (doubleClickTimeoutRef.current) {
+                console.log('[Double Click] Blocked - too soon after last double-click');
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              
+              // Only open full player if one isn't already open
+              if ((media.video_player === 'pexels' || media.video_player === 'r2') && showFullPlayer !== media.id) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[Double Click] Opening full player for:', media.id);
+                
+                // Transfer hover video position to player position
+                const hoverTime = videoProgressRef.current.get(`hover-${media.id}`);
+                if (hoverTime !== undefined && hoverTime > 0) {
+                  console.log('[Double Click] Transferring position from hover:', hoverTime);
+                  videoProgressRef.current.set(`player-${media.id}`, hoverTime);
+                }
+                
                 setShowFullPlayer(media.id);
                 setHoveredVideoId(null);
+                
+                // Set debounce timeout
+                doubleClickTimeoutRef.current = setTimeout(() => {
+                  doubleClickTimeoutRef.current = null;
+                }, 1000);
+              } else {
+                console.log('[Double Click] Blocked - full player already showing for this media');
+                e.preventDefault();
+                e.stopPropagation();
               }
             }}
           >
@@ -309,8 +353,11 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       key={`player-${media.id}`}
                       ref={(el) => {
                         if (el) {
-                          videoElementsRef.current.set(media.id, el);
+                          videoElementsRef.current.set(`player-${media.id}`, el);
                           console.log(`[Video Player] Mounted for ${media.video_player} video:`, media.video_url);
+                        } else {
+                          // Cleanup when unmounting
+                          videoElementsRef.current.delete(`player-${media.id}`);
                         }
                       }}
                       data-media-id={media.id}
@@ -326,7 +373,7 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                       }}
                       onLoadedMetadata={(e) => {
                         console.log('[Video Player] Metadata loaded, duration:', e.currentTarget.duration);
-                        const savedTime = videoProgressRef.current.get(media.id);
+                        const savedTime = videoProgressRef.current.get(`player-${media.id}`);
                         if (savedTime !== undefined && savedTime > 0) {
                           e.currentTarget.currentTime = savedTime;
                         }
@@ -345,13 +392,13 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                         const currentTime = e.currentTarget.currentTime;
                         const duration = e.currentTarget.duration;
                         if (duration - currentTime < 0.1) {
-                          videoProgressRef.current.set(media.id, 0);
+                          videoProgressRef.current.set(`player-${media.id}`, 0);
                         } else {
-                          videoProgressRef.current.set(media.id, currentTime);
+                          videoProgressRef.current.set(`player-${media.id}`, currentTime);
                         }
                       }}
                       onPause={(e) => {
-                        videoProgressRef.current.set(media.id, e.currentTarget.currentTime);
+                        videoProgressRef.current.set(`player-${media.id}`, e.currentTarget.currentTime);
                       }}
                     />
                   ) : (
@@ -383,21 +430,25 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const videoEl = videoElementsRef.current.get(media.id);
-                      if (videoEl) {
-                        captureVideoSnapshot(videoEl, media.id);
-                      }
+                      captureVideoSnapshot(media.id);
                       setIsPlaying(false);
                       setShowFullPlayer(null);
+                      // Clear debounce when closing
+                      if (doubleClickTimeoutRef.current) {
+                        clearTimeout(doubleClickTimeoutRef.current);
+                        doubleClickTimeoutRef.current = null;
+                      }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
-                        const videoEl = videoElementsRef.current.get(media.id);
-                        if (videoEl) {
-                          captureVideoSnapshot(videoEl, media.id);
-                        }
+                        captureVideoSnapshot(media.id);
                         setIsPlaying(false);
                         setShowFullPlayer(null);
+                        // Clear debounce when closing
+                        if (doubleClickTimeoutRef.current) {
+                          clearTimeout(doubleClickTimeoutRef.current);
+                          doubleClickTimeoutRef.current = null;
+                        }
                       }
                     }}
                     className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
@@ -414,36 +465,48 @@ const ProductDetailMediaDisplay: React.FC<ProductDetailMediaDisplayProps> = ({ m
                     key={`hover-${media.id}`}
                     ref={(el) => {
                       if (el) {
-                        videoElementsRef.current.set(media.id, el);
+                        videoElementsRef.current.set(`hover-${media.id}`, el);
+                        console.log(`[Hover Video] Mounted`);
+                        el.muted = true;
+                      } else {
+                        videoElementsRef.current.delete(`hover-${media.id}`);
                       }
                     }}
                     data-media-id={media.id}
                     src={media.video_url}
                     crossOrigin="anonymous"
-                    autoPlay
                     loop
                     muted
                     playsInline
                     className="w-full h-full object-contain transition-opacity duration-300"
-                    onLoadedMetadata={(e) => {
-                      const savedTime = videoProgressRef.current.get(media.id);
+                    onLoadedData={(e) => {
+                      // Restore saved position when video data is loaded and ready
+                      const savedTime = videoProgressRef.current.get(`hover-${media.id}`);
+                      console.log('[Hover Video] Data loaded, restoring position:', savedTime || 0);
                       if (savedTime !== undefined && savedTime > 0) {
                         e.currentTarget.currentTime = savedTime;
                       }
+                      // Start playing
+                      e.currentTarget.play().catch(err => {
+                        console.warn('[Hover Video] Play failed:', err);
+                      });
+                    }}
+                    onError={(e) => {
+                      console.error('[Hover Video] Error loading:', media.video_url);
+                      setHoveredVideoId(null);
                     }}
                     onTimeUpdate={(e) => {
                       const currentTime = e.currentTarget.currentTime;
                       const duration = e.currentTarget.duration;
-                      // Reset position if video is near the end (looping soon)
                       if (duration - currentTime < 0.1) {
-                        videoProgressRef.current.set(media.id, 0);
+                        videoProgressRef.current.set(`hover-${media.id}`, 0);
                       } else {
-                        videoProgressRef.current.set(media.id, currentTime);
+                        videoProgressRef.current.set(`hover-${media.id}`, currentTime);
                       }
                     }}
                   />
                 </div>
-              ) : (getDerivedThumbnail(media) || media.video_player === 'r2') ? (
+              ) : (getDerivedThumbnail(media) || media.video_player === 'r2' || media.video_player === 'pexels') ? (
                 <div
                   className="w-full aspect-video max-h-full relative transition-opacity duration-300 cursor-pointer"
                   onClick={(e) => {

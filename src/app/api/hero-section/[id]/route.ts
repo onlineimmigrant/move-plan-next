@@ -39,6 +39,12 @@ export async function PUT(
     if (body.image !== undefined) updateData.image = body.image;
     if (body.animation_element !== undefined) updateData.animation_element = body.animation_element;
 
+    // Handle video background fields
+    if (body.is_video !== undefined) updateData.is_video = body.is_video;
+    if (body.video_url !== undefined) updateData.video_url = body.video_url;
+    if (body.video_player !== undefined) updateData.video_player = body.video_player;
+    if (body.video_thumbnail !== undefined) updateData.video_thumbnail = body.video_thumbnail;
+
     // Handle translation fields
     if (body.title_translation !== undefined) updateData.title_translation = body.title_translation;
     if (body.description_translation !== undefined) updateData.description_translation = body.description_translation;

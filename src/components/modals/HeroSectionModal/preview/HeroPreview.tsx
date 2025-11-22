@@ -4,7 +4,7 @@
  * Exact mirror of the live Hero component for preview
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import parse from 'html-react-parser';
 import dynamic from 'next/dynamic';
 import { HeroFormData } from '../types';
@@ -14,6 +14,7 @@ import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { ssr: false, loading: () => null });
 const LetterGlitch = dynamic(() => import('@/components/AnimateElements/LetterGlitch'), { ssr: false, loading: () => null });
 const MagicBento = dynamic(() => import('@/components/AnimateElements/MagicBento'), { ssr: false, loading: () => null });
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 interface HeroPreviewProps {
   formData: HeroFormData;
@@ -22,6 +23,23 @@ interface HeroPreviewProps {
 }
 
 export function HeroPreview({ formData, onDoubleClickTitle, onDoubleClickDescription }: HeroPreviewProps) {
+  // Helper to construct video URL based on player type
+  const getVideoUrl = useCallback((video_url?: string, video_player?: string) => {
+    if (!video_url || !video_player) return '';
+    
+    switch (video_player) {
+      case 'youtube':
+        return `https://www.youtube.com/watch?v=${video_url}`;
+      case 'vimeo':
+        return `https://vimeo.com/${video_url}`;
+      case 'pexels':
+      case 'r2':
+        return video_url; // Direct URL
+      default:
+        return video_url;
+    }
+  }, []);
+
   // Determine image position
   const imagePosition = formData.image_style?.position || 'right';
   const isImageFullPage = formData.image_style?.fullPage || false;
@@ -157,14 +175,81 @@ export function HeroPreview({ formData, onDoubleClickTitle, onDoubleClickDescrip
         </div>
       )}
 
-      {/* Full-page background image - exactly like Hero.tsx */}
-      {formData.image && isImageFullPage && (
+      {/* Full-page background video or image - exactly like Hero.tsx */}
+      {formData.is_video && formData.video_url && formData.video_player ? (
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/40 z-10"></div>
+          
+          {formData.video_player === 'pexels' || formData.video_player === 'r2' ? (
+            // Native HTML5 video for Pexels and R2
+            <video
+              src={formData.video_url}
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              crossOrigin="anonymous"
+            />
+          ) : (
+            // ReactPlayer for YouTube and Vimeo
+            <div className="w-full h-full">
+              <ReactPlayer
+                url={getVideoUrl(formData.video_url, formData.video_player)}
+                width="100%"
+                height="100%"
+                playing={true}
+                loop={true}
+                muted={true}
+                playsinline={true}
+                controls={false}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      autoplay: 1,
+                      controls: 0,
+                      modestbranding: 1,
+                      rel: 0,
+                      showinfo: 0,
+                      loop: 1,
+                      mute: 1,
+                      playsinline: 1
+                    }
+                  },
+                  vimeo: {
+                    playerOptions: {
+                      autoplay: true,
+                      background: true,
+                      loop: true,
+                      muted: true,
+                      title: false,
+                      byline: false,
+                      portrait: false
+                    }
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  minWidth: '100%',
+                  minHeight: '100%',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            </div>
+          )}
+        </div>
+      ) : formData.image && isImageFullPage ? (
         <img
           src={formData.image}
           alt={`Image of ${formData.title}`}
           className="absolute inset-0 -z-10 w-full h-full object-cover"
         />
-      )}
+      ) : null}
 
       {/* Main content container - exactly like Hero.tsx */}
       <div

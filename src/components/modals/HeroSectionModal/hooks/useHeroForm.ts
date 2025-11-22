@@ -106,6 +106,11 @@ export function useHeroForm(editingSection: any) {
         description: (editingSection as any).description || (editingSection as any).p_description || '',
         button: (editingSection as any).button || (editingSection as any).button_main_get_started || 'Get Started',
         image: (editingSection as any).image || '',
+        // Video background fields
+        is_video: (editingSection as any).is_video || false,
+        video_url: (editingSection as any).video_url || undefined,
+        video_player: (editingSection as any).video_player || undefined,
+        video_thumbnail: (editingSection as any).video_thumbnail || undefined,
         title_style: titleStyle,
         description_style: descriptionStyle,
         image_style: imageStyle,
@@ -130,6 +135,11 @@ export function useHeroForm(editingSection: any) {
         button: updatedData.button || prevData.button,
         image: updatedData.image || prevData.image,
         animation_element: updatedData.animation_element !== undefined ? updatedData.animation_element : prevData.animation_element,
+        // Video background fields
+        is_video: updatedData.is_video !== undefined ? updatedData.is_video : prevData.is_video,
+        video_url: updatedData.video_url !== undefined ? updatedData.video_url : prevData.video_url,
+        video_player: updatedData.video_player !== undefined ? updatedData.video_player : prevData.video_player,
+        video_thumbnail: updatedData.video_thumbnail !== undefined ? updatedData.video_thumbnail : prevData.video_thumbnail,
         title_style: updatedData.title_style || prevData.title_style,
         description_style: updatedData.description_style || prevData.description_style,
         image_style: updatedData.image_style || prevData.image_style,

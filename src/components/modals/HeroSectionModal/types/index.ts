@@ -73,6 +73,11 @@ export interface HeroFormData {
   button?: string;
   image?: string | null;
   animation_element?: string;
+  // Video background fields
+  is_video?: boolean;
+  video_url?: string;
+  video_player?: 'youtube' | 'vimeo' | 'pexels' | 'r2';
+  video_thumbnail?: string | null;
   title_style: TitleStyle;
   description_style: DescriptionStyle;
   image_style: ImageStyle;

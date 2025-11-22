@@ -10,6 +10,9 @@ import { FaPlayCircle } from 'react-icons/fa';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { HoverEditButtons } from '@/ui/Button';
 
+// Lazy load ReactPlayer for video backgrounds
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
+
 // Lazy load heavy animation components - only when actually used
 const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { 
   ssr: false,
@@ -40,6 +43,11 @@ interface HeroProps {
     button_translation?: Record<string, string>;
     image?: string | null;
     animation_element?: string;
+    // Video background fields
+    is_video?: boolean;
+    video_url?: string;
+    video_player?: 'youtube' | 'vimeo' | 'pexels' | 'r2';
+    video_thumbnail?: string | null;
     title_style: {
       font?: string;
       color?: string;
@@ -132,6 +140,25 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  // Helper to construct video URL based on player type
+  const getVideoUrl = useCallback((video_url?: string, video_player?: string) => {
+    if (!video_url || !video_player) return '';
+    
+    switch (video_player) {
+      case 'youtube':
+        return `https://www.youtube.com/watch?v=${video_url}`;
+      case 'vimeo':
+        return `https://vimeo.com/${video_url}`;
+      case 'pexels':
+      case 'r2':
+        return video_url; // Direct URL
+      default:
+        return video_url;
+    }
+  }, []);
 
   // Update local state when prop changes
   useEffect(() => {
@@ -403,8 +430,82 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
         </div>
       )}
 
-      {/* Full-page background image - CLS optimized with fill prop */}
-      {hero.image && isImageFullPage && (
+      {/* Full-page background video or image */}
+      {hero.is_video && hero.video_url && hero.video_player ? (
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/40 z-10"></div>
+          
+          {hero.video_player === 'pexels' || hero.video_player === 'r2' ? (
+            // Native HTML5 video for Pexels and R2
+            <video
+              ref={videoRef}
+              src={hero.video_url}
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              crossOrigin="anonymous"
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onError={(e) => {
+                console.error('[Hero] Video error:', e);
+              }}
+            />
+          ) : (
+            // ReactPlayer for YouTube and Vimeo
+            <div className="w-full h-full">
+              <ReactPlayer
+                url={getVideoUrl(hero.video_url, hero.video_player)}
+                width="100%"
+                height="100%"
+                playing={true}
+                loop={true}
+                muted={true}
+                playsinline={true}
+                controls={false}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      autoplay: 1,
+                      controls: 0,
+                      modestbranding: 1,
+                      rel: 0,
+                      showinfo: 0,
+                      loop: 1,
+                      mute: 1,
+                      playsinline: 1
+                    }
+                  },
+                  vimeo: {
+                    playerOptions: {
+                      autoplay: true,
+                      background: true,
+                      loop: true,
+                      muted: true,
+                      title: false,
+                      byline: false,
+                      portrait: false
+                    }
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  minWidth: '100%',
+                  minHeight: '100%',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            </div>
+          )}
+        </div>
+      ) : hero.image && isImageFullPage ? (
+        // Full-page background image - CLS optimized with fill prop
         <Image
           src={hero.image}
           alt={`Image of ${translatedH1Title}`}
@@ -414,7 +515,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
           sizes="100vw"
           quality={90}
         />
-      )}
+      ) : null}
 
       <div
         className={`mx-auto max-w-${hero.title_style?.blockWidth || '2xl'} text-${
