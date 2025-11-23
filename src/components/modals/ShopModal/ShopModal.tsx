@@ -1,11 +1,11 @@
 /**
- * ProductCreditEditModal - Main Component
+ * ShopModal - Main Component
  * 
- * Modern product management modal with glass morphism design
- * Follows TicketsAdminModal architecture patterns
+ * Modern shop management modal with glass morphism design
+ * Manages Products, Pricing Plans, Features, Customers, Orders
  * 
  * Features:
- * - CRUD operations for products
+ * - CRUD operations for products, pricing plans, features
  * - Tax code autocomplete
  * - Image validation
  * - Real-time updates
@@ -41,6 +41,9 @@ import {
 const FeaturesView = lazy(() => import('./components/FeaturesView'));
 const InventoryView = lazy(() => import('./components/InventoryView'));
 const PricingPlansView = lazy(() => import('./components/PricingPlansView'));
+const CustomersView = lazy(() => import('./components/CustomersView'));
+const OrdersView = lazy(() => import('./components/OrdersView'));
+const StripeView = lazy(() => import('./components/StripeView'));
 import {
   useProductData,
   useProductOperations,
@@ -54,18 +57,18 @@ import {
 } from './hooks';
 import { Product, ProductFormData, ProductFilters, Toast } from './types';
 import { DEFAULT_FORM_DATA } from './utils';
-import { useProductModal } from './context';
+import { useShopModal } from './context';
 
 // Import MainTab type
 import type { MainTab } from './components/MainTabNavigation';
 
 /**
- * Main Product Management Modal
+ * Main Shop Management Modal
  * 
- * Integrated with ProductModalProvider context for global state management
+ * Integrated with ShopModalProvider context for global state management
  */
-export default function ProductCreditEditModal() {
-  const { isOpen, closeModal } = useProductModal();
+export default function ShopModal() {
+  const { isOpen, closeModal } = useShopModal();
   const { settings } = useSettings();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -96,7 +99,7 @@ export default function ProductCreditEditModal() {
   const [announcement, setAnnouncement] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
-    productId: string | null;
+    productId: number | null;
     productName: string | null;
   }>({ isOpen: false, productId: null, productName: null });
 
@@ -166,42 +169,60 @@ export default function ProductCreditEditModal() {
   });
 
   // Handlers
-  const handleCreateNew = () => {
+  const handleCreateNew = useCallback(() => {
     setSelectedProduct(null);
     setFormData(DEFAULT_FORM_DATA);
     setValidationErrors({});
     setView('form');
     setAnnouncement('Create new product form opened');
-  };
+  }, []);
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = useCallback((product: Product) => {
     setSelectedProduct(product);
     setFormData({
+      // Basic Info
       product_name: product.product_name,
       product_description: product.product_description || '',
-      links_to_image: product.links_to_image || '',
-      product_tax_code: product.product_tax_code || '',
-      attributes: product.attrs ? JSON.stringify(product.attrs, null, 2) : '',
       is_displayed: product.is_displayed,
+      // Media
+      links_to_image: product.links_to_image || '',
+      links_to_video: product.links_to_video || '',
+      // Book/Author
+      author: product.author || '',
+      author_2: product.author_2 || '',
+      isbn: product.isbn || '',
+      // SEO & Identifiers
+      slug: product.slug || '',
+      sku: product.sku || '',
+      metadescription_for_page: product.metadescription_for_page || '',
+      // Display
+      background_color: product.background_color || '',
+      order: product.order || 0,
+      // Integration
+      product_tax_code: product.product_tax_code || '',
+      amazon_books_url: product.amazon_books_url || '',
+      compare_link_url: product.compare_link_url || '',
+      // Additional
+      details: product.details || '',
+      attributes: product.attrs ? JSON.stringify(product.attrs, null, 2) : '',
     });
     setValidationErrors({});
     setView('form');
     setAnnouncement(`Editing ${product.product_name}`);
-  };
+  }, []);
 
-  const handleFormDataChange = (field: keyof ProductFormData, value: any) => {
+  const handleFormDataChange = useCallback((field: keyof ProductFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear validation error for this field
-    if (validationErrors[field]) {
-      setValidationErrors(prev => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    }
-  };
+    setValidationErrors(prev => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     // Validate
     const errors: Record<string, string> = {};
     if (!formData.product_name.trim()) {
@@ -232,26 +253,26 @@ export default function ProductCreditEditModal() {
     setView('list');
     setSelectedProduct(null);
     setFormData(DEFAULT_FORM_DATA);
-  };
+  }, [formData, selectedProduct, productOperations]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setView('list');
     setSelectedProduct(null);
     setFormData(DEFAULT_FORM_DATA);
     setValidationErrors({});
     setAnnouncement('Cancelled product editing');
-  };
+  }, []);
 
-  const handleDeleteClick = (productId: string) => {
+  const handleDeleteClick = useCallback((productId: number) => {
     const product = productData.products.find(p => p.id === productId);
     setDeleteConfirmation({
       isOpen: true,
       productId,
       productName: product?.product_name || 'this product',
     });
-  };
+  }, [productData.products]);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (deleteConfirmation.productId) {
       await productOperations.confirmDeleteProduct(deleteConfirmation.productId);
       setDeleteConfirmation({ isOpen: false, productId: null, productName: null });
@@ -260,22 +281,22 @@ export default function ProductCreditEditModal() {
         setSelectedProduct(null);
       }
     }
-  };
+  }, [deleteConfirmation.productId, selectedProduct?.id, productOperations]);
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setDeleteConfirmation({ isOpen: false, productId: null, productName: null });
-  };
+  }, []);
 
   // Image Gallery handlers
-  const openImageGallery = () => {
+  const openImageGallery = useCallback(() => {
     setIsImageGalleryOpen(true);
-  };
+  }, []);
 
-  const closeImageGallery = () => {
+  const closeImageGallery = useCallback(() => {
     setIsImageGalleryOpen(false);
-  };
+  }, []);
 
-  const handleImageSelect = (url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
+  const handleImageSelect = useCallback((url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
     setFormData(prev => {
       const newFormData = { ...prev, links_to_image: url };
       
@@ -297,19 +318,19 @@ export default function ProductCreditEditModal() {
     });
     setIsImageGalleryOpen(false);
     setAnnouncement(attribution ? 'Unsplash image selected' : 'Product image updated');
-  };
+  }, []);
 
-  const openMediaGallery = () => {
+  const openMediaGallery = useCallback(() => {
     console.log('🚀 openMediaGallery called in ProductCreditEditModal');
     setIsMediaGalleryOpen(true);
-  };
+  }, []);
 
-  const closeMediaGallery = () => {
+  const closeMediaGallery = useCallback(() => {
     console.log('🔒 closeMediaGallery called');
     setIsMediaGalleryOpen(false);
-  };
+  }, []);
 
-  const handleMediaSelect = async (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+  const handleMediaSelect = useCallback(async (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
     console.log('📸 handleMediaSelect called with:', { url, attribution, isVideo, videoData });
     if (carouselRef.current) {
       console.log('✅ carouselRef.current exists, calling addMediaItem');
@@ -318,17 +339,17 @@ export default function ProductCreditEditModal() {
       console.error('❌ carouselRef.current is null!');
     }
     closeMediaGallery();
-  };
+  }, [closeMediaGallery]);
 
   // Simplified UI for initial testing
   return (
     <>
       <ModalContainer isOpen={isOpen} onClose={closeModal}>
         <ModalHeader
-          title="Products & Services"
+          title="Shop"
           subtitle={view === 'form' 
             ? (selectedProduct ? 'Edit' : 'Create')
-            : 'Manage your products and pricing'
+            : 'Manage your shop: products, pricing, and more'
           }
           productCount={productData.products.length}
           primaryColor={primary.base}
@@ -471,16 +492,22 @@ export default function ProductCreditEditModal() {
                 }}
               />
             </Suspense>
-          ) : (
-            /* Stripe Tab - Coming Soon */
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center">
-                <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Stripe Integration</h3>
-                <p className="text-sm text-gray-500">Coming soon...</p>
-              </div>
-            </div>
-          )}
+          ) : mainTab === 'customers' ? (
+            /* Customers Tab */
+            <Suspense fallback={<LoadingState message="Loading customers..." />}>
+              <CustomersView />
+            </Suspense>
+          ) : mainTab === 'orders' ? (
+            /* Orders Tab */
+            <Suspense fallback={<LoadingState message="Loading orders..." />}>
+              <OrdersView />
+            </Suspense>
+          ) : mainTab === 'stripe' ? (
+            /* Stripe Tab */
+            <Suspense fallback={<LoadingState message="Loading Stripe configuration..." />}>
+              <StripeView />
+            </Suspense>
+          ) : null}
         </div>
       </ModalContainer>
 

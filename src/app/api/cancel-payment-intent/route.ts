@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
 export async function POST(request: Request) {
+  const host = request.headers.get('host') || undefined;
+  const organizationId = await getOrganizationId({ headers: { host } });
+  if (!organizationId) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  }
+  const stripe = await createStripeInstance(organizationId);
   try {
     const { paymentIntentId } = await request.json();
 

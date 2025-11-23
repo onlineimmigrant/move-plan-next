@@ -71,7 +71,9 @@ export function useProductFilters({
         
         case 'updated':
         default:
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          const dateA = new Date(a.updated_at || a.created_at).getTime();
+          const dateB = new Date(b.updated_at || b.created_at).getTime();
+          return dateB - dateA;
       }
     });
 

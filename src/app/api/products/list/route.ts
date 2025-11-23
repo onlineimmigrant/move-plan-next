@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   const baseUrl = getBaseUrl(true);
   console.log('API /products/list baseUrl:', baseUrl);
@@ -16,7 +20,28 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('product')
-      .select('id, product_name, product_description, product_tax_code, is_displayed, attrs, links_to_image, organization_id')
+      .select(`
+        id, 
+        product_name, 
+        product_description, 
+        product_tax_code, 
+        is_displayed, 
+        attrs, 
+        links_to_image,
+        links_to_video,
+        author,
+        author_2,
+        isbn,
+        slug,
+        sku,
+        metadescription_for_page,
+        background_color,
+        order,
+        amazon_books_url,
+        compare_link_url,
+        details,
+        organization_id
+      `)
       .eq('organization_id', organizationId);
 
     if (error) {

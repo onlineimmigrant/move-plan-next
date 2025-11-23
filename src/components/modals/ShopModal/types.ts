@@ -10,17 +10,63 @@
  * Represents a product with all its properties from the 'product' table
  */
 export interface Product {
-  id: string;
+  id: number;
   product_name: string;
   product_description?: string;
   is_displayed: boolean;
-  links_to_image?: string; // First image from array
-  attrs?: Record<string, any>; // Custom JSON attributes
+  
+  // Pricing (manual/legacy fields)
+  price_manual?: string;
+  currency_manual?: string;
+  currency_manual_symbol?: string;
+  price_valid_until?: string;
+  
+  // Media
+  links_to_image?: string;
+  links_to_video?: string;
+  image_16_9_1200_675?: string;
+  image_1_1_1080_1080?: string;
+  image_4_3_800_600?: string;
+  image_book_800_1200?: string;
+  thumbnail_16_9_1280_1720?: string;
+  video_player?: string;
+  
+  // Book/Author info
+  author?: string;
+  author_2?: string;
+  isbn?: string;
+  
+  // SEO & Identifiers
+  slug?: string;
+  sku?: string;
+  metadescription_for_page?: string;
+  
+  // Relations
+  product_sub_type_id?: number;
+  product_sub_type_additional_id?: number;
+  course_connected_id?: number;
+  quiz_id?: string;
+  
+  // Display & Ordering
+  order?: number;
+  view_count?: number;
+  background_color?: string;
+  is_in_pricingplan_comparison?: boolean;
+  
+  // Integration
   product_tax_code?: string;
   stripe_product_id?: string;
+  amazon_books_url?: string;
+  compare_link_url?: string;
+  
+  // Additional data
+  details?: string;
+  attrs?: Record<string, any>; // Custom JSON attributes
+  
+  // Metadata
   organization_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 /**
@@ -28,12 +74,37 @@ export interface Product {
  * Used for form state management and validation
  */
 export interface ProductFormData {
+  // Basic Info
   product_name: string;
-  is_displayed: boolean;
   product_description: string;
+  is_displayed: boolean;
+  
+  // Media
   links_to_image: string;
-  attributes: string; // JSON string (will be parsed to attrs)
+  links_to_video: string;
+  
+  // Book/Author Info
+  author: string;
+  author_2: string;
+  isbn: string;
+  
+  // SEO & Identifiers
+  slug: string;
+  sku: string;
+  metadescription_for_page: string;
+  
+  // Display
+  background_color: string;
+  order: number;
+  
+  // Integration
   product_tax_code: string;
+  amazon_books_url: string;
+  compare_link_url: string;
+  
+  // Additional
+  details: string;
+  attributes: string; // JSON string (will be parsed to attrs)
 }
 
 /**

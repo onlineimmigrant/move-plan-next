@@ -18,8 +18,8 @@ import { HeroSectionEditProvider } from '@/components/modals/HeroSectionModal/co
 import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context';
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
-import { ProductModalProvider } from '@/components/modals/ProductModals/ProductCreditEditModal';
-import ProductCreditEditModal from '@/components/modals/ProductModals/ProductCreditEditModal/ProductCreditEditModal';
+import { ShopModalProvider } from '@/components/modals/ShopModal';
+import ShopModal from '@/components/modals/ShopModal/ShopModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
 import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
@@ -276,7 +276,7 @@ export default function ClientProviders({
                                 <PageCreationProvider>
                                   <SiteMapModalProvider>
                                     <GlobalSettingsModalProvider>
-                                      <ProductModalProvider>
+                                      <ShopModalProvider>
                                     <DynamicLanguageUpdater />
                                     <DefaultLocaleCookieManager />
                                     <CookieSettingsProvider>
@@ -320,11 +320,11 @@ export default function ClientProviders({
                             <PageCreationModal />
                             <SiteMapModal />
                             <GlobalSettingsModal />
-                            <ProductCreditEditModal />
+                            <ShopModal />
                             <HeaderEditModal />
                             <FooterEditModal />
                             <LayoutManagerModal />
-                          </ProductModalProvider>
+                          </ShopModalProvider>
                           </GlobalSettingsModalProvider>
                         </SiteMapModalProvider>
                       </PageCreationProvider>

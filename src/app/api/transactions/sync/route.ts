@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { calculateEndDate } from '@/utils/CalculateEndDate'; // Import the utility function
-
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,9 +21,17 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     console.log('Starting transaction sync process...');
+    
+    // Get organization ID
+    const host = request.headers.get('host') || undefined;
+    const organizationId = await getOrganizationId({ headers: { host } });
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    const stripe = await createStripeInstance(organizationId);
 
     // Step 1: Fetch pricing plans for lookup (needed for purchases table)
     console.log('Fetching pricing plans from Supabase...');

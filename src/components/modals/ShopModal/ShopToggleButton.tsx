@@ -1,7 +1,7 @@
 /**
- * ProductCreditEditToggleButton Component
+ * ShopToggleButton Component
  * 
- * Toggle button for opening the ProductCreditEditModal
+ * Toggle button for opening the ShopModal
  * Can be placed in navigation or header
  */
 
@@ -9,11 +9,11 @@
 
 import React from 'react';
 import { CubeIcon } from '@heroicons/react/24/outline';
-import { useProductModal } from './context';
+import { useShopModal } from './context';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
-export function ProductCreditEditToggleButton() {
-  const { openModal } = useProductModal();
+export function ShopToggleButton() {
+  const { openModal } = useShopModal();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
@@ -21,8 +21,8 @@ export function ProductCreditEditToggleButton() {
     <button
       onClick={openModal}
       className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      aria-label="Open product management"
-      title="Products (⌘P)"
+      aria-label="Open shop management"
+      title="Shop (⌘P)"
     >
       <CubeIcon
         className="h-5 w-5"

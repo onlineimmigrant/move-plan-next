@@ -76,10 +76,35 @@ export const MAX_TAX_CODE_RESULTS = 50;
  * Default form data
  */
 export const DEFAULT_FORM_DATA = {
+  // Basic Info
   product_name: '',
-  is_displayed: true,
   product_description: '',
+  is_displayed: true,
+  
+  // Media
   links_to_image: '',
-  attributes: '',
+  links_to_video: '',
+  
+  // Book/Author Info
+  author: '',
+  author_2: '',
+  isbn: '',
+  
+  // SEO & Identifiers
+  slug: '',
+  sku: '',
+  metadescription_for_page: '',
+  
+  // Display
+  background_color: '',
+  order: 0,
+  
+  // Integration
   product_tax_code: '',
+  amazon_books_url: '',
+  compare_link_url: '',
+  
+  // Additional
+  details: '',
+  attributes: '',
 } as const;

@@ -54,7 +54,12 @@ export function useProductData({
     setError(null);
     
     try {
-      const response = await fetch(API_ENDPOINTS.LIST_PRODUCTS);
+      const response = await fetch(API_ENDPOINTS.LIST_PRODUCTS, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

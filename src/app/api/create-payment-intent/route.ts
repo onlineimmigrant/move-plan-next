@@ -1,12 +1,22 @@
 // app/api/create-payment-intent/route.ts
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
 export async function POST(request: Request) {
   try {
-    const { amount, currency, metadata, promoCodeId, paymentIntentId, customerEmail, isCustomerUpdateOnly } = await request.json();
+    const { amount, currency, metadata, promoCodeId, paymentIntentId, customerEmail, isCustomerUpdateOnly, organizationId: bodyOrgId } = await request.json();
+    
+    // Get organization ID from request or body
+    const host = request.headers.get('host') || undefined;
+    const organizationId = bodyOrgId || await getOrganizationId({ headers: { host } });
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    
+    // Create Stripe instance with organization keys
+    const stripe = await createStripeInstance(organizationId);
     console.log('Processing payment intent:', { amount, currency, promoCodeId, paymentIntentId, customerEmail, isCustomerUpdateOnly });
 
     if (!amount || !currency) {

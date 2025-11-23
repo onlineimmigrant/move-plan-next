@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -10,8 +11,16 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { code, totalPrice } = await request.json();
+    const { code, totalPrice, organizationId: bodyOrgId } = await request.json();
     console.log('Validating promo code:', { code, totalPrice });
+    
+    // Get organization ID
+    const host = request.headers.get('host') || undefined;
+    const organizationId = bodyOrgId || await getOrganizationId({ headers: { host } });
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    const stripe = await createStripeInstance(organizationId);
 
     if (!code) {
       return NextResponse.json(

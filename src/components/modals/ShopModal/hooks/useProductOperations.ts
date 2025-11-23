@@ -24,8 +24,8 @@ interface UseProductOperationsReturn {
   setShowDeleteConfirmation: (show: boolean) => void;
   setProductToDelete: (product: Product | null) => void;
   handleCreateProduct: (formData: ProductFormData) => Promise<boolean>;
-  handleUpdateProduct: (productId: string, formData: ProductFormData) => Promise<boolean>;
-  confirmDeleteProduct: (productId: string) => Promise<void>;
+  handleUpdateProduct: (productId: number, formData: ProductFormData) => Promise<boolean>;
+  confirmDeleteProduct: (productId: number) => Promise<void>;
 }
 
 /**
@@ -98,6 +98,24 @@ export function useProductOperations({
         links_to_image: sanitizeImageUrl(formData.links_to_image) || undefined,
         attrs: attrs,
         product_tax_code: formData.product_tax_code?.trim() ? formData.product_tax_code.trim() : undefined,
+        // Media
+        links_to_video: formData.links_to_video?.trim() || undefined,
+        // Book/Author
+        author: formData.author?.trim() || undefined,
+        author_2: formData.author_2?.trim() || undefined,
+        isbn: formData.isbn?.trim() || undefined,
+        // SEO & Identifiers
+        slug: formData.slug?.trim() || undefined,
+        sku: formData.sku?.trim() || undefined,
+        metadescription_for_page: formData.metadescription_for_page?.trim() || undefined,
+        // Display
+        background_color: formData.background_color?.trim() || undefined,
+        order: formData.order,
+        // External Links
+        amazon_books_url: formData.amazon_books_url?.trim() || undefined,
+        compare_link_url: formData.compare_link_url?.trim() || undefined,
+        // Additional
+        details: formData.details?.trim() || undefined,
       };
 
       const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
@@ -129,7 +147,7 @@ export function useProductOperations({
    * Update an existing product
    */
   const handleUpdateProduct = useCallback(async (
-    productId: string,
+    productId: number,
     formData: ProductFormData
   ): Promise<boolean> => {
     setIsSubmitting(true);
@@ -161,12 +179,30 @@ export function useProductOperations({
         links_to_image: sanitizeImageUrl(formData.links_to_image) || undefined,
         attrs: attrs,
         product_tax_code: formData.product_tax_code?.trim() ? formData.product_tax_code.trim() : undefined,
+        // Media
+        links_to_video: formData.links_to_video?.trim() || undefined,
+        // Book/Author
+        author: formData.author?.trim() || undefined,
+        author_2: formData.author_2?.trim() || undefined,
+        isbn: formData.isbn?.trim() || undefined,
+        // SEO & Identifiers
+        slug: formData.slug?.trim() || undefined,
+        sku: formData.sku?.trim() || undefined,
+        metadescription_for_page: formData.metadescription_for_page?.trim() || undefined,
+        // Display
+        background_color: formData.background_color?.trim() || undefined,
+        order: formData.order,
+        // External Links
+        amazon_books_url: formData.amazon_books_url?.trim() || undefined,
+        compare_link_url: formData.compare_link_url?.trim() || undefined,
+        // Additional
+        details: formData.details?.trim() || undefined,
       };
 
       const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, updates }),
+        body: JSON.stringify({ productId: String(productId), updates }),
       });
 
       if (!response.ok) {
@@ -191,14 +227,14 @@ export function useProductOperations({
   /**
    * Delete a product (with confirmation)
    */
-  const confirmDeleteProduct = useCallback(async (productId: string) => {
+  const confirmDeleteProduct = useCallback(async (productId: number) => {
     setIsDeleting(true);
     
     try {
       const response = await fetch(API_ENDPOINTS.MANAGE_PRODUCTS, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ productId: String(productId) }),
       });
 
       if (!response.ok) {

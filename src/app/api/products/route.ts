@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { stripe } from '@/lib/stripe-supabase';
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function validateImageUrl(url: string): string | undefined {
   if (!url || typeof url !== 'string') {
     return undefined;
@@ -58,7 +62,32 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     console.log('POST /api/products body:', body);
-    const { product_name, is_displayed = true, product_description, product_tax_code, links_to_image, attrs } = body;
+    const { 
+      product_name, 
+      is_displayed = true, 
+      product_description, 
+      product_tax_code, 
+      links_to_image, 
+      attrs,
+      // Media
+      links_to_video,
+      // Book/Author
+      author,
+      author_2,
+      isbn,
+      // SEO & Identifiers
+      slug,
+      sku,
+      metadescription_for_page,
+      // Display
+      background_color,
+      order,
+      // External Links
+      amazon_books_url,
+      compare_link_url,
+      // Additional
+      details,
+    } = body;
 
     if (!product_name) {
       return NextResponse.json({ error: 'Missing required field: product_name' }, { status: 400 });
@@ -73,6 +102,25 @@ export async function POST(request: Request) {
         product_tax_code,
         links_to_image,
         attrs,
+        // Media
+        links_to_video,
+        // Book/Author
+        author,
+        author_2,
+        isbn,
+        // SEO & Identifiers
+        slug,
+        sku,
+        metadescription_for_page,
+        // Display
+        background_color,
+        order,
+        // External Links
+        amazon_books_url,
+        compare_link_url,
+        // Additional
+        details,
+        // System
         organization_id: organizationId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -150,7 +198,7 @@ export async function PUT(request: Request) {
 
     const { data: product, error: fetchError } = await supabase
       .from('product')
-      .select('id, product_name, is_displayed, product_description, product_tax_code, links_to_image, attrs, stripe_product_id, organization_id')
+      .select('id, product_name, is_displayed, product_description, product_tax_code, links_to_image, attrs, stripe_product_id, organization_id, links_to_video, author, author_2, isbn, slug, sku, metadescription_for_page, background_color, order, amazon_books_url, compare_link_url, details')
       .eq('id', productIdStr)
       .eq('organization_id', organizationId)
       .single();
@@ -170,6 +218,24 @@ export async function PUT(request: Request) {
     const product_tax_code = updates.product_tax_code;
     const links_to_image = updates.links_to_image;
     const attrs = updates.attrs;
+    // Media
+    const links_to_video = updates.links_to_video;
+    // Book/Author
+    const author = updates.author;
+    const author_2 = updates.author_2;
+    const isbn = updates.isbn;
+    // SEO & Identifiers
+    const slug = updates.slug;
+    const sku = updates.sku;
+    const metadescription_for_page = updates.metadescription_for_page;
+    // Display
+    const background_color = updates.background_color;
+    const order = updates.order;
+    // External Links
+    const amazon_books_url = updates.amazon_books_url;
+    const compare_link_url = updates.compare_link_url;
+    // Additional
+    const details = updates.details;
 
     console.log('Extracted updates - product_name:', product_name);
     console.log('Extracted updates - is_displayed:', is_displayed);
@@ -190,6 +256,25 @@ export async function PUT(request: Request) {
       product_tax_code: product_tax_code !== undefined ? product_tax_code : product.product_tax_code,
       links_to_image: links_to_image !== undefined ? (validatedImageUrl || undefined) : product.links_to_image,
       attrs: attrs !== undefined ? attrs : product.attrs,
+      // Media
+      links_to_video: links_to_video !== undefined ? links_to_video : product.links_to_video,
+      // Book/Author
+      author: author !== undefined ? author : product.author,
+      author_2: author_2 !== undefined ? author_2 : product.author_2,
+      isbn: isbn !== undefined ? isbn : product.isbn,
+      // SEO & Identifiers
+      slug: slug !== undefined ? slug : product.slug,
+      sku: sku !== undefined ? sku : product.sku,
+      metadescription_for_page: metadescription_for_page !== undefined ? metadescription_for_page : product.metadescription_for_page,
+      // Display
+      background_color: background_color !== undefined ? background_color : product.background_color,
+      order: order !== undefined ? order : product.order,
+      // External Links
+      amazon_books_url: amazon_books_url !== undefined ? amazon_books_url : product.amazon_books_url,
+      compare_link_url: compare_link_url !== undefined ? compare_link_url : product.compare_link_url,
+      // Additional
+      details: details !== undefined ? details : product.details,
+      // System
       updated_at: new Date().toISOString(),
     };
 

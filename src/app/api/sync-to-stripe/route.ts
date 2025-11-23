@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
 // Utility function to validate the request (optional, for security)
 const verifyRequest = (request: Request) => {
@@ -13,6 +12,12 @@ const verifyRequest = (request: Request) => {
 
 export async function POST(request: Request) {
   try {
+    const host = request.headers.get('host') || undefined;
+    const organizationId = await getOrganizationId({ headers: { host } });
+    if (!organizationId) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    const stripe = await createStripeInstance(organizationId);
     if (!verifyRequest(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

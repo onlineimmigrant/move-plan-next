@@ -11,13 +11,13 @@ import type { Product } from '../types';
 
 interface ProductListProps {
   products: Product[];
-  selectedProductId?: string | null;
+  selectedProductId?: number | null;
   isLoading: boolean;
   searchQuery?: string;
   activeTab?: 'all' | 'active' | 'archived';
   onProductSelect: (product: Product) => void;
   onProductEdit?: (product: Product) => void;
-  onProductDelete?: (productId: string) => void;
+  onProductDelete?: (productId: number) => void;
   isDeleting?: boolean;
 }
 

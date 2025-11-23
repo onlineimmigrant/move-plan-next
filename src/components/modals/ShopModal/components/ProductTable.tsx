@@ -9,7 +9,7 @@ interface ProductTableProps {
   products: Product[];
   pricingPlansByProduct: Record<number, PricingPlan[]>;
   onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
 }
@@ -22,13 +22,13 @@ function ProductTableComponent({
   searchQuery,
   onSearchChange,
 }: ProductTableProps) {
-  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
 
   console.log('ProductTable - Products:', products.length);
   console.log('ProductTable - PricingPlansByProduct:', pricingPlansByProduct);
   console.log('ProductTable - Keys:', Object.keys(pricingPlansByProduct));
 
-  const toggleProductExpansion = (productId: string) => {
+  const toggleProductExpansion = (productId: number) => {
     setExpandedProducts(prev => {
       const next = new Set(prev);
       if (next.has(productId)) {
@@ -40,16 +40,18 @@ function ProductTableComponent({
     });
   };
 
-  const formatPrice = (price?: number, currency?: string) => {
+  const formatPrice = (price?: number, currencySymbol?: string) => {
     if (price === undefined || price === null) return 'N/A';
-    const symbol = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
-    return `${symbol}${price.toFixed(2)}`;
+    const symbol = currencySymbol || '£';
+    return `${symbol}${(price / 100).toFixed(2)}`;
   };
 
-  const formatInterval = (interval?: string, count?: number) => {
-    if (!interval) return 'One-time';
-    const countStr = count && count > 1 ? `${count} ` : '';
-    return `${countStr}${interval}${count && count > 1 ? 's' : ''}`;
+  const formatInterval = (type?: string, interval?: string, measure?: string) => {
+    if (type === 'recurring' && interval) {
+      const measureText = measure && measure !== 'item' ? ` / ${measure}` : '';
+      return `${interval}${measureText}`;
+    }
+    return 'One-time';
   };
 
   return (
@@ -239,12 +241,12 @@ function ProductTableComponent({
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap">
                             <span className="text-sm text-gray-600">
-                              {formatPrice(plan.price, plan.currency)}
+                              {formatPrice(plan.price, plan.currency_symbol)}
                             </span>
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap">
                             <span className="text-sm text-gray-600">
-                              {formatInterval(plan.recurring_interval, plan.recurring_interval_count)}
+                              {formatInterval(plan.type, plan.recurring_interval, plan.measure)}
                             </span>
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap">

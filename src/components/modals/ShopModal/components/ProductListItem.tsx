@@ -25,7 +25,7 @@ interface ProductListItemProps {
   searchQuery?: string;
   onClick: (product: Product) => void;
   onEdit?: (product: Product) => void;
-  onDelete?: (productId: string) => void;
+  onDelete?: (productId: number) => void;
   isDeleting?: boolean;
 }
 

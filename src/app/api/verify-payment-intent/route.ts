@@ -1,10 +1,16 @@
 // /src/app/api/verify-payment-intent/route.ts
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getOrganizationId } from '@/lib/getSettings';
+import { createStripeInstance } from '@/lib/stripeInstance';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-export async function GET(request: Request) {
+export async function POST(request: Request) {
+  const host = request.headers.get('host') || undefined;
+  const organizationId = await getOrganizationId({ headers: { host } });
+  if (!organizationId) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  }
+  const stripe = await createStripeInstance(organizationId);
   try {
     const { searchParams } = new URL(request.url);
     const paymentIntentId = searchParams.get('session_id');

@@ -218,18 +218,6 @@ const ProductMediaCarousel = forwardRef<ProductMediaCarouselHandle, ProductMedia
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Additional Media
-        </h3>
-        <button
-          onClick={handleAddClick}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          + Add Media
-        </button>
-      </div>
-
       {mediaItems.length === 0 ? (
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">

@@ -32,7 +32,7 @@ import { useGlobalSettingsModal } from '@/components/modals/GlobalSettingsModal/
 import { useLayoutManager } from '@/components/modals/LayoutManagerModal/context';
 import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
 import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
-import { useProductModal } from '@/components/modals/ProductModals/ProductCreditEditModal';
+import { useShopModal } from '@/components/modals/ShopModal';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -73,7 +73,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const { openModal: openLayoutManagerModal } = useLayoutManager();
   const { openModal: openHeaderEditModal } = useHeaderEdit();
   const { openModal: openFooterEditModal } = useFooterEdit();
-  const { openModal: openProductModal } = useProductModal();
+  const { openModal: openShopModal } = useShopModal();
 
   const quickActions: QuickAction[] = [
     // Navigation Section - MOVED TO TOP (most common actions)
@@ -164,12 +164,12 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
     // Products Section
     {
       id: 'product_page',
-      label: 'Product',
+      label: 'Shop',
       icon: CubeIcon,
       shortcut: `${modifierKey}7`,
       action: () => {
         onClose();
-        openProductModal();
+        openShopModal();
       },
     },
     // General Section

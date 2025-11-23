@@ -1,7 +1,7 @@
 /**
- * ProductCreditEditModal Context
+ * ShopModal Context
  * 
- * Provides global state management for the Product modal,
+ * Provides global state management for the Shop modal,
  * allowing it to be opened from anywhere in the application.
  */
 
@@ -9,30 +9,30 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-interface ProductModalContextType {
+interface ShopModalContextType {
   isOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
 }
 
-const ProductModalContext = createContext<ProductModalContextType | undefined>(undefined);
+const ShopModalContext = createContext<ShopModalContextType | undefined>(undefined);
 
-interface ProductModalProviderProps {
+interface ShopModalProviderProps {
   children: React.ReactNode;
 }
 
 /**
- * Provider component for ProductModal context
+ * Provider component for ShopModal context
  * Wrap your app with this to enable modal state management
  * 
  * @example
  * ```tsx
- * <ProductModalProvider>
+ * <ShopModalProvider>
  *   <App />
- * </ProductModalProvider>
+ * </ShopModalProvider>
  * ```
  */
-export function ProductModalProvider({ children }: ProductModalProviderProps) {
+export function ShopModalProvider({ children }: ShopModalProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = useCallback(() => {
@@ -53,22 +53,22 @@ export function ProductModalProvider({ children }: ProductModalProviderProps) {
   );
 
   return (
-    <ProductModalContext.Provider value={value}>
+    <ShopModalContext.Provider value={value}>
       {children}
-    </ProductModalContext.Provider>
+    </ShopModalContext.Provider>
   );
 }
 
 /**
- * Hook to access ProductModal context
+ * Hook to access ShopModal context
  * Use this in components to open/close the modal
  * 
- * @throws {Error} If used outside ProductModalProvider
+ * @throws {Error} If used outside ShopModalProvider
  * 
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { openModal, closeModal, isOpen } = useProductModal();
+ *   const { openModal, closeModal, isOpen } = useShopModal();
  *   
  *   return (
  *     <button onClick={openModal}>
@@ -78,11 +78,11 @@ export function ProductModalProvider({ children }: ProductModalProviderProps) {
  * }
  * ```
  */
-export function useProductModal() {
-  const context = useContext(ProductModalContext);
+export function useShopModal() {
+  const context = useContext(ShopModalContext);
   
   if (!context) {
-    throw new Error('useProductModal must be used within ProductModalProvider');
+    throw new Error('useShopModal must be used within ShopModalProvider');
   }
   
   return context;

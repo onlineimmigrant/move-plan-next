@@ -8,17 +8,35 @@ import BasketItemComponent from '@/components/product/BasketItem';
 import { HiShoppingBag } from 'react-icons/hi';
 import Link from 'next/link';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import PaymentForm from '../../../components/product/PaymentForm';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useProductTranslations } from '../../../components/product/useProductTranslations';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+// Fetch Stripe publishable key dynamically
+let stripePromiseCache: Promise<Stripe | null> | null = null;
+const getStripePromise = async (): Promise<Stripe | null> => {
+  if (!stripePromiseCache) {
+    stripePromiseCache = (async () => {
+      try {
+        const response = await fetch('/api/stripe/publishable-key');
+        const { publishableKey } = await response.json();
+        return loadStripe(publishableKey);
+      } catch (error) {
+        console.error('Failed to load Stripe publishable key:', error);
+        // Fallback to env var
+        return loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+      }
+    })();
+  }
+  return stripePromiseCache;
+};
 
 // Isolate Elements in a separate component to prevent re-renders
 const PaymentFormWrapper = memo(
@@ -51,10 +69,21 @@ const PaymentFormWrapper = memo(
     setCustomerEmail: (email: string | null) => void;
     updatePaymentIntentWithEmail: (email?: string, isCustomerUpdateOnly?: boolean) => Promise<void>;
   }) => {
+    const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
+    
+    useEffect(() => {
+      getStripePromise().then(setStripeInstance);
+    }, []);
+    
     console.log('PaymentFormWrapper rendered with clientSecret:', clientSecret);
+    
+    if (!stripeInstance) {
+      return <div className="text-center py-4">Loading Stripe...</div>;
+    }
+    
     return (
       <Elements
-        stripe={stripePromise}
+        stripe={stripeInstance}
         options={{
           clientSecret,
         }}

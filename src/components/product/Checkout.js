@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   PaymentElement,
   useStripe,
@@ -10,10 +10,24 @@ import {
 import { loadStripe } from '@stripe/stripe-js'
 import { useProductTranslations } from './useProductTranslations';
 
-// Make sure to call loadStripe outside of a component's render to avoid
-// recreating the Stripe object on every render.
-// This is your test publishable API key.
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+// Fetch Stripe publishable key dynamically
+let stripePromiseCache = null;
+const getStripePromise = async () => {
+  if (!stripePromiseCache) {
+    stripePromiseCache = (async () => {
+      try {
+        const response = await fetch('/api/stripe/publishable-key');
+        const { publishableKey } = await response.json();
+        return loadStripe(publishableKey);
+      } catch (error) {
+        console.error('Failed to load Stripe publishable key:', error);
+        // Fallback to env var
+        return loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+      }
+    })();
+  }
+  return stripePromiseCache;
+};
 
 function PaymentForm() {
   const stripe = useStripe();
@@ -75,11 +89,21 @@ function PaymentForm() {
 }
 
 export default function CheckoutForm({ clientSecret }) {
+  const [stripeInstance, setStripeInstance] = useState(null);
+  
+  useEffect(() => {
+    getStripePromise().then(setStripeInstance);
+  }, []);
+  
+  if (!stripeInstance) {
+    return <div>Loading Stripe...</div>;
+  }
+  
   const appearance = {
     theme: 'stripe',
   };
   return (
-    <Elements stripe={stripePromise} options={{ appearance, clientSecret }}>
+    <Elements stripe={stripeInstance} options={{ appearance, clientSecret }}>
       <PaymentForm />
     </Elements>
   )
