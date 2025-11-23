@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Plus, Archive, CreditCard } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -35,16 +35,22 @@ import {
   ProductListToolbar,
   ProductDetailView,
   ConfirmationDialog,
-  FeaturesView,
 } from './components';
+
+// Lazy load heavy tab components
+const FeaturesView = lazy(() => import('./components/FeaturesView'));
+const InventoryView = lazy(() => import('./components/InventoryView'));
+const PricingPlansView = lazy(() => import('./components/PricingPlansView'));
 import {
   useProductData,
   useProductOperations,
   useProductFilters,
   useDebounce,
-  useModalDataFetching,
+  useTabDataFetching,
   usePricingPlans,
   useFeatures,
+  useInventory,
+  usePricingPlansManagement,
 } from './hooks';
 import { Product, ProductFormData, ProductFilters, Toast } from './types';
 import { DEFAULT_FORM_DATA } from './utils';
@@ -115,7 +121,17 @@ export default function ProductCreditEditModal() {
     organizationId: settings.organization_id,
   });
 
+  const pricingPlansManagementData = usePricingPlansManagement({
+    organizationId: settings.organization_id,
+    onToast: showToast,
+  });
+
   const featuresData = useFeatures({
+    organizationId: settings.organization_id,
+    onToast: showToast,
+  });
+
+  const inventoryData = useInventory({
     organizationId: settings.organization_id,
     onToast: showToast,
   });
@@ -127,14 +143,25 @@ export default function ProductCreditEditModal() {
     filters: { ...filters, searchQuery: debouncedSearchQuery },
   });
 
-  // Fetch products, pricing plans, and features on modal open
-  useModalDataFetching({
+  // Tab-based data fetching for better performance
+  useTabDataFetching({
     isOpen,
-    onFetchData: async () => {
+    activeTab: mainTab,
+    onFetchProductsData: async () => {
       await productData.fetchProducts();
+    },
+    onFetchPricingPlansData: async () => {
+      await productData.fetchProducts(); // Need products for dropdown
+      await pricingPlansManagementData.fetchPricingPlans();
+    },
+    onFetchFeaturesData: async () => {
       await pricingPlansData.fetchPricingPlans();
       await featuresData.fetchFeatures();
       await featuresData.fetchPricingPlanFeatures();
+    },
+    onFetchInventoryData: async () => {
+      await pricingPlansData.fetchPricingPlans();
+      await inventoryData.fetchInventories();
     },
   });
 
@@ -380,38 +407,70 @@ export default function ProductCreditEditModal() {
                 carouselRef={carouselRef}
               />
             )
+          ) : mainTab === 'pricing-plans' ? (
+            /* Pricing Plans Tab */
+            <Suspense fallback={<LoadingState message="Loading pricing plans..." />}>
+              <PricingPlansView
+                pricingPlans={pricingPlansManagementData.pricingPlans}
+                products={productData.products}
+                isLoading={pricingPlansManagementData.isLoading}
+                onCreatePlan={async (data) => {
+                  await pricingPlansManagementData.createPricingPlan(data);
+                }}
+                onUpdatePlan={async (id, updates) => {
+                  await pricingPlansManagementData.updatePricingPlan(id, updates);
+                }}
+                onDeletePlan={async (id) => {
+                  await pricingPlansManagementData.deletePricingPlan(id);
+                }}
+                onReorderPlans={async (plans) => {
+                  await pricingPlansManagementData.reorderPricingPlans(plans);
+                }}
+              />
+            </Suspense>
           ) : mainTab === 'features' ? (
             /* Features Tab */
-            <FeaturesView
-              features={featuresData.features}
-              pricingPlans={Object.values(pricingPlansData.pricingPlansByProduct).flat()}
-              pricingPlanFeatures={featuresData.pricingPlanFeatures}
-              isLoading={featuresData.isLoading}
-              onCreateFeature={async (data) => {
-                await featuresData.createFeature(data);
-              }}
-              onUpdateFeature={async (id, updates) => {
-                await featuresData.updateFeature(id, updates);
-              }}
-              onDeleteFeature={async (id) => {
-                await featuresData.deleteFeature(id);
-              }}
-              onAssignFeature={async (pricingplanId, featureId) => {
-                await featuresData.assignFeatureToPlan(pricingplanId, featureId);
-              }}
-              onRemoveFeature={async (pricingplanId, featureId) => {
-                await featuresData.removeFeatureFromPlan(pricingplanId, featureId);
-              }}
-            />
+            <Suspense fallback={<LoadingState message="Loading features..." />}>
+              <FeaturesView
+                features={featuresData.features}
+                pricingPlans={pricingPlansData.allPricingPlans}
+                pricingPlanFeatures={featuresData.pricingPlanFeatures}
+                isLoading={featuresData.isLoading}
+                onCreateFeature={async (data) => {
+                  await featuresData.createFeature(data);
+                }}
+                onUpdateFeature={async (id, updates) => {
+                  await featuresData.updateFeature(id, updates);
+                }}
+                onDeleteFeature={async (id) => {
+                  await featuresData.deleteFeature(id);
+                }}
+                onAssignFeature={async (pricingplanId, featureId) => {
+                  await featuresData.assignFeatureToPlan(pricingplanId, featureId);
+                }}
+                onRemoveFeature={async (pricingplanId, featureId) => {
+                  await featuresData.removeFeatureFromPlan(pricingplanId, featureId);
+                }}
+              />
+            </Suspense>
           ) : mainTab === 'inventory' ? (
-            /* Inventory Tab - Coming Soon */
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center">
-                <Archive className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Inventory Management</h3>
-                <p className="text-sm text-gray-500">Coming soon...</p>
-              </div>
-            </div>
+            /* Inventory Tab */
+            <Suspense fallback={<LoadingState message="Loading inventory..." />}>
+              <InventoryView
+                inventories={inventoryData.inventories}
+                pricingPlans={pricingPlansData.allPricingPlans}
+                isLoading={inventoryData.isLoading}
+                onCreateInventory={async (data) => {
+                  await inventoryData.createInventory(data);
+                }}
+                onUpdateInventory={async (id, updates) => {
+                  await inventoryData.updateInventory(id, updates);
+                }}
+                onDeleteInventory={async (id) => {
+                  await inventoryData.deleteInventory(id);
+                }}
+              />
+            </Suspense>
           ) : (
             /* Stripe Tab - Coming Soon */
             <div className="flex-1 flex items-center justify-center p-6">

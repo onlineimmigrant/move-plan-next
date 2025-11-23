@@ -4,12 +4,13 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { CheckIcon, XMarkIcon as XMarkIconSmall } from '@heroicons/react/20/solid';
 import { PRICING_CONSTANTS } from '@/utils/pricingConstants';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Feature {
   id: string;
   name: string;
   slug: string;
-  type: 'features' | 'modules' | 'support';
+  type: 'features' | 'modules' | 'support' | 'bonus' | string;
   order: number;
   content?: string;
 }
@@ -123,31 +124,48 @@ export default function PricingComparisonTable({
   currencySymbol,
   translations,
 }: PricingComparisonTableProps) {
+  const themeColors = useThemeColors();
+  const primaryColor = themeColors.cssVars.primary.base;
+  
   const featuresGroupedByType = useMemo(() => getAllFeaturesGroupedByType(plans), [plans]);
   const hasRealFeatures = Object.keys(featuresGroupedByType).length > 0;
 
-  const typeOrder = ['features', 'modules'];
   const orderedTypes = useMemo(() => {
-    const ordered: string[] = [];
-    const other: string[] = [];
-
-    Object.keys(featuresGroupedByType).forEach(type => {
-      if (type === 'features' || type === 'modules') {
-        if (!ordered.includes(type)) {
-          ordered.push(type);
-        }
-      } else if (type !== 'support') {
-        other.push(type);
-      }
-    });
-
-    ordered.sort((a, b) => typeOrder.indexOf(a) - typeOrder.indexOf(b));
-
-    return [
-      ...ordered,
-      ...other.sort(),
-      ...(featuresGroupedByType.support ? ['support'] : [])
-    ];
+    const allTypes = Object.keys(featuresGroupedByType);
+    const result: string[] = [];
+    
+    // Normalize to lowercase for comparison
+    const normalizedTypes = allTypes.map(t => ({ original: t, lower: t.toLowerCase() }));
+    
+    // 1. Modules first
+    const modulesType = normalizedTypes.find(t => t.lower === 'modules');
+    if (modulesType) result.push(modulesType.original);
+    
+    // 2. Features second
+    const featuresType = normalizedTypes.find(t => t.lower === 'features');
+    if (featuresType) result.push(featuresType.original);
+    
+    // 3. Other types (except support and bonus) in alphabetical order
+    const other = normalizedTypes
+      .filter(t => 
+        t.lower !== 'modules' && 
+        t.lower !== 'features' && 
+        t.lower !== 'support' && 
+        t.lower !== 'bonus'
+      )
+      .map(t => t.original)
+      .sort();
+    result.push(...other);
+    
+    // 4. Support
+    const supportType = normalizedTypes.find(t => t.lower === 'support');
+    if (supportType) result.push(supportType.original);
+    
+    // 5. Bonus last
+    const bonusType = normalizedTypes.find(t => t.lower === 'bonus');
+    if (bonusType) result.push(bonusType.original);
+    
+    return result;
   }, [featuresGroupedByType]);
 
   return (
@@ -223,6 +241,8 @@ export default function PricingComparisonTable({
                       typeDisplayName = 'Modules';
                     } else if (featureType === 'support') {
                       typeDisplayName = 'Support';
+                    } else if (featureType === 'bonus') {
+                      typeDisplayName = 'Bonus';
                     } else {
                       typeDisplayName = featureType.charAt(0).toUpperCase() + featureType.slice(1);
                     }
@@ -233,8 +253,8 @@ export default function PricingComparisonTable({
                   return (
                     <React.Fragment key={featureType}>
                       {needsSubtitle && (
-                        <tr className="bg-gray-100 border-b border-gray-200">
-                          <td className="py-3 px-6 text-sm font-semibold text-gray-800" colSpan={plans.length + 1}>
+                        <tr className="border-b border-gray-200" style={{ backgroundColor: `${primaryColor}08` }}>
+                          <td className="py-4 px-6 text-base font-bold text-gray-900" colSpan={plans.length + 1}>
                             {typeDisplayName}
                           </td>
                         </tr>
@@ -242,12 +262,40 @@ export default function PricingComparisonTable({
 
                       {features.map((feature) => {
                         const currentRowIndex = rowIndex++;
+                        const isImportant = ['modules', 'bonus', 'support'].includes(featureType.toLowerCase());
+                        const textSize = isImportant ? 'text-base' : 'text-sm';
+                        const fontWeight = isImportant ? 'font-medium' : 'font-normal';
+                        const rowPadding = isImportant ? 'py-5' : 'py-4';
+                        
                         return (
-                          <tr key={feature.id} className={`border-b border-gray-100 ${currentRowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                            <td className="py-4 px-6 text-sm text-gray-700 font-light">
+                          <tr 
+                            key={feature.id} 
+                            className={`border-b border-gray-100 ${currentRowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'} ${isImportant ? 'bg-opacity-60' : ''}`}
+                            tabIndex={0}
+                            role="row"
+                            aria-label={`Feature: ${feature.name}`}
+                          >
+                            <td className={`${rowPadding} px-6 ${textSize} text-gray-700 ${fontWeight}`}>
                               <Link
                                 href={`/features/${feature.slug}`}
-                                className="hover:text-blue-600 hover:underline transition-colors"
+                                className="transition-colors px-1 -mx-1 rounded focus:outline-none focus:ring-2"
+                                style={{ backgroundColor: 'transparent', outlineColor: primaryColor }}
+                                onFocus={(e) => {
+                                  e.currentTarget.style.backgroundColor = `${primaryColor}15`;
+                                  e.currentTarget.style.color = primaryColor;
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = '#374151';
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = `${primaryColor}15`;
+                                  e.currentTarget.style.color = primaryColor;
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = '#374151';
+                                }}
                               >
                                 {feature.name}
                               </Link>
@@ -255,7 +303,7 @@ export default function PricingComparisonTable({
                             {plans.map((plan) => (
                               <td key={`${plan.name}-${feature.id}`} className="text-center py-4 px-6">
                                 {planHasRealFeature(plan, feature, plans) ? (
-                                  <CheckIcon className="h-5 w-5 text-emerald-600 mx-auto" />
+                                  <CheckIcon className="h-5 w-5 mx-auto" style={{ color: primaryColor }} />
                                 ) : (
                                   <XMarkIconSmall className="h-5 w-5 text-gray-300 mx-auto" />
                                 )}
@@ -276,7 +324,7 @@ export default function PricingComparisonTable({
                     {plans.map((plan, planIndex) => (
                       <td key={`${plan.name}-${feature}`} className="text-center py-4 px-6">
                         {planHasFeature(planIndex, feature, plans) ? (
-                          <CheckIcon className="h-5 w-5 text-emerald-600 mx-auto" />
+                          <CheckIcon className="h-5 w-5 mx-auto" style={{ color: primaryColor }} />
                         ) : (
                           <XMarkIconSmall className="h-5 w-5 text-gray-300 mx-auto" />
                         )}

@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon, ChevronDown, Search, ArrowUpDown, GripVertical } from 'lucide-react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
@@ -27,7 +27,7 @@ interface FeaturesViewProps {
   onRemoveFeature: (pricingplanId: string, featureId: string) => Promise<void>;
 }
 
-export default function FeaturesView({
+function FeaturesView({
   features,
   pricingPlans,
   pricingPlanFeatures,
@@ -556,7 +556,20 @@ export default function FeaturesView({
                 >
                   {/* Accordion Header */}
                   <div
-                    className="flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 p-4 cursor-pointer transition-colors"
+                    style={{ 
+                      backgroundColor: isExpanded ? `${primary.base}15` : 'white',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isExpanded) {
+                        e.currentTarget.style.backgroundColor = `${primary.base}10`;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isExpanded) {
+                        e.currentTarget.style.backgroundColor = 'white';
+                      }
+                    }}
                     onClick={() => setExpandedFeatureId(isExpanded ? null : feature.id)}
                   >
                     {/* Drag Handle - only show when sortable */}
@@ -575,13 +588,14 @@ export default function FeaturesView({
                     </div>
 
                     {/* Feature Name */}
-                    <h4 className="font-semibold text-gray-900 flex-1">{feature.name}</h4>
+                    <h4 className="font-semibold flex-1" style={{ color: isExpanded ? primary.base : '#111827' }}>{feature.name}</h4>
 
                     {/* Chevron */}
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
+                      className={`w-5 h-5 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}
+                      style={{ color: isExpanded ? primary.base : '#9ca3af' }}
                     />
                   </div>
 
@@ -604,10 +618,17 @@ export default function FeaturesView({
                               e.stopPropagation();
                               handleEdit(feature);
                             }}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors"
+                            style={{ backgroundColor: 'transparent' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = `${primary.base}15`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
                             title="Edit feature"
                           >
-                            <Edit2 className="w-4 h-4 text-gray-600" />
+                            <Edit2 className="w-4 h-4" style={{ color: primary.base }} />
                           </button>
                           <button
                             onClick={(e) => {
@@ -763,3 +784,5 @@ export default function FeaturesView({
     </div>
   );
 }
+
+export default memo(FeaturesView);

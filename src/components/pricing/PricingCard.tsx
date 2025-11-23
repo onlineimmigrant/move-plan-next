@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Link from 'next/link';
 import { CheckIcon } from '@heroicons/react/20/solid';
 import { PRICING_CONSTANTS } from '@/utils/pricingConstants';
@@ -10,6 +10,7 @@ interface Feature {
   id: string;
   name: string;
   slug: string;
+  type?: string;
 }
 
 interface PricingCardProps {
@@ -74,6 +75,9 @@ const PricingCard = memo<PricingCardProps>(({
   translations,
   isLoadingFeatures,
 }) => {
+  const themeColors = useThemeColors();
+  const primaryColor = themeColors.cssVars.primary.base;
+  
   const displayCurrencySymbol = (isAnnual ? annualCurrencySymbol : currencySymbol) || currencySymbol;
   const displayPrice = hasOneTimePlans
     ? monthlyPrice
@@ -89,6 +93,22 @@ const PricingCard = memo<PricingCardProps>(({
   const maxFeatures = PRICING_CONSTANTS.MAX_VISIBLE_FEATURES;
   const featuresToShow = isExpanded ? features : features.slice(0, maxFeatures);
   const hasMoreFeatures = features.length > maxFeatures;
+
+  // Memoize button styles to prevent recalculation on every render
+  const buttonStyles = useMemo(() => ({
+    primary: {
+      background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+      color: 'white',
+      boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}30`,
+    },
+    secondary: {
+      backgroundColor: 'transparent',
+      color: themeColors.cssVars.primary.base,
+      borderWidth: '2px',
+      borderStyle: 'solid' as const,
+      borderColor: themeColors.cssVars.primary.base,
+    },
+  }), [themeColors.cssVars.primary.base, themeColors.cssVars.primary.hover]);
 
   const calculateTotal = () => {
     if (hasOneTimePlans) return null;
@@ -108,8 +128,6 @@ const PricingCard = memo<PricingCardProps>(({
   const discountPercent = annualSizeDiscount > 0
     ? Math.round(annualSizeDiscount)
     : Math.round(((monthlyPrice - annualPrice) / monthlyPrice) * 100);
-
-  const themeColors = useThemeColors();
 
   return (
     <div
@@ -196,22 +214,9 @@ const PricingCard = memo<PricingCardProps>(({
           {/* CTA Button */}
           <Link
             href={productSlug ? `/products/${productSlug}` : '#'}
+            prefetch={true}
             className="inline-block w-full py-3.5 px-6 rounded-full font-medium text-sm transition-all group-hover:scale-[1.02] text-center"
-            style={
-              buttonVariant === 'primary'
-                ? {
-                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
-                    color: 'white',
-                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}30`,
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: themeColors.cssVars.primary.base,
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    borderColor: themeColors.cssVars.primary.base,
-                  }
-            }
+            style={buttonVariant === 'primary' ? buttonStyles.primary : buttonStyles.secondary}
           >
             {buttonText === 'Buy Now' ? translations.buyNow : translations.getStarted}
           </Link>
@@ -227,23 +232,47 @@ const PricingCard = memo<PricingCardProps>(({
                   <div className="h-4 bg-gray-200 rounded w-full"></div>
                 </li>
               ))
+            ) : features.length === 0 ? (
+              <li className="text-center py-8">
+                <div className="text-gray-400 mb-2">
+                  <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-500 font-light">No features available</p>
+              </li>
             ) : (
               <>
                 {featuresToShow.map((feature, index) => {
                   const realFeature = realFeatures?.find((rf) => rf.name === feature);
+                  const isImportant = realFeature && ['modules', 'bonus', 'support'].includes(realFeature.type?.toLowerCase() || '');
+                  const featureTextSize = isImportant ? 'text-base' : 'text-sm';
+                  const featureWeight = isImportant ? 'font-medium' : 'font-light';
 
                   return (
                     <li key={index} className="flex items-start">
-                      <CheckIcon className="h-4 w-4 text-gray-400 shrink-0 mt-0.5 mr-3" />
+                      <CheckIcon 
+                        className={`shrink-0 mt-0.5 mr-3 ${isImportant ? 'h-5 w-5' : 'h-4 w-4'}`} 
+                        style={{ color: primaryColor }} 
+                      />
                       {realFeature ? (
                         <Link
                           href={`/features/${realFeature.slug}`}
-                          className="text-gray-600 text-sm font-light leading-relaxed hover:text-sky-600 hover:underline transition-colors"
+                          className={`text-gray-600 ${featureTextSize} ${featureWeight} leading-relaxed transition-colors px-1 -mx-1 rounded`}
+                          style={{ backgroundColor: 'transparent' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = `${primaryColor}15`;
+                            e.currentTarget.style.color = primaryColor;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#4b5563';
+                          }}
                         >
                           {feature}
                         </Link>
                       ) : (
-                        <span className="text-gray-600 text-sm font-light leading-relaxed">
+                        <span className={`text-gray-600 ${featureTextSize} ${featureWeight} leading-relaxed`}>
                           {feature}
                         </span>
                       )}
@@ -256,7 +285,16 @@ const PricingCard = memo<PricingCardProps>(({
                     <div className="h-4 w-4 shrink-0 mt-0.5 mr-3"></div>
                     <button
                       onClick={onToggleExpanded}
-                      className="text-gray-500 text-sm font-medium hover:text-gray-700 hover:underline transition-colors flex items-center gap-1"
+                      className="text-gray-500 text-sm font-medium transition-colors flex items-center gap-1 px-1 -mx-1 rounded"
+                      style={{ backgroundColor: 'transparent' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = `${primaryColor}15`;
+                        e.currentTarget.style.color = primaryColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#6b7280';
+                      }}
                     >
                       {isExpanded ? (
                         <>

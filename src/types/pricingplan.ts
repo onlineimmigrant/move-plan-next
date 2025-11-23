@@ -56,6 +56,7 @@ export interface PricingPlan {
   // Status and ordering
   is_active: boolean;
   order_number: number;
+  order?: number; // Drag-and-drop ordering field
   type?: string;
   slug?: string;
   

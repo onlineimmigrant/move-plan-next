@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { FaTrash, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { Product } from '../types';
 import type { PricingPlan } from '@/types/pricingplan';
@@ -14,7 +14,7 @@ interface ProductTableProps {
   onSearchChange: (value: string) => void;
 }
 
-export default function ProductTable({
+function ProductTableComponent({
   products,
   pricingPlansByProduct,
   onEdit,
@@ -274,3 +274,5 @@ export default function ProductTable({
     </div>
   );
 }
+
+export const ProductTable = memo(ProductTableComponent);

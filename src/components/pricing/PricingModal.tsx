@@ -30,7 +30,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
@@ -39,7 +39,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
 import PricingCard from '@/components/pricing/PricingCard';
-import PricingComparisonTable from '@/components/pricing/PricingComparisonTable';
+// Lazy load comparison table - only loads when user scrolls down
+const PricingComparisonTable = lazy(() => import('@/components/pricing/PricingComparisonTable'));
 import { 
   generateProductPricingUrl, 
   generateBasicPricingUrl,
@@ -83,7 +84,18 @@ export { generateProductPricingUrl, generateBasicPricingUrl };
 export default function PricingModal({ isOpen, onClose, pricingComparison }: PricingModalProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PricingComparisonProduct | null>(null);
-  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>(() => {
+    // Load from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('pricing-expanded-features');
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
   const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
   const [hoveredProductId, setHoveredProductId] = useState<number | null>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
@@ -97,7 +109,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const currentLocale = getLocaleFromPathname(pathname);
 
   // Fetch pricing plans
-  const { pricingPlans, isLoadingPlans } = usePricingPlans(
+  const { pricingPlans, isLoadingPlans, error: plansError } = usePricingPlans(
     settings?.organization_id,
     selectedProduct?.id,
     'USD' // Will be updated by currency detection
@@ -107,7 +119,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const { userCurrency, currencySymbol } = useCurrencyDetection(pricingPlans);
   
   // Fetch plan features
-  const { planFeatures, isLoadingFeatures } = usePlanFeatures(
+  const { planFeatures, isLoadingFeatures, error: featuresError } = usePlanFeatures(
     pricingPlans,
     settings?.organization_id
   );
@@ -196,6 +208,19 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     document.addEventListener('keydown', handleTabKey);
     return () => document.removeEventListener('keydown', handleTabKey);
   }, [isOpen]);
+
+  /**
+   * Persist expanded features to localStorage
+   */
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('pricing-expanded-features', JSON.stringify(expandedFeatures));
+      } catch (error) {
+        console.error('Failed to save expanded state:', error);
+      }
+    }
+  }, [expandedFeatures]);
 
   /**
    * Handle modal open/close effects:
@@ -349,7 +374,30 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
 
             {/* Pricing Cards - Smaller on Desktop */}
             <div className={PRICING_GRID_CLASSES.container}>
-              {isLoadingPlans ? (
+              {plansError ? (
+                // Error state - failed to load plans
+                <div className="col-span-full text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="text-red-400 mb-4">
+                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <h3 className={TEXT_STYLES.errorTitle}>Failed to load pricing plans</h3>
+                    <p className={TEXT_STYLES.errorDescription}>{plansError}</p>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: themeColors.cssVars.primary.base,
+                        color: 'white'
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              ) : isLoadingPlans ? (
                 // Loading skeleton
                 Array.from({ length: PRICING_GRID_CLASSES.skeletonCount }).map((_, index) => (
                   <div
@@ -418,17 +466,24 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
             )}
             </div>
 
-            {/* Feature Comparison Table */}
-            <PricingComparisonTable
-              plans={displayPlans}
-              isAnnual={isAnnual}
-              hasOneTimePlans={hasOneTimePlans}
-              currencySymbol={currencySymbol}
-              translations={{
-                features: translations.compareAllFeatures,
-                limitedTimeOffer: translations.limitedTimeOffer,
-              }}
-            />
+            {/* Feature Comparison Table - Lazy loaded */}
+            <Suspense fallback={
+              <div className="max-w-6xl mx-auto mb-20 animate-pulse">
+                <div className="h-12 bg-gray-200 rounded mb-8 max-w-md mx-auto"></div>
+                <div className="h-64 bg-gray-100 rounded"></div>
+              </div>
+            }>
+              <PricingComparisonTable
+                plans={displayPlans}
+                isAnnual={isAnnual}
+                hasOneTimePlans={hasOneTimePlans}
+                currencySymbol={currencySymbol}
+                translations={{
+                  features: translations.compareAllFeatures,
+                  limitedTimeOffer: translations.limitedTimeOffer,
+                }}
+              />
+            </Suspense>
           </div>
           </div>
         </div>
