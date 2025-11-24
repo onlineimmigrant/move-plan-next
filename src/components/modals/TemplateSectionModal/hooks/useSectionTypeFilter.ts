@@ -15,10 +15,11 @@ import {
   UserGroupIcon,
   ChatBubbleBottomCenterTextIcon,
   CalendarIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 
 export interface SectionTypeOption {
-  value: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
+  value: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
   label: string;
   description: string;
   shortDescription?: string;
@@ -122,6 +123,14 @@ export const SECTION_TYPE_OPTIONS: SectionTypeOption[] = [
     shortDescription: 'Booking system',
     icon: CalendarIcon,
     color: 'cyan',
+  },
+  {
+    value: 'form_harmony',
+    label: 'Form Harmony',
+    description: 'Custom forms with conditional logic and analytics',
+    shortDescription: 'Custom forms',
+    icon: ClipboardDocumentListIcon,
+    color: 'violet',
   },
 ];
 

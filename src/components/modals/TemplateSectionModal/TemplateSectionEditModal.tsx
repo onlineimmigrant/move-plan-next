@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTemplateSectionEdit } from './context';
 import useFocusTrap from '@/hooks/useFocusTrap';
-import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab, TranslationsSection } from './components';
+import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab, TranslationsSection, FormsTab } from './components';
 import { useSectionOperations, TemplateSectionFormData, useSectionTypeFilter } from './hooks';
 import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
@@ -32,7 +32,7 @@ import EditableGradientPicker from '@/components/Shared/EditableFields/EditableG
 import SimpleGradientPicker from '@/components/Shared/EditableFields/SimpleGradientPicker';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 
-type MegaMenuId = 'style' | 'layout' | 'content' | 'translations' | null;
+type MegaMenuId = 'style' | 'layout' | 'content' | 'translations' | 'forms' | null;
 
 export default function TemplateSectionEditModal() {
   const { isOpen, editingSection, mode, closeModal, refetchEditingSection, refreshSections } = useTemplateSectionEdit();
@@ -254,6 +254,7 @@ export default function TemplateSectionEditModal() {
     is_image_bottom: false,
     is_slider: false,
     section_type: 'general',
+    form_id: null,
     is_reviews_section: false,
     url_page: undefined,
     website_metric: undefined,
@@ -301,6 +302,7 @@ export default function TemplateSectionEditModal() {
         is_image_bottom: editingSection.is_image_bottom || false,
         is_slider: editingSection.is_slider || false,
         section_type: sectionType,
+        form_id: editingSection.form_id || null,
         is_reviews_section: editingSection.is_reviews_section || false,
         url_page: editingSection.url_page,
         website_metric: editingSection.website_metric,
@@ -557,6 +559,12 @@ export default function TemplateSectionEditModal() {
         { id: 'metrics', label: 'Metrics / Items', component: 'content' },
       ]
     },
+    // Only show Forms tab when section_type is 'form_harmony'
+    ...(formData.section_type === 'form_harmony' ? [{
+      id: 'forms' as const,
+      label: 'Forms',
+      sections: []
+    }] : []),
     {
       id: 'translations' as const,
       label: 'Translations',
@@ -692,7 +700,7 @@ export default function TemplateSectionEditModal() {
         </div>
 
         {/* Mega Menu Dropdown (for Style, Content, and Translations) */}
-        {openMenu && openMenu !== 'layout' && openMenu !== 'translations' && (
+        {openMenu && openMenu !== 'layout' && openMenu !== 'translations' && openMenu !== 'forms' && (
           <>
             {/* Backdrop */}
             <div 
@@ -1454,6 +1462,30 @@ export default function TemplateSectionEditModal() {
                   isSaving={isSaving}
                   hasUnsavedChanges={hasUnsavedTranslations}
                   setHasUnsavedChanges={setHasUnsavedTranslations}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Forms Mega Menu Dropdown */}
+        {openMenu === 'forms' && formData.section_type === 'form_harmony' && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setOpenMenu(null)}
+              aria-label="Close menu"
+            />
+            
+            {/* Forms Panel */}
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+              <div className="max-w-4xl mx-auto px-6 py-6 h-full pb-24">
+                <FormsTab
+                  formId={formData.form_id}
+                  onFormIdChange={(newFormId) => {
+                    setFormData(prev => ({ ...prev, form_id: newFormId }));
+                  }}
                 />
               </div>
             </div>

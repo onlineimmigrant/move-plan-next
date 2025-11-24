@@ -207,6 +207,25 @@ export default function LayoutTab({ formData, setFormData, mode = 'edit' }: Layo
         )}
       </div>
 
+      {/* Form Harmony Notice */}
+      {formData.section_type === 'form_harmony' && (
+        <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-purple-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-purple-900 mb-1">Form Harmony Section</h4>
+              <p className="text-sm text-purple-700">
+                Click the <strong>"Forms"</strong> tab at the top to create or select a form for this section.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick pick: Section Type + Color & Text */}
       <div>
         <label className="block text-sm font-semibold mb-4 text-gray-900">
@@ -250,6 +269,12 @@ export default function LayoutTab({ formData, setFormData, mode = 'edit' }: Layo
                       onClick={() => {
                         setFormData({ ...formData, section_type: opt.value });
                         setShowTypeDropdown(false);
+                        // Show helpful message for form_harmony
+                        if (opt.value === 'form_harmony') {
+                          setTimeout(() => {
+                            alert('✓ Section type set to Form Harmony!\n\nNow click the "Forms" tab at the top to create or select a form.');
+                          }, 100);
+                        }
                       }}
                       role="option"
                       aria-selected={formData.section_type === opt.value}

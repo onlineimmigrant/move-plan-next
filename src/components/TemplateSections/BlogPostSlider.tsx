@@ -48,6 +48,10 @@ interface BlogPostSliderProps {
   backgroundColor?: string;
 }
 
+// Cache blog posts to prevent refetching
+const postsCache = new Map<string, { posts: BlogPost[]; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const { settings } = useSettings();
   const themeColors = useThemeColors();
@@ -61,6 +65,8 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const autoScrollInterval = useRef<NodeJS.Timeout | null>(null);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hasLoadedRef = useRef(false);
 
   // Detect mobile device
   useEffect(() => {
@@ -76,11 +82,25 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
 
   // Fetch blog posts that should be displayed on first page
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+
     const fetchFeaturedPosts = async () => {
       try {
         const organizationId = await getOrganizationId(baseUrl);
         if (!organizationId) {
           setLoading(false);
+          hasLoadedRef.current = true;
+          return;
+        }
+
+        // Check cache first
+        const cached = postsCache.get(organizationId);
+        const now = Date.now();
+        
+        if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+          setPosts(cached.posts);
+          setLoading(false);
+          hasLoadedRef.current = true;
           return;
         }
 
@@ -88,16 +108,45 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
         if (response.ok) {
           const data = await response.json();
 
+          // Cache the result
+          postsCache.set(organizationId, {
+            posts: data,
+            timestamp: Date.now(),
+          });
+
           setPosts(data);
+          hasLoadedRef.current = true;
         }
       } catch (error) {
         console.error('Error fetching featured posts:', error);
+        hasLoadedRef.current = true;
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFeaturedPosts();
+    if (!hasLoadedRef.current) {
+      // Use IntersectionObserver to only load when visible
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasLoadedRef.current) {
+              fetchFeaturedPosts();
+              observer.disconnect();
+            }
+          });
+        },
+        { rootMargin: '50px' }
+      );
+
+      if (containerRef.current) {
+        observer.observe(containerRef.current);
+      }
+
+      return () => {
+        observer.disconnect();
+      };
+    }
   }, [baseUrl]);
 
   // Auto-scroll functionality (disabled on mobile)
@@ -153,7 +202,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   };
 
   if (loading || posts.length === 0) {
-    return null;
+    return <div ref={containerRef} />;
   }
 
   // Determine if we should use the gradient background
@@ -173,6 +222,7 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
 
   return (
     <section 
+      ref={containerRef}
       className="py-8 md:py-12"
       style={gradientStyle}
     >

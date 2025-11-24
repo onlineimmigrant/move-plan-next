@@ -38,11 +38,12 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
   is_reviews_section: boolean;
   website_metric?: Metric[];
   organization_id: string | null;
   url_page?: string;
+  form_id?: string | null;
 }
 
 interface TemplateSectionEditContextType {
@@ -144,6 +145,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_image_bottom: data.is_image_bottom,
         is_slider: data.is_slider,
         section_type: data.section_type || 'general',
+        form_id: data.form_id || null,
         is_reviews_section: data.is_reviews_section,
         image_metrics_height: data.image_metrics_height,
         website_metric: data.website_metric, // Include metrics data for inline editing

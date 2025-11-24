@@ -9,7 +9,11 @@ export type SectionType =
   | 'reviews'
   | 'help_center'
   | 'real_estate'
-  | 'pricing_plans';
+  | 'pricing_plans'
+  | 'team'
+  | 'testimonials'
+  | 'appointment'
+  | 'form_harmony';
 
 export interface TemplateSection {
   id: string;
@@ -44,4 +48,7 @@ export interface TemplateSection {
   url_page?: string;
   organization_id?: string | null;
   website_metric: any[];
+  
+  // FormHarmony integration
+  form_id?: string | null;
 }

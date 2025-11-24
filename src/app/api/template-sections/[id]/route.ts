@@ -59,8 +59,8 @@ export async function PUT(
       is_section_title_aligned_right: body.is_section_title_aligned_right ?? false,
       is_image_bottom: body.is_image_bottom ?? false,
       is_slider: body.is_slider ?? false,
-      is_reviews_section: body.is_reviews_section ?? false,
       section_type: body.section_type || 'general',
+      form_id: body.form_id || null,
       image_metrics_height: body.image_metrics_height || null,
     };
 

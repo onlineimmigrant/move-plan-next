@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 import { SliderNavigation } from '@/ui/SliderNavigation';
 
 // Dynamic imports for heavy section components (Phase 2 optimization)
+const FormHarmonySection = dynamic(() => import('@/components/TemplateSections/FormHarmonySection'), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>
+});
 const FeedbackAccordion = dynamic(() => import('@/components/TemplateSections/FeedbackAccordion'));
 const HelpCenterSection = dynamic(() => import('@/components/TemplateSections/HelpCenterSection'));
 const RealEstateModal = dynamic(() => import('@/components/TemplateSections/RealEstateModal').then(mod => ({ default: mod.RealEstateModal })));
@@ -208,13 +211,14 @@ interface TemplateSectionData {
   is_slider?: boolean;
   
   // Consolidated section type field
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
   
   // DEPRECATED - Keep for backward compatibility (only is_reviews_section may still be in some DB records)
   is_reviews_section: boolean;
   
   website_metric: Metric[];
   organization_id: string | null;
+  form_id?: string | null;
 }
 
 const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo(({ section }) => {
@@ -382,7 +386,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     <section
       className={`${
         // Remove padding for new special sections that manage their own layout
-        ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews'].includes(section.section_type || '')
+        ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'form_harmony'].includes(section.section_type || '')
           ? 'px-0 py-0 min-h-0'
           : section.is_slider 
           ? 'px-0 py-8 min-h-[600px]' 
@@ -402,7 +406,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
         <div
         className={`${section.is_full_width ? 'w-full' : 'max-w-7xl'} mx-auto ${
           // Remove spacing for special sections that manage their own layout
-          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'help_center', 'real_estate', 'team', 'testimonials'].includes(section.section_type || '')
+          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'help_center', 'real_estate', 'team', 'testimonials', 'form_harmony'].includes(section.section_type || '')
             ? '' 
             : section.is_slider 
             ? 'py-4 space-y-12' 
@@ -444,6 +448,15 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
             
             case 'testimonials':
               return <Testimonials section={section} />;
+            
+            case 'form_harmony':
+              return section.form_id ? (
+                <FormHarmonySection formId={section.form_id} />
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <p>No form selected. Please configure this section in the admin panel.</p>
+                </div>
+              );
             
             case 'general':
             default:

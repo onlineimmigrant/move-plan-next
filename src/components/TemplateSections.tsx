@@ -41,7 +41,10 @@ interface TemplateSectionData {
   is_slider?: boolean;
   
   // Consolidated section type field
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'appointment';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'appointment' | 'form_harmony';
+  
+  // Form harmony
+  form_id?: string | null;
   
   // DEPRECATED - Keep for backward compatibility
   is_reviews_section: boolean;
