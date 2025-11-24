@@ -78,6 +78,10 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
   const [published, setPublished] = useState(false);
   const [availableForms, setAvailableForms] = useState<any[]>([]);
   const [showFormSelector, setShowFormSelector] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'autosaving' | 'saved' | 'error'>('idle');
+  const didHydrateRef = React.useRef(false);
+  const autosaveTimeoutRef = React.useRef<number | null>(null);
   
   // Slash command state
   const [showSlashMenu, setShowSlashMenu] = useState(false);
@@ -87,6 +91,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [hoveredQuestion, setHoveredQuestion] = useState<string | null>(null);
   const [showDescriptionFor, setShowDescriptionFor] = useState<Set<string>>(new Set());
+  const [showLogicFor, setShowLogicFor] = useState<Set<string>>(new Set());
   const slashMenuRef = React.useRef<HTMLDivElement>(null);
 
   const toggleDescription = (questionId: string) => {
@@ -144,6 +149,8 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
         setFormSettings(data.form.settings || {});
         setPublished(data.form.published || false);
         setQuestions(data.form.questions || []);
+        // Load design style from settings
+        setDesignStyle(data.form.settings?.designStyle || 'large');
       }
     } catch (error) {
       console.error('Error loading form:', error);
@@ -160,7 +167,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
         body: JSON.stringify({
           title: formTitle || 'Untitled Form',
           description: formDescription || '',
-          settings: formSettings,
+          settings: { ...formSettings, designStyle },
           published: published,
         }),
       });
@@ -183,15 +190,40 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
 
     setLoading(true);
     try {
+      // Normalize ephemeral IDs before save so logic references persist
+      let normalizedQuestions = questions;
+      const ephemeralIds = questions.filter(q => q.id.startsWith('q_')).map(q => q.id);
+      if (ephemeralIds.length > 0) {
+        const idMap: Record<string, string> = {};
+        normalizedQuestions = questions.map(q => {
+          if (q.id.startsWith('q_')) {
+            const newId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `uuid_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            idMap[q.id] = newId;
+            return { ...q, id: newId };
+          }
+          return q;
+        });
+        // Remap logic rule references
+        normalizedQuestions = normalizedQuestions.map(q => {
+          const logic = q.validation?.logic as undefined | { combinator: 'all' | 'any'; rules: { leftQuestionId: string; operator: string; value?: string }[] };
+          if (logic && Array.isArray(logic.rules)) {
+            const remapped = logic.rules.map((r: { leftQuestionId: string; operator: string; value?: string }) => ({ ...r, leftQuestionId: idMap[r.leftQuestionId] || r.leftQuestionId }));
+            return { ...q, validation: { ...(q.validation || {}), logic: { ...logic, rules: remapped } } };
+          }
+          return q;
+        });
+        // Update local state so UI stays in sync after save
+        setQuestions(normalizedQuestions);
+      }
       const response = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formTitle,
           description: formDescription,
-          settings: formSettings,
+          settings: { ...formSettings, designStyle },
           published: published,
-          questions: questions.map((q, idx) => ({ ...q, order_index: idx })),
+          questions: normalizedQuestions.map((q, idx) => ({ ...q, order_index: idx })),
         }),
       });
 
@@ -210,7 +242,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
 
   const addQuestion = (type: Question['type']) => {
     const newQuestion: Question = {
-      id: `q_${Date.now()}`,
+      id: (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `uuid_${Date.now()}_${Math.random().toString(16).slice(2)}`,
       type,
       label: '',
       required: false,
@@ -219,12 +251,13 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     };
     setQuestions([...questions, newQuestion]);
     setSelectedQuestion(newQuestion.id);
+    setDirty(true);
   };
 
   const addQuestionAfter = (afterId: string) => {
     const index = questions.findIndex(q => q.id === afterId);
     const newQuestion: Question = {
-      id: `q_${Date.now()}`,
+      id: (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `uuid_${Date.now()}_${Math.random().toString(16).slice(2)}`,
       type: 'text',
       label: '',
       required: false,
@@ -234,10 +267,14 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     newQuestions.splice(index + 1, 0, newQuestion);
     setQuestions(newQuestions);
     setSelectedQuestion(newQuestion.id);
+    setDirty(true);
   };
+
+  // (addQuestionBefore removed; plus control now always inserts below using addQuestionAfter)
 
   const updateQuestion = (id: string, updates: Partial<Question>) => {
     setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
+    setDirty(true);
   };
 
   const deleteQuestion = (id: string) => {
@@ -245,6 +282,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     if (selectedQuestion === id) {
       setSelectedQuestion(null);
     }
+    setDirty(true);
   };
 
   const duplicateQuestion = (id: string) => {
@@ -257,6 +295,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
         order_index: questions.length,
       };
       setQuestions([...questions, duplicate]);
+      setDirty(true);
     }
   };
 
@@ -270,9 +309,85 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     const newQuestions = [...questions];
     [newQuestions[index], newQuestions[newIndex]] = [newQuestions[newIndex], newQuestions[index]];
     setQuestions(newQuestions);
+    setDirty(true);
+  };
+
+  // Conditional Logic helpers
+  type LogicOperator = 'is' | 'is_not' | 'contains' | 'not_contains' | 'gt' | 'lt' | 'answered' | 'not_answered';
+  type LogicRule = { leftQuestionId: string; operator: LogicOperator; value?: string };
+  type LogicGroup = { combinator: 'all' | 'any'; rules: LogicRule[] };
+
+  const ensureLogicGroup = (q: Question): LogicGroup => {
+    const current = (q.validation?.logic as LogicGroup | undefined);
+    return current && Array.isArray(current.rules)
+      ? current
+      : { combinator: 'all', rules: [] };
+  };
+
+  const setQuestionLogic = (questionId: string, updater: (lg: LogicGroup) => LogicGroup) => {
+    const q = questions.find(x => x.id === questionId);
+    if (!q) return;
+    const next = updater(ensureLogicGroup(q));
+    updateQuestion(questionId, { validation: { ...(q.validation || {}), logic: next } });
+  };
+
+  const toggleLogic = (questionId: string) => {
+    setShowLogicFor(prev => {
+      const n = new Set(prev);
+      if (n.has(questionId)) n.delete(questionId); else n.add(questionId);
+      return n;
+    });
+  };
+
+  const logicSummary = (q: Question) => {
+    const lg = ensureLogicGroup(q);
+    // If no rules, return empty string so summary stays hidden
+    if (!lg.rules.length) return '';
+    const joiner = lg.combinator === 'all' ? 'AND' : 'OR';
+    const parts = lg.rules.map(rule => {
+      const ref = questions.find(x => x.id === rule.leftQuestionId);
+      const refLabel = ref?.label || 'Untitled';
+      const opMap: Record<LogicOperator, string> = {
+        is: 'is', is_not: 'is not', contains: 'contains', not_contains: 'does not contain',
+        gt: '>', lt: '<', answered: 'is answered', not_answered: 'is not answered'
+      };
+      const val = (rule.operator === 'answered' || rule.operator === 'not_answered') ? '' : ` "${rule.value || ''}"`;
+      return `${refLabel} ${opMap[rule.operator]}${val}`;
+    });
+    return parts.join(` ${joiner} `);
   };
 
   // Slash command helpers
+  // Builder Logic Preview State
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, string>>({});
+  
+  // Design Style State
+  const [designStyle, setDesignStyle] = useState<'large' | 'compact'>('large');
+
+  const evaluateRulePreview = (rule: { leftQuestionId: string; operator: LogicOperator; value?: string }) => {
+    const refAnswer = (previewAnswers[rule.leftQuestionId] ?? '').toString();
+    const value = (rule.value ?? '').toString();
+    switch (rule.operator) {
+      case 'is': return refAnswer === value;
+      case 'is_not': return refAnswer !== value;
+      case 'contains': return refAnswer.toLowerCase().includes(value.toLowerCase());
+      case 'not_contains': return !refAnswer.toLowerCase().includes(value.toLowerCase());
+      case 'gt': return Number(refAnswer) > Number(value);
+      case 'lt': return Number(refAnswer) < Number(value);
+      case 'answered': return !!refAnswer && refAnswer.length > 0;
+      case 'not_answered': return !(!!refAnswer && refAnswer.length > 0);
+      default: return true;
+    }
+  };
+  const passesLogicPreview = (q: Question) => {
+    const lg = q.validation?.logic as undefined | { combinator: 'all' | 'any'; rules: { leftQuestionId: string; operator: LogicOperator; value?: string }[] };
+    if (lg && lg.rules.length) {
+      const results = lg.rules.map(evaluateRulePreview);
+      return lg.combinator === 'all' ? results.every(Boolean) : results.some(Boolean);
+    }
+    return true;
+  };
   const filteredFieldTypes = FIELD_TYPES.filter(field => 
     field.label.toLowerCase().includes(slashFilter.toLowerCase()) ||
     field.value.toLowerCase().includes(slashFilter.toLowerCase())
@@ -351,6 +466,90 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     setShowSlashMenu(false);
     setSlashFilter('');
   };
+
+  // Debounced autosave
+  const saveFormSilent = async () => {
+    if (!formId) {
+      if (!formTitle.trim()) return; // don't create unnamed forms via autosave
+      await createNewForm();
+      setDirty(false);
+      setSaveState('saved');
+      return;
+    }
+    try {
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDescription,
+          settings: formSettings,
+          published: published,
+          questions: questions.map((q, idx) => ({ ...q, order_index: idx })),
+        }),
+      });
+      if (!response.ok) throw new Error('Autosave failed');
+      setDirty(false);
+      setSaveState('saved');
+      window.setTimeout(() => setSaveState('idle'), 1200);
+    } catch (err) {
+      setSaveState('error');
+    }
+  };
+
+  useEffect(() => {
+    // skip first mount to avoid autosaving initial load
+    if (!didHydrateRef.current) {
+      didHydrateRef.current = true;
+      return;
+    }
+    // schedule autosave
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+    }
+    setSaveState('autosaving');
+    autosaveTimeoutRef.current = window.setTimeout(() => {
+      if (!loading) {
+        saveFormSilent();
+      }
+    }, 500);
+    return () => {
+      if (autosaveTimeoutRef.current) window.clearTimeout(autosaveTimeoutRef.current);
+    };
+  }, [formTitle, formDescription, questions, published, formSettings]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isMeta = navigator.platform.toLowerCase().includes('mac') ? e.metaKey : e.ctrlKey;
+      if (isMeta && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveForm();
+      }
+      if (isMeta && (e.key === 'Enter' || e.key === 'N')) {
+        e.preventDefault();
+        if (selectedQuestion) {
+          addQuestionAfter(selectedQuestion);
+        } else {
+          addQuestion('text');
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedQuestion, formTitle, formDescription, questions, published]);
+
+  // Leave protection
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
 
   // Close slash menu when clicking outside
   React.useEffect(() => {
@@ -458,112 +657,244 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
     <div className="absolute left-0 right-0 bottom-0 flex flex-col bg-white dark:bg-gray-800" style={{ top: 0 }}>
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-6 space-y-6">
-        {/* Back to Form Selector */}
-        <div className="flex items-center gap-2 pt-6">
-          <button
-            onClick={() => {
-              onFormIdChange(null);
-              setShowFormSelector(true);
-            }}
-            className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Forms
-          </button>
+        {/* Minimal Header */}
+        <div className="sticky top-0 z-10 -mx-6 px-6 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <button
+              onClick={() => {
+                if (dirty && !confirm('You have unsaved changes. Leave without saving?')) return;
+                onFormIdChange(null);
+                setShowFormSelector(true);
+              }}
+              className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              aria-label="Back to Forms"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Forms
+            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  setDesignStyle(s => s === 'large' ? 'compact' : 'large');
+                  setDirty(true);
+                }}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${designStyle === 'compact' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'}`}
+                aria-label="Toggle design style"
+                title="Toggle design style"
+              >
+                {designStyle === 'large' ? 'Design: Large' : 'Design: Compact'}
+              </button>
+              <button
+                onClick={() => setPreviewMode(m => !m)}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${previewMode ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'}`}
+                aria-label="Toggle logic preview"
+                title="Toggle logic preview"
+              >
+                {previewMode ? 'Logic Preview: ON' : 'Logic Preview'}
+              </button>
+              {previewMode && (
+                <button
+                  onClick={() => setPreviewAnswers({})}
+                  className="text-xs px-2 py-1 rounded border bg-gray-50 text-gray-500 hover:bg-gray-100"
+                  aria-label="Clear preview answers"
+                  title="Clear preview answers"
+                >
+                  Clear Answers
+                </button>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={published}
+                  onChange={(e) => { setPublished(e.target.checked); setDirty(true); }}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Published</span>
+                <span className="text-xs text-gray-500">{published ? '(Live)' : '(Draft)'}</span>
+              </label>
+              <span className="text-sm text-gray-500">
+                {questions.length} {questions.length === 1 ? 'Question' : 'Questions'}
+              </span>
+              <Button
+                onClick={saveForm}
+                disabled={!formTitle.trim() || loading}
+                variant="primary"
+                className="px-4 py-2"
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* WYSIWYG Form Preview Style - Title & Description */}
-        <div className="space-y-6 py-8">
+        <div className="max-w-2xl mx-auto">
+        {/* WYSIWYG Form Title & Description */}
+        <div className="space-y-6 py-8 pl-[108px]">
           <input
             type="text"
             value={formTitle}
-            onChange={(e) => setFormTitle(e.target.value)}
-            placeholder="Form title"
-            className="w-full text-5xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-0 placeholder-gray-300"
-            style={{ padding: 0 }}
+            onChange={(e) => { setFormTitle(e.target.value); setDirty(true); }}
+            placeholder="Untitled Form"
+            className={`w-full bg-transparent border-none outline-none focus:ring-0 ${designStyle === 'large' ? 'text-4xl' : 'text-2xl'}`}
+            style={{ 
+              padding: 0,
+              fontWeight: formTitle ? 700 : 300,
+              color: formTitle ? '#111827' : '#d1d5db'
+            }}
           />
           <textarea
             value={formDescription}
-            onChange={(e) => setFormDescription(e.target.value)}
+            onChange={(e) => { setFormDescription(e.target.value); setDirty(true); }}
             placeholder="Form description (optional)"
             rows={2}
-            className="w-full text-xl text-gray-600 bg-transparent border-none outline-none focus:ring-0 resize-none placeholder-gray-300"
-            style={{ padding: 0 }}
+            className={`w-full bg-transparent border-none outline-none focus:ring-0 resize-none ${designStyle === 'large' ? 'text-xl' : 'text-base'}`}
+            style={{ 
+              padding: 0,
+              fontWeight: formDescription ? 400 : 300,
+              color: formDescription ? '#6b7280' : '#d1d5db'
+            }}
           />
         </div>
 
       {/* Questions List - WYSIWYG Inline Editing */}
       <div className="space-y-8 pb-6">
-        {questions.map((question, index) => (
+        {questions.map((question, index) => {
+          const hiddenByLogic = previewMode && !passesLogicPreview(question);
+          return (
           <div
             key={question.id}
-            className="group relative pl-20"
+            className={`group relative ${hiddenByLogic ? 'opacity-40 grayscale' : ''}`}
             onMouseEnter={() => setHoveredQuestion(question.id)}
             onMouseLeave={() => setHoveredQuestion(null)}
+            onDragOver={(e) => { e.preventDefault(); }}
+            onDrop={(e) => { e.preventDefault(); }}
           >
-            {/* Hover Controls - Left Side (always 80px from left) */}
-            <div className="absolute left-0 top-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => deleteQuestion(question.id)}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete question"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => addQuestionAfter(question.id)}
-                className="p-2 text-gray-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition-colors"
-                title="Add question after"
-              >
-                <PlusIcon className="h-4 w-4" />
-              </button>
-              <button
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg cursor-move transition-colors"
-                title="Drag to reorder"
-              >
-                <Bars3Icon className="h-4 w-4" />
-              </button>
+            {/* Controls divider ABOVE question */}
+            <div
+              className="relative mb-6 h-8"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('ring-1', 'ring-purple-300');
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.classList.remove('ring-1', 'ring-purple-300');
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('ring-1', 'ring-purple-300');
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const draggedIndex = questions.findIndex(q => q.id === draggedId);
+                const insertIndex = index; // insert BEFORE current question (drag)
+                if (draggedIndex !== -1 && draggedIndex !== insertIndex) {
+                  const newQuestions = [...questions];
+                  const [removed] = newQuestions.splice(draggedIndex, 1);
+                  newQuestions.splice(insertIndex > draggedIndex ? insertIndex - 1 : insertIndex, 0, removed);
+                  setQuestions(newQuestions);
+                }
+              }}
+            >
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-dashed border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <div className="bg-white dark:bg-gray-800 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  <button
+                    onClick={() => addQuestionAfter(question.id)}
+                    className="p-1 text-gray-500 hover:text-purple-600"
+                    title="Add question below"
+                    aria-label="Add question below"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => toggleLogic(question.id)}
+                    className={`p-1 rounded transition-colors ${showLogicFor.has(question.id) ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : ensureLogicGroup(question).rules.length ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-500 hover:text-blue-600'}`}
+                    title={showLogicFor.has(question.id) ? 'Hide logic editor' : (ensureLogicGroup(question).rules.length ? 'Edit logic rules' : 'Add logic condition')}
+                    aria-label="Add or edit logic"
+                  >
+                    <Cog6ToothIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteQuestion(question.id)}
+                    className="p-1 text-gray-500 hover:text-red-600"
+                    title="Delete this question"
+                    aria-label="Delete this question"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('text/plain', question.id);
+                    }}
+                    className="p-1 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
+                    title="Drag to reorder"
+                    aria-label="Drag to reorder"
+                  >
+                    <Bars3Icon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Question Content */}
-            <div>
-              {/* Question Number & Type - Show on Hover */}
-              {hoveredQuestion === question.id && (
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-sm font-medium text-gray-400">
-                    Q{index + 1}
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                    {FIELD_TYPES.find(f => f.value === question.type)?.label}
-                  </span>
-                  
-                  {/* Required Toggle */}
-                  <button
-                    onClick={() => updateQuestion(question.id, { required: !question.required })}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
-                      question.required 
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  >
-                    {question.required ? 'Required' : 'Optional'}
-                  </button>
-                  
-                  {/* Description Toggle */}
-                  <button
-                    onClick={() => toggleDescription(question.id)}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
-                      showDescriptionFor.has(question.id) || question.description
-                        ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  >
-                    Description
-                  </button>
+            <div className="pl-[108px]">
+              {previewMode && (
+                <div className="absolute -left-[108px] top-0 w-[100px] pr-2 flex flex-col gap-1 items-end">
+                  <input
+                    type="text"
+                    value={previewAnswers[question.id] || ''}
+                    onChange={(e) => setPreviewAnswers(a => ({ ...a, [question.id]: e.target.value }))}
+                    placeholder={hiddenByLogic ? 'Hidden' : 'Preview answer'}
+                    className="w-full text-[10px] px-2 py-1 rounded border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  {hiddenByLogic && (
+                    <span className="text-[10px] text-red-500 font-medium">Hidden by logic</span>
+                  )}
                 </div>
               )}
+              {/* Question Number - Always Visible */}
+              <div className="flex items-center gap-3 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border border-purple-200/50 shadow-sm">
+                  Q{index + 1}
+                </span>
+                
+                {/* Type, Required, Description - Show on Hover */}
+                {hoveredQuestion === question.id && (
+                  <>
+                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                      {FIELD_TYPES.find(f => f.value === question.type)?.label}
+                    </span>
+                    
+                    {/* Required Toggle */}
+                    <button
+                      onClick={() => updateQuestion(question.id, { required: !question.required })}
+                      className={`text-xs px-2 py-1 rounded transition-colors ${
+                        question.required 
+                          ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      {question.required ? 'Required' : 'Optional'}
+                    </button>
+                    
+                    {/* Description Toggle */}
+                    <button
+                      onClick={() => toggleDescription(question.id)}
+                      className={`text-xs px-2 py-1 rounded transition-colors ${
+                        showDescriptionFor.has(question.id) || question.description
+                          ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      Description
+                    </button>
+                  </>
+                )}
+              </div>
               
               {/* Question Label - Inline Editable */}
               <div className="relative">
@@ -573,15 +904,24 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
                   onChange={(e) => handleQuestionLabelChange(question.id, e.target.value, e)}
                   onKeyDown={(e) => handleSlashMenuKeyDown(e, question.id)}
                   placeholder="Type your question here..."
-                  className="w-full text-3xl font-semibold text-gray-900 bg-transparent border-none outline-none focus:ring-0 placeholder-gray-300 p-0"
+                  className={`w-full bg-transparent border-none outline-none focus:ring-0 p-0 ${designStyle === 'large' ? 'text-3xl' : 'text-xl'}`}
+                  style={{
+                    fontWeight: question.label ? 600 : 300,
+                    color: question.label ? '#111827' : '#d1d5db'
+                  }}
                 />
                 
                 {/* Slash Command Menu */}
                 {showSlashMenu && editingQuestionId === question.id && (
                   <div
                     ref={slashMenuRef}
-                    className="absolute z-50 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200/80 overflow-hidden"
-                    style={{ top: '100%', right: 0 }}
+                    className="absolute z-50 w-80 bg-white rounded-xl shadow-2xl border border-gray-200/80 overflow-hidden"
+                    style={{
+                      bottom: '100%',
+                      left: 0,
+                      marginBottom: '6px',
+                      maxHeight: '70vh'
+                    }}
                   >
                     <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/80 border-b border-gray-100">
                       Question Types
@@ -632,15 +972,195 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
                   value={question.description || ''}
                   onChange={(e) => updateQuestion(question.id, { description: e.target.value })}
                   placeholder="Add helpful description text..."
-                  className="w-full text-lg text-gray-500 bg-transparent border-none outline-none focus:ring-0 placeholder-gray-300 mt-2 p-0"
+                  className={`w-full bg-transparent border-none outline-none focus:ring-0 mt-2 p-0 ${designStyle === 'large' ? 'text-lg' : 'text-sm'}`}
+                  style={{
+                    fontWeight: question.description ? 400 : 300,
+                    color: question.description ? '#6b7280' : '#d1d5db'
+                  }}
                 />
               )}
 
+              {/* Logic Summary (hidden if no rules) */}
+              {ensureLogicGroup(question).rules.length > 0 && (
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="text-xs text-gray-500">
+                    {logicSummary(question)}
+                  </span>
+                </div>
+              )}
+
+              {/* Logic Editor */}
+              {showLogicFor.has(question.id) && (
+                <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-white/70 dark:bg-gray-800/70">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                    <span>Show this question if</span>
+                    <select
+                      className="border border-gray-300 text-sm rounded px-2 py-1 bg-white"
+                      value={ensureLogicGroup(question).combinator}
+                      onChange={(e) => setQuestionLogic(question.id, lg => ({ ...lg, combinator: (e.target.value as 'all'|'any') }))}
+                    >
+                      <option value="all">all</option>
+                      <option value="any">any</option>
+                    </select>
+                    <span>of the following are true:</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {ensureLogicGroup(question).rules.map((rule, rIdx) => {
+                      const refQ = questions.find(q => q.id === rule.leftQuestionId) || null;
+                      const hasOptions = !!refQ?.options?.length;
+                      const operator = rule.operator;
+                      return (
+                        <div key={rIdx} className="flex items-center gap-2">
+                          {/* Left question select */}
+                          <select
+                            className="min-w-[10rem] border border-gray-300 text-sm rounded px-2 py-1 bg-white"
+                            value={rule.leftQuestionId}
+                            onChange={(e) => setQuestionLogic(question.id, lg => {
+                              const rules = [...lg.rules];
+                              rules[rIdx] = { ...rules[rIdx], leftQuestionId: e.target.value };
+                              return { ...lg, rules };
+                            })}
+                          >
+                            <option value="" disabled>Select question…</option>
+                            {questions
+                              .slice(0, index) // only earlier questions
+                              .map(q => (
+                                <option key={q.id} value={q.id}>{q.label || 'Untitled'}</option>
+                              ))}
+                          </select>
+
+                          {/* Operator */}
+                          <select
+                            className="border border-gray-300 text-sm rounded px-2 py-1 bg-white"
+                            value={operator}
+                            onChange={(e) => setQuestionLogic(question.id, lg => {
+                              const rules = [...lg.rules];
+                              rules[rIdx] = { ...rules[rIdx], operator: e.target.value as any };
+                              return { ...lg, rules };
+                            })}
+                          >
+                            <option value="is">is</option>
+                            <option value="is_not">is not</option>
+                            <option value="contains">contains</option>
+                            <option value="not_contains">does not contain</option>
+                            <option value="gt">&gt;</option>
+                            <option value="lt">&lt;</option>
+                            <option value="answered">is answered</option>
+                            <option value="not_answered">is not answered</option>
+                          </select>
+
+                          {/* Value */}
+                          {!(operator === 'answered' || operator === 'not_answered') && (
+                            hasOptions ? (
+                              <select
+                                className="border border-gray-300 text-sm rounded px-2 py-1 bg-white"
+                                value={rule.value || ''}
+                                onChange={(e) => setQuestionLogic(question.id, lg => {
+                                  const rules = [...lg.rules];
+                                  rules[rIdx] = { ...rules[rIdx], value: e.target.value };
+                                  return { ...lg, rules };
+                                })}
+                              >
+                                <option value="" disabled>Select value…</option>
+                                {(refQ?.options || []).map((opt, i) => (
+                                  <option key={i} value={opt}>{opt || `Option ${i+1}`}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                className="border border-gray-300 text-sm rounded px-2 py-1 bg-white"
+                                placeholder="Value…"
+                                value={rule.value || ''}
+                                onChange={(e) => setQuestionLogic(question.id, lg => {
+                                  const rules = [...lg.rules];
+                                  rules[rIdx] = { ...rules[rIdx], value: e.target.value };
+                                  return { ...lg, rules };
+                                })}
+                              />
+                            )
+                          )}
+
+                          {/* Remove rule */}
+                          <button
+                            className="ml-1 text-gray-400 hover:text-red-600"
+                            title="Remove rule"
+                            onClick={() => setQuestionLogic(question.id, lg => ({ ...lg, rules: lg.rules.filter((_, i) => i !== rIdx) }))}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      className="text-sm px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                      onClick={() => setQuestionLogic(question.id, lg => ({ ...lg, rules: [...lg.rules, { leftQuestionId: questions.slice(0, index)[0]?.id || '', operator: 'is', value: '' }] }))}
+                    >
+                      Add condition
+                    </button>
+                    {ensureLogicGroup(question).rules.length > 0 && (
+                      <span className="text-xs text-gray-400">{ensureLogicGroup(question).rules.length} rule(s)</span>
+                    )}
+                  </div>
+                </div>
+              )}
               {/* Options Editor - Inline for choice fields */}
               {['multiple', 'checkbox', 'dropdown'].includes(question.type) && (
                 <div className="mt-4 space-y-2">
                   {(question.options || []).map((option, optIdx) => (
-                    <div key={optIdx} className="flex items-center gap-2 group/option">
+                    <div 
+                      key={optIdx} 
+                      className="flex items-center gap-2 group/option"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', optIdx.toString());
+                        e.currentTarget.classList.add('opacity-50');
+                      }}
+                      onDragEnd={(e) => {
+                        e.currentTarget.classList.remove('opacity-50');
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add('border-t-2', 'border-purple-500');
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove('border-t-2', 'border-purple-500');
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-t-2', 'border-purple-500');
+                        const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                        const targetIdx = optIdx;
+                        
+                        if (draggedIdx !== targetIdx) {
+                          const newOptions = [...(question.options || [])];
+                          const [removed] = newOptions.splice(draggedIdx, 1);
+                          newOptions.splice(targetIdx, 0, removed);
+                          updateQuestion(question.id, { options: newOptions });
+                        }
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          const newOptions = (question.options || []).filter((_, i) => i !== optIdx);
+                          updateQuestion(question.id, { options: newOptions });
+                        }}
+                        className="opacity-0 group-hover/option:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                        title="Delete option"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover/option:opacity-100 transition-opacity"
+                        title="Drag to reorder"
+                      >
+                        <Bars3Icon className="h-4 w-4" />
+                      </button>
                       <span className="text-gray-400 text-sm">{optIdx + 1}.</span>
                       <input
                         type="text"
@@ -650,84 +1170,64 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm }: FormsTa
                           newOptions[optIdx] = e.target.value;
                           updateQuestion(question.id, { options: newOptions });
                         }}
-                        className="flex-1 text-lg text-gray-700 bg-transparent border-none outline-none focus:ring-0 p-0"
+                        className={`flex-1 text-gray-700 bg-transparent border-none outline-none focus:ring-0 p-0 ${designStyle === 'large' ? 'text-lg' : 'text-base'}`}
                         placeholder={`Option ${optIdx + 1}`}
                       />
-                      <button
-                        onClick={() => {
-                          const newOptions = (question.options || []).filter((_, i) => i !== optIdx);
-                          updateQuestion(question.id, { options: newOptions });
-                        }}
-                        className="opacity-0 group-hover/option:opacity-100 p-1 text-red-400 hover:text-red-600 transition-opacity"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
                     </div>
                   ))}
                   <button
                     onClick={() => {
-                      const newOptions = [...(question.options || []), `Option ${(question.options?.length || 0) + 1}`];
+                      const newOptions = [...(question.options || []), ''];
                       updateQuestion(question.id, { options: newOptions });
                     }}
-                    className="text-sm text-gray-400 hover:text-purple-600 transition-colors"
+                    className={`text-gray-400 hover:text-purple-600 transition-colors ${designStyle === 'large' ? 'text-sm' : 'text-xs'}`}
                   >
                     + Add option
                   </button>
                 </div>
               )}
             </div>
+
           </div>
-        ))}
+        );})}
         
         {/* Add First Question Prompt */}
         {questions.length === 0 && (
           <button
             onClick={() => addQuestion('text')}
-            className="w-full py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50/50 transition-all text-gray-400 hover:text-purple-600"
+            className={`w-full border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50/50 transition-all text-gray-400 hover:text-purple-600 ${designStyle === 'large' ? 'py-12' : 'py-8'}`}
           >
-            <PlusIcon className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm font-medium">Click to add your first question</p>
-            <p className="text-xs mt-1">or type / in any question field</p>
+            <PlusIcon className={designStyle === 'large' ? 'h-8 w-8 mx-auto mb-2' : 'h-6 w-6 mx-auto mb-2'} />
+            <p className={`font-medium ${designStyle === 'large' ? 'text-sm' : 'text-xs'}`}>Click to add your first question</p>
+            <p className={`mt-1 ${designStyle === 'large' ? 'text-xs' : 'text-[10px]'}`}>or type / in any question field</p>
           </button>
         )}
-      </div>
-      </div>
-
-      {/* Footer - Matching Template Section Edit Modal */}
-      <div className="flex-shrink-0 px-6 py-4 border-t border-white/20 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30">
-        <div className="flex items-center justify-between w-full gap-3">
-          {/* Left side - Published checkbox & Question count */}
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={published}
-                onChange={(e) => setPublished(e.target.checked)}
-                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-              />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Published</span>
-              <span className="text-xs text-gray-500">
-                {published ? '(Live)' : '(Draft)'}
-              </span>
-            </label>
-            <span className="text-sm text-gray-500">
-              {questions.length} {questions.length === 1 ? 'Question' : 'Questions'}
-            </span>
-          </div>
-          
-          {/* Right side - Save Form button */}
-          <div className="flex items-center gap-3 ml-auto">
-            <Button
-              onClick={saveForm}
-              disabled={!formTitle.trim() || loading}
-              variant="primary"
-              className="px-6 py-2"
-            >
-              {loading ? 'Saving...' : 'Save Form'}
-            </Button>
-          </div>
+        </div>
         </div>
       </div>
+
+      {/* Floating save status chip */}
+      {(saveState !== 'idle' || dirty) && (
+        <div className="fixed bottom-4 right-6 z-20">
+          <div className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-md border ${
+            saveState === 'error'
+              ? 'bg-red-50 text-red-700 border-red-200'
+              : saveState === 'autosaving'
+              ? 'bg-amber-50 text-amber-700 border-amber-200'
+              : saveState === 'saved'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-gray-50 text-gray-600 border-gray-200'
+          }`}>
+            {saveState === 'autosaving' && 'Autosaving…'}
+            {saveState === 'saved' && 'Saved'}
+            {saveState === 'error' && 'Save failed'}
+            {saveState === 'idle' && dirty && 'Unsaved changes'}
+          </div>
+        </div>
+      )}
+
+      {/* Footer removed in favor of minimal header (Tally-style) */}
     </div>
   );
 }
+

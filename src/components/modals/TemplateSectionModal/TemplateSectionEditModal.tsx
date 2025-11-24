@@ -183,24 +183,33 @@ export default function TemplateSectionEditModal() {
     };
   }, [localDescription]);
 
-  // Focus trap (disabled while delete confirm or inline edit is showing)
-  const focusTrapRef = useFocusTrap({
-    active: isOpen && !showDeleteConfirm && !inlineEdit.field,
-    onEscape: () => {
-      // Esc should prioritize closing inline edit or mega menu before modal
-      if (inlineEdit.field) {
-        setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
-        return;
+  // Focus trap - disabled to prevent cursor jumping during typing
+  const focusTrapRef = useRef<HTMLElement | null>(null);
+  
+  // Manual keyboard handler for escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Esc should prioritize closing inline edit or mega menu before modal
+        if (inlineEdit.field) {
+          setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
+          return;
+        }
+        if (openMenu) {
+          setOpenMenu(null);
+          return;
+        }
+        if (!showDeleteConfirm) {
+          closeModal();
+        }
       }
-      if (openMenu) {
-        setOpenMenu(null);
-        return;
-      }
-      if (!showDeleteConfirm) {
-        closeModal();
-      }
-    }
-  });
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, inlineEdit.field, openMenu, showDeleteConfirm, closeModal]);
 
   // Calculate safe positioning for inline edit popover
   const getSafePopoverPosition = (x: number, y: number) => {

@@ -12,10 +12,12 @@ type Question = {
   id: string;
   type: 'text' | 'email' | 'textarea' | 'tel' | 'url' | 'number' | 'date' | 'yesno' | 'multiple' | 'checkbox' | 'dropdown' | 'rating' | 'file';
   label: string;
+  description?: string | null;
   required?: boolean;
   options?: string[];
   logic_show_if?: string;
   logic_value?: string;
+  validation?: Record<string, any>;
 };
 
 type FormData = {
@@ -28,6 +30,7 @@ type Settings = {
   primary_color?: string;
   secondary_color?: string;
   font_family?: string;
+  designStyle?: 'large' | 'compact';
 };
 
 // Cache forms to prevent refetching
@@ -84,10 +87,12 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
           id: q.id,
           type: q.type,
           label: q.label,
+          description: q.description || null,
           required: q.required || false,
           options: q.options || [],
           logic_show_if: q.logic_show_if || undefined,
           logic_value: q.logic_value || undefined,
+          validation: q.validation || {},
         })) || [];
         
         const formObject = {
@@ -101,6 +106,7 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
         const settingsObject = {
           primary_color: formSettings.theme || 'purple',
           font_family: formSettings.font_family || 'inter',
+          designStyle: formSettings.designStyle || 'large',
         };
         
         // Cache the result

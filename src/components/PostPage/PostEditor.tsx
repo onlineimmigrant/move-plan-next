@@ -1062,6 +1062,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
   const [showTableSubmenu, setShowTableSubmenu] = useState(false);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
+  const [htmlToolbarCollapsed, setHtmlToolbarCollapsed] = useState(false);
+  const [autoSaveIndicator, setAutoSaveIndicator] = useState<'saved' | 'saving' | null>(null);
   
   // Editor mode state - Initialize based on initialContentType
   const getInitialEditorMode = (): EditorMode => {
@@ -2454,7 +2456,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
     
     setEditorMode(targetMode);
     
-    // Notify parent component about code view state change (for backward compatibility)
+    // Notify parent component about code view state change
+    // Code view is true for HTML mode, false for visual and markdown modes
     if (onCodeViewChange) {
       onCodeViewChange(targetMode === 'html');
     }
@@ -2607,8 +2610,359 @@ const PostEditor: React.FC<PostEditorProps> = ({
         }
       `}</style>
       <div className="post-editor text-gray-600">
-        {/* Enhanced Toolbar - Single elegant row */}
-        <div className="sticky top-0 bg-white z-40 px-4 py-2">
+        {/* Editor Mode Toggle Bar - Top control panel */}
+        <div className="sticky top-0 z-40 border-b border-white/20 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md px-4 py-3">
+          <div className="flex flex-col gap-3">
+            {/* Row 1: Mode toggles and Content Type */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {/* Mode Toggle Buttons - Premium Style */}
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mr-1">Mode:</span>
+                <button
+                  onClick={() => switchEditorMode('visual')}
+                  disabled={postType === 'landing'}
+                  title={postType === 'landing' ? 'Visual Editor disabled for Landing pages' : 'Visual Editor (WYSIWYG) - ⌘1'}
+                  aria-label="Switch to Visual Editor"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 relative ${
+                    (editorMode as EditorMode) === 'visual'
+                      ? 'bg-white dark:bg-gray-700 shadow-md border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={{
+                    ...(((editorMode as EditorMode) === 'visual') && {
+                      boxShadow: `0 0 0 2px ${themeColors.cssVars.primary.base}20`,
+                    }),
+                    '--tw-ring-color': themeColors.cssVars.primary.base
+                  } as React.CSSProperties}
+                >
+                  Visual
+                  <span className="ml-1.5 text-[10px] opacity-50">⌘1</span>
+                </button>
+                <button
+                  onClick={() => switchEditorMode('markdown')}
+                  title="Markdown Editor - ⌘2"
+                  aria-label="Switch to Markdown Editor"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 relative ${
+                    (editorMode as EditorMode) === 'markdown'
+                      ? 'bg-white dark:bg-gray-700 shadow-md border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]'
+                  }`}
+                  style={{
+                    ...(((editorMode as EditorMode) === 'markdown') && {
+                      boxShadow: `0 0 0 2px ${themeColors.cssVars.primary.base}20`,
+                    }),
+                    '--tw-ring-color': themeColors.cssVars.primary.base
+                  } as React.CSSProperties}
+                >
+                  Markdown
+                  <span className="ml-1.5 text-[10px] opacity-50">⌘2</span>
+                </button>
+                <button
+                  onClick={() => switchEditorMode('html')}
+                  title="HTML Source Editor - ⌘3"
+                  aria-label="Switch to HTML Editor"
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 relative ${
+                    (editorMode as EditorMode) === 'html'
+                      ? 'bg-white dark:bg-gray-700 shadow-md border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]'
+                  }`}
+                  style={{
+                    ...(((editorMode as EditorMode) === 'html') && {
+                      boxShadow: `0 0 0 2px ${themeColors.cssVars.primary.base}20`,
+                    }),
+                    '--tw-ring-color': themeColors.cssVars.primary.base
+                  } as React.CSSProperties}
+                >
+                  HTML
+                  <span className="ml-1.5 text-[10px] opacity-50">⌘3</span>
+                  {autoSaveIndicator === 'saved' && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Content Type Radio Buttons - Premium Style */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Content Type:</span>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-md transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]">
+                    <input
+                      type="radio"
+                      name="contentType"
+                      value="html"
+                      checked={(initialContentType || 'html') === 'html'}
+                      onChange={() => handleContentTypeChange('html')}
+                      className="w-3.5 h-3.5 border-gray-300 dark:border-gray-600 focus:ring-2"
+                      style={{ 
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
+                    />
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">HTML</span>
+                  </label>
+                  <label className="flex items-center gap-2 px-3 py-1.5 cursor-pointer rounded-md transition-all duration-200 hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]">
+                    <input
+                      type="radio"
+                      name="contentType"
+                      value="markdown"
+                      checked={(initialContentType || 'html') === 'markdown'}
+                      onChange={() => handleContentTypeChange('markdown')}
+                      className="w-3.5 h-3.5 border-gray-300 dark:border-gray-600 focus:ring-2"
+                      style={{ 
+                        accentColor: themeColors.cssVars.primary.base,
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
+                    />
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Markdown</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Unified HTML Toolbar - All tools in one row */}
+            {(editorMode as EditorMode) === 'html' && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2.5 border-t border-white/10 dark:border-gray-700/10">
+                {/* All HTML tools in one row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Action buttons group */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={copyToClipboard}
+                      disabled={!htmlContent.length}
+                      aria-label="Copy HTML to clipboard"
+                      className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
+                        copySuccess 
+                          ? 'text-green-600 dark:text-green-400 animate-pulse'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]'
+                      } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                      title={htmlContent.length ? "Copy to Clipboard (⌘C)" : "No content to copy"}
+                      style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+                    >
+                      {copySuccess ? (
+                        <span className="flex items-center gap-1.5">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Copied
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy
+                        </span>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={validateHtml}
+                      aria-label="Validate HTML syntax"
+                      className="px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                      title="Validate HTML (⌘⇧V)"
+                      style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Validate
+                      </span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowFindReplace(!showFindReplace)}
+                      aria-label={showFindReplace ? "Close find and replace" : "Open find and replace"}
+                      className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
+                        showFindReplace
+                          ? 'bg-white dark:bg-gray-700 shadow-md border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-[1.02]'
+                      }`}
+                      title="Find & Replace (⌘F)"
+                      style={{
+                        ...(showFindReplace && {
+                          boxShadow: `0 0 0 2px ${themeColors.cssVars.primary.base}20`,
+                        }),
+                        '--tw-ring-color': themeColors.cssVars.primary.base
+                      } as React.CSSProperties}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Find
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-300 mx-1"></div>
+
+                  {/* Advanced tools group */}
+                  <div className="flex items-center gap-1">
+                {/* Background Color Toggle */}
+                <Button
+                  size="sm"
+                  onClick={() => setHtmlEditorBgColor(htmlEditorBgColor === 'dark' ? 'light' : 'dark')}
+                  variant="outline"
+                  title={htmlEditorBgColor === 'dark' ? 'Switch to Light Background' : 'Switch to Dark Background'}
+                >
+                  {htmlEditorBgColor === 'dark' ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </Button>
+                
+                {/* Syntax Highlighting Toggle */}
+                <Button
+                  size="sm"
+                  onClick={() => setSyntaxHighlighting(!syntaxHighlighting)}
+                  variant={syntaxHighlighting ? "secondary" : "outline"}
+                  title={syntaxHighlighting ? 'Disable Syntax Highlighting' : 'Enable Syntax Highlighting'}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </Button>
+                
+                {/* Comment Toggle Button */}
+                <Button
+                  size="sm"
+                  onClick={toggleComment}
+                  variant="outline"
+                  title="Toggle Comment (Cmd/Ctrl + /)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                </Button>
+                
+                {/* Beautify Button with Settings */}
+                <div className="relative inline-block">
+                  <div className="flex items-center gap-0">
+                    <Button
+                      size="sm"
+                      onClick={formatHtmlContent}
+                      variant="outline"
+                      title="Beautify HTML with current settings"
+                      className="rounded-r-none border-r-0"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+                      </svg>
+                      Beautify
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowBeautifySettings(!showBeautifySettings)}
+                      variant={showBeautifySettings ? "secondary" : "outline"}
+                      title="Beautify settings"
+                      className="rounded-l-none px-1.5"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Minify Button */}
+                <Button
+                  size="sm"
+                  onClick={minifyHtmlContent}
+                  variant="outline"
+                  title="Minify HTML (Remove whitespace)"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  Minify
+                </Button>
+                
+                <div className="h-6 w-px bg-gray-300 mx-1"></div>
+                
+                {/* Undo Button */}
+                <Button
+                  size="sm"
+                  onClick={undoHtml}
+                  variant="outline"
+                  title="Undo (Ctrl+Z)"
+                  disabled={htmlHistoryIndex <= 0}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </Button>
+                
+                {/* Redo Button */}
+                <Button
+                  size="sm"
+                  onClick={redoHtml}
+                  variant="outline"
+                  title="Redo (Ctrl+Y)"
+                  disabled={htmlHistoryIndex >= htmlHistory.length - 1}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                  </svg>
+                </Button>
+                  </div>
+
+                  <div className="h-6 w-px bg-gray-300 mx-1"></div>
+
+                  {/* Undo/Redo group */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      onClick={undoHtml}
+                      variant="outline"
+                      title="Undo (Ctrl+Z)"
+                      disabled={htmlHistoryIndex <= 0}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      onClick={redoHtml}
+                      variant="outline"
+                      title="Redo (Ctrl+Y)"
+                      disabled={htmlHistoryIndex >= htmlHistory.length - 1}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Auto-save indicator */}
+                {autoSaveIndicator && (
+                  <span className={`text-xs font-medium px-2 py-1 rounded-md transition-all ${
+                    autoSaveIndicator === 'saved' 
+                      ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
+                      : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 animate-pulse'
+                  }`}>
+                    {autoSaveIndicator === 'saved' ? '✓ Saved' : 'Saving...'}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Visual Editor Toolbar - Only show in Visual mode */}
+        {(editorMode as EditorMode) === 'visual' && (
+          <div className="sticky top-[69px] z-40 px-4 py-2 backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 border-b border-white/20 dark:border-gray-700/20">
           <div className={isCodeView ? "flex flex-col md:flex-row md:justify-between md:items-center gap-2 mx-auto max-w-5xl" : "flex flex-wrap gap-1 items-center"}>
             {!isCodeView && (
               <>
@@ -3170,92 +3524,12 @@ const PostEditor: React.FC<PostEditorProps> = ({
               </>
             )}
 
-            {/* View Toggle for Visual Mode */}
-            {!isCodeView && (
-              <>
-                <div className="h-6 w-px bg-gray-300 mx-1"></div>
-                <Button
-                  size="sm"
-                  onClick={toggleCodeView}
-                  variant="outline"
-                  title="View HTML Source"
-                  className="font-mono text-xs"
-                >
-                  Code
-                </Button>
-              </>
-            )}
           </div>
         </div>
+        )}
 
-        {/* Editor Mode Toggle Bar - Shows in ALL modes */}
-        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            {/* Mode Toggle Buttons */}
-            <div className="flex items-center gap-1 bg-white rounded-md p-0.5 border border-gray-200">
-              <Button
-                size="sm"
-                onClick={() => switchEditorMode('visual')}
-                variant={(editorMode as EditorMode) === 'visual' ? 'secondary' : 'outline'}
-                title={postType === 'landing' ? 'Visual Editor disabled for Landing pages' : 'Visual Editor (WYSIWYG)'}
-                className="font-mono text-xs"
-                disabled={postType === 'landing'}
-              >
-                Visual
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => switchEditorMode('markdown')}
-                variant={(editorMode as EditorMode) === 'markdown' ? 'secondary' : 'outline'}
-                title="Markdown Editor"
-                className="font-mono text-xs"
-              >
-                Markdown
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => switchEditorMode('html')}
-                variant={(editorMode as EditorMode) === 'html' ? 'secondary' : 'outline'}
-                title="HTML Source Editor"
-                className="font-mono text-xs"
-              >
-                HTML
-              </Button>
-            </div>
-
-            {/* Content Type Radio Buttons */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-gray-600">Content Type:</span>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1.5 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="contentType"
-                    value="html"
-                    checked={(initialContentType || 'html') === 'html'}
-                    onChange={() => handleContentTypeChange('html')}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">HTML</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="contentType"
-                    value="markdown"
-                    checked={(initialContentType || 'html') === 'markdown'}
-                    onChange={() => handleContentTypeChange('markdown')}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">Markdown</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Table submenu */}
-        {showTableSubmenu && !isCodeView && (
+        {/* Table submenu - Only show in Visual mode */}
+        {(editorMode as EditorMode) === 'visual' && showTableSubmenu && (
           <div className="border-b border-gray-200 bg-gray-50 p-3">
             <div className="flex flex-wrap gap-1">
               <Button
@@ -3584,6 +3858,24 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       placeholder="Enter HTML content..."
                       spellCheck={false}
                     />
+                  </div>
+                </div>
+
+                {/* HTML Editor Stats Bar - Bottom of editor */}
+                <div className="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 border-t border-white/30 dark:border-gray-700/30 px-4 py-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                      HTML Editor
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {htmlContent.length.toLocaleString()} <span className="text-gray-500">chars</span>
+                      </span>
+                      <span className="text-gray-400 dark:text-gray-600">•</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {htmlContent.trim().split(/\s+/).filter(w => w.length > 0).length} <span className="text-gray-500">words</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

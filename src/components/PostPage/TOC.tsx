@@ -197,8 +197,8 @@ const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
 
     return (
         <div className="table-of-contents sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <div className="bg-white p-4 rounded-lg">
-                <h2 className="font-semibold text-sm text-gray-900 mb-4">On this page</h2>
+            <div className="p-4 rounded-lg">
+                <h2 className="font-semibold text-sm text-gray-900 dark:text-white mb-4">On this page</h2>
                 <ul className="space-y-0.5">
                     {hierarchicalTOC.map((item, index) => (
                         <TOCItemComponent

@@ -125,6 +125,7 @@ export async function PATCH(
       for (let index = 0; index < questions.length; index++) {
         const q = questions[index];
         const questionData = {
+          id: q.id, // now client supplies stable UUID
           form_id: formId,
           type: q.type,
           label: q.label,
@@ -138,18 +139,9 @@ export async function PATCH(
           order_index: index,
         };
 
-        // If question has a real database ID (UUID), update it
-        if (q.id && !q.id.startsWith('q_')) {
-          await supabase
-            .from('form_questions')
-            .update(questionData)
-            .eq('id', q.id);
-        } else {
-          // Insert new question
-          await supabase
-            .from('form_questions')
-            .insert(questionData);
-        }
+        await supabase
+          .from('form_questions')
+          .upsert(questionData, { onConflict: 'id' });
       }
     }
 

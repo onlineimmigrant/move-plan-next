@@ -104,8 +104,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   return (
     <div className="markdown-editor-container flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="border-b border-gray-200 bg-white p-2">
+      {/* Toolbar - Glassmorphic style matching Visual mode */}
+      <div className="sticky top-0 z-40 px-4 py-2 backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 border-b border-white/20 dark:border-gray-700/20">
         <div className="flex flex-wrap gap-1 items-center">
           {/* Headers */}
           <div className="flex gap-0.5">
@@ -123,11 +123,11 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           <div className="h-6 w-px bg-gray-300 mx-1"></div>
 
           {/* Text formatting */}
-          <Button size="sm" variant="outline" onClick={() => insertText('**', '**', 'bold')} title="Bold">
-            <strong>B</strong>
+          <Button size="sm" variant="outline" onClick={() => insertText('**', '**', 'bold')} title="Bold" className="font-bold">
+            B
           </Button>
-          <Button size="sm" variant="outline" onClick={() => insertText('*', '*', 'italic')} title="Italic">
-            <em>I</em>
+          <Button size="sm" variant="outline" onClick={() => insertText('*', '*', 'italic')} title="Italic" className="italic">
+            I
           </Button>
           <Button size="sm" variant="outline" onClick={() => insertText('~~', '~~', 'strikethrough')} title="Strikethrough">
             <s>S</s>
@@ -177,9 +177,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             </svg>
           </Button>
           <Button size="sm" variant="outline" onClick={() => insertText('> ', '', 'blockquote')} title="Blockquote">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
+            "
           </Button>
           <Button size="sm" variant="outline" onClick={() => insertAtCursor('\n---\n')} title="Horizontal Rule">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +188,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           <div className="h-6 w-px bg-gray-300 mx-1"></div>
 
           {/* Preview toggle */}
-          <div className="flex gap-0.5 bg-gray-100 rounded p-0.5">
+          <div className="flex gap-0.5">
             <Button 
               size="sm" 
               variant={previewMode === 'editor-only' ? 'secondary' : 'outline'}
