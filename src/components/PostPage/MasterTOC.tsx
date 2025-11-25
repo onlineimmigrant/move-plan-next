@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { ChevronRightIcon, BookOpenIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { debug } from '@/utils/debug';
+import { VirtualizedArticleList } from './VirtualizedArticleList';
+
+// Threshold for enabling virtualization
+const VIRTUALIZATION_THRESHOLD = 50;
 
 // Global cache for document sets to avoid re-fetching
 // Cache for storing document set data with version
@@ -41,7 +45,10 @@ interface MasterTOCProps {
   currentArticleTOC?: TOCItem[]; // Client-side generated TOC for current article
 }
 
-// Helper function to build hierarchical TOC structure
+/**
+ * Build hierarchical TOC structure from flat array
+ * @performance Helper function, not component-specific
+ */
 const buildTOCHierarchy = (flatTOC: TOCItem[]): TOCItem[] => {
   const hierarchy: TOCItem[] = [];
   const stack: TOCItem[] = [];
@@ -191,8 +198,31 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
   const [expandedArticles, setExpandedArticles] = useState<Set<string>>(() => new Set([currentSlug]));
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const themeColors = useThemeColors();
   const isFetchingRef = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts for search (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K or Ctrl+K to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchFocused(true);
+      }
+      // Escape to clear search
+      if (e.key === 'Escape' && isSearchFocused) {
+        setSearchQuery('');
+        searchInputRef.current?.blur();
+        setIsSearchFocused(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchFocused]);
 
   // Log component mount
   useEffect(() => {
@@ -407,17 +437,27 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
           />
         </div>
         <input
+          ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search articles..."
-          className="block w-full pl-10 pr-10 py-2 text-sm rounded-lg focus:outline-none transition-all backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-0 focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600"
-          style={{ color: themeColors.cssVars.primary.base }}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          placeholder="Search articles... (⌘K)"
+          className="block w-full pl-10 pr-10 py-2 text-sm rounded-lg focus:outline-none transition-all backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-0 focus:ring-2 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+          style={{ 
+            color: themeColors.cssVars.primary.base,
+            boxShadow: isSearchFocused ? `0 0 0 2px ${themeColors.cssVars.primary.base}25` : undefined
+          }}
+          aria-label="Search articles (press Command+K or Control+K)"
         />
         {searchQuery && (
           <button
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center z-10 transition-colors"
+            onClick={() => {
+              setSearchQuery('');
+              searchInputRef.current?.focus();
+            }}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center z-10 transition-colors hover:scale-110"
             aria-label="Clear search"
             style={{ color: themeColors.cssVars.primary.base }}
           >
@@ -436,7 +476,23 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
       {/* Articles List */}
       <div className="space-y-1">
         {filteredArticles.length > 0 ? (
-          filteredArticles.map((article, index) => {
+          // Use virtualized list for large article sets (50+ items)
+          filteredArticles.length >= VIRTUALIZATION_THRESHOLD ? (
+            <VirtualizedArticleList
+              articles={filteredArticles}
+              currentSlug={currentSlug}
+              expandedArticles={expandedArticles}
+              toggleArticle={toggleArticle}
+              isNumbered={setData.is_numbered || false}
+              handleScrollTo={handleScrollTo}
+              currentArticleTOC={currentArticleTOC}
+              activeHeadingId={activeHeadingId}
+              buildTOCHierarchy={buildTOCHierarchy}
+              TOCItemComponent={TOCItemComponent}
+            />
+          ) : (
+            // Regular rendering for smaller lists
+            filteredArticles.map((article, index) => {
           const isCurrentArticle = article.slug === currentSlug;
           const isExpanded = expandedArticles.has(article.slug);
           
@@ -531,6 +587,7 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
             </div>
           );
         })
+          ) // Close regular rendering
         ) : (
           <div className="text-sm text-gray-500 text-center py-4">
             No articles found matching "{searchQuery}"
@@ -541,4 +598,8 @@ const MasterTOC: React.FC<MasterTOCProps> = ({
   );
 };
 
-export default MasterTOC;
+/**
+ * MasterTOC component with memoization
+ * @performance Prevents re-renders when props haven't changed
+ */
+export default React.memo(MasterTOC);

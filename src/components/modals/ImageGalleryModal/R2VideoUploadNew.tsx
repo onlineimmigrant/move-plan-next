@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { 
   ArrowUpTrayIcon, 
   XMarkIcon, 
@@ -19,6 +19,7 @@ import { generateAndUploadThumbnail } from '@/lib/videoThumbnail';
 interface R2VideoUploadProps {
   onSelectVideo: (videoData: any) => void;
   productId?: number;
+  onSelectionChange?: (hasSelection: boolean) => void;
 }
 
 interface VideoFile {
@@ -31,12 +32,18 @@ interface VideoFile {
   thumbnail?: string;
 }
 
-export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploadProps) {
+export interface R2VideoUploadHandle {
+  confirmSelection: () => Promise<void>;
+  hasSelection: () => boolean;
+}
+
+const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onSelectVideo, productId, onSelectionChange }, ref) => {
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentFolder, setCurrentFolder] = useState<string>('');
+  const [displayLimit, setDisplayLimit] = useState(20);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +57,21 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
 
   useEffect(() => {
     loadVideos();
+    setDisplayLimit(20);
   }, [currentFolder, productId]);
+
+  useEffect(() => {
+    setDisplayLimit(20);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    onSelectionChange?.(selectedVideo !== null);
+  }, [selectedVideo, onSelectionChange]);
+
+  useImperativeHandle(ref, () => ({
+    confirmSelection: handleConfirmSelection,
+    hasSelection: () => selectedVideo !== null
+  }));
 
   useEffect(() => {
     if (renamingVideo && renameInputRef.current) {
@@ -77,6 +98,8 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[R2VideoUpload] Total videos received from API:', data.videos?.length);
+        console.log('[R2VideoUpload] Total folders received from API:', data.folders?.length);
         setVideos(data.videos || []);
         setFolders(data.folders || []);
       }
@@ -266,6 +289,9 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
   const filteredVideos = videos.filter(v => 
     v.fileName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const displayedVideos = filteredVideos.slice(0, displayLimit);
+  const hasMoreVideos = filteredVideos.length > displayLimit;
 
   return (
     <>
@@ -353,7 +379,7 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 pb-24">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -429,7 +455,7 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
                   <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wider">Videos</h3>
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {filteredVideos.map((video) => (
+                  {displayedVideos.map((video) => (
                     <div
                       key={video.url}
                       onClick={() => !renamingVideo && setSelectedVideo(video.url)}
@@ -537,50 +563,26 @@ export default function R2VideoUpload({ onSelectVideo, productId }: R2VideoUploa
                     </div>
                   ))}
                 </div>
+                {hasMoreVideos && (
+                  <div className="mt-6 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setDisplayLimit(prev => prev + 20)}
+                      className="px-6 py-2"
+                    >
+                      Load More ({filteredVideos.length - displayLimit} remaining)
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
-
-      {/* Footer - matching My Gallery */}
-      <div className="sticky bottom-0 px-3 sm:px-6 py-3 sm:py-4 border-t bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)` }}>
-        {selectedVideo ? (
-          <div className="flex items-center justify-between">
-            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden md:block">
-              <span className="font-medium" style={{ color: themeColors.cssVars.primary.base }}>1 video selected</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedVideo(null)}
-                className="flex-1 md:flex-initial text-sm sm:text-base"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleConfirmSelection}
-                disabled={isGeneratingThumbnail}
-                className="flex-1 md:flex-initial text-sm sm:text-base"
-              >
-                {isGeneratingThumbnail ? (
-                  <span className="flex items-center gap-2">
-                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </span>
-                ) : (
-                  'Insert Video'
-                )}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
-            Click a video to select it
-          </div>
-        )}
-      </div>
     </>
   );
-}
+});
+
+R2VideoUpload.displayName = 'R2VideoUpload';
+
+export default R2VideoUpload;

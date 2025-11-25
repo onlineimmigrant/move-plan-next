@@ -10,6 +10,15 @@
   }
 }
 
+/* Media Carousel Node View */
+.media-carousel-node-view,
+.ProseMirror [data-node-view-wrapper] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+}
+
 .table-wrapper {
     overflow-x: auto;
     max-width: 100%;

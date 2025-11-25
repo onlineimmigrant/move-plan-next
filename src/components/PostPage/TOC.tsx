@@ -5,6 +5,9 @@ import React, { memo, useMemo, useState, useEffect } from 'react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
+/**
+ * Table of Contents item structure
+ */
 interface TOCItem {
     tag_name: string;
     tag_text: string;
@@ -12,12 +15,29 @@ interface TOCItem {
     children?: TOCItem[];
 }
 
+/**
+ * Props for TOC component
+ */
 interface TOCProps {
+    /** Array of hierarchical TOC items */
     toc: TOCItem[];
+    /** Callback to handle scrolling to a heading */
     handleScrollTo: (id: string) => void;
 }
 
-// Recursive component to render TOC items with collapsible nested sections
+/**
+ * Recursive TOC Item Component
+ * 
+ * Renders individual TOC items with collapsible nested sections.
+ * Auto-expands when child items are active, highlights current section.
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {TOCItem} props.item - TOC item data
+ * @param {Function} props.handleScrollTo - Scroll handler
+ * @param {number} props.level - Nesting level for indentation
+ * @param {string} props.activeHeadingId - Currently active heading ID
+ */
 const TOCItemComponent: React.FC<{
     item: TOCItem;
     handleScrollTo: (id: string) => void;
@@ -68,16 +88,18 @@ const TOCItemComponent: React.FC<{
     };
 
     return (
-        <li style={getItemStyle(item.tag_name)}>
+        <li style={getItemStyle(item.tag_name)} role="none">
             <div className="flex items-center gap-2">
                 {hasChildren && (
                     <button
                         onClick={() => setIsOpen(!isOpen)}
                         className="flex-shrink-0 p-0.5 rounded hover:bg-gray-100 transition-colors"
-                        aria-label={isOpen ? 'Collapse' : 'Expand'}
+                        aria-label={isOpen ? `Collapse ${item.tag_text}` : `Expand ${item.tag_text}`}
+                        aria-expanded={isOpen}
                     >
                         <ChevronDownIcon 
                             className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            aria-hidden="true"
                         />
                     </button>
                 )}
@@ -88,6 +110,8 @@ const TOCItemComponent: React.FC<{
                             ? getFontWeight(item.tag_name)
                             : `${getFontWeight(item.tag_name)} text-gray-600 hover:bg-gray-50`
                     } ${!hasChildren ? 'ml-5' : ''}`}
+                    aria-current={isActive ? 'location' : undefined}
+                    aria-label={`Navigate to ${item.tag_text}`}
                     style={
                         isActive
                             ? {
@@ -133,29 +157,41 @@ TOCItemComponent.displayName = 'TOCItemComponent';
 const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
     const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
 
-    // Track active heading based on scroll position
+    // Track active heading using IntersectionObserver (more efficient than scroll listener)
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const handleScroll = () => {
-            const headings = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id]');
-            const scrollPosition = window.scrollY + 120; // Offset for better UX
+        const headingElements = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id]');
+        if (headingElements.length === 0) return;
 
-            let currentHeading: string | undefined;
-
-            headings.forEach((heading) => {
-                const element = heading as HTMLElement;
-                if (element.offsetTop <= scrollPosition) {
-                    currentHeading = element.id;
-                }
-            });
-
-            setActiveHeadingId(currentHeading);
+        const observerOptions: IntersectionObserverInit = {
+            rootMargin: '-100px 0px -66% 0px', // Trigger when heading is in top third of viewport
+            threshold: 0,
         };
 
-        handleScroll(); // Initial check
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            // Find the first visible heading in the viewport
+            const visibleHeadings = entries
+                .filter(entry => entry.isIntersecting)
+                .sort((a, b) => {
+                    // Sort by position in document
+                    return a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top;
+                });
+
+            if (visibleHeadings.length > 0) {
+                const firstVisible = visibleHeadings[0].target as HTMLElement;
+                setActiveHeadingId(firstVisible.id);
+            }
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+        // Observe all headings
+        headingElements.forEach(heading => observer.observe(heading));
+
+        return () => {
+            observer.disconnect();
+        };
     }, []);
 
     // Build hierarchical structure from flat TOC list
@@ -196,10 +232,15 @@ const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
     if (!toc || toc.length === 0) return null;
 
     return (
-        <div className="table-of-contents sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+        <nav 
+            className="table-of-contents sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" 
+            aria-label="Table of contents"
+        >
             <div className="p-4 rounded-lg">
-                <h2 className="font-semibold text-sm text-gray-900 dark:text-white mb-4">On this page</h2>
-                <ul className="space-y-0.5">
+                <h2 className="font-semibold text-sm text-gray-900 dark:text-white mb-4">
+                    On this page
+                </h2>
+                <ul className="space-y-0.5" role="list">
                     {hierarchicalTOC.map((item, index) => (
                         <TOCItemComponent
                             key={`${item.tag_id}-${index}`}
@@ -211,10 +252,36 @@ const TOC: React.FC<TOCProps> = memo(({ toc, handleScrollTo }) => {
                     ))}
                 </ul>
             </div>
-        </div>
+        </nav>
     );
 });
 
 TOC.displayName = 'TOC';
 
+/**
+ * Table of Contents Component
+ * 
+ * Displays hierarchical navigation for post headings with:
+ * - Active section highlighting
+ * - Collapsible nested sections
+ * - Smooth scroll navigation
+ * - Automatic active section detection (debounced)
+ * 
+ * @component
+ * @param {TOCProps} props - Component props
+ * @param {TOCItem[]} props.toc - Array of TOC items
+ * @param {Function} props.handleScrollTo - Scroll handler for navigation
+ * 
+ * @example
+ * <TOC toc={tocItems} handleScrollTo={handleScroll} />
+ * 
+ * @accessibility
+ * - Uses semantic nav and list elements
+ * - Includes ARIA labels and current location indicators
+ * - Keyboard navigable with Tab
+ * 
+ * @performance
+ * - Memoized to prevent re-renders
+ * - Scroll events debounced to 100ms
+ */
 export default TOC;

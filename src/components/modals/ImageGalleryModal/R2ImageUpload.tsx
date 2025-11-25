@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { 
   ArrowUpTrayIcon, 
   XMarkIcon, 
@@ -18,6 +18,7 @@ import Button from '@/ui/Button';
 interface R2ImageUploadProps {
   onSelectImage: (imageData: any) => void;
   productId?: number;
+  onSelectionChange?: (hasSelection: boolean) => void;
 }
 
 interface ImageFile {
@@ -29,12 +30,18 @@ interface ImageFile {
   uploaded: string;
 }
 
-export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploadProps) {
+export interface R2ImageUploadHandle {
+  confirmSelection: () => void;
+  hasSelection: () => boolean;
+}
+
+const R2ImageUpload = forwardRef<R2ImageUploadHandle, R2ImageUploadProps>(({ onSelectImage, productId, onSelectionChange }, ref) => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentFolder, setCurrentFolder] = useState<string>('');
+  const [displayLimit, setDisplayLimit] = useState(20);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +54,21 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
 
   useEffect(() => {
     loadImages();
+    setDisplayLimit(20);
   }, [currentFolder, productId]);
+
+  useEffect(() => {
+    setDisplayLimit(20);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    onSelectionChange?.(selectedImage !== null);
+  }, [selectedImage, onSelectionChange]);
+
+  useImperativeHandle(ref, () => ({
+    confirmSelection: handleConfirmSelection,
+    hasSelection: () => selectedImage !== null
+  }));
 
   useEffect(() => {
     if (renamingImage && renameInputRef.current) {
@@ -69,15 +90,14 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
       const endpoint = productId ? `/api/products/${productId}/r2-images` : '/api/r2-images';
       const url = currentFolder ? `${endpoint}?folder=${encodeURIComponent(currentFolder)}` : endpoint;
       
-      console.log('[R2ImageUpload] Fetching from:', url);
-      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[R2ImageUpload] Loaded:', { images: data.images?.length, folders: data.folders?.length });
+        console.log('[R2ImageUpload] Total images received from API:', data.images?.length);
+        console.log('[R2ImageUpload] Total folders received from API:', data.folders?.length);
         setImages(data.images || []);
         setFolders(data.folders || []);
       } else {
@@ -231,6 +251,9 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
   const filteredImages = images.filter(i => 
     i.fileName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  const displayedImages = filteredImages.slice(0, displayLimit);
+  const hasMoreImages = filteredImages.length > displayLimit;
 
   return (
     <>
@@ -318,7 +341,7 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 pb-24">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -394,7 +417,7 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
                   <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wider">Images</h3>
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {filteredImages.map((image) => (
+                  {displayedImages.map((image) => (
                     <div
                       key={image.url}
                       onClick={() => !renamingImage && setSelectedImage(image.url)}
@@ -502,42 +525,27 @@ export default function R2ImageUpload({ onSelectImage, productId }: R2ImageUploa
                     </div>
                   ))}
                 </div>
+                {hasMoreImages && (
+                  <div className="mt-6 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setDisplayLimit(prev => prev + 20)}
+                      className="px-6 py-2"
+                    >
+                      Load More ({filteredImages.length - displayLimit} remaining)
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 px-3 sm:px-6 py-3 sm:py-4 border-t bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)` }}>
-        {selectedImage ? (
-          <div className="flex items-center justify-between">
-            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden md:block">
-              <span className="font-medium" style={{ color: themeColors.cssVars.primary.base }}>1 image selected</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedImage(null)}
-                className="flex-1 md:flex-initial text-sm sm:text-base"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleConfirmSelection}
-                className="flex-1 md:flex-initial text-sm sm:text-base"
-              >
-                Insert Image
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">
-            Click an image to select it
-          </div>
-        )}
-      </div>
     </>
   );
-}
+});
+
+R2ImageUpload.displayName = 'R2ImageUpload';
+
+export default R2ImageUpload;

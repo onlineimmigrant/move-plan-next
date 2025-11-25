@@ -30,15 +30,18 @@ export async function PATCH(
       .from('product_media')
       .update({ thumbnail_url })
       .eq('id', mediaId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('[Update Media Thumbnail] Error:', error);
-      return NextResponse.json({ error: 'Failed to update thumbnail' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update thumbnail', details: error }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: 'Media not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(data[0]);
   } catch (error) {
     console.error('[Update Media Thumbnail] Unexpected error:', error);
     return NextResponse.json(

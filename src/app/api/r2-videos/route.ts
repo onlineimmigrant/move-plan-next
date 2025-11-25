@@ -88,32 +88,53 @@ export async function GET(request: NextRequest) {
       ? `${effectiveOrgId}/videos/${filterFolder}/`
       : `${effectiveOrgId}/videos/`;
     console.log('[r2-videos] Listing with prefix:', prefix);
-    const listUrl = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}`;
 
-    const response = await fetch(listUrl, {
-      headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-    });
+    // Fetch all objects with pagination support
+    let allObjects: any[] = [];
+    let cursor: string | undefined;
+    let hasMore = true;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[r2-videos] R2 list failed:', response.status, errorText);
-      return NextResponse.json({ error: 'Failed to list R2 videos', details: errorText }, { status: 500 });
+    while (hasMore) {
+      const listUrl = cursor
+        ? `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}&cursor=${encodeURIComponent(cursor)}`
+        : `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}`;
+
+      const response = await fetch(listUrl, {
+        headers: {
+          'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[r2-videos] R2 list failed:', response.status, errorText);
+        return NextResponse.json({ error: 'Failed to list R2 videos', details: errorText }, { status: 500 });
+      }
+
+      const data = await response.json();
+      
+      // Handle both array and object response formats from Cloudflare
+      const objects = Array.isArray(data.result) ? data.result : (data.result?.objects || []);
+      allObjects = allObjects.concat(objects);
+
+      // Check if there are more results - pagination info is in result_info
+      cursor = data.result_info?.cursor;
+      hasMore = data.result_info?.is_truncated === true && !!cursor;
+      
+      console.log('[r2-videos] Fetched batch:', { 
+        batchSize: objects.length, 
+        totalSoFar: allObjects.length,
+        hasMore,
+        cursor: cursor ? 'present' : 'none',
+        isTruncated: data.result_info?.is_truncated
+      });
     }
 
-    const data = await response.json();
+    console.log('[r2-videos] Total objects fetched:', allObjects.length);
     
     // Transform R2 objects to video data with folder information
-    const objects = Array.isArray(data.result) ? data.result : (data.result?.objects || []);
-    console.log('[r2-videos] API Response:', { 
-      success: true, 
-      objectCount: objects.length, 
-      prefix, 
-      sampleKeys: objects.slice(0, 5).map((o: any) => o.key) 
-    });
     const folders = new Set<string>();
-    const videos = objects
+    const videos = allObjects
       .filter((obj: any) => obj.key.endsWith('.mp4') || obj.key.endsWith('.webm') || obj.key.endsWith('.mov'))
       .map((obj: any) => {
         // Extract folder from key: orgId/videos/folder/file.mp4

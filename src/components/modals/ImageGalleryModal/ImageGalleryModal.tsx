@@ -1,23 +1,38 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon, PhotoIcon, ArrowUpTrayIcon, ArrowPathIcon, FolderIcon, ChevronRightIcon, HomeIcon, PlayIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import { XMarkIcon, MagnifyingGlassIcon, PhotoIcon, ArrowUpTrayIcon, ArrowPathIcon, FolderIcon, ChevronRightIcon, HomeIcon, PlayIcon, CheckCircleIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { createPortal } from 'react-dom';
+import { Rnd } from 'react-rnd';
 import Button from '@/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
-import { BaseModal } from '@/components/modals/_shared/BaseModal';
-import UnsplashImageSearch, { UnsplashAttribution } from './UnsplashImageSearch';
-import PexelsImageSearch from './PexelsImageSearch';
-import YouTubeVideoSearch from './YouTubeVideoSearch';
-import R2VideoUpload from './R2VideoUploadNew';
-import R2ImageUpload from './R2ImageUpload';
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Lazy load tab components (only those without refs)
+const UnsplashImageSearch = lazy(() => import('./UnsplashImageSearch'));
+const PexelsImageSearch = lazy(() => import('./PexelsImageSearch'));
+const YouTubeVideoSearch = lazy(() => import('./YouTubeVideoSearch'));
+
+// Import R2 components directly (they use refs, can't be lazy-loaded)
+import R2VideoUpload from './R2VideoUploadNew';
+import R2ImageUpload from './R2ImageUpload';
+
+// Import types
+import type { UnsplashAttribution } from './UnsplashImageSearch';
+import type { R2VideoUploadHandle } from './R2VideoUploadNew';
+import type { R2ImageUploadHandle } from './R2ImageUpload';
+
+// Global cache for fetchAllImages to avoid refetching
+let globalImageCache: StorageImage[] | null = null;
+let isFetchingGlobalCache = false;
 
 interface ImageGalleryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectImage: (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => void;
   productId?: number; // Optional: for auto-attaching R2 videos on upload
+  defaultTab?: 'r2images' | 'upload' | 'unsplash' | 'pexels' | 'youtube' | 'gallery' | 'videos';
 }
 
 interface StorageImage {
@@ -36,8 +51,11 @@ interface StorageFolder {
 
 type StorageItem = StorageImage | StorageFolder;
 
-export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, productId }: ImageGalleryModalProps) {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'unsplash' | 'pexels' | 'youtube' | 'upload' | 'r2images'>('gallery');
+type ViewMode = 'grid' | 'list';
+type GridSize = 'compact' | 'comfortable' | 'large';
+
+export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, productId, defaultTab = 'r2images' }: ImageGalleryModalProps) {
+  const [activeTab, setActiveTab] = useState<'r2images' | 'upload' | 'unsplash' | 'pexels' | 'youtube' | 'gallery'>(defaultTab === 'videos' ? 'youtube' : defaultTab);
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
   const [allImages, setAllImages] = useState<StorageImage[]>([]); // For global search
@@ -49,30 +67,100 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
+  const [r2ImageHasSelection, setR2ImageHasSelection] = useState(false);
+  const [r2VideoHasSelection, setR2VideoHasSelection] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [gridSize, setGridSize] = useState<GridSize>('comfortable');
+  const [mounted, setMounted] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(20); // Pagination for gallery tab
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const r2ImageRef = useRef<R2ImageUploadHandle>(null);
+  const r2VideoRef = useRef<R2VideoUploadHandle>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
   const themeColors = useThemeColors();
   const { primary } = themeColors;
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Focus search with /
+    if (e.key === '/' && activeTab === 'gallery') {
+      e.preventDefault();
+      searchInputRef.current?.focus();
+    }
+    
+    // Navigate up folder with Backspace
+    if (e.key === 'Backspace' && activeTab === 'gallery' && currentPath && !searchQuery && document.activeElement !== searchInputRef.current) {
+      e.preventDefault();
+      navigateUp();
+    }
+    
+    // Insert with Ctrl+Enter
+    if (e.ctrlKey && e.key === 'Enter' && selectedImages.size > 0) {
+      e.preventDefault();
+      handleInsert();
+    }
+    
+    // Close with Escape
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleClose();
+    }
+  }, [activeTab, currentPath, searchQuery, selectedImages.size]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleKeyDown]);
+
   // Fetch images from Supabase storage
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && activeTab === 'gallery') {
       fetchImages();
-      // Fetch all images for global search (only once when modal opens)
-      if (allImages.length === 0) {
+      // Use global cache for search
+      if (globalImageCache) {
+        setAllImages(globalImageCache);
+      } else if (!isFetchingGlobalCache) {
+        isFetchingGlobalCache = true;
         setIsSearching(true);
         fetchAllImages().then(results => {
+          globalImageCache = results;
           setAllImages(results);
           setIsSearching(false);
+          isFetchingGlobalCache = false;
           console.log('Global search index built:', results.length, 'images');
         });
       }
     }
-  }, [isOpen, currentPath]);
+  }, [isOpen, currentPath, activeTab]);
 
   // Fetch all images recursively for global search
-  const fetchAllImages = async (path = '', accumulated: StorageImage[] = []): Promise<StorageImage[]> => {
+  const fetchAllImages = useCallback(async (path = '', accumulated: StorageImage[] = []): Promise<StorageImage[]> => {
     try {
       const { data, error: storageError } = await supabase.storage
         .from('gallery')
@@ -117,9 +205,9 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
       console.error('Error in fetchAllImages:', err);
       return accumulated;
     }
-  };
+  }, []);
 
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -197,82 +285,133 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPath]);
 
-  // Use global search when query is present, otherwise show current folder
-  const filteredImages = searchQuery
-    ? allImages.filter(image =>
-        image.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (image.path && image.path.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : images.filter(image =>
-        image.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Memoize filtered images - use debounced query
+  const filteredImages = useMemo(() => {
+    const query = debouncedSearchQuery;
+    if (query) {
+      return allImages.filter(image =>
+        image.name.toLowerCase().includes(query.toLowerCase()) ||
+        (image.path && image.path.toLowerCase().includes(query.toLowerCase()))
       );
+    }
+    return images.filter(image =>
+      image.name.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [debouncedSearchQuery, allImages, images]);
 
-  const filteredFolders = searchQuery
-    ? [] // Hide folders when searching globally
-    : folders.filter(folder =>
-        folder.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const filteredFolders = useMemo(() => {
+    if (debouncedSearchQuery) return []; // Hide folders when searching globally
+    return folders.filter(folder =>
+      folder.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+  }, [debouncedSearchQuery, folders]);
 
-  const handleImageSelect = (image: StorageImage) => {
-    setSelectedImage(image.url);
-  };
+  // Paginated images for gallery tab
+  const displayedImages = useMemo(() => {
+    return filteredImages.slice(0, displayLimit);
+  }, [filteredImages, displayLimit]);
 
-  const handleFolderClick = (folderName: string) => {
-    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-    setCurrentPath(newPath);
-    setPathHistory([...pathHistory, newPath]);
-    setSearchQuery(''); // Clear search when navigating
-  };
+  const hasMoreImages = filteredImages.length > displayLimit;
 
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    // Search provides global results automatically via filteredImages
-  };
+  const handleImageSelect = useCallback((image: StorageImage, isMultiSelect = false) => {
+    if (isMultiSelect) {
+      const newSelected = new Set(selectedImages);
+      if (newSelected.has(image.url)) {
+        newSelected.delete(image.url);
+      } else {
+        newSelected.add(image.url);
+      }
+      setSelectedImages(newSelected);
+      setSelectedImage(Array.from(newSelected)[0] || null);
+    } else {
+      setSelectedImage(image.url);
+      setSelectedImages(new Set([image.url]));
+    }
+  }, [selectedImages]);
 
-  const handleNavigateUp = () => {
+  const navigateUp = useCallback(() => {
     if (currentPath) {
       const parts = currentPath.split('/');
-      parts.pop(); // Remove last segment
+      parts.pop();
       const newPath = parts.join('/');
       setCurrentPath(newPath);
       setPathHistory([...pathHistory, newPath]);
       setSearchQuery('');
+      setDisplayLimit(20);
     }
-  };
+  }, [currentPath, pathHistory]);
 
-  const handleNavigateToRoot = () => {
+  const handleFolderClick = useCallback((folderName: string) => {
+    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+    setCurrentPath(newPath);
+    setPathHistory([...pathHistory, newPath]);
+    setSearchQuery(''); // Clear search when navigating
+    setDisplayLimit(20); // Reset pagination when navigating
+  }, [currentPath, pathHistory]);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    setDisplayLimit(20); // Reset pagination on search
+  }, []);
+
+  const handleNavigateUp = useCallback(() => {
+    navigateUp();
+  }, [navigateUp]);
+
+  const handleNavigateToRoot = useCallback(() => {
     setCurrentPath('');
     setPathHistory(['']);
     setSearchQuery('');
-  };
+  }, []);
 
-  const handleNavigateToPath = (index: number) => {
+  const handleNavigateToPath = useCallback((index: number) => {
     const pathParts = currentPath.split('/').filter(p => p);
     const newPath = pathParts.slice(0, index + 1).join('/');
     setCurrentPath(newPath);
     setPathHistory([...pathHistory, newPath]);
     setSearchQuery('');
-  };
+  }, [currentPath, pathHistory]);
 
-  const handleConfirmSelection = () => {
+  const handleInsert = useCallback(async () => {
+    // For R2 Images tab, call the R2ImageUpload's confirm handler
+    if (activeTab === 'r2images' && r2ImageRef.current) {
+      r2ImageRef.current.confirmSelection();
+      onClose();
+      return;
+    }
+    
+    // For Video tab, call the R2VideoUpload's confirm handler
+    if (activeTab === 'upload' && r2VideoRef.current) {
+      await r2VideoRef.current.confirmSelection();
+      onClose();
+      return;
+    }
+    
+    // For other tabs (gallery, unsplash, pexels, youtube), use the standard flow
     if (selectedImage) {
       onSelectImage(selectedImage);
       onClose();
       setSelectedImage(null);
+      setSelectedImages(new Set());
     }
-  };
+  }, [activeTab, selectedImage, onSelectImage, onClose]);
 
-  const handleClose = () => {
+  const handleConfirmSelection = useCallback(() => {
+    handleInsert();
+  }, [handleInsert]);
+
+  const handleClose = useCallback(() => {
     setSelectedImage(null);
+    setSelectedImages(new Set());
     setSearchQuery('');
     setCurrentPath('');
     setPathHistory(['']);
     onClose();
-  };
+  }, [onClose]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -364,27 +503,24 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [currentPath, fetchImages]);
 
-  const handleUploadClick = () => {
+  const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  if (!isOpen) return null;
-
-  const handleUnsplashSelect = (url: string, attribution: UnsplashAttribution) => {
+  const handleUnsplashSelect = useCallback((url: string, attribution: UnsplashAttribution) => {
     onSelectImage(url, attribution);
     onClose();
-  };
+  }, [onSelectImage, onClose]);
 
-  const handlePexelsSelect = (url: string, attribution?: PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+  const handlePexelsSelect = useCallback((url: string, attribution?: PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
     onSelectImage(url, attribution, isVideo, videoData);
     onClose();
-  };
+  }, [onSelectImage, onClose]);
 
-  const handleYouTubeSelect = (videoId: string, videoData: any) => {
+  const handleYouTubeSelect = useCallback((videoId: string, videoData: any) => {
     console.log('🎥 handleYouTubeSelect called with:', { videoId, videoData });
-    // Pass YouTube video data to parent with both thumbnail_url and image_url set
     onSelectImage(
       `https://www.youtube.com/watch?v=${videoId}`,
       undefined,
@@ -393,437 +529,608 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
         video_player: 'youtube',
         video_url: videoId,
         thumbnail_url: videoData.thumbnail,
-        image_url: videoData.thumbnail, // Set image_url as well for compatibility
+        image_url: videoData.thumbnail,
         title: videoData.title,
       }
     );
     onClose();
-  };
+  }, [onSelectImage, onClose]);
 
-  return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Image Gallery"
-      size="xl"
-      noPadding={true}
-      draggable={true}
-      resizable={true}
-      zIndex={10005}
+  // Get grid columns class based on size
+  const getGridCols = useCallback(() => {
+    switch (gridSize) {
+      case 'compact': return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8';
+      case 'comfortable': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5';
+      case 'large': return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+    }
+  }, [gridSize]);
+
+  if (!isOpen) return null;
+
+  const modalContent = (
+    <>
+      {/* Backdrop overlay to prevent interaction with other modals */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10004]"
+        onClick={handleClose}
+      />
+      
+      <Rnd
+      default={{
+        x: window.innerWidth / 2 - 411.125,
+        y: window.innerHeight / 2 - 375,
+        width: 822.25,
+        height: 750,
+      }}
+      minWidth={500}
+      minHeight={600}
+      bounds="window"
+      dragHandleClassName="drag-handle"
+      className="z-[10005]"
     >
-      {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-6">
-        <button
-          onClick={() => setActiveTab('gallery')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'gallery'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'gallery' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <FolderIcon className="w-5 h-5 inline-block mr-2" />
-          My Gallery
-        </button>
-        <button
-          onClick={() => setActiveTab('unsplash')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'unsplash'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'unsplash' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <svg className="w-5 h-5 inline-block mr-2" viewBox="0 0 32 32" fill="currentColor">
-            <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-          </svg>
-          Unsplash
-        </button>
-        <button
-          onClick={() => setActiveTab('pexels')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'pexels'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'pexels' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
-          Pexels
-        </button>
-        <button
-          onClick={() => setActiveTab('youtube')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'youtube'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'youtube' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <PlayIcon className="w-5 h-5 inline-block mr-2" />
-          YouTube
-        </button>
-        <button
-          onClick={() => setActiveTab('upload')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'upload'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'upload' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <PlayIcon className="w-5 h-5 inline-block mr-2" />
-          Video
-        </button>
-        <button
-          onClick={() => setActiveTab('r2images')}
-          className={`
-            px-6 py-3 font-medium text-sm transition-all border-b-2
-            ${activeTab === 'r2images'
-              ? 'bg-white dark:bg-gray-900'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }
-          `}
-          style={activeTab === 'r2images' ? {
-            borderColor: themeColors.cssVars.primary.base,
-            color: themeColors.cssVars.primary.base
-          } : undefined}
-        >
-          <PhotoIcon className="w-5 h-5 inline-block mr-2" />
-          Images
-        </button>
-      </div>
-
-      {/* Content based on active tab */}
-      {activeTab === 'gallery' ? (
-        <>
-      {/* Search Bar & Upload - Directly below header */}
-      <div className="sticky top-0 z-10 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={isSearching ? "Indexing..." : window.innerWidth < 768 ? "Search images" : "Search all images across folders..."}
-              disabled={isSearching}
-              className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-wait transition-shadow"
-              style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
-            />
-              {searchQuery && (
-                <div className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium" style={{ color: themeColors.cssVars.primary.base }}>
-                  Searching all folders
-                </div>
-              )}
-            </div>
-            <Button
-              onClick={fetchImages}
-              disabled={isLoading}
-              variant="outline"
-              className="whitespace-nowrap px-2 sm:px-3"
-              title="Refresh gallery"
-            >
-              <ArrowPathIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Button
-              onClick={handleUploadClick}
-              disabled={isUploading}
-              variant="primary"
-              className="whitespace-nowrap px-2 sm:px-3"
-              title="Upload images (JPG, PNG, GIF, SVG, WebP - max 5MB each)"
-            >
-              <ArrowUpTrayIcon className="w-4 h-4 sm:w-5 sm:h-5 md:mr-2" />
-              <span className="hidden md:inline">{isUploading ? 'Uploading...' : 'Upload'}</span>
-            </Button>
+      <div className="h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+        {/* Fixed Header with Drag Handle */}
+        <div className="drag-handle cursor-move bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 border-b border-gray-200/30 dark:border-gray-700/30 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <PhotoIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Media Gallery</h2>
           </div>
-          
-          {/* Upload Progress */}
-          {uploadProgress && (
-            <div className="text-sm text-green-600 flex items-center gap-2 animate-fade-in">
-              <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-              {uploadProgress}
-            </div>
-          )}
-
-          {/* Folder/Image Count */}
-          {(images.length > 0 || folders.length > 0) && (
-            <div className="text-xs sm:text-sm text-gray-500">
-              {filteredFolders.length} {filteredFolders.length === 1 ? 'folder' : 'folders'}, {filteredImages.length} {filteredImages.length === 1 ? 'image' : 'images'}
-            </div>
-          )}
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-white/60 dark:hover:bg-gray-800/60 rounded-lg transition-all hover:ring-2 ring-gray-300 dark:ring-gray-600"
+          >
+            <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
         </div>
-      </div>
 
-      {/* Breadcrumb Navigation */}
-      {currentPath && (
-        <div className="px-3 sm:px-6 py-2 sm:py-3 border-b bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)`, backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 3%, transparent)` }}>
-          <div className="flex items-center gap-1 sm:gap-2 text-sm overflow-x-auto">
-            <button
-              onClick={handleNavigateToRoot}
-              className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors shrink-0"
-              style={{ color: themeColors.cssVars.primary.base }}
-              title="Go to root"
-            >
-              <HomeIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Gallery</span>
-            </button>
-            {currentPath.split('/').map((segment, index) => (
-              <React.Fragment key={index}>
-                <ChevronRightIcon className="w-4 h-4 text-gray-400 dark:text-gray-600 shrink-0" />
-                <button
-                  onClick={() => handleNavigateToPath(index)}
-                  className="px-2 py-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors shrink-0 truncate max-w-[120px]"
-                  onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
-                  onMouseLeave={(e) => e.currentTarget.style.color = ''}
-                  title={segment}
-                >
-                  {segment}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Content - with top spacing */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 mb-4" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Loading images...</p>
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200/30 dark:border-gray-700/30 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-6">
+          {/* Images Tab (r2images) */}
+          <button
+            onClick={() => setActiveTab('r2images')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'r2images'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <PhotoIcon className="w-5 h-5" />
+              <span>Images</span>
             </div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center px-4">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <XMarkIcon className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
-              </div>
-              <p className="text-red-600 font-medium text-sm sm:text-base">{error}</p>
-              <Button
-                onClick={fetchImages}
-                variant="outline"
-                className="mt-4"
-              >
-                Try Again
-              </Button>
-            </div>
-          </div>
-        ) : filteredFolders.length === 0 && filteredImages.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center px-4">
-              <PhotoIcon className="w-12 h-12 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-2 text-sm sm:text-base">
-                {searchQuery ? 'No items match your search' : 'No items found in this folder'}
-              </p>
-              {currentPath === '' && images.length === 0 && folders.length === 0 && (
-                <div className="text-xs sm:text-sm text-gray-400 mt-4 space-y-2">
-                  <p>Upload images to your Supabase storage:</p>
-                  <ol className="text-left max-w-md mx-auto list-decimal list-inside space-y-1">
-                    <li>Go to Supabase Dashboard → Storage</li>
-                    <li>Select the "gallery" bucket</li>
-                    <li>Upload image files (jpg, png, gif, svg, webp)</li>
-                    <li>Refresh this gallery</li>
-                  </ol>
-                </div>
-              )}
-              {currentPath !== '' && (
-                <Button
-                  onClick={handleNavigateUp}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Go Back
-                </Button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Folders Section */}
-            {filteredFolders.length > 0 && (
-              <div>
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wider">Folders</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {filteredFolders.map((folder) => (
-                    <button
-                      key={folder.name}
-                      onClick={() => handleFolderClick(folder.name)}
-                      className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-sky-200 hover:border-sky-400 hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-sky-50 to-sky-100"
-                    >
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4">
-                        <FolderIcon className="w-12 h-12 sm:w-12 sm:h-12 text-sky-500 mb-2" />
-                        <span className="text-xs sm:text-sm font-medium text-gray-700 text-center line-clamp-2">
-                          {folder.name}
-                        </span>
-                      </div>
-                      <div className="absolute inset-0 bg-sky-500 opacity-0 group-hover:opacity-10 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {activeTab === 'r2images' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
             )}
+          </button>
+          
+          {/* Video Tab (upload) */}
+          <button
+            onClick={() => setActiveTab('upload')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'upload'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <PlayIcon className="w-5 h-5" />
+              <span>Video</span>
+            </div>
+            {activeTab === 'upload' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
+            )}
+          </button>
+          
+          {/* Unsplash Tab */}
+          <button
+            onClick={() => setActiveTab('unsplash')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'unsplash'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor">
+                <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+              </svg>
+              <span>Unsplash</span>
+            </div>
+            {activeTab === 'unsplash' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
+            )}
+          </button>
+          
+          {/* Pexels Tab */}
+          <button
+            onClick={() => setActiveTab('pexels')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'pexels'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <PhotoIcon className="w-5 h-5" />
+              <span>Pexels</span>
+            </div>
+            {activeTab === 'pexels' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
+            )}
+          </button>
+          
+          {/* YouTube Tab */}
+          <button
+            onClick={() => setActiveTab('youtube')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'youtube'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <PlayIcon className="w-5 h-5" />
+              <span>YouTube</span>
+            </div>
+            {activeTab === 'youtube' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
+            )}
+          </button>
+          
+          {/* My Gallery Tab */}
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`
+              px-6 py-3 font-medium text-sm transition-all relative
+              ${activeTab === 'gallery'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+              }
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <FolderIcon className="w-5 h-5" />
+              <span>My Gallery</span>
+            </div>
+            {activeTab === 'gallery' && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
+              />
+            )}
+          </button>
+        </div>
 
-            {/* Images Section */}
-            {filteredImages.length > 0 && (
-              <div>
-                {filteredFolders.length > 0 && (
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wider">Images</h3>
-                )}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {filteredImages.map((image) => (
-                    <div
-                      key={image.url}
-                      onClick={() => handleImageSelect(image)}
-                      className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-200 hover:shadow-lg"
-                      style={selectedImage === image.url ? {
-                        borderColor: themeColors.cssVars.primary.base,
-                        boxShadow: `0 0 0 4px color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)`,
-                        transform: 'scale(1.05)'
-                      } : {
-                        borderColor: 'rgb(229 231 235)'
-                      }}
-                    >
-                      <img
-                        src={image.url}
-                        alt={image.name}
-                        className="w-full h-full object-contain bg-gray-50 p-2"
-                        loading="lazy"
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === 'gallery' ? (
+            /* Gallery Tab */
+            <>
+              {/* Search Bar & Upload */}
+              <div className="sticky top-0 z-10 px-6 py-4 border-b border-gray-200/30 dark:border-gray-700/30 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        placeholder={isSearching ? "Indexing..." : "Search all images... (Press / to focus)"}
+                        disabled={isSearching}
+                        className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300/50 dark:border-gray-600/50 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-wait transition-all"
+                        style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
                       />
-                      
-                      {/* Overlay */}
-                      <div className={`
-                        absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent
-                        transition-opacity duration-200
-                        ${selectedImage === image.url ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
-                      `}>
-                        <div className="absolute bottom-0 left-0 right-0 p-2">
-                          {searchQuery && image.path ? (
-                            <>
-                              <p className="text-white text-[10px] opacity-80 truncate">
-                                {image.path.split('/').slice(0, -1).join('/') || 'root'}
-                              </p>
-                              <p className="text-white text-xs font-medium truncate">
-                                {image.name}
-                              </p>
-                            </>
-                          ) : (
-                            <p className="text-white text-xs font-medium truncate">
-                              {image.name}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Selection Checkmark */}
-                      {selectedImage === image.url && (
-                        <div className="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 bg-sky-500 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
+                      {searchQuery && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                          <span className="text-xs font-medium" style={{ color: themeColors.cssVars.primary.base }}>
+                            All folders
+                          </span>
+                          <button
+                            onClick={() => setSearchQuery('')}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
                         </div>
                       )}
                     </div>
-                  ))}
+                    <Button
+                      onClick={fetchImages}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="whitespace-nowrap px-3"
+                      title="Refresh gallery"
+                    >
+                      <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      onClick={handleUploadClick}
+                      disabled={isUploading}
+                      variant="primary"
+                      className="whitespace-nowrap px-3"
+                      title="Upload images (JPG, PNG, GIF, SVG, WebP - max 5MB each)"
+                    >
+                      <ArrowUpTrayIcon className="w-5 h-5 mr-2" />
+                      <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
+                    </Button>
+                    
+                    {/* View mode toggle */}
+                    <div className="hidden lg:flex items-center gap-1 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg p-1 border border-gray-200/50 dark:border-gray-700/50">
+                      <button
+                        onClick={() => setGridSize('compact')}
+                        className={`p-1.5 rounded transition-all ${gridSize === 'compact' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                        title="Compact view"
+                      >
+                        <Squares2X2Icon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setGridSize('comfortable')}
+                        className={`p-1.5 rounded transition-all ${gridSize === 'comfortable' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                        title="Comfortable view"
+                      >
+                        <Squares2X2Icon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setGridSize('large')}
+                        className={`p-1.5 rounded transition-all ${gridSize === 'large' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                        title="Large view"
+                      >
+                        <Squares2X2Icon className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Upload Progress */}
+                  {uploadProgress && (
+                    <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 animate-fade-in">
+                      <CheckCircleIcon className="w-4 h-4" />
+                      {uploadProgress}
+                    </div>
+                  )}
+
+                  {/* Folder/Image Count */}
+                  {(images.length > 0 || folders.length > 0) && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {filteredFolders.length} {filteredFolders.length === 1 ? 'folder' : 'folders'}, {filteredImages.length} {filteredImages.length === 1 ? 'image' : 'images'}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t bg-gray-50/50 dark:bg-gray-900/20" style={{ borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)` }}>
-        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hidden md:block">
-          {selectedImage ? (
-            <span className="font-medium" style={{ color: themeColors.cssVars.primary.base }}>1 image selected</span>
-          ) : (
-            <span>Click an image to select it</span>
-          )}
+              {/* Breadcrumb Navigation */}
+              {currentPath && (
+                <div className="px-6 py-3 border-b border-gray-200/30 dark:border-gray-700/30 bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-sm overflow-x-auto">
+                    <button
+                      onClick={handleNavigateToRoot}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-white/60 dark:hover:bg-gray-800/60 rounded-lg transition-all shrink-0 ring-1 ring-gray-200/50 dark:ring-gray-700/50"
+                      style={{ color: themeColors.cssVars.primary.base }}
+                      title="Go to root (Backspace)"
+                    >
+                      <HomeIcon className="w-4 h-4" />
+                      <span>Gallery</span>
+                    </button>
+                    {currentPath.split('/').map((segment, index) => (
+                      <React.Fragment key={index}>
+                        <ChevronRightIcon className="w-4 h-4 text-gray-400 dark:text-gray-600 shrink-0" />
+                        <button
+                          onClick={() => handleNavigateToPath(index)}
+                          className="px-2.5 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-800/60 rounded-lg transition-all shrink-0 truncate max-w-[150px] ring-1 ring-gray-200/50 dark:ring-gray-700/50"
+                          onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+                          onMouseLeave={(e) => e.currentTarget.style.color = ''}
+                          title={segment}
+                        >
+                          {segment}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+                      <p className="text-gray-600 dark:text-gray-400">Loading images...</p>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center px-4">
+                      <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <XMarkIcon className="w-8 h-8 text-red-600 dark:text-red-400" />
+                      </div>
+                      <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
+                      <Button
+                        onClick={fetchImages}
+                        variant="outline"
+                        className="mt-4"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </div>
+                ) : filteredFolders.length === 0 && filteredImages.length === 0 ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center px-4">
+                      <PhotoIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 mb-2">
+                        {searchQuery ? 'No items match your search' : 'No items found in this folder'}
+                      </p>
+                      {currentPath !== '' && (
+                        <Button
+                          onClick={handleNavigateUp}
+                          variant="outline"
+                          className="mt-4"
+                        >
+                          <span className="flex items-center gap-2">
+                            Go Back
+                            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white/60 dark:bg-gray-800/60 border border-gray-300/50 dark:border-gray-600/50 rounded">⌫</kbd>
+                          </span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Folders Section */}
+                    {filteredFolders.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wider">Folders</h3>
+                        <div className={`grid ${getGridCols()} gap-4`}>
+                          {filteredFolders.map((folder) => (
+                            <button
+                              key={folder.name}
+                              onClick={() => handleFolderClick(folder.name)}
+                              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-blue-200/50 dark:border-blue-700/50 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-blue-50/80 to-blue-100/80 dark:from-blue-900/30 dark:to-blue-800/30 backdrop-blur-sm hover:scale-105"
+                            >
+                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                <FolderIcon className="w-12 h-12 text-blue-500 dark:text-blue-400 mb-2 transition-transform group-hover:scale-110" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 text-center line-clamp-2">
+                                  {folder.name}
+                                </span>
+                              </div>
+                              <div className="absolute inset-0 bg-blue-500 dark:bg-blue-400 opacity-0 group-hover:opacity-10 transition-opacity" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Images Section */}
+                    {filteredImages.length > 0 && (
+                      <div>
+                        {filteredFolders.length > 0 && (
+                          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wider">Images</h3>
+                        )}
+                        <div className={`grid ${getGridCols()} gap-4`}>
+                          {displayedImages.map((image) => {
+                            const isSelected = selectedImages.has(image.url);
+                            return (
+                              <div
+                                key={image.url}
+                                onClick={(e) => handleImageSelect(image, e.shiftKey)}
+                                className={`group relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 hover:shadow-xl ${
+                                  isSelected ? 'scale-105 ring-4' : 'hover:scale-105'
+                                }`}
+                                style={isSelected ? {
+                                  borderColor: themeColors.cssVars.primary.base,
+                                  '--tw-ring-color': `${themeColors.cssVars.primary.base}33`
+                                } as React.CSSProperties : {
+                                  borderColor: 'rgb(229 231 235 / 0.5)'
+                                } as React.CSSProperties}
+                              >
+                                <img
+                                  src={image.url}
+                                  alt={image.name}
+                                  className="w-full h-full object-cover bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm"
+                                  loading="lazy"
+                                />
+                                
+                                {/* Overlay */}
+                                <div className={`
+                                  absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent
+                                  transition-opacity duration-200
+                                  ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+                                `}>
+                                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                                    {searchQuery && image.path ? (
+                                      <>
+                                        <p className="text-white/70 text-[10px] truncate">
+                                          {image.path.split('/').slice(0, -1).join('/') || 'root'}
+                                        </p>
+                                        <p className="text-white text-xs font-medium truncate">
+                                          {image.name}
+                                        </p>
+                                      </>
+                                    ) : (
+                                      <p className="text-white text-xs font-medium truncate">
+                                        {image.name}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Selection Checkmark */}
+                                {isSelected && (
+                                  <div 
+                                    className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/50"
+                                    style={{ backgroundColor: themeColors.cssVars.primary.base }}
+                                  >
+                                    <CheckCircleIcon className="w-5 h-5 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {hasMoreImages && (
+                          <div className="mt-6 flex justify-center">
+                            <Button
+                              variant="outline"
+                              onClick={() => setDisplayLimit(prev => prev + 20)}
+                              className="px-6 py-2"
+                            >
+                              Load More ({filteredImages.length - displayLimit} remaining)
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : activeTab === 'r2images' ? (
+            /* Images Tab - R2 Image Upload with Gallery UI */
+            <R2ImageUpload 
+              ref={r2ImageRef}
+              onSelectImage={(imageData) => {
+                onSelectImage(imageData.image_url, undefined, false);
+                onClose();
+              }}
+              productId={productId}
+              onSelectionChange={setR2ImageHasSelection}
+            />
+          ) : activeTab === 'upload' ? (
+            /* Video Tab - R2 Video Upload with Gallery UI */
+            <R2VideoUpload 
+              ref={r2VideoRef}
+              onSelectVideo={(videoData) => {
+                onSelectImage('', undefined, true, videoData);
+                onClose();
+              }}
+              productId={productId}
+              onSelectionChange={setR2VideoHasSelection}
+            />
+          ) : activeTab === 'unsplash' ? (
+            /* Unsplash Tab */
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+              </div>
+            }>
+              <UnsplashImageSearch onSelectImage={handleUnsplashSelect} />
+            </Suspense>
+          ) : activeTab === 'pexels' ? (
+            /* Pexels Tab */
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+              </div>
+            }>
+              <PexelsImageSearch onSelectImage={handlePexelsSelect} />
+            </Suspense>
+          ) : activeTab === 'youtube' ? (
+            /* YouTube Tab */
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
+              </div>
+            }>
+              <YouTubeVideoSearch onSelectVideo={handleYouTubeSelect} />
+            </Suspense>
+          ) : null}
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="flex-1 md:flex-initial text-sm sm:text-base"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleConfirmSelection}
-            disabled={!selectedImage}
-            className="flex-1 md:flex-initial text-sm sm:text-base"
-          >
-            Insert Image
-          </Button>
+
+        {/* Fixed Footer */}
+        <div className="border-t border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 backdrop-blur-md px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              {selectedImages.size > 0 ? (
+                <>
+                  <CheckCircleIcon className="w-5 h-5" style={{ color: themeColors.cssVars.primary.base }} />
+                  <span className="font-medium" style={{ color: themeColors.cssVars.primary.base }}>
+                    {selectedImages.size} {selectedImages.size === 1 ? 'image' : 'images'} selected
+                  </span>
+                </>
+              ) : (
+                <>
+                  <PhotoIcon className="w-5 h-5" />
+                  <span>Select an image to continue</span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleInsert}
+                disabled={
+                  activeTab === 'r2images' ? !r2ImageHasSelection :
+                  activeTab === 'upload' ? !r2VideoHasSelection :
+                  selectedImages.size === 0
+                }
+                className="px-6 bg-gradient-to-r hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={
+                  (activeTab === 'r2images' && r2ImageHasSelection) ||
+                  (activeTab === 'upload' && r2VideoHasSelection) ||
+                  selectedImages.size > 0 ? {
+                    backgroundImage: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})`
+                  } : undefined
+                }
+              >
+                <span className="flex items-center gap-2">
+                  Insert Image
+                  {selectedImages.size > 0 && (
+                    <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white/20 border border-white/30 rounded">
+                      ^⏎
+                    </kbd>
+                  )}
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-        </>
-      ) : activeTab === 'unsplash' ? (
-        /* Unsplash Tab */
-        <UnsplashImageSearch onSelectImage={handleUnsplashSelect} />
-      ) : activeTab === 'pexels' ? (
-        /* Pexels Tab */
-        <PexelsImageSearch onSelectImage={handlePexelsSelect} />
-      ) : activeTab === 'youtube' ? (
-        /* YouTube Tab */
-        <YouTubeVideoSearch onSelectVideo={handleYouTubeSelect} />
-      ) : activeTab === 'upload' ? (
-        /* R2 Video Upload Tab */
-        <R2VideoUpload 
-          onSelectVideo={(videoData) => {
-            onSelectImage('', undefined, true, videoData);
-            onClose();
-          }}
-          productId={productId}
-        />
-      ) : activeTab === 'r2images' ? (
-        /* R2 Image Upload Tab */
-        <R2ImageUpload 
-          onSelectImage={(imageData) => {
-            onSelectImage(imageData.image_url, undefined, false);
-            onClose();
-          }}
-          productId={productId}
-        />
-      ) : null}
-    </BaseModal>
+    </Rnd>
+    </>
   );
+
+  return mounted ? createPortal(modalContent, document.body) : null;
 }
+

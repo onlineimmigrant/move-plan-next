@@ -57,40 +57,57 @@ export async function GET(request: NextRequest) {
 
     console.log('[r2-images] Listing with prefix:', prefix);
 
-    const listUrl = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}`;
+    // Fetch all objects with pagination support
+    let allObjects: any[] = [];
+    let cursor: string | undefined;
+    let hasMore = true;
 
-    const listResponse = await fetch(listUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-    });
+    while (hasMore) {
+      const listUrl = cursor
+        ? `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}&cursor=${encodeURIComponent(cursor)}`
+        : `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects?prefix=${encodeURIComponent(prefix)}`;
 
-    if (!listResponse.ok) {
-      const errorText = await listResponse.text();
-      console.error('[r2-images] List failed:', errorText);
-      return NextResponse.json({ 
-        error: 'Failed to list images' 
-      }, { status: 500 });
+      const listResponse = await fetch(listUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        },
+      });
+
+      if (!listResponse.ok) {
+        const errorText = await listResponse.text();
+        console.error('[r2-images] List failed:', errorText);
+        return NextResponse.json({ 
+          error: 'Failed to list images' 
+        }, { status: 500 });
+      }
+
+      const data = await listResponse.json();
+      
+      // Handle both array and object response formats from Cloudflare
+      const objects = Array.isArray(data.result) ? data.result : (data.result?.objects || []);
+      allObjects = allObjects.concat(objects);
+
+      // Check if there are more results - pagination info is in result_info
+      cursor = data.result_info?.cursor;
+      hasMore = data.result_info?.is_truncated === true && !!cursor;
+      
+      console.log('[r2-images] Fetched batch:', { 
+        batchSize: objects.length, 
+        totalSoFar: allObjects.length,
+        hasMore,
+        cursor: cursor ? 'present' : 'none',
+        isTruncated: data.result_info?.is_truncated
+      });
     }
 
-    const data = await listResponse.json();
-    
-    // Handle both array and object response formats from Cloudflare
-    const objects = Array.isArray(data.result) ? data.result : (data.result?.objects || []);
-
-    console.log('[r2-images] API Response:', { 
-      success: data.success, 
-      objectCount: objects.length,
-      prefix,
-      sampleKeys: objects.slice(0, 5).map((o: any) => o.key)
-    });
+    console.log('[r2-images] Total objects fetched:', allObjects.length);
 
     // Extract unique folders and images
     const foldersSet = new Set<string>();
     const images: any[] = [];
 
-    objects.forEach((obj: any) => {
+    allObjects.forEach((obj: any) => {
       const key = obj.key as string;
       
       // Remove prefix to get relative path

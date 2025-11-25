@@ -40,6 +40,9 @@ import { usePostEditModal } from './context';
 import Button from '@/ui/Button';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import TOC from '@/components/PostPage/TOC';
+import { PostMediaCarouselHandle } from '@/components/PostMediaCarousel';
+import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
+import type { PexelsAttributionData } from '@/components/MediaAttribution';
 
 // Import modular sections
 import {
@@ -125,9 +128,13 @@ export default function PostEditModal() {
   const [openMenu, setOpenMenu] = useState<MegaMenuId>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
+  const [isMediaGalleryOpen, setIsMediaGalleryOpen] = useState(false);
   const [isCodeView, setIsCodeView] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Ref for post media carousel
+  const carouselRef = useRef<PostMediaCarouselHandle>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -271,6 +278,28 @@ export default function PostEditModal() {
     
     setIsImageGalleryOpen(false);
   }, [updateField, setFormData]);
+
+  // Media gallery handlers for carousel
+  const openMediaGallery = useCallback(() => {
+    console.log('🚀 openMediaGallery called in PostEditModal');
+    setIsMediaGalleryOpen(true);
+  }, []);
+
+  const closeMediaGallery = useCallback(() => {
+    console.log('🔒 closeMediaGallery called');
+    setIsMediaGalleryOpen(false);
+  }, []);
+
+  const handleMediaSelect = useCallback(async (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+    console.log('📸 handleMediaSelect called with:', { url, attribution, isVideo, videoData });
+    if (carouselRef.current) {
+      console.log('✅ carouselRef.current exists, calling addMediaItem');
+      await carouselRef.current.addMediaItem(url, attribution, isVideo, videoData);
+    } else {
+      console.warn('⚠️ carouselRef.current is null');
+    }
+    closeMediaGallery();
+  }, [closeMediaGallery]);
 
   // Mega menu configuration - Dynamic sections based on post type
   const settingsSections = [
@@ -485,6 +514,9 @@ export default function PostEditModal() {
                             formData={formData} 
                             updateField={updateField}
                             onOpenImageGallery={() => setIsImageGalleryOpen(true)}
+                            onOpenMediaGallery={openMediaGallery}
+                            postSlug={editingPost?.slug}
+                            carouselRef={carouselRef}
                           />
                         )}
                       </div>
@@ -668,11 +700,18 @@ export default function PostEditModal() {
     <>
       {modalContent}
       
-      {/* Image Gallery Modal */}
+      {/* Image Gallery Modal - Main Photo */}
       <ImageGalleryModal
         isOpen={isImageGalleryOpen}
         onClose={() => setIsImageGalleryOpen(false)}
         onSelectImage={handleImageSelect}
+      />
+
+      {/* Image Gallery Modal - Media Carousel */}
+      <ImageGalleryModal
+        isOpen={isMediaGalleryOpen}
+        onClose={closeMediaGallery}
+        onSelectImage={handleMediaSelect}
       />
 
       {/* Inline Edit Popover */}

@@ -1,7 +1,9 @@
 // preview/PostPreview.tsx - Live preview component
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
 import { PostFormData } from '../types';
+import { MediaCarouselRenderer } from '@/components/PostPage/PostEditor/ui/MediaCarouselRenderer';
 
 interface PostPreviewProps {
   formData: PostFormData;
@@ -14,6 +16,65 @@ export function PostPreview({
   onDoubleClickTitle,
   onDoubleClickDescription,
 }: PostPreviewProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Process carousel elements after render
+  useEffect(() => {
+    if (!contentRef.current || !formData.content) return;
+
+    console.log('🔍 [Preview] Searching for carousel elements...');
+    const carouselElements = contentRef.current.querySelectorAll(
+      '[data-type="media-carousel"]'
+    );
+    console.log('🔍 [Preview] Found carousel elements:', carouselElements.length);
+
+    const roots: any[] = [];
+
+    carouselElements.forEach((element, index) => {
+      const mediaItemsData = element.getAttribute('data-media-items');
+      const align = element.getAttribute('data-align') as 'left' | 'center' | 'right' || 'center';
+      const width = element.getAttribute('data-width') || '600px';
+      
+      console.log(`🎠 [Preview] Processing carousel ${index}:`, { mediaItemsData, align, width });
+
+      if (mediaItemsData) {
+        try {
+          const mediaItems = JSON.parse(mediaItemsData);
+          console.log('🎠 [Preview] Parsed media items:', mediaItems);
+          
+          // Create a container for the React component
+          const container = document.createElement('div');
+          element.parentNode?.replaceChild(container, element);
+          
+          console.log('🎠 [Preview] Rendering MediaCarouselRenderer...');
+          // Render the carousel component
+          const root = ReactDOM.createRoot(container);
+          root.render(
+            <MediaCarouselRenderer
+              mediaItems={mediaItems}
+              align={align}
+              width={width}
+            />
+          );
+          roots.push(root);
+        } catch (error) {
+          console.error('❌ [Preview] Failed to parse carousel data:', error);
+        }
+      }
+    });
+
+    // Cleanup
+    return () => {
+      roots.forEach(root => {
+        try {
+          root.unmount();
+        } catch (e) {
+          // Ignore unmount errors
+        }
+      });
+    };
+  }, [formData.content]);
+
   return (
     <div className="w-full min-h-[400px]">
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -84,6 +145,7 @@ export function PostPreview({
 
         {/* Content Preview */}
         <div
+          ref={contentRef}
           className="prose dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white 
                    prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400"
           dangerouslySetInnerHTML={{ __html: formData.content || '<p class="text-gray-400 italic">No content yet...</p>' }}

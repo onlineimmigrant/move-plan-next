@@ -21,7 +21,11 @@ interface AdminButtonsProps {
   post?: Post;
 }
 
-export default function AdminButtons({ post }: AdminButtonsProps) {
+/**
+ * Admin action buttons for editing/creating posts
+ * @performance Memoized to prevent re-renders
+ */
+function AdminButtonsComponent({ post }: AdminButtonsProps) {
   const { openCreateModal, openEditModal } = usePostEditModal();
   const pathname = usePathname();
 
@@ -56,3 +60,6 @@ export default function AdminButtons({ post }: AdminButtonsProps) {
     </div>
   );
 }
+
+const AdminButtons = React.memo(AdminButtonsComponent);
+export default AdminButtons;

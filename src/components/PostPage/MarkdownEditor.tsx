@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import Button from '@/ui/Button';
+import Button from '../../ui/Button';
 
 interface MarkdownEditorProps {
   value: string;

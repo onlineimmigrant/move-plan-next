@@ -19,8 +19,9 @@ interface BottomSheetTOCProps {
 /**
  * Bottom Sheet TOC Component
  * Mobile-optimized TOC that slides up from bottom
+ * @performance Memoized to prevent re-renders when props unchanged
  */
-export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
+const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
   toc,
   handleScrollTo,
   title = 'Table of Contents',
@@ -193,3 +194,5 @@ export const BottomSheetTOC: React.FC<BottomSheetTOCProps> = ({
     </>
   );
 };
+
+export const BottomSheetTOC = React.memo(BottomSheetTOCComponent);

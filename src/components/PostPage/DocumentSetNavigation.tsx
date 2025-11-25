@@ -5,12 +5,18 @@ import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon, BookOpenIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
+/**
+ * Table of contents item structure
+ */
 interface TOCItem {
   level: number;
   text: string;
   id: string;
 }
 
+/**
+ * Article in a document set
+ */
 interface Article {
   id: string;
   title: string;
@@ -19,6 +25,9 @@ interface Article {
   toc: TOCItem[];
 }
 
+/**
+ * Document set structure
+ */
 interface DocumentSet {
   set: string;
   title: string;
@@ -26,14 +35,45 @@ interface DocumentSet {
   articles: Article[];
 }
 
+/**
+ * Props for DocumentSetNavigation component
+ */
 interface DocumentSetNavigationProps {
+  /** Current article slug */
   currentSlug: string;
+  /** Document set identifier */
   docSet: string;
+  /** Organization ID for API calls */
   organizationId: string;
+  /** Whether this is a doc_set type post */
   isDocSetType?: boolean;
 }
 
-const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
+/**
+ * Document Set Navigation Component
+ * 
+ * Provides previous/next navigation for articles within a document set.
+ * Includes Master TOC toggle and breadcrumb-style navigation.
+ * 
+ * @component
+ * @param {DocumentSetNavigationProps} props - Component props
+ * 
+ * @example
+ * <DocumentSetNavigation
+ *   currentSlug="getting-started"
+ *   docSet="user-guide"
+ *   organizationId="org-123"
+ *   isDocSetType={true}
+ * />
+ * 
+ * @accessibility
+ * - Uses nav landmark with descriptive aria-label
+ * - Keyboard navigable links
+ * - Clear visual indication of current article
+ * 
+ * @performance Memoized to prevent unnecessary re-renders
+ */
+const DocumentSetNavigationComponent: React.FC<DocumentSetNavigationProps> = ({
   currentSlug,
   docSet,
   organizationId,
@@ -93,6 +133,41 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
       return newSet;
     });
   };
+
+  // Prefetch adjacent articles for instant navigation
+  useEffect(() => {
+    if (!setData) return;
+
+    const currentIndex = setData.articles.findIndex(article => article.slug === currentSlug);
+    const adjacentSlugs: string[] = [];
+
+    // Add previous article
+    if (currentIndex > 0) {
+      adjacentSlugs.push(setData.articles[currentIndex - 1].slug);
+    }
+
+    // Add next article
+    if (currentIndex < setData.articles.length - 1) {
+      adjacentSlugs.push(setData.articles[currentIndex + 1].slug);
+    }
+
+    // Create prefetch link tags
+    adjacentSlugs.forEach(slug => {
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = `/${slug}`;
+      link.as = 'document';
+      document.head.appendChild(link);
+    });
+
+    // Cleanup: Remove prefetch links on unmount
+    return () => {
+      adjacentSlugs.forEach(slug => {
+        const links = document.head.querySelectorAll(`link[href="/${slug}"]`);
+        links.forEach(link => link.remove());
+      });
+    };
+  }, [setData, currentSlug]);
 
   if (isLoading || !setData) {
     return null;
@@ -218,25 +293,28 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
       </div>
 
       {/* Previous/Next Navigation */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {previousArticle ? (
-          <Link
-            href={`/${previousArticle.slug}`}
-            className="group flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-all w-full"
-          >
-            <div 
-              className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-              style={{ 
-                backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 10%, transparent)`,
-                color: themeColors.cssVars.primary.base
-              }}
+      <nav aria-label="Document set navigation">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {previousArticle ? (
+            <Link
+              href={`/${previousArticle.slug}`}
+              className="group flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-all w-full"
+              aria-label={`Previous: ${previousArticle.title}`}
             >
-              <ChevronLeftIcon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                Prev
-              </p>
+              <div 
+                className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                style={{ 
+                  backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 10%, transparent)`,
+                  color: themeColors.cssVars.primary.base
+                }}
+                aria-hidden="true"
+              >
+                <ChevronLeftIcon className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                  Prev
+                </p>
               <p 
                 className="font-semibold text-gray-700 truncate transition-colors"
                 style={{ color: 'inherit' }}
@@ -264,6 +342,7 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
           <Link
             href={`/${nextArticle.slug}`}
             className="group flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 transition-all w-full"
+            aria-label={`Next: ${nextArticle.title}`}
           >
             <div className="flex-1 min-w-0 text-right">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
@@ -293,14 +372,17 @@ const DocumentSetNavigation: React.FC<DocumentSetNavigationProps> = ({
                 backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 10%, transparent)`,
                 color: themeColors.cssVars.primary.base
               }}
+              aria-hidden="true"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </div>
           </Link>
         )}
-      </div>
+        </div>
+      </nav>
     </div>
   );
 };
 
+const DocumentSetNavigation = React.memo(DocumentSetNavigationComponent);
 export default DocumentSetNavigation;
