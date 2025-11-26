@@ -6,7 +6,7 @@ export type ContentType = 'html' | 'markdown';
 export interface PostFormData {
   title: string;
   description: string;
-  content: string;
+  content?: string;
   contentType: ContentType;
   subsection: string;
   slug: string;

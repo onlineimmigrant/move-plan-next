@@ -94,7 +94,7 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
   // Render Markdown if content_type is 'markdown'
   if (post.content_type === 'markdown') {
     return (
-      <div className="w-full max-w-none prose prose-sm sm:prose-base lg:prose-lg prose-gray dark:prose-invert px-4 sm:px-0 overflow-hidden">
+      <div className="w-full max-w-none overflow-hidden">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw, rehypeSanitize]}
@@ -125,7 +125,7 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
   return (
     <div 
       ref={contentRef}
-      className="w-full max-w-none prose prose-sm sm:prose-base lg:prose-lg prose-gray dark:prose-invert px-4 sm:px-0 overflow-hidden"
+      className="w-full max-w-none overflow-hidden"
       dangerouslySetInnerHTML={{ __html: processedContent }}
     />
   );

@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "@/ui/Button";
 import { cn } from "@/lib/utils";
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type LogicOperator = 'is' | 'is_not' | 'contains' | 'not_contains' | 'gt' | 'lt' | 'answered' | 'not_answered';
 type LogicRule = { leftQuestionId: string; operator: LogicOperator; value?: string };
@@ -33,6 +34,15 @@ type Settings = {
   secondary_color?: string;
   font_family?: string;
   designStyle?: 'large' | 'compact';
+  designType?: 'classic' | 'card';
+  showCompanyLogo?: boolean;
+  columnLayout?: 1 | 2 | 3;
+  formPosition?: 'left' | 'center' | 'right';
+  contentColumns?: Array<{
+    position: 'left' | 'center' | 'right';
+    type: 'image' | 'video' | 'text';
+    content: string;
+  }>;
 };
 
 const colorMap: Record<string, string> = {
@@ -49,6 +59,10 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [startTime] = useState(Date.now());
+  const themeColors = useThemeColors();
+
+  const columnLayout = settings.columnLayout || 1;
+  const isStepped = true; // Always use stepped mode (one question per view)
 
   // Design style classes
   const isCompact = settings.designStyle === 'compact';
@@ -64,6 +78,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   const checkboxPaddingClass = isCompact ? 'p-4 space-x-4' : 'p-8 space-x-6';
   const checkboxTextClass = isCompact ? 'text-xl' : 'text-3xl';
   const checkboxSizeClass = isCompact ? 'w-5 h-5' : 'w-8 h-8';
+  const labelTextClass = isCompact ? 'text-base' : 'text-lg';
   const ratingButtonClass = isCompact ? 'w-12 h-12' : 'w-20 h-20';
   const ratingTextClass = isCompact ? 'text-xl' : 'text-3xl';
   const fileInputTextClass = isCompact ? 'text-base px-3 py-4' : 'text-xl px-6 py-8';
@@ -123,6 +138,184 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   }, [visibleQuestions.length]);
   
   const current = visibleQuestions[step];
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const completionTimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+      
+      const response = await fetch(`/api/forms/${form.id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          answers,
+          completionTimeSeconds,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to submit form:', error);
+        alert('Failed to submit form. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Form submitted successfully:', data);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to submit form. Please try again.');
+      setSubmitting(false);
+    }
+  };
+
+  const renderQuestionInput = (question: Question) => {
+    const inputClasses = `w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:outline-none transition-all`;
+    
+    switch (question.type) {
+      case "text":
+        return (
+          <input
+            type="text"
+            className={inputClasses}
+            placeholder="Type your answer here..."
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "email":
+        return (
+          <input
+            type="email"
+            className={inputClasses}
+            placeholder="your@email.com"
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "tel":
+        return (
+          <input
+            type="tel"
+            className={inputClasses}
+            placeholder="+1 (555) 000-0000"
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "url":
+        return (
+          <input
+            type="url"
+            className={inputClasses}
+            placeholder="https://example.com"
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "number":
+        return (
+          <input
+            type="number"
+            className={inputClasses}
+            placeholder="0"
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "date":
+        return (
+          <input
+            type="date"
+            className={inputClasses}
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "textarea":
+        return (
+          <textarea
+            rows={textareaRowsClass}
+            className={`w-full ${inputTextClass} ${textareaPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all resize-none`}
+            placeholder="Type your answer here..."
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          />
+        );
+      
+      case "dropdown":
+        return (
+          <select
+            className={inputClasses}
+            value={answers[question.id] || ""}
+            onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+          >
+            <option value="">Select an option</option>
+            {question.options?.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        );
+      
+      case "yesno":
+      case "multiple":
+        return (
+          <div className="space-y-2">
+            {question.options?.map((opt) => (
+              <label key={opt} className={`flex items-center gap-3 ${labelTextClass} cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors`}>
+                <input
+                  type="radio"
+                  name={question.id}
+                  value={opt}
+                  checked={answers[question.id] === opt}
+                  className={checkboxSizeClass}
+                  onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })}
+                />
+                <span>{opt}</span>
+              </label>
+            ))}
+          </div>
+        );
+      
+      case "checkbox":
+        return (
+          <div className="space-y-2">
+            {question.options?.map((opt) => {
+              const currentAnswers = answers[question.id] ? answers[question.id].split(',') : [];
+              const isChecked = currentAnswers.includes(opt);
+              
+              return (
+                <label key={opt} className={`flex items-center gap-3 ${labelTextClass} cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors`}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    className={checkboxSizeClass}
+                    onChange={(e) => {
+                      const newAnswers = e.target.checked
+                        ? [...currentAnswers, opt]
+                        : currentAnswers.filter(a => a !== opt);
+                      setAnswers({ ...answers, [question.id]: newAnswers.join(',') });
+                    }}
+                  />
+                  <span>{opt}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+      
+      default:
+        return <p className="text-gray-500">Unsupported question type: {question.type}</p>;
+    }
+  };
 
   const handleBack = () => {
     if (step > 0) {
@@ -184,21 +377,61 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
 
   if (!current) return null;
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
-      <div className="w-full max-w-3xl">
-        <AnimatePresence mode="wait">
-          <motion.div key={current.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
-            {/* Progress */}
-            <div className={`${progressClass} font-medium text-gray-600 uppercase tracking-wider`}>
-              Question {step + 1} of {visibleQuestions.length}
+  // Render content column helper
+  const renderContentColumn = (position: 'left' | 'center' | 'right') => {
+    const contentColumns = settings.contentColumns || [];
+    const contentColumn = contentColumns.find(col => col.position === position);
+    
+    if (!contentColumn || !contentColumn.content) {
+      return <div key={position} className="hidden md:block" />;
+    }
+    
+    return (
+      <div key={position} className="flex items-center">
+        <div className="w-full space-y-4">
+          {contentColumn.type === 'image' && (
+            <img 
+              src={contentColumn.content} 
+              alt="Column content" 
+              className="w-full h-auto rounded-lg shadow-md"
+            />
+          )}
+          {contentColumn.type === 'video' && (
+            <div className="aspect-video">
+              <iframe
+                src={contentColumn.content}
+                className="w-full h-full rounded-lg shadow-md"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
+          )}
+          {contentColumn.type === 'text' && (
+            <div className={`prose ${isCompact ? 'prose-sm' : 'prose-lg'} max-w-none`}>
+              {contentColumn.content.split('\n').map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
-            {/* Title & Description */}
-            <h1 className={`${titleClass} font-bold text-gray-900 leading-tight`}>{current.label}</h1>
-            {current.description && (
-              <p className={`${descriptionClass} text-gray-600 max-w-3xl mt-4 leading-relaxed`}>{current.description}</p>
-            )}
+  // The stepped form content (one question at a time)
+  const steppedFormContent = (
+    <AnimatePresence mode="wait">
+      <motion.div key={current.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
+        {/* Progress */}
+        <div className={`${progressClass} font-medium text-gray-600 uppercase tracking-wider`}>
+          Question {step + 1} of {visibleQuestions.length}
+        </div>
+
+        {/* Title & Description */}
+        <h1 className={`${titleClass} font-bold text-gray-900 leading-tight`}>{current.label}</h1>
+        {current.description && (
+          <p className={`${descriptionClass} text-gray-600 max-w-3xl mt-4 leading-relaxed`}>{current.description}</p>
+        )}
 
             {/* Field */}
             <div className="mt-8">
@@ -206,7 +439,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="text"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="Type your answer here..."
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -218,7 +451,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="email"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="your@email.com"
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -230,7 +463,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="tel"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="+1 (555) 000-0000"
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -242,7 +475,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="url"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="https://example.com"
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -254,7 +487,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="number"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="0"
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -266,7 +499,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <input
                   type="date"
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
                 />
@@ -276,7 +509,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <textarea
                   autoFocus
                   rows={textareaRowsClass}
-                  className={`w-full ${inputTextClass} ${textareaPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all resize-none`}
+                  className={`w-full ${inputTextClass} ${textareaPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all resize-none`}
                   placeholder="Share your thoughts..."
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -286,7 +519,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
               {current.type === "dropdown" && (
                 <select
                   autoFocus
-                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all bg-white cursor-pointer`}
+                  className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all bg-white cursor-pointer`}
                   value={answers[current.id] || ""}
                   onChange={(e) => {
                     setAnswers({ ...answers, [current.id]: e.target.value });
@@ -354,7 +587,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 <div className="space-y-4">
                   <input
                     type="file"
-                    className={`w-full ${fileInputTextClass} ${fileInputBorderClass} border-gray-300 focus:border-black focus:outline-none transition-all bg-white cursor-pointer file:mr-4 file:px-6 file:py-3 file:rounded-lg file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800`}
+                    className={`w-full ${fileInputTextClass} ${fileInputBorderClass} border-gray-300  focus:outline-none transition-all bg-white cursor-pointer file:mr-4 file:px-6 file:py-3 file:rounded-lg file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800`}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -420,6 +653,115 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
             </div>
           </motion.div>
         </AnimatePresence>
+  );
+
+  // Multi-column layout wrapper
+  if (columnLayout > 1) {
+    const formPosition = settings.formPosition || 'left';
+    const designType = settings.designType || 'classic';
+    const columnClass = columnLayout === 2 ? 'md:grid-cols-2' : columnLayout === 3 ? 'md:grid-cols-3' : '';
+    const positions: ('left' | 'center' | 'right')[] = columnLayout === 2 
+      ? ['left', 'right'] 
+      : ['left', 'center', 'right'];
+
+    // CSS for focus border color and radio/checkbox accent color using theme
+    const focusStyles = `
+      input:focus, textarea:focus, select:focus {
+        border-color: ${themeColors.cssVars.primary.base} !important;
+      }
+      input[type="radio"]:checked, input[type="checkbox"]:checked {
+        accent-color: ${themeColors.cssVars.primary.base};
+      }
+      input[type="radio"]:focus, input[type="checkbox"]:focus {
+        outline-color: ${themeColors.cssVars.primary.base};
+      }
+      label:has(input[type="radio"]:checked),
+      label:has(input[type="checkbox"]:checked) {
+        border-color: ${themeColors.cssVars.primary.base} !important;
+      }
+      label:hover:has(input[type="radio"]),
+      label:hover:has(input[type="checkbox"]) {
+        border-color: ${themeColors.cssVars.primary.light} !important;
+      }
+    `;
+
+    // Card design type: wrap in card with background
+    if (designType === 'card') {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+          <style>{focusStyles}</style>
+          <div className="w-full max-w-6xl">
+            <div className={`${isCompact ? 'p-8' : 'p-12'} bg-white shadow-2xl ${isCompact ? 'rounded-xl' : 'rounded-3xl'}`}>
+              <div className={`grid ${columnClass} gap-8`}>
+                {positions.map(position => 
+                  position === formPosition 
+                    ? <div key={position}>{steppedFormContent}</div>
+                    : renderContentColumn(position)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Classic design type: clean centered layout
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+        <style>{focusStyles}</style>
+        <div className="w-full max-w-6xl">
+          <div className={`grid ${columnClass} gap-8`}>
+            {positions.map(position => 
+              position === formPosition 
+                ? <div key={position} className="flex items-center justify-center">{steppedFormContent}</div>
+                : renderContentColumn(position)
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Single column layout (default)
+  const designType = settings.designType || 'classic';
+  
+  // CSS for focus border color and radio/checkbox accent color using theme
+  const focusStyles = `
+    input:focus, textarea:focus, select:focus {
+      border-color: ${themeColors.cssVars.primary.base} !important;
+    }
+    input[type="radio"]:checked, input[type="checkbox"]:checked {
+      accent-color: ${themeColors.cssVars.primary.base};
+    }
+    input[type="radio"]:focus, input[type="checkbox"]:focus {
+      outline-color: ${themeColors.cssVars.primary.base};
+    }
+    label:has(input[type="radio"]:checked),
+    label:has(input[type="checkbox"]:checked) {
+      border-color: ${themeColors.cssVars.primary.base} !important;
+    }
+    label:hover:has(input[type="radio"]),
+    label:hover:has(input[type="checkbox"]) {
+      border-color: ${themeColors.cssVars.primary.light} !important;
+    }
+  `;
+  
+  if (designType === 'card') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+        <style>{focusStyles}</style>
+        <div className={`relative w-full max-w-3xl ${isCompact ? 'p-8' : 'p-12'} bg-white dark:bg-gray-800 shadow-2xl ${isCompact ? 'rounded-xl' : 'rounded-3xl'}`}>
+          {steppedFormContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+      <style>{focusStyles}</style>
+      <div className="relative w-full max-w-3xl">
+        {steppedFormContent}
       </div>
     </div>
   );

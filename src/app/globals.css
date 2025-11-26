@@ -1103,3 +1103,56 @@ input:-webkit-autofill:active {
 .animate-slideDown {
   animation: slideDown 0.3s ease-out forwards;
 }
+
+/* Landing Page Styles */
+/* Hide header, footer, and breadcrumbs on landing pages */
+body[data-landing-page="true"] nav.fixed,
+body[data-landing-page="true"] footer[role="contentinfo"],
+body[data-landing-page="true"] nav[aria-label="Breadcrumb"],
+body[data-landing-page="true"] .breadcrumbs {
+  display: none !important;
+}
+
+/* Remove top spacing on landing pages (from fixed header compensation) */
+body[data-landing-page="true"] main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Remove margin from parent container on landing pages - override inline style */
+body[data-landing-page="true"] .main-content-wrapper {
+  margin-top: 0 !important;
+}
+
+/* Remove all margins and padding from landing page prose content */
+.landing-prose {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove top margin from first child in landing prose */
+.landing-prose > *:first-child {
+  margin-top: 0 !important;
+}
+
+/* Make admin buttons permanently visible on landing pages (desktop and mobile) */
+body[data-landing-page="true"] .landing-page-container .admin-buttons-container {
+  opacity: 1 !important;
+}
+
+/* Admin buttons visibility */
+.admin-buttons-container {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* On desktop (non-landing pages), hide by default and show on hover */
+@media (min-width: 768px) {
+  body:not([data-landing-page="true"]) .admin-buttons-container {
+    opacity: 0;
+  }
+  
+  body:not([data-landing-page="true"]) .group:hover .admin-buttons-container {
+    opacity: 1;
+  }
+}

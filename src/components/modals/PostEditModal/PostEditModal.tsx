@@ -120,7 +120,7 @@ export default function PostEditModal() {
   } = useInlineEdit(formData, updateField);
 
   // Table of Contents (for fullscreen mode)
-  const { toc, handleScrollTo } = useTOC(formData.content, isFullScreen);
+  const { toc, handleScrollTo } = useTOC(formData.content || '', isFullScreen);
 
   // Document sets
   const { availableSets } = useDocumentSets(isOpen);

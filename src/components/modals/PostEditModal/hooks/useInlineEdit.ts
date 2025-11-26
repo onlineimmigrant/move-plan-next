@@ -17,8 +17,8 @@ export function useInlineEdit(formData: PostFormData, updateField: (field: keyof
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
     const padding = 16;
 
-    let safeX = Math.max(padding, Math.min(x, viewportWidth - popoverWidth - padding));
-    let safeY = Math.max(padding, Math.min(y, viewportHeight - popoverHeight - padding));
+    const safeX = Math.max(padding, Math.min(x, viewportWidth - popoverWidth - padding));
+    const safeY = Math.max(padding, Math.min(y, viewportHeight - popoverHeight - padding));
 
     return { x: safeX, y: safeY };
   }, []);

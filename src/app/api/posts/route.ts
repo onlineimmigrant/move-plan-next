@@ -8,7 +8,7 @@ type BlogPostBody = {
   // Core fields
   title: string;
   slug: string;
-  content: string;
+  content?: string;
   description?: string;
   faq_section_is_title?: boolean;
   

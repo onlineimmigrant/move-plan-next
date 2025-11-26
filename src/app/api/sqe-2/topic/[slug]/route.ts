@@ -5,7 +5,7 @@ import { getOrganizationId } from '@/lib/supabase';
 type BlogPostBody = {
   title: string;
   slug: string;
-  content: string;
+  content?: string;
   description?: string;
   display_this_post?: boolean;
   display_as_blog_post?: boolean;

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, memo, lazy, Suspense } from 'react';
+import React, { useMemo, memo, lazy, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { PostPageSkeleton } from '@/components/PostPage/PostPageSkeleton';
 import { OptimizedPostImage } from '@/components/PostPage/OptimizedPostImage';
 import { LazyMarkdownRenderer } from '@/components/PostPage/LazyMarkdownRenderer';
+import Loading from '@/ui/Loading';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useDocumentSetLogic } from '@/hooks/useDocumentSetLogic';
 import { 
@@ -153,7 +154,37 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   // Performance monitoring (enabled for admins)
   const performanceVitals = usePerformanceMonitoring(isAdmin);
 
+  // Set data attribute immediately if we can detect landing page from initial post prop
+  useEffect(() => {
+    // Set immediately based on post.type if available
+    if (post?.type === 'landing') {
+      document.body.setAttribute('data-landing-page', 'true');
+    }
+  }, [post?.type]);
+
+  // Set data attribute on body for landing pages to hide header/footer/breadcrumbs
+  useEffect(() => {
+    if (visibility.isLandingPost) {
+      console.log('🎯 Setting data-landing-page attribute');
+      document.body.setAttribute('data-landing-page', 'true');
+      // Also log the wrapper element
+      const wrapper = document.querySelector('.main-content-wrapper');
+      console.log('🎯 main-content-wrapper element:', wrapper);
+      console.log('🎯 main-content-wrapper computed marginTop:', wrapper ? window.getComputedStyle(wrapper).marginTop : 'not found');
+    } else {
+      console.log('🎯 Removing data-landing-page attribute');
+      document.body.removeAttribute('data-landing-page');
+    }
+    return () => {
+      document.body.removeAttribute('data-landing-page');
+    };
+  }, [visibility.isLandingPost]);
+
   if (!translatedPost) {
+    // For landing pages, show clean loading instead of skeleton
+    if (post?.type === 'landing') {
+      return <Loading />;
+    }
     return <PostPageSkeleton />;
   }
 
@@ -206,15 +237,13 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                 <>
                   {visibility.showPostHeader && visibility.hasHeaderContent && (
                     <div
-                      onMouseEnter={() => setIsHeaderHovered(true)}
-                      onMouseLeave={() => setIsHeaderHovered(false)}
-                      className="relative px-4 sm:px-6 lg:px-0"
+                      className="relative px-4 sm:px-6 lg:px-0 group"
                     >
                       <Suspense fallback={<div className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg mb-8" />}>
                         <PostHeader
                           post={translatedPost}
                           isAdmin={isAdmin}
-                          showAdminButtons={isHeaderHovered}
+                          showAdminButtons={isAdmin}
                           minimal={visibility.isMinimalPost}
                         />
                       </Suspense>
@@ -338,7 +367,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
         </div>
         ) : null
       ) : (translatedPost.content && (
-        <div className="relative">
+        <div className="relative group landing-page-container">
           {isAdmin && (
             <div className="absolute top-4 right-4 z-50">
               <Suspense fallback={null}>
@@ -346,7 +375,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
               </Suspense>
             </div>
           )}
-          <Suspense fallback={<div className="h-screen bg-gray-100 dark:bg-gray-800 animate-pulse" />}>
+          <Suspense fallback={<Loading />}>
             <LandingPostContent post={{ ...translatedPost, content: translatedPost.content }} />
           </Suspense>
         </div>

@@ -97,13 +97,17 @@ export function usePostPageVisibility(post: Post | null, tocLength: number) {
 
   // Determine main padding based on content presence
   const mainPaddingClass = useMemo(() => {
+    // Landing pages should have no padding
+    if (isLandingPost) {
+      return 'w-full max-w-full overflow-x-hidden';
+    }
     // If minimal post with no header content and no post content, remove padding
     if (isMinimalPost && !hasHeaderContent && !post?.content) {
       return 'px-4 bg-white w-full max-w-full overflow-x-hidden';
     }
     // Default padding
     return 'px-4 sm:pt-4 sm:pb-16 bg-white w-full max-w-full overflow-x-hidden';
-  }, [isMinimalPost, hasHeaderContent, post?.content]);
+  }, [isLandingPost, isMinimalPost, hasHeaderContent, post?.content]);
 
   // Determine TOC padding
   const tocPaddingClass = useMemo(() => {

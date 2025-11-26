@@ -64,7 +64,15 @@ export async function GET(request: NextRequest) {
     // Get all forms for organization
     const { data: forms, error: fetchError } = await supabase
       .from('forms')
-      .select('id, title, description, published, created_at, updated_at')
+      .select(`
+        id, 
+        title, 
+        description, 
+        published, 
+        created_at, 
+        updated_at,
+        form_questions (id)
+      `)
       .eq('organization_id', organizationId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -74,7 +82,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch forms', details: fetchError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, forms }, { status: 200 });
+    // Add question count to each form
+    const formsWithCount = forms?.map(form => ({
+      ...form,
+      question_count: form.form_questions?.length || 0,
+      form_questions: undefined, // Remove the nested array
+    })) || [];
+
+    return NextResponse.json({ success: true, forms: formsWithCount }, { status: 200 });
   } catch (error: any) {
     console.error('Error in GET /api/forms:', error);
     return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });

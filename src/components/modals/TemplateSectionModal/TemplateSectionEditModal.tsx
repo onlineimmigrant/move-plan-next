@@ -319,6 +319,13 @@ export default function TemplateSectionEditModal() {
     }
   }, [editingSection]);
 
+  // Auto-open Forms menu when section_type is 'form_harmony'
+  useEffect(() => {
+    if (formData.section_type === 'form_harmony' && openMenu !== 'forms') {
+      setOpenMenu('forms');
+    }
+  }, [formData.section_type]);
+
   // Remove legacy focus management (now handled by useFocusTrap which restores previous focus)
 
   // Keyboard shortcuts
@@ -616,9 +623,9 @@ export default function TemplateSectionEditModal() {
       ) : (
         <Rnd
           default={{
-            x: (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2 - 560,
+            x: (typeof window !== 'undefined' ? window.innerWidth * 0.1 : 120),
             y: (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 - 450,
-            width: 1120,
+            width: (typeof window !== 'undefined' ? window.innerWidth * 0.8 : 1120),
             height: 900,
           }}
           minWidth={800}
@@ -662,14 +669,20 @@ export default function TemplateSectionEditModal() {
               {mode === 'create' ? 'Create Template Section' : 'Edit Template Section'}
             </h2>
           </div>
-          
-          <button
-            onClick={closeModal}
-            className="p-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 transition-colors"
-            aria-label="Close modal"
-          >
-            <XMarkIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                // Close entire modal, bypassing menu close
+                setOpenMenu(null);
+                closeModal();
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 transition-colors"
+              aria-label="Close modal"
+            >
+              <XMarkIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
         </div>
 
         {/* Mega Menu Buttons - Matching Hero Edit Modal */}
@@ -719,7 +732,7 @@ export default function TemplateSectionEditModal() {
             />
             
             {/* Mega Menu Panel */}
-            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto max-h-[calc(90vh-132px)] rounded-b-2xl" style={{ top: '132px' }}>
               <div className="max-w-7xl mx-auto px-6 py-6 h-full">
                 {menus.filter(menu => menu.id === openMenu).map((menu) => (
                   <div key={menu.id}>
@@ -1488,13 +1501,16 @@ export default function TemplateSectionEditModal() {
             />
             
             {/* Forms Panel */}
-            <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
+            <div className="absolute left-0 right-0 bottom-0 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
               <div className="max-w-4xl mx-auto px-6 py-6 h-full pb-24">
                 <FormsTab
                   formId={formData.form_id}
                   onFormIdChange={(newFormId) => {
                     setFormData(prev => ({ ...prev, form_id: newFormId }));
                   }}
+                  backgroundColor={formData.background_color}
+                  isGradient={formData.is_gradient}
+                  gradient={formData.gradient}
                 />
               </div>
             </div>

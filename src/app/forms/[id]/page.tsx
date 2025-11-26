@@ -38,19 +38,22 @@ export default async function PublicFormPage({ params }: { params: { id: string 
   if (tenant && form.organization_id !== tenant.organizationId) notFound();
   if (!tenant && form.organization_id) notFound(); // optionally allow global forms
 
-  // Load tenant settings for theming
-  const settingsResult = await supabase
-    .from("settings")
-    .select("primary_color, secondary_color, font_family")
-    .eq("organization_id", form.organization_id)
-    .single();
-  
-  const orgSettings = settingsResult.data;
+  // Use form's own settings (which include columnLayout, formPosition, contentColumns)
+  const formSettings = form.settings || {};
+  const settings = {
+    primary_color: formSettings.theme || 'purple',
+    font_family: formSettings.font_family || 'inter',
+    designStyle: formSettings.designStyle || 'large',
+    showCompanyLogo: formSettings.showCompanyLogo || false,
+    columnLayout: formSettings.columnLayout || 1,
+    formPosition: formSettings.formPosition || 'left',
+    contentColumns: formSettings.contentColumns || [],
+  };
 
   return (
     <FormRenderer
       form={form}
-      settings={orgSettings || { primary_color: "purple", font_family: "inter" }}
+      settings={settings}
     />
   );
 }

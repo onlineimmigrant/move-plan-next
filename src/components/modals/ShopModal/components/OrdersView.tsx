@@ -168,7 +168,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
   }, [organizationId, fetchPurchases]);
 
   const filteredPurchases = useMemo(() => {
-    let filtered = purchases.filter(purchase => {
+    const filtered = purchases.filter(purchase => {
       // Status filter
       if (filterStatus === 'active' && !purchase.is_active) return false;
       if (filterStatus === 'expired' && purchase.is_active) return false;

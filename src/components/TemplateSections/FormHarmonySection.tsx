@@ -3,6 +3,8 @@
 
 import React, { useEffect, useState, useRef, memo } from 'react';
 import { FormRenderer } from '@/components/tally/FormRenderer';
+import { CompanyLogo } from '@/components/modals/TemplateSectionModal/components/forms/components/CompanyLogo';
+import { useSettings } from '@/context/SettingsContext';
 
 interface FormHarmonySectionProps {
   formId: string;
@@ -31,6 +33,15 @@ type Settings = {
   secondary_color?: string;
   font_family?: string;
   designStyle?: 'large' | 'compact';
+  designType?: 'classic' | 'card';
+  showCompanyLogo?: boolean;
+  columnLayout?: 1 | 2 | 3;
+  formPosition?: 'left' | 'center' | 'right';
+  contentColumns?: Array<{
+    position: 'left' | 'center' | 'right';
+    type: 'image' | 'video' | 'text';
+    content: string;
+  }>;
 };
 
 // Cache forms to prevent refetching
@@ -45,6 +56,7 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
   const isMounted = useRef(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasLoadedRef = useRef(false);
+  const { settings: appSettings } = useSettings();
 
   useEffect(() => {
     isMounted.current = true;
@@ -107,6 +119,11 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
           primary_color: formSettings.theme || 'purple',
           font_family: formSettings.font_family || 'inter',
           designStyle: formSettings.designStyle || 'large',
+          designType: formSettings.designType || 'classic',
+          showCompanyLogo: formSettings.showCompanyLogo || false,
+          columnLayout: formSettings.columnLayout || 1,
+          formPosition: formSettings.formPosition || 'left',
+          contentColumns: formSettings.contentColumns || [],
         };
         
         // Cache the result
@@ -180,7 +197,13 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
   }
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className="relative pt-20 md:pt-16">
+      {settings?.showCompanyLogo && appSettings?.image && (
+        <CompanyLogo 
+          imageUrl={appSettings.image} 
+          designStyle={settings.designStyle || 'large'} 
+        />
+      )}
       <FormRenderer 
         form={form} 
         settings={settings || { primary_color: 'purple', font_family: 'inter' }} 

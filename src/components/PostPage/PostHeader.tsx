@@ -86,7 +86,7 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
   }, [post.is_with_author, post.author, post.is_company_author, brandName]);
 
   return (
-    <div className="post-header relative">
+    <div className="post-header relative group">
       {/* Section and Subsection - Hide for minimal */}
       {!minimal && (
         <>
@@ -141,8 +141,8 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
         <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mt-6 mb-12">{post.description}</p>
       )}
       
-      {/* Neomorphism Admin Buttons - Hover/Touch Activated */}
-      {isAdmin && showAdminButtons && (
+      {/* Admin Buttons - Debug: Always show */}
+      {showAdminButtons && (
         <AdminButtons post={post} />
       )} 
     </div>

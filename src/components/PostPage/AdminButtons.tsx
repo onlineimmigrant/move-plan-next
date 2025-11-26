@@ -40,7 +40,7 @@ function AdminButtonsComponent({ post }: AdminButtonsProps) {
   };
 
   return (
-    <div className="absolute top-0 right-0 flex items-center space-x-3 z-50">
+    <div className="admin-buttons-container absolute top-0 right-0 flex items-center space-x-3 z-50 transition-opacity duration-300">
       <Button 
         onClick={handleEdit}
         variant="edit_plus"

@@ -171,6 +171,10 @@ const TemplateSections: React.FC = () => {
   }, [pathname, basePath]);
 
   if (isLoading) {
+    // Don't show loading skeleton on landing pages to avoid distraction
+    if (typeof document !== 'undefined' && document.body.getAttribute('data-landing-page') === 'true') {
+      return null;
+    }
     return (
       <>
         {/* Show 3 general section skeletons while loading */}
