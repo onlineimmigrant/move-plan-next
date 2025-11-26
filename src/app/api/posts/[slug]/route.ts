@@ -277,6 +277,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
       author_config,
       product_config,
       media_config,
+      translations,
       organization_id: providedOrgId,
     } = body;
 
@@ -298,7 +299,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
     console.log('Checking if post exists for slug:', slug, 'organization_id:', organization_id);
     const { data: existingPost, error: fetchError } = await supabase
       .from('blog_post')
-      .select('id, display_config, organization_config, cta_config, author_config, product_config, media_config')
+      .select('id, display_config, organization_config, cta_config, author_config, product_config, media_config, translations')
       .eq('slug', slug)
       .or(`organization_id.eq.${organization_id},organization_id.is.null`)
       .single();
@@ -386,6 +387,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
         ...media_config,
       };
       console.log('📸 Merged media_config:', updateData.media_config);
+    }
+
+    if (translations !== undefined) {
+      console.log('🌐 API received translations:', translations);
+      console.log('🌐 Existing translations:', existingPost.translations);
+      updateData.translations = translations; // Replace entirely, don't merge
+      console.log('🌐 Updated translations:', updateData.translations);
     }
 
     if (Object.keys(updateData).length === 0) {

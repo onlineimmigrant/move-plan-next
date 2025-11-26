@@ -51,6 +51,7 @@ import {
   MediaSection,
   DisplaySection,
   DocumentSetSection,
+  TranslationsSection,
 } from './sections';
 
 // Import custom hooks
@@ -310,6 +311,10 @@ export default function PostEditModal() {
     ...(formData.postType === 'doc_set' ? [{ id: 'docset', label: 'Document Set', component: 'docset' }] : []),
   ];
 
+  const translationsSections = [
+    { id: 'translations', label: 'Manage Translations', component: 'translations' },
+  ];
+
   const menus = [
     {
       id: 'settings' as const,
@@ -317,20 +322,26 @@ export default function PostEditModal() {
       icon: Cog6ToothIcon,
       sections: settingsSections
     },
+    {
+      id: 'translations' as const,
+      label: 'Translations',
+      icon: GlobeAltIcon,
+      sections: translationsSections
+    },
   ];
 
   if (!isOpen || !mounted) return null;
 
   const modalContent = (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[10001]"
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[9999]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="post-modal-title"
     >
-      {/* Backdrop */}
+      {/* Backdrop - More transparent with blur */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/15 backdrop-blur-md"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -343,7 +354,7 @@ export default function PostEditModal() {
               (focusTrapRef as React.MutableRefObject<HTMLElement | null>).current = el;
             }
           }}
-          className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl 
+          className="relative w-full h-[90vh] flex flex-col bg-white/40 dark:bg-gray-900/40 backdrop-blur-2xl 
                    rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
           onClick={(e) => e.stopPropagation()}
         >
@@ -352,12 +363,12 @@ export default function PostEditModal() {
       ) : (
         <Rnd
           default={{
-            x: (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2 - 560,
+            x: (typeof window !== 'undefined' ? window.innerWidth : 1920) * 0.075, // 7.5% margin on each side (85% width)
             y: (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 - 450,
-            width: 1120,
+            width: (typeof window !== 'undefined' ? window.innerWidth : 1920) * 0.85, // 85% of viewport width
             height: 900,
           }}
-          minWidth={800}
+          minWidth={1000}
           minHeight={700}
           bounds="window"
           dragHandleClassName="modal-drag-handle"
@@ -370,7 +381,7 @@ export default function PostEditModal() {
                 (focusTrapRef as React.MutableRefObject<HTMLElement | null>).current = el;
               }
             }}
-            className="relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl 
+            className="relative h-full flex flex-col bg-white/40 dark:bg-gray-900/40 backdrop-blur-2xl 
                      rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
             onClick={(e) => e.stopPropagation()}
           >
@@ -471,15 +482,17 @@ export default function PostEditModal() {
                   </button>
                 </div>
                 
-                {/* Grid layout for sections - Always 3 columns on desktop */}
-                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {/* Grid layout for sections - Full width for translations, 3 columns for settings */}
+                <div className={openMenu === 'translations' ? '' : 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}>
                   {menus.find(m => m.id === openMenu)?.sections.map((section) => (
-                    <div key={section.id} className="rounded-lg p-4 border border-white/20 dark:border-gray-700/20">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 
-                                   border-b border-white/20 dark:border-gray-700/20">
-                        {section.label}
-                      </h3>
-                      <div className="space-y-3">
+                    <div key={section.id} className={openMenu === 'translations' ? '' : 'rounded-lg p-4 border border-white/20 dark:border-gray-700/20'}>
+                      {openMenu !== 'translations' && (
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 
+                                     border-b border-white/20 dark:border-gray-700/20">
+                          {section.label}
+                        </h3>
+                      )}
+                      <div className={openMenu === 'translations' ? '' : 'space-y-3'}>
                         {section.component === 'type' && (
                           <TypeSection 
                             formData={formData} 
@@ -517,6 +530,15 @@ export default function PostEditModal() {
                             onOpenMediaGallery={openMediaGallery}
                             postSlug={editingPost?.slug}
                             carouselRef={carouselRef}
+                          />
+                        )}
+                        {section.component === 'translations' && (
+                          <TranslationsSection 
+                            formData={formData} 
+                            updateField={updateField}
+                            primaryColor={primary.base}
+                            hasUnsavedChanges={isDirty}
+                            setHasUnsavedChanges={setIsDirty}
                           />
                         )}
                       </div>
@@ -690,6 +712,10 @@ export default function PostEditModal() {
           onCodeViewChange={setIsCodeView}
           postType={formData.postType}
           initialCodeView={formData.postType === 'landing'}
+          postTitle={formData.title}
+          postDescription={formData.description}
+          onTitleChange={(newTitle) => updateField('title', newTitle)}
+          onDescriptionChange={(newDescription) => updateField('description', newDescription)}
         />
       </div>
     );

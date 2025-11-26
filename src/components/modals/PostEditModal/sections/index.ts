@@ -6,3 +6,4 @@ export { SeoSection } from './SeoSection';
 export { MediaSection } from './MediaSection';
 export { DisplaySection } from './DisplaySection';
 export { DocumentSetSection } from './DocumentSetSection';
+export { TranslationsSection } from './TranslationsSection';

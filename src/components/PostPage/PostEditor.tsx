@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { htmlToMarkdown, markdownToHtml, cleanHtml, unescapeMarkdown } from './PostEditor/utils/converters';
@@ -22,7 +22,8 @@ import {
   useEditorConfig,
   usePostEditorState,
   useEditorKeyboardShortcuts,
-  useTouchScrolling
+  useTouchScrolling,
+  useContentEnhancement
 } from './PostEditor/hooks';
 import { 
   EditorModeToggle, 
@@ -33,7 +34,8 @@ import {
   HtmlEditorToolbar,
   HtmlEditorView,
   CarouselControls,
-  VideoControls
+  VideoControls,
+  AIEnhancementModal
 } from './PostEditor/components';
 
 const PostEditor: React.FC<PostEditorProps> = ({ 
@@ -46,7 +48,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
   postType = 'default',
   initialCodeView,
   mediaConfig,
-  onMediaConfigChange
+  onMediaConfigChange,
+  postTitle,
+  postDescription,
+  onTitleChange,
+  onDescriptionChange
 }) => {
   const themeColors = useThemeColors();
   
@@ -199,6 +205,115 @@ const PostEditor: React.FC<PostEditorProps> = ({
     onContentChange
   );
 
+  // AI Enhancement state and handlers
+  const { enhanceContent, isEnhancing, error: enhanceError, enhancementResult, clearResult } = useContentEnhancement();
+  const [showAIEnhancementModal, setShowAIEnhancementModal] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [hasSelection, setHasSelection] = useState(false);
+
+  // Track selection changes in visual editor
+  useEffect(() => {
+    if (!editor || editorMode !== 'visual') return;
+    
+    const updateSelection = () => {
+      const { from, to } = editor.state.selection;
+      const text = editor.state.doc.textBetween(from, to, ' ');
+      setSelectedText(text);
+      setHasSelection(text.trim().length > 0);
+    };
+
+    editor.on('selectionUpdate', updateSelection);
+    return () => {
+      editor.off('selectionUpdate', updateSelection);
+    };
+  }, [editor, editorMode]);
+
+  // Track selection changes in markdown editor
+  useEffect(() => {
+    if (editorMode !== 'markdown') return;
+
+    const handleSelectionChange = () => {
+      const textarea = document.querySelector('.markdown-editor-textarea') as HTMLTextAreaElement;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value.substring(start, end);
+      setSelectedText(text);
+      setHasSelection(text.trim().length > 0);
+    };
+
+    // Add listeners to track selection
+    const textarea = document.querySelector('.markdown-editor-textarea') as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.addEventListener('mouseup', handleSelectionChange);
+      textarea.addEventListener('keyup', handleSelectionChange);
+      textarea.addEventListener('select', handleSelectionChange);
+    }
+
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener('mouseup', handleSelectionChange);
+        textarea.removeEventListener('keyup', handleSelectionChange);
+        textarea.removeEventListener('select', handleSelectionChange);
+      }
+    };
+  }, [editorMode]);
+
+  const handleAIEnhance = () => {
+    if (hasSelection && selectedText.trim()) {
+      setShowAIEnhancementModal(true);
+    }
+  };
+
+  const handleApplyEnhancement = (enhancedContent: string) => {
+    if (!enhancedContent) return;
+
+    if (editorMode === 'markdown') {
+      // Handle markdown mode with proper spacing
+      const textarea = document.querySelector('.markdown-editor-textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        
+        // Check if we need to add spacing before and after
+        const beforeChar = start > 0 ? markdownContent.charAt(start - 1) : '';
+        const afterChar = end < markdownContent.length ? markdownContent.charAt(end) : '';
+        
+        // Add newline before if the previous character is not whitespace or newline
+        const needsSpaceBefore = beforeChar && beforeChar !== '\n' && start > 0;
+        // Add newline after if the next character is not whitespace or newline
+        const needsSpaceAfter = afterChar && afterChar !== '\n' && end < markdownContent.length;
+        
+        const contentToInsert = 
+          (needsSpaceBefore ? '\n\n' : '') + 
+          enhancedContent + 
+          (needsSpaceAfter ? '\n\n' : '');
+        
+        const newContent = markdownContent.substring(0, start) + contentToInsert + markdownContent.substring(end);
+        setMarkdownContent(newContent);
+        
+        // Update cursor position
+        setTimeout(() => {
+          textarea.focus();
+          const newCursorPos = start + contentToInsert.length;
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+      }
+    } else if (editor) {
+      // Handle visual editor
+      editor.chain().focus().deleteSelection().insertContent(enhancedContent).run();
+    }
+    
+    setShowAIEnhancementModal(false);
+    clearResult(); // Clear result after applying
+  };
+
+  const handleCloseEnhancementModal = () => {
+    setShowAIEnhancementModal(false);
+    clearResult(); // Clear result when closing
+  };
+
   // Find & Replace handlers hook
   const { findMatches, findNext, findPrevious, replaceCurrent, replaceAll } = useFindReplaceHandlers(
     htmlContent,
@@ -273,6 +388,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
     cleanHtml,
     unescapeMarkdown,
     formatHTML: formatHTMLWrapper,
+    pendingContentType,
   });
 
   // Update history when HTML content changes
@@ -404,6 +520,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
             toggleHighlight={toggleHighlightWrapper}
             setShowTableSubmenu={setShowTableSubmenu}
             showTableSubmenu={showTableSubmenu}
+            onAIEnhance={handleAIEnhance}
+            hasSelection={hasSelection}
           />
         )}
 
@@ -495,6 +613,26 @@ const PostEditor: React.FC<PostEditorProps> = ({
           finishCarouselCreation={finishCarouselCreation}
           cancelContentTypeChange={cancelContentTypeChange}
           confirmContentTypeChange={confirmContentTypeChange}
+        />
+
+        {/* AI Enhancement Modal */}
+        <AIEnhancementModal
+          isOpen={showAIEnhancementModal}
+          onClose={handleCloseEnhancementModal}
+          selectedText={selectedText}
+          onApply={handleApplyEnhancement}
+          scope="selection"
+          enhanceContent={enhanceContent}
+          isEnhancing={isEnhancing}
+          error={enhanceError}
+          enhancementResult={enhancementResult}
+          clearResult={clearResult}
+          postTitle={postTitle}
+          postDescription={postDescription}
+          postContent={htmlContent}
+          onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
+          editorMode={editorMode}
         />
 
         {/* Editor Content */}

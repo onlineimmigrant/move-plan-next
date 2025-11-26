@@ -16,6 +16,11 @@ export interface PostEditorProps {
     unsplash_attribution?: UnsplashAttribution;
   };
   onMediaConfigChange?: (mediaConfig: { main_photo?: string; unsplash_attribution?: UnsplashAttribution }) => void;
+  // For AI enhancement
+  postTitle?: string;
+  postDescription?: string;
+  onTitleChange?: (title: string) => void;
+  onDescriptionChange?: (description: string) => void;
 }
 
 /**

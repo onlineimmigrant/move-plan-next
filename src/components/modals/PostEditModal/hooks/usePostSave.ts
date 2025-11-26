@@ -80,6 +80,9 @@ export function usePostSave(
             pexels_attribution: formData.mediaConfig.pexels_attribution 
           }),
         },
+        ...(formData.translations && Object.keys(formData.translations).length > 0 && {
+          translations: formData.translations
+        }),
       };
 
       if (formData.authorName.trim()) postData.author_name = formData.authorName.trim();

@@ -36,6 +36,7 @@ interface Post {
   doc_set_order?: number | null;
   doc_set_title?: string | null;
   type?: 'default' | 'minimal' | 'landing' | 'doc_set';
+  translations?: Record<string, { title?: string; description?: string; content?: string }>;
 }
 
 // Flatten JSONB style fields similar to API route
@@ -69,6 +70,7 @@ function flattenPost(raw: any): Post | null {
     type: raw.display_config?.type ?? raw.type,
     reviews: raw.reviews,
     faqs: raw.faqs,
+    translations: raw.translations ?? {},
   } as Post;
 }
 
@@ -83,7 +85,7 @@ async function fetchPostData(slug: string): Promise<Post | null> {
     console.log('🔍 [ServerSide] Fetching post (direct) slug:', slug, 'org:', organizationId);
     const { data, error } = await supabase
       .from('blog_post')
-      .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config')
+      .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config, translations')
       .eq('slug', slug)
       .eq('organization_id', organizationId)
       .maybeSingle();
@@ -132,7 +134,7 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* Client component for interactive functionality */}
       <PerfPostMount />
       <PostPageErrorBoundary>
-        <PostPageClient post={post} slug={slug} />
+        <PostPageClient post={post} slug={slug} locale={locale} />
       </PostPageErrorBoundary>
     </>
   );

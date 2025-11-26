@@ -33,3 +33,5 @@ export { useEditorConfig } from './useEditorConfig';
 export { usePostEditorState } from './usePostEditorState';
 export { useEditorKeyboardShortcuts } from './useEditorKeyboardShortcuts';
 export { useTouchScrolling } from './useTouchScrolling';
+export { useContentEnhancement } from './useContentEnhancement';
+export type { EnhancementType, EnhancementScope } from './useContentEnhancement';

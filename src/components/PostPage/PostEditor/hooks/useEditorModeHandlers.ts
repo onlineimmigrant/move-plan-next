@@ -24,6 +24,7 @@ interface EditorModeHandlersProps {
   cleanHtml: (html: string) => string;
   unescapeMarkdown: (text: string) => string;
   formatHTML: (html: string, indentType: 'spaces' | 'tabs', indentSize: number, lineEnding: 'LF' | 'CRLF') => string;
+  pendingContentType: 'html' | 'markdown' | null;
 }
 
 export interface EditorModeHandlers {
@@ -55,6 +56,7 @@ export function useEditorModeHandlers({
   cleanHtml,
   unescapeMarkdown,
   formatHTML,
+  pendingContentType,
 }: EditorModeHandlersProps): EditorModeHandlers {
   const switchEditorMode = (targetMode: EditorMode) => {
     // Prevent switching to visual editor for landing pages
@@ -162,10 +164,33 @@ export function useEditorModeHandlers({
   };
 
   const confirmContentTypeChange = () => {
-    const pendingContentType = null; // This will be managed in the parent state
+    if (!pendingContentType) return;
     
-    // This function needs access to pendingContentType from state
-    // We'll handle this in the integration phase
+    // Switch to appropriate editor mode
+    if (pendingContentType === 'markdown') {
+      switchEditorMode('markdown');
+    } else {
+      // For HTML, default to visual mode if available
+      if (postType !== 'landing') {
+        switchEditorMode('visual');
+      } else {
+        switchEditorMode('html');
+      }
+    }
+    
+    // Get current content based on current mode
+    const currentContent = editorMode === 'markdown' ? markdownContent : 
+                          editorMode === 'html' ? htmlContent : 
+                          editor?.getHTML() || '';
+    
+    // Notify parent via onContentChange with the new content type
+    if (onContentChange) {
+      onContentChange(currentContent, pendingContentType);
+    }
+    
+    // Close modal and reset
+    setShowContentTypeModal(false);
+    setPendingContentType(null);
   };
 
   const cancelContentTypeChange = () => {

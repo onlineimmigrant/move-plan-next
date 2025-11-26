@@ -3,6 +3,7 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import Button from '@/ui/Button';
+import { SparklesIcon } from '@heroicons/react/24/outline';
 
 interface VisualEditorToolbarProps {
   editor: Editor;
@@ -15,6 +16,8 @@ interface VisualEditorToolbarProps {
   toggleHighlight: () => void;
   setShowTableSubmenu: (show: boolean) => void;
   showTableSubmenu: boolean;
+  onAIEnhance?: () => void;
+  hasSelection?: boolean;
 }
 
 export const VisualEditorToolbar: React.FC<VisualEditorToolbarProps> = ({
@@ -28,10 +31,30 @@ export const VisualEditorToolbar: React.FC<VisualEditorToolbarProps> = ({
   toggleHighlight,
   setShowTableSubmenu,
   showTableSubmenu,
+  onAIEnhance,
+  hasSelection = false,
 }) => {
   return (
     <div className="sticky top-[69px] z-40 px-4 py-2 backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 border-b border-white/20 dark:border-gray-700/20">
       <div className="flex flex-wrap gap-1 items-center">
+        {/* AI Enhancement Button - First position for visibility */}
+        {onAIEnhance && (
+          <>
+            <Button
+              size="sm"
+              onClick={onAIEnhance}
+              variant="outline"
+              disabled={!hasSelection}
+              title={hasSelection ? "Enhance selected text with AI" : "Select text to enhance with AI"}
+              className="text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <SparklesIcon className="w-4 h-4 mr-1" />
+              AI Enhance
+            </Button>
+            <div className="h-6 w-px bg-gray-300 mx-1"></div>
+          </>
+        )}
+        
         {/* Text formatting */}
         <Button
           size="sm"

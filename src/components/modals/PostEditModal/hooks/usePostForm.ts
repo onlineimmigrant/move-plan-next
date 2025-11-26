@@ -33,6 +33,8 @@ export function usePostForm(editingPost: any, mode: 'create' | 'edit', isOpen: b
     docSetOrder: '',
     docSetTitle: '',
     section: '',
+    organizationId: '',
+    translations: {},
   });
 
   const [isDirty, setIsDirty] = useState(false);
@@ -68,6 +70,8 @@ export function usePostForm(editingPost: any, mode: 'create' | 'edit', isOpen: b
           docSetOrder: post.doc_set_order?.toString() || post.organization_config?.doc_set_order?.toString() || '',
           docSetTitle: post.doc_set_title || post.organization_config?.doc_set_title || '',
           section: post.section || post.organization_config?.section_id?.toString() || '',
+          organizationId: post.organization_id || '',
+          translations: post.translations || {},
         };
 
         setFormData(newFormData);
@@ -98,6 +102,8 @@ export function usePostForm(editingPost: any, mode: 'create' | 'edit', isOpen: b
           docSetOrder: '',
           docSetTitle: '',
           section: '',
+          organizationId: '',
+          translations: {},
         });
         initialLoadRef.current = false;
       }

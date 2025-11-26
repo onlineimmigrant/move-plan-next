@@ -32,6 +32,57 @@ const MasterTOC = lazy(() => import('@/components/PostPage/MasterTOC'));
 // Lazy load admin-only components (only loads for admins)
 const AdminButtons = lazy(() => import('@/components/PostPage/AdminButtons'));
 
+/**
+ * Utility function to get translated content
+ * @param defaultContent - The default content (fallback)
+ * @param translations - JSONB object with translations
+ * @param locale - Current locale
+ * @param field - Field name (title, description, content)
+ * @returns Translated content or default content
+ */
+const getTranslatedContent = (
+  defaultContent: string | undefined,
+  translations: Record<string, { title?: string; description?: string; content?: string }> | undefined,
+  locale: string,
+  field: 'title' | 'description' | 'content'
+): string | undefined => {
+  // If no default content, return undefined
+  if (!defaultContent) {
+    return undefined;
+  }
+
+  // List of supported locales
+  const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+  
+  // Only consider it a locale if it's exactly 2 characters AND in our supported list
+  const isValidLocale = locale && locale.length === 2 && supportedLocales.includes(locale);
+  
+  // If no valid locale, return default content
+  if (!isValidLocale) {
+    console.log('Translation: No valid locale provided, using default content');
+    return defaultContent;
+  }
+
+  // If no translations object exists, return default content
+  if (!translations) {
+    console.log('Translation: No translations available, using default content');
+    return defaultContent;
+  }
+
+  // Try to get translation for the current locale
+  const localeTranslations = translations[locale];
+  
+  // If translation exists for locale and field is not empty, use it
+  if (localeTranslations && localeTranslations[field] && localeTranslations[field]!.trim() !== '') {
+    console.log(`Translation: Found ${field} translation for locale '${locale}', using translated content`);
+    return localeTranslations[field];
+  }
+
+  // If no translation for current locale, return the original default content
+  console.log(`Translation: No ${field} translation found for locale '${locale}', using default content`);
+  return defaultContent;
+};
+
 interface Post {
   id: string;
   slug: string;
@@ -60,14 +111,24 @@ interface Post {
   doc_set?: string | null;
   doc_set_order?: number | null;
   doc_set_title?: string | null;
+  translations?: Record<string, { title?: string; description?: string; content?: string }>;
 }
 
 interface PostPageClientProps {
   post: Post;
   slug: string;
+  locale: string;
 }
 
-const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
+const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale }) => {
+  // Apply translations based on locale
+  const translatedPost = useMemo(() => ({
+    ...post,
+    title: getTranslatedContent(post.title, post.translations, locale, 'title'),
+    description: getTranslatedContent(post.description, post.translations, locale, 'description'),
+    content: getTranslatedContent(post.content, post.translations, locale, 'content'),
+  }), [post, locale]);
+
   // Theme and base URL
   const themeColors = useThemeColors();
   const baseUrl = useMemo(() =>
@@ -76,11 +137,11 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   );
 
   // Custom hooks for organized logic
-  const { toc, handleScrollTo, contentRef } = usePostPageTOC(post);
-  const visibility = usePostPageVisibility(post, toc.length);
-  const { isAdmin, isHeaderHovered, setIsHeaderHovered, makeEditable } = usePostPageAdmin(post, slug, baseUrl);
-  const { shouldShowMainContent, shouldShowNoContentMessage } = usePostPageEffects(post, slug);
-  const docSet = useDocumentSetLogic(post);
+  const { toc, handleScrollTo, contentRef } = usePostPageTOC(translatedPost);
+  const visibility = usePostPageVisibility(translatedPost, toc.length);
+  const { isAdmin, isHeaderHovered, setIsHeaderHovered, makeEditable } = usePostPageAdmin(translatedPost, slug, baseUrl);
+  const { shouldShowMainContent, shouldShowNoContentMessage } = usePostPageEffects(translatedPost, slug);
+  const docSet = useDocumentSetLogic(translatedPost);
   
   // Reading progress tracking (only for default and doc_set posts)
   const showProgress = visibility.postType === 'default' || visibility.postType === 'doc_set';
@@ -92,12 +153,12 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
   // Performance monitoring (enabled for admins)
   const performanceVitals = usePerformanceMonitoring(isAdmin);
 
-  if (!post) {
+  if (!translatedPost) {
     return <PostPageSkeleton />;
   }
 
   // For minimal posts with no header and no content, return empty fragment
-  if (visibility.isMinimalPost && !visibility.hasHeaderContent && !post?.content) {
+  if (visibility.isMinimalPost && !visibility.hasHeaderContent && !translatedPost?.content) {
     return <></>;
   }
 
@@ -151,7 +212,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                     >
                       <Suspense fallback={<div className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg mb-8" />}>
                         <PostHeader
-                          post={post}
+                          post={translatedPost}
                           isAdmin={isAdmin}
                           showAdminButtons={isHeaderHovered}
                           minimal={visibility.isMinimalPost}
@@ -160,7 +221,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                     </div>
                   )}
                   
-                  {post.content && (
+                  {translatedPost.content && (
                     <article
                       ref={contentRef}
                       className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container px-4 sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
@@ -171,9 +232,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                         maxWidth: '100%',
                       }}
                     >
-                      {post.content_type === 'markdown' ? (
+                      {translatedPost.content_type === 'markdown' ? (
                         <LazyMarkdownRenderer
-                          content={post.content}
+                          content={translatedPost.content}
                           components={{
                             img: ({node, ...props}) => (
                               <OptimizedPostImage
@@ -197,7 +258,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
                           }}
                         />
                       ) : (
-                        <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                        <div dangerouslySetInnerHTML={{ __html: translatedPost.content }} />
                       )}
                     </article>
                   )}
@@ -276,7 +337,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
           </aside>
         </div>
         ) : null
-      ) : (post.content && (
+      ) : (translatedPost.content && (
         <div className="relative">
           {isAdmin && (
             <div className="absolute top-4 right-4 z-50">
@@ -286,7 +347,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug }) => {
             </div>
           )}
           <Suspense fallback={<div className="h-screen bg-gray-100 dark:bg-gray-800 animate-pulse" />}>
-            <LandingPostContent post={{ ...post, content: post.content }} />
+            <LandingPostContent post={{ ...translatedPost, content: translatedPost.content }} />
           </Suspense>
         </div>
       ))}

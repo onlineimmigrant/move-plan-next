@@ -238,7 +238,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
+              className="markdown-editor-textarea flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
               style={{ minHeight: '500px' }}
             />
           </div>

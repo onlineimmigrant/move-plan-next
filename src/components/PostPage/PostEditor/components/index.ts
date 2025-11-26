@@ -10,3 +10,5 @@ export { CarouselControls } from './CarouselControls';
 export { VideoControls } from './VideoControls';
 export { EditorErrorBoundary } from './EditorErrorBoundary';
 export { ImageGalleryModalLazy, LazyModalWrapper } from './LazyModals';
+export { AIEnhancementModal } from './AIEnhancementModal';
+

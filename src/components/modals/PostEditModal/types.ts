@@ -41,6 +41,8 @@ export interface PostFormData {
   docSetOrder: string;
   docSetTitle: string;
   section: string;
+  organizationId?: string;
+  translations?: Record<string, { title?: string; description?: string; content?: string }>;
 }
 
 export interface TOCItem {

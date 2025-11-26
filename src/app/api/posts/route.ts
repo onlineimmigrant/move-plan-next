@@ -51,6 +51,8 @@ type BlogPostBody = {
     };
   };
   
+  translations?: Record<string, { title?: string; description?: string; content?: string }>;
+  
   // Metadata
   organization_id?: number;
   created_on?: string;
@@ -225,6 +227,7 @@ export async function POST(request: NextRequest) {
       author_config = {},
       product_config = {},
       media_config = {},
+      translations = {},
     } = body;
 
     // Extract individual fields for easier handling
@@ -319,6 +322,8 @@ export async function POST(request: NextRequest) {
       },
       
       media_config,
+      
+      ...(Object.keys(translations).length > 0 && { translations }),
     };
     
     const { data: newPost, error: insertError } = await supabase
