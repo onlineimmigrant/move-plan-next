@@ -49,7 +49,7 @@ export default function TemplateHeadingSectionEditModal() {
   const { formData, setFormData } = useHeadingForm(editingSection);
 
   // Part toggles for title parts 2 and 3
-  const { showPart2, showPart3, setShowPart2, setShowPart3 } = usePartToggles(formData.name_part_2, formData.name_part_3);
+  // Multi-part titles removed - now using single title field
 
   // Theme colors
   const themeColors = useThemeColors();
@@ -112,7 +112,7 @@ export default function TemplateHeadingSectionEditModal() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (formData.name.trim() && formData.description_text.trim()) {
+        if (formData.title.trim()) {
           handleSave(formData);
         }
       }
@@ -149,12 +149,12 @@ export default function TemplateHeadingSectionEditModal() {
       const timer = setTimeout(() => setPreviewRefreshing(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [formData.name, formData.description_text, formData.button_text, formData.image, formData.background_color, isOpen]);
+  }, [formData.title, formData.description, formData.button_text, formData.image, formData.background_color, isOpen]);
 
   // Inline editing handlers
   const handleInlineEditOpen = (field: 'title' | 'description', event: React.MouseEvent) => {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
-    const value = field === 'title' ? formData.name : formData.description_text;
+    const value = field === 'title' ? formData.title : formData.description;
     setInlineEdit({
       field,
       value: value || '',
@@ -165,9 +165,9 @@ export default function TemplateHeadingSectionEditModal() {
   const handleInlineEditSave = () => {
     if (inlineEdit.field && inlineEdit.value.trim()) {
       if (inlineEdit.field === 'title') {
-        setFormData({ ...formData, name: inlineEdit.value });
+        setFormData({ ...formData, title: inlineEdit.value });
       } else {
-        setFormData({ ...formData, description_text: inlineEdit.value });
+        setFormData({ ...formData, description: inlineEdit.value });
       }
     }
     setInlineEdit({ field: null, value: '', position: { x: 0, y: 0 } });
@@ -185,15 +185,8 @@ export default function TemplateHeadingSectionEditModal() {
     setFormData,
     openColorPickers: {
       titleColor: openColorPickers.titleColor,
-      titleGradientFrom: openColorPickers.titleGradientFrom,
-      titleGradientVia: openColorPickers.titleGradientVia,
-      titleGradientTo: openColorPickers.titleGradientTo,
     },
     toggleColorPicker,
-    showPart2,
-    showPart3,
-    setShowPart2,
-    setShowPart3,
     primaryColor: primary.base,
   };
 
@@ -210,6 +203,11 @@ export default function TemplateHeadingSectionEditModal() {
   const buttonSectionProps = {
     formData,
     setFormData,
+    openColorPickers: {
+      buttonColor: openColorPickers.buttonColor,
+      buttonTextColor: openColorPickers.buttonTextColor,
+    },
+    toggleColorPicker,
     primaryColor: primary.base,
   };
 
@@ -239,6 +237,7 @@ export default function TemplateHeadingSectionEditModal() {
         isOpen={isOpen}
         onClose={closeModal}
         size="large"
+        disableBodyScrollLock={true}
         className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl"
       >
         <StandardModalHeader
@@ -433,7 +432,7 @@ export default function TemplateHeadingSectionEditModal() {
                 variant="primary"
                 onClick={() => handleSave(formData)}
                 loading={isSaving}
-                disabled={!formData.name.trim() || !formData.description_text.trim()}
+                disabled={!formData.title.trim()}
                 className="px-6 py-2"
                 title="Ctrl/Cmd + S to save"
               >

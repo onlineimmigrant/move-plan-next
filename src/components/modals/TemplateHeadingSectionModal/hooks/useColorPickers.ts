@@ -17,6 +17,8 @@ export function useColorPickers() {
     backgroundGradientFrom: false,
     backgroundGradientVia: false,
     backgroundGradientTo: false,
+    buttonColor: false,
+    buttonTextColor: false,
   });
 
   const toggleColorPicker = (key: keyof typeof openColorPickers) => {
@@ -34,6 +36,8 @@ export function useColorPickers() {
       backgroundGradientFrom: false,
       backgroundGradientVia: false,
       backgroundGradientTo: false,
+      buttonColor: false,
+      buttonTextColor: false,
     });
   };
 

@@ -60,11 +60,11 @@ export function BackgroundSection({
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
-            checked={!!formData.is_gradient}
+            checked={!!formData.gradient_enabled}
             onChange={(e) => setFormData({
               ...formData,
-              is_gradient: e.target.checked,
-              gradient: e.target.checked ? (formData.gradient || {
+              gradient_enabled: e.target.checked,
+              gradient_config: e.target.checked ? (formData.gradient_config || {
                 from: 'sky-50',
                 via: 'white',
                 to: 'purple-50'
@@ -78,7 +78,7 @@ export function BackgroundSection({
       </div>
 
       {/* Background Gradient Colors */}
-      {formData.is_gradient && formData.gradient && (
+      {formData.gradient_enabled && formData.gradient_config && (
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-2">
             Gradient Colors
@@ -86,15 +86,15 @@ export function BackgroundSection({
           <div className="flex items-center gap-2">
             <div className="dropdown-container flex-1">
               <ColorPaletteDropdown
-                value={formData.gradient.from || 'sky-50'}
+                value={formData.gradient_config.from || 'sky-50'}
                 onChange={(colorClass: string) => {
                   setFormData({
                     ...formData,
-                    gradient: {
-                      ...formData.gradient!,
+                    gradient_config: {
+                      ...formData.gradient_config!,
                       from: colorClass,
-                      via: formData.gradient?.via || 'white',
-                      to: formData.gradient!.to
+                      via: formData.gradient_config?.via || 'white',
+                      to: formData.gradient_config!.to
                     }
                   });
                 }}
@@ -108,14 +108,14 @@ export function BackgroundSection({
             </div>
             <div className="dropdown-container flex-1">
               <ColorPaletteDropdown
-                value={formData.gradient.via || 'white'}
+                value={formData.gradient_config.via || 'white'}
                 onChange={(colorClass: string) => {
                   setFormData({
                     ...formData,
-                    gradient: {
-                      from: formData.gradient!.from,
+                    gradient_config: {
+                      from: formData.gradient_config!.from,
                       via: colorClass,
-                      to: formData.gradient!.to
+                      to: formData.gradient_config!.to
                     }
                   });
                 }}
@@ -129,13 +129,13 @@ export function BackgroundSection({
             </div>
             <div className="dropdown-container flex-1">
               <ColorPaletteDropdown
-                value={formData.gradient.to || 'purple-50'}
+                value={formData.gradient_config.to || 'purple-50'}
                 onChange={(colorClass: string) => {
                   setFormData({
                     ...formData,
-                    gradient: {
-                      from: formData.gradient!.from,
-                      via: formData.gradient?.via || 'white',
+                    gradient_config: {
+                      from: formData.gradient_config!.from,
+                      via: formData.gradient_config?.via || 'white',
                       to: colorClass
                     }
                   });

@@ -466,6 +466,7 @@ export default function LayoutManagerModal() {
       size="large"
       enableDrag={true}
       enableResize={true}
+      disableBodyScrollLock={true}
       ariaLabel="Layout Manager Modal"
       className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl"
     >

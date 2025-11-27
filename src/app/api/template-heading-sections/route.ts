@@ -71,26 +71,14 @@ export async function GET(request: Request) {
       .from('website_templatesectionheading')
       .select(`
         id,
-        name,
-        name_translation,
-        name_part_2,
-        name_part_3,
-        description_text,
-        description_text_translation,
-        button_text,
-        button_text_translation,
-        url,
+        comment,
+        order,
         url_page,
-        image,
-        image_first,
-        is_included_template_sections_active,
         organization_id,
-        style_variant,
-        text_style_variant,
-        is_text_link,
-        background_color,
-        is_gradient,
-        gradient
+        updated_at,
+        content,
+        translations,
+        style
       `)
       .eq('url_page', decodedUrlPage)
       .or(`organization_id.eq.${organizationId},organization_id.is.null`)
@@ -149,16 +137,9 @@ export async function POST(request: Request) {
     console.log('Creating new template heading section:', body);
 
     // Validate required fields
-    if (!body.name) {
+    if (!body.content?.title) {
       return NextResponse.json(
-        { error: 'name is required', message: 'Heading name is required' },
-        { status: 400 }
-      );
-    }
-    
-    if (!body.description_text) {
-      return NextResponse.json(
-        { error: 'description_text is required', message: 'Description text is required' },
+        { error: 'content.title is required', message: 'Heading title is required' },
         { status: 400 }
       );
     }
@@ -197,27 +178,46 @@ export async function POST(request: Request) {
       ? (existingSections[0].order || 0) + 1 
       : 1;
 
-    // Prepare insert data
+    // Prepare insert data with new JSONB structure
     const insertData = {
-      name: body.name,
-      name_part_2: body.name_part_2 || null,
-      name_part_3: body.name_part_3 || null,
-      name_translation: body.name_translation || {},
-      description_text: body.description_text,
-      description_text_translation: body.description_text_translation || {},
-      button_text: body.button_text || null,
-      button_text_translation: body.button_text_translation || {},
-      url: body.url || null,
       url_page: body.url_page,
-      image: body.image || null,
-      image_first: body.image_first ?? false,
-      is_included_template_sections_active: body.is_included_template_sections_active ?? false,
       organization_id: organizationId,
-      style_variant: body.style_variant || 'default',
-      text_style_variant: body.text_style_variant || 'default',
-      is_text_link: body.is_text_link ?? false,
-      background_color: body.background_color || 'white',
+      comment: body.comment || null,
       order: nextOrder,
+      content: {
+        title: body.content.title,
+        description: body.content.description || null,
+        image: body.content.image || null,
+        button: {
+          text: body.content.button?.text || null,
+          url: body.content.button?.url || null,
+          is_text_link: body.content.button?.is_text_link ?? true,
+        },
+      },
+      translations: body.translations || {},
+      style: {
+        background_color: body.style?.background_color || 'white',
+        title: {
+          color: body.style?.title?.color || null,
+          size: body.style?.title?.size || '3xl',
+          font: body.style?.title?.font || 'sans',
+          weight: body.style?.title?.weight || 'bold',
+        },
+        description: {
+          color: body.style?.description?.color || null,
+          size: body.style?.description?.size || 'md',
+          font: body.style?.description?.font || 'sans',
+          weight: body.style?.description?.weight || 'normal',
+        },
+        button: {
+          color: body.style?.button?.color || null,
+          text_color: body.style?.button?.text_color || 'white',
+        },
+        alignment: body.style?.alignment || 'left',
+        image_first: body.style?.image_first ?? false,
+        image_style: body.style?.image_style || 'default',
+        gradient: body.style?.gradient || { enabled: false },
+      },
     };
 
     // Insert the new template heading section using service role

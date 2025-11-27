@@ -83,36 +83,42 @@ export function ImageSection({
         </div>
       )}
 
-      {/* Image Position Options */}
+      {/* Image Style Options */}
       {formData.image && (
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-2">
-            Image Position Style
+            Image Style
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {(['default', 'contained', 'full-width', 'circle'] as const).map((position) => (
+            {(['default', 'contained', 'full_width', 'circle'] as const).map((style) => (
               <button
-                key={position}
+                key={style}
                 onClick={() => setFormData({
                   ...formData,
-                  image_style: { ...formData.image_style, position }
+                  image_style: style
                 })}
                 className={cn(
                   'px-3 py-2 text-sm font-medium rounded-md border transition-colors capitalize',
-                  formData.image_style?.position === position
+                  formData.image_style === style
                     ? 'border-2'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 )}
-                style={formData.image_style?.position === position ? {
+                style={formData.image_style === style ? {
                   backgroundColor: `${primaryColor}15`,
                   color: primaryColor,
                   borderColor: primaryColor
                 } : {}}
               >
-                {position.replace('-', ' ')}
+                {style === 'full_width' ? 'Full Width' : style}
               </button>
             ))}
           </div>
+          <p className="mt-2 text-xs text-gray-500">
+            <span className="font-medium">Default:</span> Static image with rounded corners (no animation)<br/>
+            <span className="font-medium">Contained:</span> Animated with hover effects and limited height<br/>
+            <span className="font-medium">Full Width:</span> Covers full column width without effects<br/>
+            <span className="font-medium">Circle:</span> Circular shape with hover effects
+          </p>
         </div>
       )}
     </div>

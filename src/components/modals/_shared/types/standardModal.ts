@@ -125,6 +125,9 @@ export interface StandardModalContainerProps {
   
   /** ARIA labelledby ID */
   ariaLabelledBy?: string;
+  
+  /** Disable body scroll lock (allows page scrolling behind modal) */
+  disableBodyScrollLock?: boolean;
 }
 
 /**

@@ -65,7 +65,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
   // JSONB Modal state
   const [jsonbModal, setJsonbModal] = useState<{
     isOpen: boolean;
-    field: 'name_translation' | 'description_text_translation' | 'button_text_translation' | null;
+    field: 'title_translation' | 'description_translation' | 'button_text_translation' | null;
     value: string;
   }>({
     isOpen: false,
@@ -77,8 +77,8 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
   const getAllLanguageCodes = (): string[] => {
     const codes = new Set<string>();
     
-    Object.keys(formData.name_translation || {}).forEach(code => codes.add(code));
-    Object.keys(formData.description_text_translation || {}).forEach(code => codes.add(code));
+    Object.keys(formData.title_translation || {}).forEach(code => codes.add(code));
+    Object.keys(formData.description_translation || {}).forEach(code => codes.add(code));
     Object.keys(formData.button_text_translation || {}).forEach(code => codes.add(code));
     
     return Array.from(codes).sort();
@@ -88,7 +88,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
   // Update translation
   const updateTranslation = (
-    field: 'name_translation' | 'description_text_translation' | 'button_text_translation',
+    field: 'title_translation' | 'description_translation' | 'button_text_translation',
     languageCode: string,
     value: string
   ) => {
@@ -103,7 +103,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
   };
 
   // Update original field
-  const updateOriginalField = (field: 'name' | 'description_text' | 'button_text', value: string) => {
+  const updateOriginalField = (field: 'title' | 'description' | 'button_text', value: string) => {
     setFormData({
       ...formData,
       [field]: value,
@@ -120,20 +120,20 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       return;
     }
 
-    const newNameTranslation = { ...formData.name_translation };
-    const newDescriptionTranslation = { ...formData.description_text_translation };
+    const newTitleTranslation = { ...formData.title_translation };
+    const newDescriptionTranslation = { ...formData.description_translation };
     const newButtonTranslation = { ...formData.button_text_translation };
     
     missing.forEach(code => {
-      newNameTranslation[code] = '';
+      newTitleTranslation[code] = '';
       newDescriptionTranslation[code] = '';
       newButtonTranslation[code] = '';
     });
 
     setFormData({
       ...formData,
-      name_translation: newNameTranslation,
-      description_text_translation: newDescriptionTranslation,
+      title_translation: newTitleTranslation,
+      description_translation: newDescriptionTranslation,
       button_text_translation: newButtonTranslation,
     });
     setHasUnsavedChanges(true);
@@ -141,18 +141,18 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
   // Remove a language
   const removeLanguage = (code: string) => {
-    const newNameTranslation = { ...formData.name_translation };
-    const newDescriptionTranslation = { ...formData.description_text_translation };
+    const newTitleTranslation = { ...formData.title_translation };
+    const newDescriptionTranslation = { ...formData.description_translation };
     const newButtonTranslation = { ...formData.button_text_translation };
     
-    delete newNameTranslation[code];
+    delete newTitleTranslation[code];
     delete newDescriptionTranslation[code];
     delete newButtonTranslation[code];
 
     setFormData({
       ...formData,
-      name_translation: newNameTranslation,
-      description_text_translation: newDescriptionTranslation,
+      title_translation: newTitleTranslation,
+      description_translation: newDescriptionTranslation,
       button_text_translation: newButtonTranslation,
     });
     setHasUnsavedChanges(true);
@@ -160,7 +160,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
   // Open JSONB modal
   const openJsonbModal = (
-    field: 'name_translation' | 'description_text_translation' | 'button_text_translation'
+    field: 'title_translation' | 'description_translation' | 'button_text_translation'
   ) => {
     const currentValue = formData[field] || {};
     
@@ -206,7 +206,7 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
   // AI Translate All
   const handleAITranslateAll = async () => {
-    if (!formData.name && !formData.description_text && !formData.button_text) {
+    if (!formData.title && !formData.description && !formData.button_text) {
       alert('No content to translate.');
       return;
     }
@@ -228,47 +228,47 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
       });
     };
 
-    // Translate name
-    const nameMissingLangs = formData.name?.trim() 
-      ? needsTranslation(formData.name_translation, supportedLocales)
+    // Translate title
+    const titleMissingLangs = formData.title?.trim() 
+      ? needsTranslation(formData.title_translation, supportedLocales)
       : [];
 
     // Track current state to avoid stale closures
     let currentFormData = formData;
 
-    if (nameMissingLangs.length > 0) {
+    if (titleMissingLangs.length > 0) {
       const result = await translateAll({
         tableName: 'website_templatesectionheading',
-        fields: [{ name: 'name', content: currentFormData.name }],
+        fields: [{ name: 'name', content: currentFormData.title }], // Use 'name' for translation config
         sourceLanguage: originalLanguage,
-        targetLanguages: nameMissingLangs,
+        targetLanguages: titleMissingLangs,
       });
 
       if (result.success && result.translations?.name) {
         // Update formData immediately to show translations in real-time
         currentFormData = {
           ...currentFormData,
-          name_translation: {
-            ...(currentFormData.name_translation || {}),
-            ...result.translations.name,
+          title_translation: {
+            ...(currentFormData.title_translation || {}),
+            ...result.translations.name, // Map 'name' translations to title_translation
           },
         };
         setFormData(currentFormData);
         translatedCount++;
       }
-    } else if (currentFormData.name?.trim()) {
+    } else if (currentFormData.title?.trim()) {
       skippedCount++;
     }
 
-    // Translate description_text
-    const descriptionMissingLangs = currentFormData.description_text?.trim()
-      ? needsTranslation(currentFormData.description_text_translation, supportedLocales)
+    // Translate description
+    const descriptionMissingLangs = currentFormData.description?.trim()
+      ? needsTranslation(currentFormData.description_translation, supportedLocales)
       : [];
 
     if (descriptionMissingLangs.length > 0) {
       const result = await translateAll({
         tableName: 'website_templatesectionheading',
-        fields: [{ name: 'description_text', content: currentFormData.description_text }],
+        fields: [{ name: 'description_text', content: currentFormData.description }], // Use 'description_text' for translation config
         sourceLanguage: originalLanguage,
         targetLanguages: descriptionMissingLangs,
       });
@@ -277,15 +277,15 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
         // Update formData immediately to show translations in real-time
         currentFormData = {
           ...currentFormData,
-          description_text_translation: {
-            ...(currentFormData.description_text_translation || {}),
-            ...result.translations.description_text,
+          description_translation: {
+            ...(currentFormData.description_translation || {}),
+            ...result.translations.description_text, // Map 'description_text' translations to description_translation
           },
         };
         setFormData(currentFormData);
         translatedCount++;
       }
-    } else if (currentFormData.description_text?.trim()) {
+    } else if (currentFormData.description?.trim()) {
       skippedCount++;
     }
 
@@ -342,11 +342,14 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
 
     setIsSaving(true);
     try {
+      // We need to send the complete structure with existing data + updated translations
       await updateSection({
-        ...formData, // Include all formData fields
-        name_translation: formData.name_translation || {},
-        description_text_translation: formData.description_text_translation || {},
-        button_text_translation: formData.button_text_translation || {},
+        ...editingSection, // Include existing section data
+        translations: {
+          name: formData.title_translation || {},
+          description: formData.description_translation || {},
+          button_text: formData.button_text_translation || {},
+        },
       });
       setHasUnsavedChanges(false);
       toast.success('Translations saved successfully!');
@@ -418,8 +421,8 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
                   </td>
                   <td className="px-4 py-3">
                     <textarea
-                      value={formData.name || ''}
-                      onChange={(e) => updateOriginalField('name', e.target.value)}
+                      value={formData.title || ''}
+                      onChange={(e) => updateOriginalField('title', e.target.value)}
                       rows={2}
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent resize-y"
                       style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
@@ -427,8 +430,8 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
                   </td>
                   <td className="px-4 py-3">
                     <textarea
-                      value={formData.description_text || ''}
-                      onChange={(e) => updateOriginalField('description_text', e.target.value)}
+                      value={formData.description || ''}
+                      onChange={(e) => updateOriginalField('description', e.target.value)}
                       rows={2}
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent resize-y"
                       style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
@@ -475,14 +478,14 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <textarea
-                          value={formData.name_translation?.[languageCode] || ''}
-                          onChange={(e) => updateTranslation('name_translation', languageCode, e.target.value)}
+                          value={formData.title_translation?.[languageCode] || ''}
+                          onChange={(e) => updateTranslation('title_translation', languageCode, e.target.value)}
                           rows={2}
                           className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent resize-y"
                           style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
                         />
                         <button
-                          onClick={() => openJsonbModal('name_translation')}
+                          onClick={() => openJsonbModal('title_translation')}
                           className="px-1.5 py-0.5 text-[10px] font-mono rounded border transition-colors hover:opacity-80 opacity-0 group-hover:opacity-100"
                           style={{
                             borderColor: `${primaryColor}40`,
@@ -498,14 +501,14 @@ export function TranslationsSection({ formData, setFormData, primaryColor }: Tra
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <textarea
-                          value={formData.description_text_translation?.[languageCode] || ''}
-                          onChange={(e) => updateTranslation('description_text_translation', languageCode, e.target.value)}
+                          value={formData.description_translation?.[languageCode] || ''}
+                          onChange={(e) => updateTranslation('description_translation', languageCode, e.target.value)}
                           rows={2}
                           className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent resize-y"
                           style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
                         />
                         <button
-                          onClick={() => openJsonbModal('description_text_translation')}
+                          onClick={() => openJsonbModal('description_translation')}
                           className="px-1.5 py-0.5 text-[10px] font-mono rounded border transition-colors hover:opacity-80 opacity-0 group-hover:opacity-100"
                           style={{
                             borderColor: `${primaryColor}40`,

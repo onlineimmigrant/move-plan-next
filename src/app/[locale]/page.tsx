@@ -122,6 +122,30 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
       // console.log('Fetched FAQs data:', faqsData);
     }
 
+    // Fetch template sections (for server-side rendering)
+    const { data: templateSectionsData, error: templateSectionsError } = await supabase
+      .from('website_templatesection')
+      .select('*')
+      .eq('url_page', '/home')
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+      .order('order', { ascending: true });
+
+    if (templateSectionsError) {
+      console.error('Error fetching template sections:', templateSectionsError);
+    }
+
+    // Fetch template heading sections (for server-side rendering)
+    const { data: templateHeadingSectionsData, error: templateHeadingSectionsError } = await supabase
+      .from('website_templatesectionheading')
+      .select('*')
+      .eq('url_page', '/home')
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+      .order('order', { ascending: true });
+
+    if (templateHeadingSectionsError) {
+      console.error('Error fetching template heading sections:', templateHeadingSectionsError);
+    }
+
     return {
       hero: heroData
         ? {
@@ -139,8 +163,8 @@ async function fetchHomePageData(baseUrl: string): Promise<HomePageData> {
         : defaultData.hero,
       brands: brandsData || [],
       faqs: faqsData || [],
-      templateSections: [], // Empty, as it will be fetched in ClientProviders
-      templateHeadingSections: [], // Empty, as it will be fetched in ClientProviders
+      templateSections: templateSectionsData || [],
+      templateHeadingSections: templateHeadingSectionsData || [],
       brands_heading: '',
       labels_default: {
         button_main_get_started: { url: '/products', text: 'Get Started' },
@@ -158,10 +182,45 @@ export default async function Page() {
   const settings = await getSettings(baseUrl);
   const homePageData = await fetchHomePageData(baseUrl);
 
+  // Extract first section image for preloading (LCP optimization)
+  let firstImageUrl: string | null = null;
+  
+  // Combine and sort all sections by order
+  const allSections = [
+    ...(homePageData.templateSections || []).map(s => ({ ...s, type: 'template' as const })),
+    ...(homePageData.templateHeadingSections || []).map(s => ({ ...s, type: 'heading' as const }))
+  ].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  // Get first section's image if it exists
+  const firstSection = allSections[0];
+  if (firstSection) {
+    if (firstSection.type === 'heading') {
+      // TypeScript: firstSection is TemplateHeadingSection with type property
+      const headingSection = firstSection as any; // Use any to access JSONB content field
+      if (headingSection.content && typeof headingSection.content === 'object' && 'image' in headingSection.content) {
+        firstImageUrl = headingSection.content.image;
+      }
+    } else if (firstSection.type === 'template') {
+      const templateSection = firstSection as any;
+      if (templateSection.image) {
+        firstImageUrl = templateSection.image;
+      }
+    }
+  }
+
   // console.log('🏠 [HomePage] Rendering home page with SimpleLayoutSEO');
 
   return (
     <>
+      {/* Preload first section image for LCP optimization */}
+      {firstImageUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={firstImageUrl}
+          fetchPriority="high"
+        />
+      )}
       <SimpleLayoutSEO />
       <div>
         <h1 className="sr-only">{settings.site || 'Welcome'}</h1>

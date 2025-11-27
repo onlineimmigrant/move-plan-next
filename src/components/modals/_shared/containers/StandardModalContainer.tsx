@@ -64,6 +64,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
   closeOnEscape = true,
   ariaLabel,
   ariaLabelledBy,
+  disableBodyScrollLock = false,
 }) => {
   // Mount gating to ensure server and initial client render match (avoid hydration mismatch)
   const [mounted, setMounted] = useState(false);
@@ -91,23 +92,36 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
 
   // Lock body scroll when modal is open (without moving scroll position)
   useEffect(() => {
-    if (isOpen) {
-      // Simply prevent scrolling without changing position
+    if (isOpen && !disableBodyScrollLock) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
       const originalOverflow = document.body.style.overflow;
       const originalPaddingRight = document.body.style.paddingRight;
+      const originalPosition = document.body.style.position;
+      const originalTop = document.body.style.top;
+      const originalWidth = document.body.style.width;
       
       // Get scrollbar width to prevent layout shift
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       
+      // Lock scroll position without changing it
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       
       return () => {
+        // Restore scroll position
+        document.body.style.position = originalPosition;
+        document.body.style.top = originalTop;
+        document.body.style.width = originalWidth;
         document.body.style.overflow = originalOverflow;
         document.body.style.paddingRight = originalPaddingRight;
+        window.scrollTo(0, scrollY);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, disableBodyScrollLock]);
 
   // Get size configuration
   const sizeConfig = getModalSizeConfig(size);
@@ -119,7 +133,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
     width: sizeConfig.minWidth,
     height: sizeConfig.minHeight,
   };
-  const finalPosition = defaultPosition || getDefaultPosition(size, finalSize);
+  const finalPosition = defaultPosition || getDefaultPosition(size, finalSize, disableBodyScrollLock);
 
   // Glass morphism classes
   const glassClasses = `

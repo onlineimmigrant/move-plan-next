@@ -7,7 +7,7 @@
 import React, { useMemo } from 'react';
 import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
-import { HeadingFormData, TEXT_VARIANTS } from '../types';
+import { HeadingFormData } from '../types';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 
@@ -17,8 +17,51 @@ interface HeadingPreviewProps {
   onDoubleClickDescription?: (e: React.MouseEvent) => void;
 }
 
+// Font mappings
+const FONT_FAMILIES = {
+  sans: 'font-sans',
+  serif: 'font-serif',
+  mono: 'font-mono',
+  display: 'font-display',
+};
+
+const TITLE_SIZES = {
+  xs: 'text-xs',
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-lg',
+  xl: 'text-xl',
+  '2xl': 'text-2xl',
+  '3xl': 'text-3xl sm:text-4xl lg:text-5xl',
+  '4xl': 'text-4xl sm:text-5xl lg:text-6xl',
+};
+
+const DESC_SIZES = {
+  xs: 'text-xs',
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-lg',
+  xl: 'text-xl',
+  '2xl': 'text-2xl',
+  '3xl': 'text-3xl',
+  '4xl': 'text-4xl',
+};
+
+const FONT_WEIGHTS = {
+  light: 'font-light',
+  normal: 'font-normal',
+  medium: 'font-medium',
+  semibold: 'font-semibold',
+  bold: 'font-bold',
+};
+
+const ALIGNMENTS = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
 export function HeadingPreview({ formData, onDoubleClickTitle, onDoubleClickDescription }: HeadingPreviewProps) {
-  const textVar = TEXT_VARIANTS[formData.text_style_variant || 'default'];
   const hasImage = !!formData.image;
 
   const sanitizeHTML = (html: string) => DOMPurify.sanitize(html, {
@@ -28,19 +71,32 @@ export function HeadingPreview({ formData, onDoubleClickTitle, onDoubleClickDesc
 
   // Background style
   const headingBackgroundStyle = useMemo(() => {
-    return getBackgroundStyle(
-      formData.is_gradient,
-      formData.gradient,
-      formData.background_color || 'white'
-    );
-  }, [formData.is_gradient, formData.gradient, formData.background_color]);
+    if (formData.gradient_enabled) {
+      return getBackgroundStyle(true, formData.gradient_config, formData.background_color);
+    }
+    return { backgroundColor: formData.background_color };
+  }, [formData.gradient_enabled, formData.gradient_config, formData.background_color]);
 
-  // Title alignment class
-  const titleAlignmentClass = formData.title_alignment === 'center' 
-    ? 'text-center mx-auto' 
-    : formData.title_alignment === 'right'
-    ? 'text-right ml-auto'
-    : 'text-left';
+  // Build classes
+  const titleClasses = [
+    TITLE_SIZES[formData.title_size],
+    FONT_FAMILIES[formData.title_font],
+    FONT_WEIGHTS[formData.title_weight],
+    'tracking-tight leading-tight',
+  ].join(' ');
+
+  const descClasses = [
+    DESC_SIZES[formData.description_size],
+    FONT_FAMILIES[formData.description_font],
+    FONT_WEIGHTS[formData.description_weight],
+    'leading-8',
+  ].join(' ');
+
+  const alignmentClass = ALIGNMENTS[formData.alignment];
+  const titleColor = formData.title_color ? getColorValue(formData.title_color) : 'rgb(31 41 55)';
+  const descColor = formData.description_color ? getColorValue(formData.description_color) : 'rgb(55 65 81)';
+  const buttonColor = formData.button_color ? getColorValue(formData.button_color) : 'rgb(16 185 129)';
+  const buttonTextColor = formData.button_text_color ? getColorValue(formData.button_text_color) : 'white';
 
   return (
     <section
@@ -57,43 +113,32 @@ export function HeadingPreview({ formData, onDoubleClickTitle, onDoubleClickDesc
           
           {/* Text Content */}
           <div className={`${formData.image_first ? 'lg:order-2' : 'lg:order-1'}`}>
-            <div className={`${!hasImage ? 'text-center max-w-4xl mx-auto' : 'w-full'}`}>
+            <div className={`${!hasImage ? `text-center max-w-4xl mx-auto ${ALIGNMENTS.center}` : alignmentClass}`}>
               <h1
-                className={`${textVar.h1} tracking-tight leading-tight ${titleAlignmentClass}`}
+                className={titleClasses}
+                style={{ color: titleColor }}
                 onDoubleClick={onDoubleClickTitle}
-                style={{ cursor: onDoubleClickTitle ? 'text' : 'default' }}
               >
-                {parse(sanitizeHTML(formData.name))}{' '}
-                {formData.name_part_2 && (
-                  <span className="relative inline-block">
-                    <span className="relative z-10 bg-clip-text text-transparent" style={{
-                      background: 'linear-gradient(to right, rgb(75 85 99), rgb(55 65 81), rgb(31 41 55))',
-                      WebkitBackgroundClip: 'text', backgroundClip: 'text'
-                    }}>
-                      {parse(sanitizeHTML(formData.name_part_2))}
-                    </span>
-                    <span className="absolute inset-0 -z-10 rounded-lg px-1 py-0.5 bg-gradient-to-r from-gray-50 to-gray-100 transform rotate-0.5" />
-                  </span>
-                )}{' '}
-                {formData.name_part_3 && parse(sanitizeHTML(formData.name_part_3))}
+                {parse(sanitizeHTML(formData.title))}
               </h1>
 
-              {formData.description_text && (
+              {formData.description && (
                 <p
-                  className={`mt-8 ${textVar.description} leading-8 max-w-2xl ${!hasImage ? 'mx-auto' : ''} ${titleAlignmentClass}`}
+                  className={`mt-8 ${descClasses} max-w-2xl ${!hasImage ? 'mx-auto' : ''}`}
+                  style={{ color: descColor }}
                   onDoubleClick={onDoubleClickDescription}
-                  style={{ cursor: onDoubleClickDescription ? 'text' : 'default' }}
                 >
-                  {parse(sanitizeHTML(formData.description_text))}
+                  {parse(sanitizeHTML(formData.description))}
                 </p>
               )}
 
-              {formData.button_text && (formData.url || formData.url_page) && (
-                <div className={`mt-10 ${titleAlignmentClass}`}>
-                  {formData.is_text_link ? (
+              {formData.button_text && formData.button_url && (
+                <div className={`mt-10 ${alignmentClass}`}>
+                  {formData.button_is_text_link ? (
                     <a
                       href="#"
-                      className={`inline-flex items-center gap-x-2 text-lg font-light transition-colors duration-200 group ${textVar.linkColor}`}
+                      className="inline-flex items-center gap-x-2 text-lg font-medium transition-colors duration-200 group"
+                      style={{ color: buttonColor }}
                       onClick={(e) => e.preventDefault()}
                     >
                       {parse(sanitizeHTML(formData.button_text))}
@@ -104,7 +149,11 @@ export function HeadingPreview({ formData, onDoubleClickTitle, onDoubleClickDesc
                   ) : (
                     <a
                       href="#"
-                      className={`inline-flex items-center justify-center px-6 py-2 text-sm text-white rounded-lg shadow-lg font-medium transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${textVar.button}`}
+                      className="inline-flex items-center justify-center px-6 py-2 text-sm rounded-lg shadow-lg font-medium transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
+                      style={{
+                        backgroundColor: buttonColor,
+                        color: buttonTextColor,
+                      }}
                       onClick={(e) => e.preventDefault()}
                     >
                       {parse(sanitizeHTML(formData.button_text))}
@@ -117,20 +166,58 @@ export function HeadingPreview({ formData, onDoubleClickTitle, onDoubleClickDesc
 
           {/* Image Content */}
           {hasImage && (
-            <div className={`${formData.image_first ? 'lg:order-1' : 'lg:order-2'}`}>
-              <div className="relative mx-auto w-full max-w-lg">
-                <div className="relative transform transition-all duration-300 hover:scale-105">
-                  <div className="relative overflow-hidden rounded-3xl">
-                    <img
-                      className="w-full h-auto object-cover transition-all duration-500 hover:scale-110"
-                      src={formData.image}
-                      alt={formData.name || 'Section image'}
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-500/3 via-gray-400/2 to-gray-600/5" />
+            <div className={`${formData.image_first ? 'lg:order-1' : 'lg:order-2'} relative`}>
+              {formData.image_style === 'default' ? (
+                <div className="relative mx-auto w-full max-w-lg">
+                  {/* Default: Static image without animation or effects */}
+                  <img
+                    className="w-full h-auto object-cover rounded-2xl"
+                    src={formData.image}
+                    alt="Section preview"
+                    loading="lazy"
+                  />
+                </div>
+              ) : formData.image_style === 'full_width' ? (
+                <div className="relative w-full">
+                  {/* Full Width: Cover full column */}
+                  <img
+                    className="w-full h-auto object-cover"
+                    src={formData.image}
+                    alt="Section preview"
+                    loading="lazy"
+                  />
+                </div>
+              ) : formData.image_style === 'circle' ? (
+                <div className="relative mx-auto w-full max-w-lg">
+                  {/* Circle: Circular with effects */}
+                  <div className="relative transform transition-all duration-300 hover:scale-105">
+                    <div className="relative overflow-hidden rounded-full aspect-square">
+                      <img
+                        className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
+                        src={formData.image}
+                        alt="Section preview"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-500/3 via-gray-400/2 to-gray-600/5" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative mx-auto w-full max-w-lg">
+                  {/* Contained: Current animated style with effects */}
+                  <div className="relative transform transition-all duration-300 hover:scale-105">
+                    <div className="relative overflow-hidden rounded-3xl">
+                      <img
+                        className="w-full h-auto object-cover transition-all duration-500 hover:scale-110 max-h-96"
+                        src={formData.image}
+                        alt="Section preview"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-500/3 via-gray-400/2 to-gray-600/5" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

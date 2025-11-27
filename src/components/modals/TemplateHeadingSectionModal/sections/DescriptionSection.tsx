@@ -36,8 +36,8 @@ export function DescriptionSection({
           Description Text
         </label>
         <textarea
-          value={formData.description_text || ''}
-          onChange={(e) => setFormData({ ...formData, description_text: e.target.value })}
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Enter heading description..."
           rows={3}
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 resize-none"
@@ -48,16 +48,13 @@ export function DescriptionSection({
       {/* Description Color */}
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-2">
-          Description Color
+          Description Color (Optional)
         </label>
         <div className="dropdown-container">
           <ColorPaletteDropdown
-            value={formData.description_style?.color || 'gray-600'}
+            value={formData.description_color || 'gray-600'}
             onChange={(colorClass: string) => {
-              setFormData({
-                ...formData,
-                description_style: { ...formData.description_style, color: colorClass }
-              });
+              setFormData({ ...formData, description_color: colorClass });
               toggleColorPicker('descriptionColor');
             }}
             isOpen={openColorPickers.descriptionColor}
@@ -68,61 +65,44 @@ export function DescriptionSection({
         </div>
       </div>
 
+      {/* Description Font */}
+      <div>
+        <label className="block text-xs font-medium text-gray-700 mb-2">
+          Font Family
+        </label>
+        <select
+          value={formData.description_font}
+          onChange={(e) => setFormData({ ...formData, description_font: e.target.value as any })}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
+        >
+          <option value="sans">Sans Serif</option>
+          <option value="serif">Serif</option>
+          <option value="mono">Monospace</option>
+          <option value="display">Display</option>
+        </select>
+      </div>
+
       {/* Description Size */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2">
-            Desktop Size
-          </label>
-          <select
-            value={formData.description_style?.size?.desktop || 'text-xl'}
-            onChange={(e) => setFormData({
-              ...formData,
-              description_style: {
-                ...formData.description_style,
-                size: {
-                  desktop: e.target.value,
-                  mobile: formData.description_style?.size?.mobile || 'text-lg'
-                }
-              }
-            })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
-            style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
-          >
-            <option value="text-sm">Small</option>
-            <option value="text-base">Base</option>
-            <option value="text-lg">Large</option>
-            <option value="text-xl">XL</option>
-            <option value="text-2xl">2XL</option>
-            <option value="text-3xl">3XL</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2">
-            Mobile Size
-          </label>
-          <select
-            value={formData.description_style?.size?.mobile || 'text-lg'}
-            onChange={(e) => setFormData({
-              ...formData,
-              description_style: {
-                ...formData.description_style,
-                size: {
-                  desktop: formData.description_style?.size?.desktop || 'text-xl',
-                  mobile: e.target.value
-                }
-              }
-            })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
-            style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
-          >
-            <option value="text-xs">XS</option>
-            <option value="text-sm">Small</option>
-            <option value="text-base">Base</option>
-            <option value="text-lg">Large</option>
-            <option value="text-xl">XL</option>
-          </select>
-        </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 mb-2">
+          Font Size
+        </label>
+        <select
+          value={formData.description_size}
+          onChange={(e) => setFormData({ ...formData, description_size: e.target.value as any })}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
+        >
+          <option value="xs">Extra Small</option>
+          <option value="sm">Small</option>
+          <option value="md">Medium (Default)</option>
+          <option value="lg">Large</option>
+          <option value="xl">Extra Large</option>
+          <option value="2xl">2X Large</option>
+          <option value="3xl">3X Large</option>
+          <option value="4xl">4X Large</option>
+        </select>
       </div>
 
       {/* Description Weight */}
@@ -130,30 +110,18 @@ export function DescriptionSection({
         <label className="block text-xs font-medium text-gray-700 mb-2">
           Font Weight
         </label>
-        <div className="grid grid-cols-4 gap-2">
-          {(['font-light', 'font-normal', 'font-medium', 'font-semibold'] as const).map((weight) => (
-            <button
-              key={weight}
-              onClick={() => setFormData({
-                ...formData,
-                description_style: { ...formData.description_style, weight }
-              })}
-              className={cn(
-                'px-3 py-2 text-sm font-medium rounded-md border transition-colors capitalize',
-                formData.description_style?.weight === weight
-                  ? 'border-2'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              )}
-              style={formData.description_style?.weight === weight ? {
-                backgroundColor: `${primaryColor}15`,
-                color: primaryColor,
-                borderColor: primaryColor
-              } : {}}
-            >
-              {weight.replace('font-', '')}
-            </button>
-          ))}
-        </div>
+        <select
+          value={formData.description_weight}
+          onChange={(e) => setFormData({ ...formData, description_weight: e.target.value as any })}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+          style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
+        >
+          <option value="light">Light</option>
+          <option value="normal">Normal (Default)</option>
+          <option value="medium">Medium</option>
+          <option value="semibold">Semibold</option>
+          <option value="bold">Bold</option>
+        </select>
       </div>
     </div>
   );

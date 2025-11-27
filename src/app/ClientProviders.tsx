@@ -22,6 +22,7 @@ import { ShopModalProvider } from '@/components/modals/ShopModal';
 import ShopModal from '@/components/modals/ShopModal/ShopModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
+import { PageSectionsProvider } from '@/context/PageSectionsContext';
 import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
 
 // Lazy load ManagedVideoCall to prevent loading twilio-video (~150KB) on every page
@@ -41,8 +42,7 @@ import LayoutManagerModal from '@/components/modals/LayoutManagerModal/LayoutMan
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import dynamic from 'next/dynamic';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import TemplateSections from '@/components/TemplateSections';
-import TemplateHeadingSections from '@/components/TemplateHeadingSections';
+import UnifiedSections from '@/components/UnifiedSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -103,6 +103,8 @@ interface ClientProvidersProps {
   menuItems?: MenuItem[];
   cookieCategories?: any[];
   cookieAccepted?: boolean;
+  templateSections?: TemplateSection[];
+  templateHeadingSections?: TemplateHeadingSection[];
 }
 
 export default function ClientProviders({
@@ -118,6 +120,8 @@ export default function ClientProviders({
   menuItems = [],
   cookieCategories = [],
   cookieAccepted = false,
+  templateSections = [],
+  templateHeadingSections = [],
 }: ClientProvidersProps) {
   const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
   const [sections, setSections] = useState<TemplateSection[]>([]);
@@ -265,13 +269,17 @@ export default function ClientProviders({
             <SettingsProvider initialSettings={settings}>
               <ThemeProvider>
                 <MeetingProvider>
-                  <ToastProvider>
-                  <HeaderEditProvider>
-                    <FooterEditProvider>
-                      <LayoutManagerProvider>
-                        <PostEditModalProvider>
-                          <TemplateSectionEditProvider>
-                            <TemplateHeadingSectionEditProvider>
+                  <PageSectionsProvider 
+                    initialTemplateSections={templateSections}
+                    initialTemplateHeadingSections={templateHeadingSections}
+                  >
+                    <ToastProvider>
+                    <HeaderEditProvider>
+                      <FooterEditProvider>
+                        <LayoutManagerProvider>
+                          <PostEditModalProvider>
+                            <TemplateSectionEditProvider>
+                              <TemplateHeadingSectionEditProvider>
                               <HeroSectionEditProvider>
                                 <PageCreationProvider>
                                   <SiteMapModalProvider>
@@ -336,6 +344,7 @@ export default function ClientProviders({
             </FooterEditProvider>
           </HeaderEditProvider>
         </ToastProvider>
+                  </PageSectionsProvider>
               </MeetingProvider>
             </ThemeProvider>
             </SettingsProvider>
@@ -392,8 +401,7 @@ function BannerAwareContent({
           <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
             <main className="w-full">
               {children}
-              <TemplateHeadingSections />
-              <TemplateSections />
+              <UnifiedSections />
               <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>
@@ -401,8 +409,7 @@ function BannerAwareContent({
         ) : (
           <main className="w-full">
             {children}
-            <TemplateHeadingSections />
-            <TemplateSections />
+            <UnifiedSections />
             <Breadcrumbs />
             <BannerContainer banners={nonFixedBanners} />
           </main>

@@ -113,10 +113,18 @@ export async function GET(request: NextRequest) {
     // Add heading sections
     if (headingSections) {
       headingSections.forEach(section => {
+        // Extract title from new JSONB structure or fallback to old field
+        let title = 'Heading Section';
+        if (section.content?.title) {
+          title = section.content.title;
+        } else if (section.heading) {
+          title = section.heading;
+        }
+        
         sections.push({
           id: section.id,
           type: 'heading_section',
-          title: section.heading || 'Heading Section',
+          title: title,
           order: section.order || 0,
           page: section.url_page || 'home',
           data: section

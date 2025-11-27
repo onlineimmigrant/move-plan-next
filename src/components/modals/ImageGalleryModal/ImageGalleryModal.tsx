@@ -558,7 +558,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
       <Rnd
       default={{
         x: window.innerWidth / 2 - 411.125,
-        y: window.innerHeight / 2 - 375,
+        y: window.innerHeight / 2 - 375 + window.scrollY,
         width: 822.25,
         height: 750,
       }}

@@ -25,13 +25,18 @@ export const getModalSizeConfig = (size: ModalSize = 'large'): ModalSizeConfig =
 /**
  * Calculate centered position for a modal
  */
-export const getCenteredPosition = (dimensions: ModalDimensions): ModalPosition => {
+export const getCenteredPosition = (dimensions: ModalDimensions, includeScrollOffset: boolean = false): ModalPosition => {
   if (typeof window === 'undefined') {
     return { x: 0, y: 0 };
   }
 
   const x = Math.max(0, (window.innerWidth - dimensions.width) / 2);
-  const y = Math.max(0, (window.innerHeight - dimensions.height) / 2);
+  let y = Math.max(0, (window.innerHeight - dimensions.height) / 2);
+  
+  // If scroll lock is disabled, add current scroll position to center modal in viewport
+  if (includeScrollOffset) {
+    y += window.scrollY;
+  }
 
   return { x, y };
 };
@@ -41,10 +46,11 @@ export const getCenteredPosition = (dimensions: ModalDimensions): ModalPosition 
  */
 export const getDefaultPosition = (
   size: ModalSize = 'large',
-  customDimensions?: ModalDimensions
+  customDimensions?: ModalDimensions,
+  includeScrollOffset: boolean = false
 ): ModalPosition => {
   const dimensions = customDimensions || getModalSizeConfig(size);
-  return getCenteredPosition(dimensions);
+  return getCenteredPosition(dimensions, includeScrollOffset);
 };
 
 /**

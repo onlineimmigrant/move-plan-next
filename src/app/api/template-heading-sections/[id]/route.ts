@@ -29,43 +29,52 @@ export async function PUT(
     console.log('Updating template heading section:', id, body);
 
     // Validate required fields for update
-    if (!body.name || !body.description_text) {
+    if (!body.content?.title) {
       return NextResponse.json(
-        { error: 'name and description_text are required' },
+        { error: 'content.title is required' },
         { status: 400 }
       );
     }
 
-    // Prepare update data
+    // Prepare update data with new JSONB structure
     const updateData: any = {
-      name: body.name,
-      name_part_2: body.name_part_2 || null,
-      name_part_3: body.name_part_3 || null,
-      description_text: body.description_text,
-      button_text: body.button_text || null,
       url_page: body.url_page,
-      url: body.url || null,
-      image: body.image || null,
-      image_first: body.image_first ?? false,
-      is_included_template_sections_active: body.is_included_template_sections_active ?? false,
-      style_variant: body.style_variant || 'default',
-      text_style_variant: body.text_style_variant || 'default',
-      is_text_link: body.is_text_link ?? false,
-      background_color: body.background_color || 'white',
-      is_gradient: body.is_gradient ?? false,
-      gradient: body.gradient || null,
+      comment: body.comment || null,
+      content: {
+        title: body.content.title,
+        description: body.content.description || null,
+        image: body.content.image || null,
+        button: {
+          text: body.content.button?.text || null,
+          url: body.content.button?.url || null,
+          is_text_link: body.content.button?.is_text_link ?? true,
+        },
+      },
+      translations: body.translations || {},
+      style: {
+        background_color: body.style?.background_color || 'white',
+        title: {
+          color: body.style?.title?.color || null,
+          size: body.style?.title?.size || '3xl',
+          font: body.style?.title?.font || 'sans',
+          weight: body.style?.title?.weight || 'bold',
+        },
+        description: {
+          color: body.style?.description?.color || null,
+          size: body.style?.description?.size || 'md',
+          font: body.style?.description?.font || 'sans',
+          weight: body.style?.description?.weight || 'normal',
+        },
+        button: {
+          color: body.style?.button?.color || null,
+          text_color: body.style?.button?.text_color || 'white',
+        },
+        alignment: body.style?.alignment || 'left',
+        image_first: body.style?.image_first ?? false,
+        image_style: body.style?.image_style || 'default',
+        gradient: body.style?.gradient || { enabled: false },
+      },
     };
-
-    // Handle translation fields
-    if (body.name_translation) {
-      updateData.name_translation = body.name_translation;
-    }
-    if (body.description_text_translation) {
-      updateData.description_text_translation = body.description_text_translation;
-    }
-    if (body.button_text_translation) {
-      updateData.button_text_translation = body.button_text_translation;
-    }
 
     // Update the template heading section
     const { data, error } = await supabaseAdmin
