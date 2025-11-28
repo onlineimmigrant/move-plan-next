@@ -5,7 +5,6 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { usePathname } from 'next/navigation';
 import TemplateSection from '@/components/TemplateSection';
 import TemplateHeadingSection from '@/components/TemplateHeadingSection';
 import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
@@ -33,13 +32,14 @@ type UnifiedSection = TemplateSection | HeadingSection;
 interface UnifiedSectionsProps {
   initialSections?: any[];
   initialHeadingSections?: any[];
+  initialPathname?: string;
 }
 
 const UnifiedSections: React.FC<UnifiedSectionsProps> = ({ 
   initialSections, 
-  initialHeadingSections 
+  initialHeadingSections,
+  initialPathname
 }) => {
-  const pathname = usePathname();
   const { templateSections: contextSections, templateHeadingSections: contextHeadingSections } = usePageSections();
   
   // Use context data if available (from SSR), otherwise fall back to props
@@ -81,7 +81,7 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   }>>(new Map());
 
   // Use the same basePath logic as TemplateSections
-  const basePath = useMemo(() => getBasePathFromLocale(pathname), [pathname]);
+  const basePath = useMemo(() => getBasePathFromLocale(initialPathname || '/'), [initialPathname]);
 
   useEffect(() => {
     // Skip fetching if we have initial server data on first load

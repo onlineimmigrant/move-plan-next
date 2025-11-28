@@ -105,6 +105,7 @@ interface ClientProvidersProps {
   cookieAccepted?: boolean;
   templateSections?: TemplateSection[];
   templateHeadingSections?: TemplateHeadingSection[];
+  pathnameFromServer?: string;
 }
 
 export default function ClientProviders({
@@ -122,8 +123,9 @@ export default function ClientProviders({
   cookieAccepted = false,
   templateSections = [],
   templateHeadingSections = [],
+  pathnameFromServer,
 }: ClientProvidersProps) {
-  const pathname = usePathname() || '/'; // Fallback to '/' if usePathname returns null
+  const pathname = pathnameFromServer || usePathname() || '/'; // Prefer server-provided pathname for SSR
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
@@ -409,7 +411,7 @@ function BannerAwareContent({
         ) : (
           <main className="w-full">
             {children}
-            <UnifiedSections />
+            <UnifiedSections initialPathname={pathname} />
             <Breadcrumbs />
             <BannerContainer banners={nonFixedBanners} />
           </main>

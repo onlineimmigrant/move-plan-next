@@ -88,7 +88,8 @@ ALTER TABLE website_templatesectionheading
 -- - updated_at (timestamp)
 -- ============================================================================
 
--- Vacuum the table to reclaim space
-VACUUM FULL website_templatesectionheading;
+-- Note: VACUUM must be run separately outside of a transaction block
+-- Run this command separately in your SQL editor after the ALTER TABLE statements:
+-- VACUUM FULL website_templatesectionheading;
 
 COMMENT ON TABLE website_templatesectionheading IS 'Template heading sections with JSONB structure for content, translations, and styling. Old individual columns have been removed after migration.';

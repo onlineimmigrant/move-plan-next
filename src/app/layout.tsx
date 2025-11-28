@@ -15,7 +15,7 @@ import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
-import { supabaseServer } from '@/lib/supabaseServerClient';
+import { supabaseServer } from '@/lib/supabaseServerSafe';
 import { Inter, Roboto, Poppins, Lato, Open_Sans, Montserrat, Nunito, Raleway, Ubuntu, Merriweather, JetBrains_Mono, Mulish } from 'next/font/google';
 
 // Optimize font loading to prevent CLS - Load all supported fonts
@@ -320,6 +320,47 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Use dynamic locale instead of static language from settings
   const language = currentLocale;
 
+  // Server-side fetch of template sections for SSR to avoid SEO/SSR mismatch
+  // Determine url_page (map '/' to '/home' to match DB convention)
+  const urlPage = (() => {
+    const base = pathname === '/' ? '/home' : pathname;
+    return base;
+  })();
+
+  let templateSections: any[] = [];
+  let templateHeadingSections: any[] = [];
+  try {
+    if (organizationId) {
+      const [{ data: tsData, error: tsError }, { data: thsData, error: thsError }] = await Promise.all([
+        supabaseServer
+          .from('website_templatesection')
+          .select('*')
+          .eq('url_page', urlPage)
+          .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+          .order('order', { ascending: true }),
+        supabaseServer
+          .from('website_templatesectionheading')
+          .select('*')
+          .eq('url_page', urlPage)
+          .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+          .order('order', { ascending: true })
+      ]);
+
+      if (tsError) {
+        console.error('[RootLayout] Error fetching template sections:', tsError);
+      }
+      if (thsError) {
+        console.error('[RootLayout] Error fetching template heading sections:', thsError);
+      }
+      templateSections = tsData || [];
+      templateHeadingSections = thsData || [];
+    }
+  } catch (e) {
+    console.error('[RootLayout] Unexpected error fetching template sections:', e);
+    templateSections = [];
+    templateHeadingSections = [];
+  }
+
   const headerData = {
     image_for_privacy_settings: settings.image,
     site: settings.site,
@@ -428,6 +469,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           menuItems={menuItems}
           cookieCategories={cookieCategories}
           cookieAccepted={cookieAccepted}
+          templateSections={templateSections}
+          templateHeadingSections={templateHeadingSections}
+          pathnameFromServer={pathname}
         >
           <LanguageSuggestionBanner currentLocale={currentLocale} />
           {children}
