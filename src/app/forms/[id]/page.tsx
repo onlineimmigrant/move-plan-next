@@ -18,14 +18,17 @@ export default async function PublicFormPage({ params }: { params: { id: string 
       title,
       settings,
       organization_id,
-      questions (
+      questions:form_questions_complete (
         id,
         type,
         label,
+        description,
         required,
         options,
+        validation,
         logic_show_if,
-        logic_value
+        logic_value,
+        order_index
       )
     `)
     .eq("id", params.id)

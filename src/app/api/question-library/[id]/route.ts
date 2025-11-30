@@ -81,7 +81,7 @@ export async function PATCH(
 
     // Parse request body
     const body = await request.json();
-    const { type, label, description, placeholder, options, validation, tags, category } = body;
+    const { type, label, description, placeholder, options, validation, tags, category, visible_for_others } = body;
 
     // Build update data
     const updateData: any = {};
@@ -93,6 +93,7 @@ export async function PATCH(
     if (validation !== undefined) updateData.validation = validation;
     if (tags !== undefined) updateData.tags = tags;
     if (category !== undefined) updateData.category = category;
+    if (visible_for_others !== undefined) updateData.visible_for_others = visible_for_others;
 
     const { data: question, error: updateError } = await supabase
       .from('question_library')

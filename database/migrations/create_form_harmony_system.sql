@@ -2,6 +2,22 @@
 -- Description: Add forms, form_questions, and form_responses tables for Tally/Typeform-style form builder
 -- Date: 2025-11-23
 -- Feature: FormHarmony - Multi-tenant form builder with conditional logic
+--
+-- ⚠️ DEPRECATION NOTICE - 2025-11-30
+-- This migration has been SUPERSEDED by create_question_library_system.sql
+-- DO NOT RUN this migration on new databases.
+-- This file is kept for historical reference only.
+-- 
+-- The new question library system provides:
+-- - Reusable question templates
+-- - Question library management
+-- - Per-form question overrides
+-- 
+-- For new installations, use:
+-- 1. create_question_library_system.sql
+-- 2. (optional) migrate_backup_questions_to_library.sql if migrating existing data
+-- ⚠️ END DEPRECATION NOTICE
+--
 
 -- ============================================================================
 -- 1. Create forms table

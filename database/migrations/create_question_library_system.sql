@@ -140,7 +140,7 @@ SELECT
   fq.question_library_id,
   
   -- Combine library data with overrides
-  COALESCE(ql.type, 'text') AS type,
+  COALESCE(fq.type_override, ql.type, 'text') AS type,
   COALESCE(fq.label_override, ql.label, '') AS label,
   COALESCE(fq.description_override, ql.description) AS description,
   COALESCE(fq.placeholder_override, ql.placeholder) AS placeholder,
@@ -167,7 +167,8 @@ SELECT
    OR fq.description_override IS NOT NULL 
    OR fq.placeholder_override IS NOT NULL
    OR fq.options_override IS NOT NULL
-   OR fq.validation_override IS NOT NULL) AS has_overrides
+   OR fq.validation_override IS NOT NULL
+   OR fq.type_override IS NOT NULL) AS has_overrides
    
 FROM form_questions fq
 LEFT JOIN question_library ql ON fq.question_library_id = ql.id;

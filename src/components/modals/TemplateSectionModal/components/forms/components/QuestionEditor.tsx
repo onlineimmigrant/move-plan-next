@@ -15,6 +15,7 @@ import { NavigationButtons } from './NavigationButtons';
 import { ensureLogicGroup as ensureLogicGroupUtil } from '../logicUtils';
 
 interface QuestionEditorProps {
+  formId?: string | null;
   question: Question;
   currentStep: number;
   totalSteps: number;
@@ -56,6 +57,7 @@ interface QuestionEditorProps {
 }
 
 export function QuestionEditor({
+  formId,
   question,
   currentStep,
   totalSteps,
@@ -101,6 +103,7 @@ export function QuestionEditor({
         {/* Question Library Suggestions */}
         {librarySuggestions && showLibrarySuggestions && (
           <QuestionLibrarySuggestions
+            formId={formId}
             searchQuery={librarySuggestions.searchQuery}
             isVisible={showLibrarySuggestions}
             selectedIndex={librarySuggestions.selectedIndex}

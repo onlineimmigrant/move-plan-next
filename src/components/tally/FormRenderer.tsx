@@ -114,15 +114,19 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   };
 
   const passesLogic = (q: Question): boolean => {
+    // First check if validation.logic exists (new complex logic system)
     const lg = q.validation?.logic;
     if (lg && Array.isArray(lg.rules) && lg.rules.length > 0) {
       const results = lg.rules.map(evaluateRule);
       return lg.combinator === 'all' ? results.every(Boolean) : results.some(Boolean);
     }
+    
     // Fallback to legacy single-condition fields
-    if (q.logic_show_if && q.logic_value !== undefined) {
+    if (q.logic_show_if && q.logic_value !== undefined && q.logic_value !== null) {
       return answers[q.logic_show_if] === q.logic_value;
     }
+    
+    // No logic conditions - always show
     return true;
   };
 
@@ -326,6 +330,15 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   const handleNext = async () => {
     if (!current) return;
 
+    // Check if current question is required and not answered
+    if (current.required) {
+      const answer = answers[current.id];
+      if (!answer || answer.trim() === '') {
+        alert('This question is required. Please provide an answer before continuing.');
+        return;
+      }
+    }
+
     if (step === visibleQuestions.length - 1) {
       setSubmitting(true);
       
@@ -428,7 +441,10 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
         </div>
 
         {/* Title & Description */}
-        <h1 className={`${titleClass} font-bold text-gray-900 leading-tight`}>{current.label}</h1>
+        <h1 className={`${titleClass} font-bold text-gray-900 leading-tight`}>
+          {current.label}
+          {current.required && <span className="text-red-500 ml-2">*</span>}
+        </h1>
         {current.description && (
           <p className={`${descriptionClass} text-gray-600 max-w-3xl mt-4 leading-relaxed`}>{current.description}</p>
         )}

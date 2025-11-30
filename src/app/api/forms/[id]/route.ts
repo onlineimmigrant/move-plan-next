@@ -125,28 +125,41 @@ export async function PATCH(
       for (let index = 0; index < questions.length; index++) {
         const q = questions[index];
         
+        // Extract simple logic fields from validation.logic if present
+        let logicShowIf = q.logic_show_if || null;
+        let logicValue = q.logic_value || null;
+        
+        // If question has complex logic in validation.logic, extract first rule for simple fields
+        if (q.validation?.logic?.rules?.length > 0) {
+          const firstRule = q.validation.logic.rules[0];
+          logicShowIf = firstRule.leftQuestionId || null;
+          logicValue = firstRule.value || null;
+        }
+        
         // Prepare question data with new library structure
         const questionData: any = {
           id: q.id, // now client supplies stable UUID
           form_id: formId,
           question_library_id: q.question_library_id || null, // Link to library if provided
           required: q.required || false,
-          logic_show_if: q.logic_show_if || null,
-          logic_value: q.logic_value || null,
+          logic_show_if: logicShowIf,
+          logic_value: logicValue,
           order_index: index,
         };
         
         // If not linked to library, store all data in overrides (custom question)
         // If linked to library, only store overrides if different from library defaults
         if (!q.question_library_id) {
-          // Custom question - store all data in overrides
+          // Custom question - store all data in overrides INCLUDING type
+          questionData.type_override = q.type; // Store the type for custom questions
           questionData.label_override = q.label;
           questionData.description_override = q.description || null;
           questionData.placeholder_override = q.placeholder || null;
           questionData.options_override = q.options || [];
-          questionData.validation_override = q.validation || {};
+          questionData.validation_override = q.validation || {}; // This includes validation.logic
         } else {
           // Library-linked question - only store overrides if provided
+          if (q.type_override !== undefined) questionData.type_override = q.type_override;
           if (q.label_override !== undefined) questionData.label_override = q.label_override;
           if (q.description_override !== undefined) questionData.description_override = q.description_override;
           if (q.placeholder_override !== undefined) questionData.placeholder_override = q.placeholder_override;

@@ -81,7 +81,7 @@ export function useFormAPI({
     } finally {
       setLoading(false);
     }
-  }, [setFormTitle, setFormDescription, setFormSettings, setPublished, setQuestions]);
+  }, []); // React setState functions are stable, no need to include them in deps
 
   const createNewForm = useCallback(async () => {
     try {
@@ -163,6 +163,9 @@ export function useFormAPI({
     }
 
     try {
+      const questionsToSave = questions.map((q, idx) => ({ ...q, order_index: idx }));
+      console.log('💾 Saving questions:', questionsToSave.map(q => ({ id: q.id, type: q.type, label: q.label })));
+      
       const response = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -171,7 +174,7 @@ export function useFormAPI({
           description: formDescription,
           settings: formSettings,
           published: published,
-          questions: questions.map((q, idx) => ({ ...q, order_index: idx })),
+          questions: questionsToSave,
         }),
       });
 
@@ -180,6 +183,7 @@ export function useFormAPI({
       setSaveState('saved');
       window.setTimeout(() => setSaveState('idle'), 1200);
     } catch (err) {
+      console.error('Autosave failed:', err);
       setSaveState('error');
     }
   }, [formId, formTitle, formDescription, formSettings, published, questions, createNewForm]);

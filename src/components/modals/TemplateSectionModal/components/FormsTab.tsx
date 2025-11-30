@@ -48,6 +48,7 @@ import { QuestionEditor } from './forms/components/QuestionEditor';
 import { CompanyLogo } from './forms/components/CompanyLogo';
 import { DesignSettingsButton } from './forms/components/DesignSettingsButton';
 import { LoadingSpinner } from './forms/components/LoadingSpinner';
+import { QuestionTypeSelector } from './forms/components/QuestionTypeSelector';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import type { GradientStyle } from '@/types/settings';
 
@@ -79,6 +80,10 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
   const [formSelectorOpen, setFormSelectorOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const updateQuestionTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [isCreatingLibraryQuestion, setIsCreatingLibraryQuestion] = useState(false);
+  const [libraryQuestionDraft, setLibraryQuestionDraft] = useState<Question | null>(null);
+  const [showLibraryTypeMenu, setShowLibraryTypeMenu] = useState(false);
+  const libraryTypeMenuRef = React.useRef<HTMLDivElement>(null);
   
   // Design menu state
   const [showDesignMenu, setShowDesignMenu] = useState(false);
@@ -197,6 +202,20 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
     }
   }, [formId, loadFormAPI]);
 
+  // Close library type menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (libraryTypeMenuRef.current && !libraryTypeMenuRef.current.contains(event.target as Node)) {
+        setShowLibraryTypeMenu(false);
+      }
+    };
+
+    if (showLibraryTypeMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLibraryTypeMenu]);
+
   // Load design settings when formSettings updates
   useEffect(() => {
     if (formId && formSettings && Object.keys(formSettings).length > 0) {
@@ -216,6 +235,92 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
     addToHistory(newQuestions);
     setSelectedQuestion(newQuestions[newQuestions.length - 1].id);
     setDirty(true);
+  };
+
+  const startCreatingLibraryQuestion = () => {
+    // Create a temporary question for library
+    const tempQuestion: Question = {
+      id: 'library-draft',
+      type: 'text',
+      label: '',
+      description: '',
+      placeholder: '',
+      required: false,
+      order_index: 0,
+    };
+    setLibraryQuestionDraft(tempQuestion);
+    setIsCreatingLibraryQuestion(true);
+    setFormSelectorOpen(false);
+  };
+
+  const saveLibraryQuestion = async () => {
+    if (!libraryQuestionDraft || !libraryQuestionDraft.label?.trim()) {
+      alert('Please enter a question label');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/question-library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: libraryQuestionDraft.type,
+          label: libraryQuestionDraft.label,
+          description: libraryQuestionDraft.description,
+          placeholder: libraryQuestionDraft.placeholder,
+          options: libraryQuestionDraft.options,
+          validation: libraryQuestionDraft.validation,
+          visible_for_others: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save library question');
+      }
+
+      // Reset
+      setLibraryQuestionDraft(null);
+      setIsCreatingLibraryQuestion(false);
+      alert('Question saved to library!');
+    } catch (error) {
+      console.error('Error saving library question:', error);
+      alert('Failed to save question. Please try again.');
+    }
+  };
+
+  const cancelLibraryQuestionCreation = () => {
+    setLibraryQuestionDraft(null);
+    setIsCreatingLibraryQuestion(false);
+  };
+
+  const addQuestionFromLibrary = (libraryQuestion: QuestionLibraryItem) => {
+    if (!formId) {
+      alert('Please create or select a form first.');
+      return;
+    }
+    
+    // Convert library question to form question
+    const newQuestion: Question = {
+      id: `q_${Date.now()}`, // Use ephemeral ID pattern that will be remapped on save
+      type: libraryQuestion.type,
+      label: libraryQuestion.label,
+      description: libraryQuestion.description,
+      placeholder: libraryQuestion.placeholder,
+      required: false,
+      options: libraryQuestion.options,
+      validation: libraryQuestion.validation,
+      order_index: questions.length,
+      question_library_id: libraryQuestion.id,
+      is_from_library: true,
+      library_tags: libraryQuestion.tags,
+      library_category: libraryQuestion.category,
+    };
+    
+    const newQuestions = [...questions, newQuestion];
+    setQuestions(newQuestions);
+    addToHistory(newQuestions);
+    setDirty(true); // This will trigger autosave via useAutoSave hook
+    setFormSelectorOpen(false);
   };
 
   const addQuestionAfter = (afterId: string) => {
@@ -340,6 +445,135 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
     return <LoadingSpinner />;
   }
 
+  // Library Question Creation Mode
+  if (isCreatingLibraryQuestion && libraryQuestionDraft) {
+    return (
+      <div className="absolute left-0 right-0 bottom-0 flex flex-col" style={{ top: 0, ...backgroundStyle, fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create Library Question</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Design a reusable question that can be shared across all forms
+              </p>
+            </div>
+
+            {/* Question Type Selector */}
+            <div className="mb-6 relative" ref={libraryTypeMenuRef}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Question Type
+              </label>
+              <button
+                onClick={() => setShowLibraryTypeMenu(!showLibraryTypeMenu)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    const currentType = FIELD_TYPES.find(f => f.value === libraryQuestionDraft.type);
+                    const Icon = currentType?.Icon;
+                    return (
+                      <>
+                        <div 
+                          className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-white"
+                          style={{ backgroundColor: primary.base }}
+                        >
+                          {Icon && <Icon className="h-5 w-5" />}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {currentType?.label || 'Select Type'}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {currentType?.description || 'Choose a question type'}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+                <svg 
+                  className={`h-5 w-5 text-gray-400 transition-transform ${showLibraryTypeMenu ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showLibraryTypeMenu && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                  <div className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                    Select Question Type
+                  </div>
+                  <QuestionTypeSelector
+                    selectedType={libraryQuestionDraft.type}
+                    onSelectType={(type) => {
+                      setLibraryQuestionDraft({ ...libraryQuestionDraft, type });
+                      setShowLibraryTypeMenu(false);
+                    }}
+                    primaryColor={primary.base}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <QuestionEditor
+              formId={null}
+              question={libraryQuestionDraft}
+              currentStep={0}
+              totalSteps={1}
+              designStyle="large"
+              showLogicFor={new Set()}
+              questions={[libraryQuestionDraft]}
+              slashCommands={{
+                showSlashMenu: false,
+                editingQuestionId: null,
+                filteredFieldTypes: [],
+                slashMenuIndex: 0,
+                slashMenuRef: React.createRef(),
+                setShowSlashMenu: () => {},
+                setSlashFilter: () => {},
+                setSlashMenuIndex: () => {},
+              }}
+              onUpdateQuestion={(id, updates) => {
+                setLibraryQuestionDraft({ ...libraryQuestionDraft, ...updates });
+              }}
+              onAddQuestionAfter={() => {}}
+              onToggleLogic={() => {}}
+              onDuplicateQuestion={() => {}}
+              onDeleteQuestion={() => {}}
+              onSetCurrentStep={() => {}}
+              onSetDirty={() => {}}
+              onHandleLabelChange={(id, value) => {
+                setLibraryQuestionDraft({ ...libraryQuestionDraft, label: value });
+              }}
+              onHandleSlashMenuKeyDown={() => {}}
+              onSetQuestionLogic={() => {}}
+            />
+            
+            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={cancelLibraryQuestionCreation}
+                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveLibraryQuestion}
+                disabled={!libraryQuestionDraft.label?.trim()}
+                className="px-4 py-2 rounded-xl text-white hover:opacity-90 transition-opacity font-medium disabled:opacity-50"
+                style={{ backgroundColor: primary.base }}
+              >
+                Save to Library
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Form Editor View
   return (
     <div className="absolute left-0 right-0 bottom-0 flex flex-col" style={{ top: 0, ...backgroundStyle, fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
@@ -417,6 +651,7 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
                 if (!question) return null;
                 return (
                   <QuestionEditor
+                    formId={formId}
                     question={question}
                     currentStep={currentStep}
                     totalSteps={questions.length}
@@ -480,6 +715,8 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
         onSelectForm={(id) => onFormIdChange(id)}
         onCreateNew={() => createNewForm()}
         onDeleteForm={deleteForm}
+        onCreateLibraryQuestion={startCreatingLibraryQuestion}
+        onAddQuestionFromLibrary={addQuestionFromLibrary}
       />
 
       {/* Floating save status chip */}
@@ -542,6 +779,8 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
         onSelectForm={(id) => onFormIdChange(id)}
         onCreateNew={() => createNewForm()}
         onDeleteForm={deleteForm}
+        onCreateLibraryQuestion={startCreatingLibraryQuestion}
+        onAddQuestionFromLibrary={addQuestionFromLibrary}
       />
 
       {/* Fixed Bottom Panel with Controls */}

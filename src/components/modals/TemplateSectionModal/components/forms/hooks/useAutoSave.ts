@@ -45,7 +45,9 @@ export function useAutoSave({
     setSaveState('autosaving');
     autosaveTimeoutRef.current = setTimeout(() => {
       if (!loading && dirty) {
-        saveFormSilent().then(() => setDirty(false));
+        saveFormSilent().then(() => {
+          setDirty(false);
+        });
       }
     }, 500);
     

@@ -28,6 +28,7 @@ export interface QuestionLibraryItem {
   tags?: string[];
   category?: string;
   usage_count?: number;
+  visible_for_others?: boolean;
   created_at?: string;
   updated_at?: string;
 }

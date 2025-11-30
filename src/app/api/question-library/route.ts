@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const type = searchParams.get('type');
     const search = searchParams.get('search');
+    const formId = searchParams.get('formId'); // For filtering by current form's questions
 
     // Build query
     let query = supabase
@@ -35,6 +36,13 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('organization_id', organizationId)
       .is('deleted_at', null);
+
+    // Filter by visibility: show public questions OR questions created by current form
+    if (formId) {
+      // For autocomplete: show only visible_for_others=true questions
+      query = query.eq('visible_for_others', true);
+    }
+    // If no formId, show all (for library management view)
 
     // Apply filters
     if (category) {
@@ -80,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { type, label, description, placeholder, options, validation, tags, category } = body;
+    const { type, label, description, placeholder, options, validation, tags, category, visible_for_others = true } = body;
 
     if (!type || !label?.trim()) {
       return NextResponse.json({ error: 'Type and label are required' }, { status: 400 });
@@ -99,6 +107,7 @@ export async function POST(request: NextRequest) {
         validation: validation || {},
         tags: tags || [],
         category: category || null,
+        visible_for_others,
       })
       .select()
       .single();

@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface QuestionLibrarySuggestionsProps {
+  formId?: string | null;
   searchQuery: string;
   isVisible: boolean;
   selectedIndex: number;
@@ -26,6 +27,7 @@ interface QuestionLibrarySuggestionsProps {
 }
 
 export function QuestionLibrarySuggestions({
+  formId,
   searchQuery,
   isVisible,
   selectedIndex,
@@ -48,7 +50,11 @@ export function QuestionLibrarySuggestions({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/question-library?search=${encodeURIComponent(query)}`);
+      const params = new URLSearchParams({ search: query });
+      if (formId) {
+        params.append('formId', formId);
+      }
+      const response = await fetch(`/api/question-library?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         const limitedSuggestions = data.questions?.slice(0, 5) || []; // Limit to top 5
@@ -69,7 +75,7 @@ export function QuestionLibrarySuggestions({
     } finally {
       setLoading(false);
     }
-  }, [onSuggestionsCountChange, onAvailableCountChange, existingQuestionLibraryIds]);
+  }, [onSuggestionsCountChange, onAvailableCountChange, existingQuestionLibraryIds, formId]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {

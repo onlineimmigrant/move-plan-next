@@ -1,12 +1,14 @@
 /**
- * FormSelectorButton - Floating button to select/switch forms
- * Opens a glassmorphism menu with available forms and create new option
+ * FormSelectorButton - Floating button to select/switch forms and manage library
+ * Opens a glassmorphism menu with tabs: Forms | Library Questions
  */
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueueListIcon, PlusIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { LibraryManagementTab } from './LibraryManagementTab';
+import type { QuestionLibraryItem, Question } from '../types';
 
 interface Form {
   id: string;
@@ -24,6 +26,8 @@ interface FormSelectorButtonProps {
   onSelectForm: (formId: string) => void;
   onCreateNew: () => void;
   onDeleteForm: (formId: string) => Promise<void>;
+  onCreateLibraryQuestion?: () => void;
+  onAddQuestionFromLibrary?: (libraryQuestion: QuestionLibraryItem) => void;
 }
 
 export function FormSelectorButton({
@@ -35,13 +39,42 @@ export function FormSelectorButton({
   onSelectForm,
   onCreateNew,
   onDeleteForm,
+  onCreateLibraryQuestion,
+  onAddQuestionFromLibrary,
 }: FormSelectorButtonProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'forms' | 'library'>('forms');
+  const [libraryCount, setLibraryCount] = useState(0);
+  const [libraryCountLoaded, setLibraryCountLoaded] = useState(false);
+
+  // Fetch library count only when Library tab is viewed for the first time
+  useEffect(() => {
+    if (isOpen && activeTab === 'library' && !libraryCountLoaded) {
+      fetchLibraryCount();
+    }
+  }, [isOpen, activeTab, libraryCountLoaded]);
+
+  const fetchLibraryCount = async () => {
+    try {
+      const response = await fetch('/api/question-library', {
+        // Lightweight request - just get count
+        next: { revalidate: 60 },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLibraryCount(data.questions?.length || 0);
+        setLibraryCountLoaded(true);
+      }
+    } catch (error) {
+      console.error('Error fetching library count:', error);
+    }
+  };
 
   const handleDelete = async (formId: string) => {
     await onDeleteForm(formId);
     setDeleteConfirm(null);
   };
+
   return (
     <>
       {/* Floating Button */}
@@ -71,7 +104,7 @@ export function FormSelectorButton({
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[59] animate-in fade-in duration-200"
+          className="fixed inset-0 z-[89] animate-in fade-in duration-200"
           onClick={onToggle}
           aria-hidden="true"
         />
@@ -79,14 +112,55 @@ export function FormSelectorButton({
 
       {/* Glassmorphism Menu Panel */}
       {isOpen && (
-        <div className="fixed top-44 left-6 w-80 max-h-[70vh] overflow-y-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-white/20 dark:border-gray-700/20 shadow-2xl rounded-3xl z-[60] animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+        <div className="fixed top-44 left-6 w-96 h-[70vh] bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-white/20 dark:border-gray-700/20 shadow-2xl rounded-3xl z-[90] animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200 flex flex-col">
+          {/* Tab Navigation */}
+          <div className="flex-shrink-0 border-b border-white/20 dark:border-gray-700/20 px-3 pt-3">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('forms')}
+                className={`
+                  flex-1 px-4 py-2 rounded-t-xl text-sm font-medium transition-all duration-200
+                  ${activeTab === 'forms'
+                    ? 'bg-white/50 dark:bg-gray-800/50'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/20 dark:hover:bg-gray-800/20'
+                  }
+                `}
+                style={activeTab === 'forms' ? { color: primaryColor } : {}}
+              >
+                Forms
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700">
+                  {availableForms.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('library')}
+                className={`
+                  flex-1 px-4 py-2 rounded-t-xl text-sm font-medium transition-all duration-200
+                  ${activeTab === 'library'
+                    ? 'bg-white/50 dark:bg-gray-800/50'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/20 dark:hover:bg-gray-800/20'
+                  }
+                `}
+                style={activeTab === 'library' ? { color: primaryColor } : {}}
+              >
+                Library
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700">
+                  {libraryCount}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {activeTab === 'forms' ? (
           <div className="p-3 space-y-3">
             {/* Header */}
             <div
               className="text-[14px] font-semibold text-gray-600 dark:text-gray-400 px-4 py-2 mb-1"
               style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
             >
-              Select Form
+              Forms
             </div>
 
             {/* Forms List */}
@@ -164,6 +238,18 @@ export function FormSelectorButton({
               Create New Form
             </button>
           </div>
+            ) : (
+              // Library Tab Content
+              <div className="relative h-full">
+                <LibraryManagementTab 
+                  formId={currentFormId}
+                  primaryColor={primaryColor}
+                  onAddQuestionToForm={onAddQuestionFromLibrary}
+                  onCreateNewLibraryQuestion={onCreateLibraryQuestion}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -171,10 +257,10 @@ export function FormSelectorButton({
       {deleteConfirm && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-[70] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/50 z-[100] animate-in fade-in duration-200"
             onClick={() => setDeleteConfirm(null)}
           />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[71] animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[101] animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Delete Form?
