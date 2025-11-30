@@ -5,6 +5,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import TemplateSection from '@/components/TemplateSection';
 import TemplateHeadingSection from '@/components/TemplateHeadingSection';
 import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
@@ -40,35 +41,13 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   initialHeadingSections,
   initialPathname
 }) => {
-  const { templateSections: contextSections, templateHeadingSections: contextHeadingSections } = usePageSections();
+  // Don't use context - it persists across page navigations and causes all pages to show the same sections
+  // Instead, rely on client-side fetches per page based on basePath
   
-  // Use context data if available (from SSR), otherwise fall back to props
-  const serverSections = contextSections.length > 0 ? contextSections : (initialSections || []);
-  const serverHeadingSections = contextHeadingSections.length > 0 ? contextHeadingSections : (initialHeadingSections || []);
-  
-  // Initialize with server-side data if available
+  // Initialize with empty data - let client fetch handle it
   const initialData = useMemo(() => {
-    if (serverSections.length === 0 && serverHeadingSections.length === 0) {
-      return [];
-    }
-    
-    const combined: UnifiedSection[] = [
-      ...serverSections.map((section: any) => ({
-        id: section.id,
-        type: 'template_section' as const,
-        order: section.order || 0,
-        data: section,
-      })),
-      ...serverHeadingSections.map((section: any) => ({
-        id: section.id,
-        type: 'heading_section' as const,
-        order: section.order || 0,
-        data: section,
-      })),
-    ];
-    
-    return combined.sort((a, b) => a.order - b.order);
-  }, [serverSections, serverHeadingSections]);
+    return [];
+  }, []);
   
   const [sections, setSections] = useState<UnifiedSection[]>(initialData);
   const [loading, setLoading] = useState(false);
@@ -80,16 +59,25 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
     timestamp: number;
   }>>(new Map());
 
-  // Use the same basePath logic as TemplateSections
-  const basePath = useMemo(() => getBasePathFromLocale(initialPathname || '/'), [initialPathname]);
+  // Track live pathname for client-side navigations (RootLayout does not remount)
+  const livePathname = usePathname();
+
+  // Resolve effective pathname: prefer client value after hydration
+  const effectivePathname = livePathname || initialPathname || '/';
+
+  // Compute basePath from effective pathname (strip locale prefix)
+  const basePath = useMemo(() => {
+    const computed = getBasePathFromLocale(effectivePathname);
+    console.log('[UnifiedSections] Computing basePath:', { initialPathname, livePathname, effectivePathname, computed });
+    return computed;
+  }, [effectivePathname, initialPathname, livePathname]);
 
   useEffect(() => {
-    // Skip fetching if we have initial server data on first load
-    if (initialData.length > 0 && sections.length > 0) {
-      return;
-    }
+    // Always fetch - don't skip based on initial data
+    // This ensures each page gets its own sections based on basePath
     
     const fetchSections = async () => {
+      console.log('[UnifiedSections] Fetching sections for basePath:', basePath);
       // Check client-side cache first
       const cached = cachedSections.current.get(basePath);
       const now = Date.now();
@@ -119,6 +107,14 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
 
           const templateSections = await templateResponse.json();
           const headingSections = await headingResponse.json();
+
+          console.log('[UnifiedSections] Fetched data:', { 
+            basePath, 
+            templateCount: templateSections?.length || 0, 
+            headingCount: headingSections?.length || 0,
+            templateSections: templateSections?.map((s: any) => ({ id: s.id, url_page: s.url_page })),
+            headingSections: headingSections?.map((s: any) => ({ id: s.id, url_page: s.url_page }))
+          });
 
           // Combine and tag sections with their type
           const combined: UnifiedSection[] = [
@@ -154,7 +150,7 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
     };
 
     fetchSections();
-  }, [basePath, initialData.length, sections.length]);
+  }, [basePath]);
 
   // Re-fetch when layout manager updates
   useEffect(() => {

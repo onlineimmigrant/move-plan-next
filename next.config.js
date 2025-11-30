@@ -38,7 +38,8 @@ const nextConfig = {
     ];
   },
   images: {
-    qualities: [75, 90, 100],
+    // Added 85 to support components using quality={85}
+    qualities: [75, 85, 90, 100],
     remotePatterns: [
 
       {

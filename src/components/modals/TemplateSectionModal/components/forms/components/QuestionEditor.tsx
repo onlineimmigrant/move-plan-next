@@ -5,10 +5,11 @@
 'use client';
 
 import React from 'react';
-import type { Question } from '../types';
+import type { Question, QuestionLibraryItem } from '../types';
 import { FieldPreview } from './FieldPreview';
 import { LogicEditor } from './LogicEditor';
 import { SlashCommandMenu } from './SlashCommandMenu';
+import { QuestionLibrarySuggestions } from './QuestionLibrarySuggestions';
 import { QuestionDescriptionEditor } from './QuestionDescriptionEditor';
 import { NavigationButtons } from './NavigationButtons';
 import { ensureLogicGroup as ensureLogicGroupUtil } from '../logicUtils';
@@ -30,6 +31,18 @@ interface QuestionEditorProps {
     setSlashFilter: (filter: string) => void;
     setSlashMenuIndex: (index: number) => void;
   };
+  librarySuggestions?: {
+    showSuggestions: boolean;
+    activeQuestionId: string | null;
+    searchQuery: string;
+    selectedIndex: number;
+    suggestionsMenuRef: React.RefObject<HTMLDivElement>;
+    existingQuestionLibraryIds: Set<string>;
+    onSelectLibraryQuestion: (question: QuestionLibraryItem) => void;
+    onCloseSuggestions: () => void;
+    onSuggestionsCountChange?: (count: number) => void;
+    onAvailableCountChange?: (count: number) => void;
+  };
   onUpdateQuestion: (id: string, updates: Partial<Question>) => void;
   onAddQuestionAfter: (afterId: string) => void;
   onToggleLogic: (questionId: string) => void;
@@ -50,6 +63,7 @@ export function QuestionEditor({
   showLogicFor,
   questions,
   slashCommands,
+  librarySuggestions,
   onUpdateQuestion,
   onAddQuestionAfter,
   onToggleLogic,
@@ -61,24 +75,44 @@ export function QuestionEditor({
   onHandleSlashMenuKeyDown,
   onSetQuestionLogic,
 }: QuestionEditorProps) {
+  const showLibrarySuggestions = librarySuggestions?.showSuggestions && 
+    librarySuggestions?.activeQuestionId === question.id;
+
   return (
     <div key={question.id} className="relative group/question">
       {/* Editable Question Label */}
-      <input
-        type="text"
-        value={question.label}
-        onChange={(e) => {
-          onHandleLabelChange(question.id, e.target.value, e);
-          onSetDirty(true);
-        }}
-        onKeyDown={(e) => onHandleSlashMenuKeyDown(e, question.id)}
-        placeholder="Type your question here..."
-        className={`w-full bg-transparent border-none outline-none focus:ring-0 p-0 ${designStyle === 'compact' ? 'text-2xl' : 'text-5xl'} font-bold text-gray-900 leading-tight`}
-        style={{
-          fontWeight: question.label ? 700 : 300,
-          color: question.label ? '#111827' : '#d1d5db'
-        }}
-      />
+      <div className="relative">
+        <input
+          type="text"
+          value={question.label}
+          onChange={(e) => {
+            onHandleLabelChange(question.id, e.target.value, e);
+            onSetDirty(true);
+          }}
+          onKeyDown={(e) => onHandleSlashMenuKeyDown(e, question.id)}
+          placeholder="Type your question here..."
+          className={`w-full bg-transparent border-none outline-none focus:ring-0 p-0 ${designStyle === 'compact' ? 'text-2xl' : 'text-5xl'} font-bold text-gray-900 leading-tight`}
+          style={{
+            fontWeight: question.label ? 700 : 300,
+            color: question.label ? '#111827' : '#d1d5db'
+          }}
+        />
+
+        {/* Question Library Suggestions */}
+        {librarySuggestions && showLibrarySuggestions && (
+          <QuestionLibrarySuggestions
+            searchQuery={librarySuggestions.searchQuery}
+            isVisible={showLibrarySuggestions}
+            selectedIndex={librarySuggestions.selectedIndex}
+            menuRef={librarySuggestions.suggestionsMenuRef}
+            existingQuestionLibraryIds={librarySuggestions.existingQuestionLibraryIds}
+            onSelectQuestion={librarySuggestions.onSelectLibraryQuestion}
+            onClose={librarySuggestions.onCloseSuggestions}
+            onSuggestionsCountChange={librarySuggestions.onSuggestionsCountChange}
+            onAvailableCountChange={librarySuggestions.onAvailableCountChange}
+          />
+        )}
+      </div>
 
       {/* Slash Command Menu */}
       <SlashCommandMenu

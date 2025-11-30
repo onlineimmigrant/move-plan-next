@@ -35,9 +35,9 @@ export async function GET(
       return NextResponse.json({ error: 'Form not found' }, { status: 404 });
     }
 
-    // Get questions separately
+    // Get questions separately using the complete view that merges library + overrides
     const { data: questions, error: questionsError } = await supabase
-      .from('form_questions')
+      .from('form_questions_complete')
       .select('*')
       .eq('form_id', formId)
       .order('order_index', { ascending: true });
@@ -124,20 +124,35 @@ export async function PATCH(
       // Upsert questions (update existing, insert new)
       for (let index = 0; index < questions.length; index++) {
         const q = questions[index];
-        const questionData = {
+        
+        // Prepare question data with new library structure
+        const questionData: any = {
           id: q.id, // now client supplies stable UUID
           form_id: formId,
-          type: q.type,
-          label: q.label,
-          description: q.description || null,
-          placeholder: q.placeholder || null,
+          question_library_id: q.question_library_id || null, // Link to library if provided
           required: q.required || false,
-          options: q.options || [],
           logic_show_if: q.logic_show_if || null,
           logic_value: q.logic_value || null,
-          validation: q.validation || {},
           order_index: index,
         };
+        
+        // If not linked to library, store all data in overrides (custom question)
+        // If linked to library, only store overrides if different from library defaults
+        if (!q.question_library_id) {
+          // Custom question - store all data in overrides
+          questionData.label_override = q.label;
+          questionData.description_override = q.description || null;
+          questionData.placeholder_override = q.placeholder || null;
+          questionData.options_override = q.options || [];
+          questionData.validation_override = q.validation || {};
+        } else {
+          // Library-linked question - only store overrides if provided
+          if (q.label_override !== undefined) questionData.label_override = q.label_override;
+          if (q.description_override !== undefined) questionData.description_override = q.description_override;
+          if (q.placeholder_override !== undefined) questionData.placeholder_override = q.placeholder_override;
+          if (q.options_override !== undefined) questionData.options_override = q.options_override;
+          if (q.validation_override !== undefined) questionData.validation_override = q.validation_override;
+        }
 
         await supabase
           .from('form_questions')

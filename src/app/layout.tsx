@@ -322,9 +322,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   // Server-side fetch of template sections for SSR to avoid SEO/SSR mismatch
   // Determine url_page (map '/' to '/home' to match DB convention)
+  // IMPORTANT: Strip locale prefix before DB lookup (DB stores paths without locale)
   const urlPage = (() => {
-    const base = pathname === '/' ? '/home' : pathname;
-    return base;
+    // Strip locale prefix (e.g., /en/my-post -> /my-post)
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
+    const normalized = pathWithoutLocale === '/' || pathWithoutLocale === '' ? '/home' : pathWithoutLocale;
+    return normalized;
   })();
 
   let templateSections: any[] = [];

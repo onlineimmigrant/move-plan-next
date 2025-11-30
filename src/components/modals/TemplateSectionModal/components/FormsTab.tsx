@@ -34,6 +34,8 @@ import { useSlashCommands } from './forms/hooks/useSlashCommands';
 import { useDesignSettings } from './forms/hooks/useDesignSettings';
 import { useKeyboardShortcuts } from './forms/hooks/useKeyboardShortcuts';
 import { useAutoSave } from './forms/hooks/useAutoSave';
+import { useQuestionLibrarySuggestions } from './forms/hooks/useQuestionLibrarySuggestions';
+import type { QuestionLibraryItem } from './forms/types';
 import { QuestionNavigationSidebar } from './forms/components/QuestionNavigationSidebar';
 import { FormHeader } from './forms/components/FormHeader';
 import { SlashCommandMenu } from './forms/components/SlashCommandMenu';
@@ -137,6 +139,40 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
       });
     },
   });
+
+  // Question Library Suggestions
+  const librarySuggestions = useQuestionLibrarySuggestions({
+    onSelectLibraryQuestion: (libraryQuestion: QuestionLibraryItem, questionId: string) => {
+      // Update question with library data
+      updateQuestion(questionId, {
+        question_library_id: libraryQuestion.id,
+        type: libraryQuestion.type,
+        label: libraryQuestion.label,
+        description: libraryQuestion.description,
+        placeholder: libraryQuestion.placeholder,
+        options: libraryQuestion.options,
+        validation: libraryQuestion.validation,
+        // Clear any overrides since we're using library defaults
+        label_override: null,
+        description_override: null,
+        placeholder_override: null,
+        options_override: null,
+        validation_override: null,
+      });
+      setDirty(true);
+    },
+  });
+
+  // Compute existing library question IDs in this form
+  const existingQuestionLibraryIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    questions.forEach(q => {
+      if (q.question_library_id) {
+        ids.add(q.question_library_id);
+      }
+    });
+    return ids;
+  }, [questions]);
 
   // Initialize history when questions load
   useEffect(() => {
@@ -255,10 +291,20 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
   // Slash command handling
   const handleQuestionLabelChange = (id: string, value: string, e?: React.ChangeEvent<HTMLInputElement>) => {
     slashCommands.handleQuestionLabelChange(id, value, e);
+    librarySuggestions.handleInputChange(id, value);
     updateQuestion(id, { label: value });
   };
 
-  const handleSlashMenuKeyDown = slashCommands.handleSlashMenuKeyDown;
+  const handleSlashMenuKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, questionId: string) => {
+    // First check if library suggestions are showing and handle navigation
+    const suggestionsHandled = librarySuggestions.handleSuggestionsKeyDown(e, questionId);
+    if (suggestionsHandled) {
+      return; // Library suggestions handled the key event
+    }
+    
+    // Otherwise, handle slash commands
+    slashCommands.handleSlashMenuKeyDown(e, questionId);
+  };
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -378,6 +424,20 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
                     showLogicFor={showLogicFor}
                     questions={questions}
                     slashCommands={slashCommands}
+                    librarySuggestions={{
+                      showSuggestions: librarySuggestions.showSuggestions,
+                      activeQuestionId: librarySuggestions.activeQuestionId,
+                      searchQuery: librarySuggestions.searchQuery,
+                      selectedIndex: librarySuggestions.selectedIndex,
+                      suggestionsMenuRef: librarySuggestions.suggestionsMenuRef,
+                      existingQuestionLibraryIds,
+                      onSelectLibraryQuestion: (question: QuestionLibraryItem) => {
+                        librarySuggestions.selectLibraryQuestion(question, questions[currentStep].id);
+                      },
+                      onCloseSuggestions: librarySuggestions.closeSuggestions,
+                      onSuggestionsCountChange: librarySuggestions.setSuggestionsCount,
+                      onAvailableCountChange: librarySuggestions.setAvailableSuggestionsCount,
+                    }}
                     onUpdateQuestion={updateQuestion}
                     onAddQuestionAfter={addQuestionAfter}
                     onToggleLogic={toggleLogic}
