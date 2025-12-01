@@ -816,8 +816,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                       const isCodedHarmony = section.text_style_variant === 'codedharmony';
                       const cardStyles = metric.is_card_type
                         ? isCodedHarmony
-                          ? `p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
-                          : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8`
+                          ? `pt-4 sm:pt-8 md:pt-10 px-5 sm:px-10 md:px-12 pb-0 rounded-3xl text-center gap-y-5 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
+                          : `pt-6 sm:pt-10 md:pt-12 px-6 sm:px-12 md:px-14 pb-0 shadow-md rounded-3xl text-center gap-y-6 overflow-hidden`
                         : '';
 
                       // Calculate metric background style (gradient or solid color)
@@ -833,7 +833,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                         <div
                           key={`${carousel.currentSlide}-${slideIndex}-${metric.id}`}
                           className={cn(
-                            "space-y-4 flex flex-col min-h-[350px]",
+                            "flex flex-col",
                             "transition-all duration-300 ease-out",
                             "hover:scale-[1.02] hover:shadow-2xl hover:z-10",
                             "focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2",
@@ -847,13 +847,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                         >
                             {metric.image && (
                               <div className={cn(
-                                section.is_image_bottom ? 'order-3' : '',
-                                // Videos: full width with negative margins, no top margin
-                                isVideoUrl(metric.image) 
-                                  ? metric.is_card_type 
-                                    ? '-mx-8 sm:-mx-16 mt-0' 
-                                    : 'mt-0'
-                                  : 'mt-8' // Images: normal margin
+                                'order-3 mt-auto',
+                                // Videos and images: full width with negative margins for card mode, flush bottom
+                                metric.is_card_type ? (isCodedHarmony ? '-mx-5 sm:-mx-10 md:-mx-12' : '-mx-6 sm:-mx-12 md:-mx-14') : ''
                               )}>
                                 {isVideoUrl(metric.image) ? (
                                   metric.image.toLowerCase().includes('youtube.com') || 
@@ -861,7 +857,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                                   metric.image.toLowerCase().includes('vimeo.com') ? (
                                     <iframe
                                       src={getEmbedUrl(metric.image)}
-                                      className="w-full rounded-none h-64 sm:h-72 md:h-80 lg:h-96"
+                                      className="w-full rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96"
                                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                       allowFullScreen
                                     />
@@ -869,13 +865,13 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                                     <video
                                       src={metric.image}
                                       controls
-                                      className="w-full object-cover rounded-none h-64 sm:h-72 md:h-80 lg:h-96"
+                                      className="w-full object-cover rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96"
                                     >
                                       Your browser does not support the video tag.
                                     </video>
                                   )
                                 ) : (
-                                  <div className="w-full overflow-hidden h-64 sm:h-72 md:h-80 lg:h-96 relative group">
+                                  <div className="w-full overflow-hidden rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96 relative group">
                                     <Image
                                       src={metric.image}
                                       alt={metric.title || 'Metric image'}
@@ -970,8 +966,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                 const isCodedHarmony = section.text_style_variant === 'codedharmony';
                 const cardStyles = metric.is_card_type
                   ? isCodedHarmony
-                    ? `p-6 sm:p-12 md:p-16 rounded-3xl text-center gap-y-6 card-hover relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
-                    : `p-8 sm:p-16 shadow-md rounded-3xl text-center gap-y-8 card-hover`
+                    ? `pt-4 sm:pt-8 md:pt-10 px-5 sm:px-10 md:px-12 pb-0 rounded-3xl text-center gap-y-5 relative overflow-hidden backdrop-blur-xl bg-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] border border-white/20`
+                    : `pt-6 sm:pt-10 md:pt-12 px-6 sm:px-12 md:px-14 pb-0 shadow-md rounded-3xl text-center gap-y-6 overflow-hidden`
                   : '';
 
                 // Calculate metric background style (gradient or solid color)
@@ -987,7 +983,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                   <div
                     key={metric.id}
                     className={cn(
-                      'space-y-4 flex flex-col mx-auto min-h-[350px]',
+                      'flex flex-col mx-auto',
                       'transition-all duration-300 ease-out',
                       'hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1',
                       'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2',
@@ -1003,13 +999,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                   >
                     {metric.image && (
                       <div className={cn(
-                        section.is_image_bottom ? 'order-3' : '',
-                        // Videos: full width with negative margins, no top margin
-                        isVideoUrl(metric.image) 
-                          ? metric.is_card_type 
-                            ? '-mx-8 sm:-mx-16 mt-0' 
-                            : 'mt-0'
-                          : 'mt-8' // Images: normal margin
+                        'order-3 mt-auto',
+                        // Videos and images: full width with negative margins for card mode, flush bottom
+                        metric.is_card_type ? (isCodedHarmony ? '-mx-5 sm:-mx-10 md:-mx-12' : '-mx-6 sm:-mx-12 md:-mx-14') : ''
                       )}>
                         {isVideoUrl(metric.image) ? (
                           metric.image.toLowerCase().includes('youtube.com') || 
@@ -1017,7 +1009,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                           metric.image.toLowerCase().includes('vimeo.com') ? (
                             <iframe
                               src={getEmbedUrl(metric.image)}
-                              className="w-full rounded-none h-64 sm:h-72 md:h-80 lg:h-96"
+                              className="w-full rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96"
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
                             />
@@ -1025,13 +1017,13 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                             <video
                               src={metric.image}
                               controls
-                              className="w-full object-cover rounded-none h-64 sm:h-72 md:h-80 lg:h-96"
+                              className="w-full object-cover rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96"
                             >
                               Your browser does not support the video tag.
                             </video>
                           )
                         ) : (
-                          <div className="w-full overflow-hidden h-64 sm:h-72 md:h-80 lg:h-96 relative group">
+                          <div className="w-full overflow-hidden rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96 relative group">
                             <Image
                               src={metric.image}
                               alt={metric.title || 'Metric image'}

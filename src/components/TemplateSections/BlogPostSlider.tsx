@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getOrganizationId } from '@/lib/supabase';
 import { getPostUrl } from '@/lib/postUtils';
 import { useSettings } from '@/context/SettingsContext';
@@ -14,6 +15,7 @@ interface BlogPost {
   slug: string;
   title: string | null;
   description: string | null;
+  created_at?: string;
   display_config?: {
     display_this_post?: boolean;
     display_as_blog_post?: boolean;
@@ -67,6 +69,8 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const containerRef = useRef<HTMLDivElement>(null);
   const hasLoadedRef = useRef(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const sliderContainerRef = useRef<HTMLDivElement>(null);
 
   // Detect mobile device
   useEffect(() => {
@@ -78,6 +82,19 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Detect reduced motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // Fetch blog posts that should be displayed on first page
@@ -149,9 +166,9 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     }
   }, [baseUrl]);
 
-  // Auto-scroll functionality (disabled on mobile)
+  // Auto-scroll functionality (disabled on mobile and with reduced motion)
   useEffect(() => {
-    if (posts.length <= 1 || isHovered || isMobile) return;
+    if (posts.length <= 1 || isHovered || isMobile || prefersReducedMotion) return;
 
     autoScrollInterval.current = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % posts.length);
@@ -201,7 +218,60 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
     }
   };
 
-  if (loading || posts.length === 0) {
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (posts.length <= 1) return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        handlePrevious();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        handleNext();
+        break;
+      case 'Home':
+        e.preventDefault();
+        setCurrentIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setCurrentIndex(posts.length - 1);
+        break;
+    }
+  }, [posts.length]);
+
+  // Current post for live region
+  const currentPost = useMemo(() => posts[currentIndex], [posts, currentIndex]);
+
+  if (loading) {
+    return (
+      <section ref={containerRef} className="pb-8 md:pb-12" aria-label="Loading featured blog posts">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden">
+            {/* Skeleton Image */}
+            <div className="h-[340px] sm:h-[408px] md:h-[476px] lg:h-[544px] xl:h-[612px] bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse relative overflow-hidden">
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+            </div>
+            {/* Skeleton Content */}
+            <div className="p-4 md:p-8 lg:p-10">
+              <div className="max-w-3xl mx-auto space-y-4">
+                <div className="h-6 w-24 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full animate-pulse" />
+                <div className="h-12 w-3/4 bg-gradient-to-r from-gray-100 to-gray-200 rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-5/6 bg-gradient-to-r from-gray-100 to-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (posts.length === 0) {
     return <div ref={containerRef} />;
   }
 
@@ -223,26 +293,39 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
   return (
     <section 
       ref={containerRef}
-      className="py-8 md:py-12"
+      className="pb-8 md:pb-12"
       style={gradientStyle}
+      role="region"
+      aria-label="Featured blog posts"
+      aria-roledescription="carousel"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Slider Container */}
-        <div 
+      {/* Live region for screen readers */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {currentPost && `Post ${currentIndex + 1} of ${posts.length}: ${currentPost.title}`}
+      </div>
+
+      {/* Slider Container */}
+      <div 
+        ref={sliderContainerRef}
           className="relative group"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          role="group"
+          aria-label="Blog post carousel"
         >
           {/* Slides */}
           <div className="overflow-hidden" ref={sliderRef}>
             <div 
-              className="flex transition-transform duration-500 ease-in-out"
+              className={`flex ${prefersReducedMotion ? '' : 'transition-transform duration-500 ease-in-out'}`}
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              role="list"
             >
-              {posts.map((post) => {
+              {posts.map((post, index) => {
                 const imageUrl = post.media_config?.main_photo && post.media_config.main_photo.trim() !== '' 
                   ? post.media_config.main_photo 
                   : settings?.image;
@@ -254,22 +337,28 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                   <div 
                     key={post.id} 
                     className="min-w-full group"
+                    role="listitem"
+                    itemScope
+                    itemType="https://schema.org/BlogPosting"
                   >
                     <div className="relative overflow-hidden">
-                      {/* Image Section - Reduced height */}
-                      <div className="relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] group/img">
-                        <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
-                          <span className="sr-only">View post: {post.title}</span>
-                        </Link>
-                        {imageUrl ? (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <img
-                              src={imageUrl}
-                              alt={post.title ?? 'Blog post'}
-                              className="w-full h-full object-contain"
-                            />
-                            
-                            {/* Unsplash Attribution */}
+                      {/* Image Section - Full width on mobile, constrained on desktop */}
+                      <div className="max-w-6xl mx-auto">
+                        <div className="relative h-[340px] sm:h-[408px] md:h-[476px] lg:h-[544px] xl:h-[612px] group/img">
+                          <Link href={getPostUrl(post)} className="absolute inset-0 z-0">
+                            <span className="sr-only">View post: {post.title}</span>
+                          </Link>
+                          {imageUrl ? (
+                            <div className="w-full h-full flex items-center justify-center relative">
+                              <Image
+                                src={imageUrl}
+                                alt={post.title ?? 'Blog post'}
+                                fill
+                                className="object-cover"
+                                priority={index === 0}
+                                sizes="(max-width: 1280px) 100vw, 1280px"
+                                itemProp="image"
+                              />                            {/* Unsplash Attribution */}
                             {unsplashAttr && (
                               <UnsplashAttribution
                                 attribution={unsplashAttr}
@@ -289,10 +378,16 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                           </div>
                         )}
                       </div>
+                      </div>
 
-                      {/* Content Section - Reduced spacing on mobile */}
-                      <Link href={getPostUrl(post)} className="block p-4 md:p-8 lg:p-10">
-                        <div className="max-w-3xl mx-auto">
+                      {/* Content Section - Constrained width with padding */}
+                      <div className="px-4 sm:px-6 lg:px-8">
+                        <Link href={getPostUrl(post)} className="block py-4 md:py-8 lg:py-10" itemProp="url">
+                          <div className="max-w-3xl mx-auto">
+                          {/* Hidden meta for schema.org */}
+                          <meta itemProp="datePublished" content={post.created_at || new Date().toISOString()} />
+                          <meta itemProp="author" content={post.organization_config?.subsection || 'Blog'} />
+                          
                           {post.organization_config?.subsection && (
                             <span 
                               className="inline-block px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium mb-2 md:mb-4"
@@ -300,14 +395,15 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                                 backgroundColor: themeColors.cssVars.primary.lighter,
                                 color: themeColors.cssVars.primary.base
                               }}
+                              itemProp="articleSection"
                             >
                               {post.organization_config.subsection}
                             </span>
                           )}
-                          <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 md:mb-4 group-hover:text-gray-700 transition-colors">
+                          <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 md:mb-4 group-hover:text-gray-700 transition-colors" itemProp="headline">
                             {post.title ?? 'Untitled'}
                           </h3>
-                          <p className="text-base md:text-lg text-gray-600 line-clamp-2 md:line-clamp-3">
+                          <p className="text-base md:text-lg text-gray-600 line-clamp-2 md:line-clamp-3" itemProp="description">
                             {post.description ?? 'No description available'}
                           </p>
                           <div 
@@ -320,7 +416,8 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
                             </svg>
                           </div>
                         </div>
-                      </Link>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -343,9 +440,6 @@ const BlogPostSlider: React.FC<BlogPostSliderProps> = ({ backgroundColor }) => {
             dotVariant="default"
           />
         </div>
-
-
-      </div>
     </section>
   );
 };
