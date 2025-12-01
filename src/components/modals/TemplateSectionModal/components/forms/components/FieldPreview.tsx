@@ -245,13 +245,17 @@ export function FieldPreview({
                     designStyle={designStyle}
                     questionType={question.type}
                     onUpdate={(newValue) => {
+                      console.log('📝 Updating option:', { questionId: question.id, index: i, oldValue: opt, newValue });
                       const newOptions = [...(question.options || [])];
                       newOptions[i] = newValue;
+                      console.log('📦 New options array:', newOptions);
                       onUpdateQuestion(question.id, { options: newOptions });
                       onSetDirty(true);
                     }}
                     onDelete={() => {
+                      console.log('🗑️ Deleting option:', { questionId: question.id, index: i, option: opt });
                       const newOptions = (question.options || []).filter((_, idx) => idx !== i);
+                      console.log('📦 New options after delete:', newOptions);
                       onUpdateQuestion(question.id, {
                         options: newOptions.length > 0 ? newOptions : ['Option 1'],
                       });
@@ -264,7 +268,9 @@ export function FieldPreview({
             {question.type !== 'yesno' && (
               <button
                 onClick={() => {
+                  console.log('➕ Adding new option to question:', question.id);
                   const newOptions = [...(question.options || []), ''];
+                  console.log('📦 New options array:', newOptions);
                   onUpdateQuestion(question.id, { options: newOptions });
                   onSetDirty(true);
                 }}

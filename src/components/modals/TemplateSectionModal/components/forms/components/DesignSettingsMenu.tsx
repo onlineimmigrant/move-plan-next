@@ -21,6 +21,12 @@ interface DesignSettingsMenuProps {
   columnLayout: 1 | 2 | 3;
   formPosition: 'left' | 'center' | 'right';
   contentColumns: ContentColumn[];
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouContactMessage?: string;
+  thankYouIcon?: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy';
+  thankYouButtonText?: string;
+  thankYouButtonUrl?: string;
   primaryColor: string;
   onClose: () => void;
   onSetDesignStyle: (style: 'large' | 'compact') => void;
@@ -29,6 +35,12 @@ interface DesignSettingsMenuProps {
   onSetColumnLayout: (layout: 1 | 2 | 3) => void;
   onSetFormPosition: (position: 'left' | 'center' | 'right') => void;
   onSetContentColumns: (columns: ContentColumn[]) => void;
+  onSetThankYouTitle: (title: string) => void;
+  onSetThankYouMessage: (message: string) => void;
+  onSetThankYouContactMessage: (message: string) => void;
+  onSetThankYouIcon: (icon: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy') => void;
+  onSetThankYouButtonText: (text: string) => void;
+  onSetThankYouButtonUrl: (url: string) => void;
   onOpenImageGallery: (position: 'left' | 'center' | 'right') => void;
   onSetDirty: (dirty: boolean) => void;
 }
@@ -41,6 +53,12 @@ export function DesignSettingsMenu({
   columnLayout,
   formPosition,
   contentColumns,
+  thankYouTitle,
+  thankYouMessage,
+  thankYouContactMessage,
+  thankYouIcon,
+  thankYouButtonText,
+  thankYouButtonUrl,
   primaryColor,
   onClose,
   onSetDesignStyle,
@@ -49,6 +67,12 @@ export function DesignSettingsMenu({
   onSetColumnLayout,
   onSetFormPosition,
   onSetContentColumns,
+  onSetThankYouTitle,
+  onSetThankYouMessage,
+  onSetThankYouContactMessage,
+  onSetThankYouIcon,
+  onSetThankYouButtonText,
+  onSetThankYouButtonUrl,
   onOpenImageGallery,
   onSetDirty,
 }: DesignSettingsMenuProps) {
@@ -450,6 +474,132 @@ export function DesignSettingsMenu({
               </div>
             </div>
           )}
+
+          {/* Thank You Screen Section */}
+          <div className="border-t border-white/10 dark:border-gray-700/10 pt-3">
+            <div
+              className="text-[14px] font-semibold text-gray-600 dark:text-gray-400 px-4 py-2 mb-1"
+              style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
+            >
+              Thank You Screen
+            </div>
+            
+            <div className="space-y-2 px-2">
+              {/* Title Input */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={thankYouTitle || ''}
+                  onChange={(e) => {
+                    onSetThankYouTitle(e.target.value);
+                    onSetDirty(true);
+                  }}
+                  placeholder="Thank You!"
+                  className="w-full text-xs px-2 py-1.5 rounded-xl bg-white/50 dark:bg-gray-900/50 border border-white/20 dark:border-gray-700/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+
+              {/* Message Input */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Message
+                </label>
+                <textarea
+                  value={thankYouMessage || ''}
+                  onChange={(e) => {
+                    onSetThankYouMessage(e.target.value);
+                    onSetDirty(true);
+                  }}
+                  placeholder="Your response has been recorded."
+                  rows={2}
+                  className="w-full text-xs px-2 py-1.5 rounded-xl bg-white/50 dark:bg-gray-900/50 border border-white/20 dark:border-gray-700/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+                />
+              </div>
+
+              {/* Icon Selector */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Icon
+                </label>
+                <div className="flex gap-1">
+                  {(['checkmark', 'heart', 'star', 'rocket', 'trophy'] as const).map((icon) => (
+                    <button
+                      key={icon}
+                      onClick={() => {
+                        onSetThankYouIcon(icon);
+                        onSetDirty(true);
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = primaryColor)}
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.borderColor = thankYouIcon === icon ? primaryColor : '')
+                      }
+                      className="flex-1 text-[10px] px-1 py-1.5 rounded-xl transition-all duration-200 hover:bg-white/10 dark:hover:bg-gray-800/10 active:bg-white/20 dark:active:bg-gray-800/20 text-gray-900 dark:text-white border border-white/20 dark:border-gray-700/20 capitalize"
+                      style={{
+                        borderColor: thankYouIcon === icon ? primaryColor : undefined,
+                        backgroundColor: thankYouIcon === icon ? 'rgba(255,255,255,0.1)' : undefined,
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact Message Input */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Contact Message (optional)
+                </label>
+                <textarea
+                  value={thankYouContactMessage || ''}
+                  onChange={(e) => {
+                    onSetThankYouContactMessage(e.target.value);
+                    onSetDirty(true);
+                  }}
+                  placeholder="We'll contact you as soon as possible!"
+                  rows={2}
+                  className="w-full text-xs px-2 py-1.5 rounded-xl bg-white/50 dark:bg-gray-900/50 border border-white/20 dark:border-gray-700/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+                />
+              </div>
+
+              {/* Button Text Input */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Button Text (optional)
+                </label>
+                <input
+                  type="text"
+                  value={thankYouButtonText || ''}
+                  onChange={(e) => {
+                    onSetThankYouButtonText(e.target.value);
+                    onSetDirty(true);
+                  }}
+                  placeholder="Visit Our Website"
+                  className="w-full text-xs px-2 py-1.5 rounded-xl bg-white/50 dark:bg-gray-900/50 border border-white/20 dark:border-gray-700/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+
+              {/* Button URL Input */}
+              <div>
+                <label className="text-[11px] text-gray-600 dark:text-gray-400 px-2 mb-0.5 block">
+                  Button URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={thankYouButtonUrl || ''}
+                  onChange={(e) => {
+                    onSetThankYouButtonUrl(e.target.value);
+                    onSetDirty(true);
+                  }}
+                  placeholder="https://example.com"
+                  className="w-full text-xs px-2 py-1.5 rounded-xl bg-white/50 dark:bg-gray-900/50 border border-white/20 dark:border-gray-700/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

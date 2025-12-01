@@ -43,6 +43,12 @@ type Settings = {
     type: 'image' | 'video' | 'text';
     content: string;
   }>;
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouContactMessage?: string;
+  thankYouIcon?: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy';
+  thankYouButtonText?: string;
+  thankYouButtonUrl?: string;
 };
 
 const colorMap: Record<string, string> = {
@@ -333,7 +339,11 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
     // Check if current question is required and not answered
     if (current.required) {
       const answer = answers[current.id];
-      if (!answer || answer.trim() === '') {
+      // For checkbox type, answer is comma-separated string, check if it has content
+      // For other types, check if answer exists and is not empty
+      const isEmpty = !answer || (typeof answer === 'string' && answer.trim() === '');
+      
+      if (isEmpty) {
         alert('This question is required. Please provide an answer before continuing.');
         return;
       }
@@ -378,12 +388,164 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   };
 
   if (submitted) {
+    const thankYouTitle = settings.thankYouTitle || 'Thank You!';
+    const thankYouMessage = settings.thankYouMessage || 'Your response has been recorded.';
+    const thankYouContactMessage = settings.thankYouContactMessage;
+    const thankYouIcon = settings.thankYouIcon || 'checkmark';
+    const buttonText = settings.thankYouButtonText;
+    const buttonUrl = settings.thankYouButtonUrl;
+
+    const icons = {
+      checkmark: (
+        <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+      heart: (
+        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      ),
+      star: (
+        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </svg>
+      ),
+      rocket: (
+        <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+      trophy: (
+        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 7h-5V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v2c0 2.21 1.79 4 4 4h.26A8.011 8.011 0 0011 17.93V19H8c-1.1 0-2 .9-2 2h12c0-1.1-.9-2-2-2h-3v-1.07c2.83-.54 5.09-2.74 5.74-5.57H20c2.21 0 4-1.79 4-4V9c0-1.1-.9-2-2-2z" />
+        </svg>
+      ),
+    };
+
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className={`max-w-lg w-full ${isCompact ? 'p-8' : 'p-16'} text-center shadow-2xl bg-white ${isCompact ? 'rounded-xl' : 'rounded-3xl'}`}>
-          <h1 className={`${isCompact ? 'text-3xl' : 'text-5xl'} font-bold mb-4`}>Thank you!</h1>
-          <p className={`${isCompact ? 'text-lg' : 'text-2xl'} text-gray-600`}>Your response has been recorded</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-gray-900" style={{ fontFamily: settings.font_family || 'inherit' }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="min-h-screen w-full"
+        >
+          <div className="bg-white dark:bg-gray-800 min-h-screen flex flex-col items-center justify-center px-6 py-12 md:px-12 text-center relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 0.1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+                className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl"
+                style={{ background: themeColors.cssVars.primary.base }}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 0.05, scale: 1 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+                className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl"
+                style={{ background: themeColors.cssVars.primary.base }}
+              />
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 max-w-4xl mx-auto w-full">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, duration: 0.7, type: 'spring', stiffness: 150, damping: 12 }}
+                className="text-green-500 mb-2"
+                style={{ color: themeColors.cssVars.primary.base }}
+              >
+                {icons[thankYouIcon]}
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 text-gray-900 dark:text-white leading-tight"
+              >
+                {thankYouTitle}
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto"
+              >
+                {thankYouMessage}
+              </motion.p>
+
+              {thankYouContactMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.5 }}
+                  className="mb-8 p-4 md:p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-600/50 rounded-2xl max-w-xl mx-auto backdrop-blur-sm"
+                >
+                  <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 font-medium">
+                    {thankYouContactMessage}
+                  </p>
+                </motion.div>
+              )}
+
+              {buttonText && buttonUrl && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <a href={buttonUrl} className="inline-block">
+                    <Button
+                      size={isCompact ? 'sm' : 'lg'}
+                      className={`${buttonTextClass} ${buttonRoundedClass}`}
+                    >
+                      {buttonText}
+                    </Button>
+                  </a>
+                </motion.div>
+              )}
+
+              {/* Decorative confetti */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+                className="mt-12 flex justify-center gap-3"
+              >
+                {[...Array(7)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ y: -30, opacity: 0, scale: 0 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    transition={{
+                      delay: 0.9 + i * 0.08,
+                      duration: 0.6,
+                      repeat: Infinity,
+                      repeatType: 'reverse',
+                      repeatDelay: 1.5 + i * 0.2,
+                      ease: 'easeInOut',
+                    }}
+                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-lg"
+                    style={{
+                      backgroundColor: i % 3 === 0 
+                        ? themeColors.cssVars.primary.base 
+                        : i % 3 === 1 
+                        ? themeColors.cssVars.primary.light 
+                        : themeColors.cssVars.primary.hover,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -538,8 +700,16 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all bg-white cursor-pointer`}
                   value={answers[current.id] || ""}
                   onChange={(e) => {
-                    setAnswers({ ...answers, [current.id]: e.target.value });
-                    setTimeout(handleNext, 300);
+                    const newAnswers = { ...answers, [current.id]: e.target.value };
+                    setAnswers(newAnswers);
+                    // Auto-advance for dropdown, skip validation since we just set the answer
+                    setTimeout(() => {
+                      if (step === visibleQuestions.length - 1) {
+                        handleSubmit();
+                      } else {
+                        setStep(step + 1);
+                      }
+                    }, 300);
                   }}
                 >
                   <option value="">Select an option...</option>
@@ -583,8 +753,16 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                     <button
                       key={rating}
                       onClick={() => {
-                        setAnswers({ ...answers, [current.id]: rating.toString() });
-                        setTimeout(handleNext, 300);
+                        const newAnswers = { ...answers, [current.id]: rating.toString() };
+                        setAnswers(newAnswers);
+                        // Auto-advance for rating, skip validation since we just set the answer
+                        setTimeout(() => {
+                          if (step === visibleQuestions.length - 1) {
+                            handleSubmit();
+                          } else {
+                            setStep(step + 1);
+                          }
+                        }, 300);
                       }}
                       className={cn(
                         `${ratingButtonClass} ${inputBorderClass} ${ratingTextClass} font-bold transition-all`,
@@ -630,8 +808,19 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                         value={opt}
                         className={checkboxSizeClass}
                         onChange={(e) => {
-                          setAnswers({ ...answers, [current.id]: e.target.value });
-                          if (current.type === "yesno") setTimeout(handleNext, 300);
+                          const newAnswers = { ...answers, [current.id]: e.target.value };
+                          setAnswers(newAnswers);
+                          if (current.type === "yesno") {
+                            // Auto-advance for yes/no questions
+                            setTimeout(() => {
+                              // Skip validation since we just set the answer
+                              if (step === visibleQuestions.length - 1) {
+                                handleSubmit();
+                              } else {
+                                setStep(step + 1);
+                              }
+                            }, 300);
+                          }
                         }}
                       />
                       <span>{opt}</span>
@@ -723,9 +912,9 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
 
     // Classic design type: clean centered layout
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: settings.font_family || "inherit" }}>
         <style>{focusStyles}</style>
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-6xl px-6">
           <div className={`grid ${columnClass} gap-8`}>
             {positions.map(position => 
               position === formPosition 
@@ -764,9 +953,9 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   
   if (designType === 'card') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: settings.font_family || "inherit" }}>
         <style>{focusStyles}</style>
-        <div className={`relative w-full max-w-3xl ${isCompact ? 'p-8' : 'p-12'} bg-white dark:bg-gray-800 shadow-2xl ${isCompact ? 'rounded-xl' : 'rounded-3xl'}`}>
+        <div className={`relative w-full max-w-3xl mx-6 ${isCompact ? 'p-8' : 'p-12'} bg-white dark:bg-gray-800 shadow-2xl ${isCompact ? 'rounded-xl' : 'rounded-3xl'}`}>
           {steppedFormContent}
         </div>
       </div>
@@ -774,9 +963,9 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ fontFamily: settings.font_family || "inherit" }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: settings.font_family || "inherit" }}>
       <style>{focusStyles}</style>
-      <div className="relative w-full max-w-3xl">
+      <div className="relative w-full max-w-3xl px-6">
         {steppedFormContent}
       </div>
     </div>

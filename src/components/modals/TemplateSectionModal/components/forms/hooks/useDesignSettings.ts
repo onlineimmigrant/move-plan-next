@@ -17,6 +17,12 @@ interface DesignSettings {
   columnLayout: 1 | 2 | 3;
   formPosition: 'left' | 'center' | 'right';
   contentColumns: ContentColumn[];
+  thankYouTitle?: string;
+  thankYouMessage?: string;
+  thankYouContactMessage?: string;
+  thankYouIcon?: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy';
+  thankYouButtonText?: string;
+  thankYouButtonUrl?: string;
 }
 
 interface UseDesignSettingsReturn {
@@ -27,6 +33,12 @@ interface UseDesignSettingsReturn {
   setColumnLayout: (layout: 1 | 2 | 3) => void;
   setFormPosition: (position: 'left' | 'center' | 'right') => void;
   setContentColumns: (columns: ContentColumn[]) => void;
+  setThankYouTitle: (title: string) => void;
+  setThankYouMessage: (message: string) => void;
+  setThankYouContactMessage: (message: string) => void;
+  setThankYouIcon: (icon: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy') => void;
+  setThankYouButtonText: (text: string) => void;
+  setThankYouButtonUrl: (url: string) => void;
   loadDesignSettings: (settings: Partial<DesignSettings>) => void;
   resetDesignSettings: () => void;
 }
@@ -72,6 +84,30 @@ export function useDesignSettings(
     setDesignSettings(prev => ({ ...prev, contentColumns: columns }));
   }, []);
 
+  const setThankYouTitle = useCallback((title: string) => {
+    setDesignSettings(prev => ({ ...prev, thankYouTitle: title }));
+  }, []);
+
+  const setThankYouMessage = useCallback((message: string) => {
+    setDesignSettings(prev => ({ ...prev, thankYouMessage: message }));
+  }, []);
+
+  const setThankYouContactMessage = useCallback((message: string) => {
+    setDesignSettings(prev => ({ ...prev, thankYouContactMessage: message }));
+  }, []);
+
+  const setThankYouIcon = useCallback((icon: 'checkmark' | 'heart' | 'star' | 'rocket' | 'trophy') => {
+    setDesignSettings(prev => ({ ...prev, thankYouIcon: icon }));
+  }, []);
+
+  const setThankYouButtonText = useCallback((text: string) => {
+    setDesignSettings(prev => ({ ...prev, thankYouButtonText: text }));
+  }, []);
+
+  const setThankYouButtonUrl = useCallback((url: string) => {
+    setDesignSettings(prev => ({ ...prev, thankYouButtonUrl: url }));
+  }, []);
+
   const loadDesignSettings = useCallback((settings: Partial<DesignSettings>) => {
     setDesignSettings(prev => ({ ...prev, ...settings }));
   }, []);
@@ -88,6 +124,12 @@ export function useDesignSettings(
     setColumnLayout,
     setFormPosition,
     setContentColumns,
+    setThankYouTitle,
+    setThankYouMessage,
+    setThankYouContactMessage,
+    setThankYouIcon,
+    setThankYouButtonText,
+    setThankYouButtonUrl,
     loadDesignSettings,
     resetDesignSettings,
   };

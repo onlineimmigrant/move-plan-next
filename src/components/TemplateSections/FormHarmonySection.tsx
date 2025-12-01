@@ -124,6 +124,12 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
           columnLayout: formSettings.columnLayout || 1,
           formPosition: formSettings.formPosition || 'left',
           contentColumns: formSettings.contentColumns || [],
+          thankYouTitle: formSettings.thankYouTitle,
+          thankYouMessage: formSettings.thankYouMessage,
+          thankYouContactMessage: formSettings.thankYouContactMessage,
+          thankYouIcon: formSettings.thankYouIcon,
+          thankYouButtonText: formSettings.thankYouButtonText,
+          thankYouButtonUrl: formSettings.thankYouButtonUrl,
         };
         
         // Cache the result
@@ -197,7 +203,7 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative pt-20 md:pt-16">
+    <div ref={containerRef} className="relative">
       {settings?.showCompanyLogo && appSettings?.image && (
         <CompanyLogo 
           imageUrl={appSettings.image} 

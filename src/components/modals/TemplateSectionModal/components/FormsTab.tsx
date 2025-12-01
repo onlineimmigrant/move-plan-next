@@ -100,6 +100,12 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
     setColumnLayout,
     setFormPosition,
     setContentColumns,
+    setThankYouTitle,
+    setThankYouMessage,
+    setThankYouContactMessage,
+    setThankYouIcon,
+    setThankYouButtonText,
+    setThankYouButtonUrl,
     loadDesignSettings,
   } = useDesignSettings();
   
@@ -333,7 +339,9 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
   };
 
   const updateQuestion = (id: string, updates: Partial<Question>) => {
+    console.log('🔄 updateQuestion called:', { id, updates, currentQuestions: questions.length });
     const newQuestions = updateQuestionUtil(questions, id, updates);
+    console.log('✅ Questions after update:', newQuestions.find(q => q.id === id));
     setQuestions(newQuestions);
     // Debounce history updates for text input to avoid excessive history entries
     if (updateQuestionTimerRef.current) {
@@ -731,6 +739,12 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
         columnLayout={designSettings.columnLayout}
         formPosition={designSettings.formPosition}
         contentColumns={designSettings.contentColumns}
+        thankYouTitle={designSettings.thankYouTitle}
+        thankYouMessage={designSettings.thankYouMessage}
+        thankYouContactMessage={designSettings.thankYouContactMessage}
+        thankYouIcon={designSettings.thankYouIcon}
+        thankYouButtonText={designSettings.thankYouButtonText}
+        thankYouButtonUrl={designSettings.thankYouButtonUrl}
         primaryColor={primary.base}
         onClose={() => setShowDesignMenu(false)}
         onSetDesignStyle={setDesignStyle}
@@ -739,6 +753,12 @@ export default function FormsTab({ formId, onFormIdChange, onSaveForm, backgroun
         onSetColumnLayout={setColumnLayout}
         onSetFormPosition={setFormPosition}
         onSetContentColumns={setContentColumns}
+        onSetThankYouTitle={setThankYouTitle}
+        onSetThankYouMessage={setThankYouMessage}
+        onSetThankYouContactMessage={setThankYouContactMessage}
+        onSetThankYouIcon={setThankYouIcon}
+        onSetThankYouButtonText={setThankYouButtonText}
+        onSetThankYouButtonUrl={setThankYouButtonUrl}
         onOpenImageGallery={(position) => {
           setSelectedColumnPosition(position);
           setImageGalleryOpen(true);

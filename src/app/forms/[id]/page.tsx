@@ -10,32 +10,32 @@ export default async function PublicFormPage({ params }: { params: { id: string 
   const tenant = await getCurrentTenant();
   const supabase = await createSupabaseAIServerClient();
 
-  // You will create these tables later — this is future-proof
-  const { data: form, error } = await supabase
+  // Fetch form data
+  const { data: form, error: formError } = await supabase
     .from("forms")
-    .select(`
-      id,
-      title,
-      settings,
-      organization_id,
-      questions:form_questions_complete (
-        id,
-        type,
-        label,
-        description,
-        required,
-        options,
-        validation,
-        logic_show_if,
-        logic_value,
-        order_index
-      )
-    `)
+    .select("id, title, settings, organization_id, published")
     .eq("id", params.id)
     .eq("published", true)
     .single();
 
-  if (error || !form) notFound();
+  if (formError || !form) notFound();
+
+  // Fetch questions from the complete view
+  const { data: questions, error: questionsError } = await supabase
+    .from("form_questions_complete")
+    .select("id, type, label, description, required, options, validation, logic_show_if, logic_value, order_index")
+    .eq("form_id", params.id)
+    .order("order_index", { ascending: true });
+
+  if (questionsError) {
+    console.error("Error fetching questions:", questionsError);
+  }
+
+  // Combine form and questions
+  const formData = {
+    ...form,
+    questions: questions || []
+  };
 
   // Enforce tenant isolation
   if (tenant && form.organization_id !== tenant.organizationId) notFound();
@@ -51,11 +51,17 @@ export default async function PublicFormPage({ params }: { params: { id: string 
     columnLayout: formSettings.columnLayout || 1,
     formPosition: formSettings.formPosition || 'left',
     contentColumns: formSettings.contentColumns || [],
+    thankYouTitle: formSettings.thankYouTitle,
+    thankYouMessage: formSettings.thankYouMessage,
+    thankYouContactMessage: formSettings.thankYouContactMessage,
+    thankYouIcon: formSettings.thankYouIcon,
+    thankYouButtonText: formSettings.thankYouButtonText,
+    thankYouButtonUrl: formSettings.thankYouButtonUrl,
   };
 
   return (
     <FormRenderer
-      form={form}
+      form={formData}
       settings={settings}
     />
   );

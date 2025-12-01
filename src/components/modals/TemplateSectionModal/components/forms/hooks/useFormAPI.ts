@@ -164,7 +164,13 @@ export function useFormAPI({
 
     try {
       const questionsToSave = questions.map((q, idx) => ({ ...q, order_index: idx }));
-      console.log('💾 Saving questions:', questionsToSave.map(q => ({ id: q.id, type: q.type, label: q.label })));
+      console.log('💾 Saving form with questions:', questionsToSave.map(q => ({ 
+        id: q.id, 
+        type: q.type, 
+        label: q.label, 
+        options: q.options,
+        question_library_id: q.question_library_id
+      })));
       
       const response = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',

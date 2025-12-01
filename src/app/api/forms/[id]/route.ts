@@ -158,13 +158,15 @@ export async function PATCH(
           questionData.options_override = q.options || [];
           questionData.validation_override = q.validation || {}; // This includes validation.logic
         } else {
-          // Library-linked question - only store overrides if provided
-          if (q.type_override !== undefined) questionData.type_override = q.type_override;
-          if (q.label_override !== undefined) questionData.label_override = q.label_override;
-          if (q.description_override !== undefined) questionData.description_override = q.description_override;
-          if (q.placeholder_override !== undefined) questionData.placeholder_override = q.placeholder_override;
-          if (q.options_override !== undefined) questionData.options_override = q.options_override;
-          if (q.validation_override !== undefined) questionData.validation_override = q.validation_override;
+          // Library-linked question - store overrides
+          // For library questions, we store fields that may have been customized
+          // The frontend sends the merged data (library + overrides), so we save everything as overrides
+          questionData.type_override = q.type_override || q.type || null;
+          questionData.label_override = q.label_override || q.label || null;
+          questionData.description_override = q.description_override || q.description || null;
+          questionData.placeholder_override = q.placeholder_override || q.placeholder || null;
+          questionData.options_override = q.options_override || q.options || [];
+          questionData.validation_override = q.validation_override || q.validation || {};
         }
 
         await supabase
