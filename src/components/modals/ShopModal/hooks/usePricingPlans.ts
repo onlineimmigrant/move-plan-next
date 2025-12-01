@@ -45,6 +45,13 @@ export function usePricingPlans({
       return;
     }
 
+    // Validate organization ID format
+    if (typeof organizationId !== 'string' || organizationId.trim() === '') {
+      console.error('Invalid organization ID format:', organizationId);
+      setError('Invalid organization ID');
+      return;
+    }
+
     // Check if fetch is already in progress
     if (fetchInProgressRef.current) {
       console.log('Fetch already in progress, skipping duplicate request');
@@ -84,14 +91,27 @@ export function usePricingPlans({
     fetchInProgressRef.current = true;
 
     try {
-      const response = await fetch(`/api/pricingplans?organization_id=${organizationId}`);
+      const url = `/api/pricingplans?organization_id=${organizationId}`;
+      console.log('Fetching pricing plans from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+      
+      console.log('Pricing plans response status:', response.status, response.statusText);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch pricing plans');
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error || `Failed to fetch pricing plans (${response.status})`);
       }
       
       const data: PricingPlan[] = await response.json();
+      console.log('Successfully fetched pricing plans:', data?.length || 0);
 
       // Update cache
       cache.data = data || [];
@@ -117,8 +137,20 @@ export function usePricingPlans({
       setPricingPlansByProduct(grouped);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch pricing plans';
-      console.error('Error fetching pricing plans:', err);
-      setError(message);
+      console.error('Error fetching pricing plans:', {
+        error: err,
+        message,
+        errorType: err instanceof TypeError ? 'TypeError (Network/CORS)' : 'Other',
+        organizationId
+      });
+      
+      // Provide more specific error messages
+      let userMessage = message;
+      if (err instanceof TypeError && err.message === 'fetch failed') {
+        userMessage = 'Network error: Unable to connect to pricing plans API. Please check your connection.';
+      }
+      
+      setError(userMessage);
     } finally {
       setIsLoading(false);
       fetchInProgressRef.current = false;

@@ -148,7 +148,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         form_id: data.form_id || null,
         is_reviews_section: data.is_reviews_section,
         image_metrics_height: data.image_metrics_height,
-        website_metric: data.website_metric, // Include metrics data for inline editing
+        // NOTE: website_metric is NOT included - metrics are managed via /api/template-sections/[id]/metrics
       };
 
       console.log('Saving template section:', { url, method, payload, hasUrlPage: 'url_page' in payload, urlPageValue: (payload as any).url_page });

@@ -1,6 +1,22 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
+/* Premium fade-in-up animation for staggered grid items */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Smooth scrolling behavior */
 html {
   scroll-behavior: smooth;

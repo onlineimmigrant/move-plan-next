@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import TemplateSection from './TemplateSection';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { TemplateSectionSkeleton } from '@/components/skeletons/TemplateSectionSkeletons';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { debug } from '@/lib/debug';
 import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
 
@@ -195,7 +196,16 @@ const TemplateSections: React.FC = () => {
   return (
     <>
       {sections.map(section => (
-        <TemplateSection key={section.id} section={section} />
+        <ErrorBoundary 
+          key={section.id}
+          fallback={
+            <div className="p-8 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800">Failed to load section: {section.section_title || 'Untitled'}</p>
+            </div>
+          }
+        >
+          <TemplateSection section={section} />
+        </ErrorBoundary>
       ))}
     </>
   );

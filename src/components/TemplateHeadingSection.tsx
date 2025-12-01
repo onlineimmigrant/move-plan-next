@@ -174,7 +174,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           <section
             key={section.id}
             className={`relative isolate group px-6 lg:px-8 py-28 sm:py-36 overflow-hidden`}
-            style={headingBackgroundStyle}
+            style={{
+              ...headingBackgroundStyle,
+              minHeight: hasImage ? '600px' : '400px'
+            }}
           >
             {/* Hover Edit Buttons for Admin */}
             {isAdmin && (
@@ -285,15 +288,15 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                         />
                       </div>
                     ) : style.image_style === 'circle' ? (
-                      <div className="relative mx-auto w-full max-w-lg">
-                        {/* Circle: Circular with effects */}
-                        <div className={`relative transform ${isPriority ? '' : 'transition-all duration-300 hover:scale-105'}`}>
-                          <div className="relative overflow-hidden rounded-full aspect-square">
+                      <div className="relative mx-auto w-full max-w-lg" style={{ height: '512px' }}>
+                        {/* Circle: Circular with effects - fixed height prevents CLS */}
+                        <div className="relative transform">
+                          <div className="relative overflow-hidden rounded-full" style={{ width: '512px', height: '512px', maxWidth: '100%' }}>
                             <Image
                               src={content.image}
                               alt={translatedTitle || 'Section image'}
                               fill
-                              className={`object-cover ${isPriority ? '' : 'transition-all duration-500 hover:scale-110'}`}
+                              className="object-cover"
                               priority={isPriority}
                               loading={isPriority ? 'eager' : 'lazy'}
                               fetchPriority={isPriority ? 'high' : 'auto'}
@@ -309,14 +312,14 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                     ) : (
                       <div className="relative mx-auto w-full max-w-lg">
                         {/* Contained: Current animated style with effects */}
-                        <div className={`relative transform ${isPriority ? '' : 'transition-all duration-300 hover:scale-105'}`}>
-                          <div className="relative overflow-hidden rounded-3xl max-h-96">
+                        <div className="relative transform" style={{ minHeight: '384px' }}>
+                          <div className="relative overflow-hidden rounded-3xl" style={{ height: '384px' }}>
                             <Image
                               src={content.image}
                               alt={translatedTitle || 'Section image'}
                               width={512}
                               height={384}
-                              className={`w-full h-auto object-cover ${isPriority ? '' : 'transition-all duration-500 hover:scale-110'}`}
+                              className="w-full h-full object-cover"
                               priority={isPriority}
                               loading={isPriority ? 'eager' : 'lazy'}
                               fetchPriority={isPriority ? 'high' : 'auto'}

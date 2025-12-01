@@ -2,20 +2,20 @@
 
 import React from 'react';
 
-// Base shimmer animation classes (optimized - removed duplicate animate-pulse)
-const shimmer = "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:will-change-transform before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent";
+// Premium shimmer animation with enhanced gradient
+const shimmer = "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:will-change-transform before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/80 before:via-blue-50/30 before:to-transparent";
 
 // Reusable skeleton primitives
 const SkeletonBox = ({ className = "" }: { className?: string }) => (
-  <div className={`bg-gray-200 rounded ${shimmer} ${className}`} />
+  <div className={`bg-gradient-to-br from-gray-100 to-gray-200 rounded ${shimmer} ${className}`} />
 );
 
 const SkeletonCircle = ({ size = "12" }: { size?: string }) => (
-  <div className={`w-${size} h-${size} bg-gray-200 rounded-full ${shimmer}`} />
+  <div className={`w-${size} h-${size} bg-gradient-to-br from-gray-100 to-gray-200 rounded-full ${shimmer}`} />
 );
 
 const SkeletonLine = ({ width = "full", height = "4" }: { width?: string; height?: string }) => (
-  <div className={`h-${height} w-${width} bg-gray-200 rounded ${shimmer}`} />
+  <div className={`h-${height} w-${width} bg-gradient-to-r from-gray-100 to-gray-200 rounded ${shimmer}`} />
 );
 
 // Section type definition

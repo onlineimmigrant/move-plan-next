@@ -28,6 +28,23 @@ export async function POST(
 
     console.log('Adding metric to section:', { sectionId, metricId: body.metric_id });
 
+    // Prevent database operations for preview mode (id = 0)
+    if (sectionId === '0' || parseInt(sectionId) === 0) {
+      console.log('Skipping database operation for preview section (id=0)');
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: 'Preview mode - no database changes',
+          data: {
+            templatesection_id: 0,
+            metric_id: body.metric_id,
+            order: 1,
+          }
+        },
+        { status: 200 }
+      );
+    }
+
     if (!body.metric_id) {
       return NextResponse.json(
         { error: 'metric_id is required' },
@@ -92,6 +109,15 @@ export async function PUT(
 
     console.log('Reordering metrics for section:', sectionId, body);
 
+    // Prevent database operations for preview mode (id = 0)
+    if (sectionId === '0' || parseInt(sectionId) === 0) {
+      console.log('Skipping database operation for preview section (id=0)');
+      return NextResponse.json(
+        { success: true, message: 'Preview mode - no database changes' },
+        { status: 200 }
+      );
+    }
+
     if (!body.metric_ids || !Array.isArray(body.metric_ids)) {
       return NextResponse.json(
         { error: 'metric_ids array is required' },
@@ -148,6 +174,15 @@ export async function DELETE(
     const metricId = searchParams.get('metric_id');
 
     console.log('Removing metric from section:', { sectionId, metricId });
+
+    // Prevent database operations for preview mode (id = 0)
+    if (sectionId === '0' || parseInt(sectionId) === 0) {
+      console.log('Skipping database operation for preview section (id=0)');
+      return NextResponse.json(
+        { success: true, message: 'Preview mode - no database changes' },
+        { status: 200 }
+      );
+    }
 
     if (!metricId) {
       return NextResponse.json(

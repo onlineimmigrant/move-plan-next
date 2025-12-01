@@ -7,18 +7,20 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     let organizationId = searchParams.get('organization_id');
 
+    console.log('[API] GET /api/pricingplans - organizationId:', organizationId);
+
     if (!organizationId) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
       const { getOrganizationId } = await import('@/lib/supabase');
       organizationId = await getOrganizationId(baseUrl);
       if (!organizationId) {
-        console.error('Organization not found for baseUrl:', baseUrl);
+        console.error('[API] Organization not found for baseUrl:', baseUrl);
         return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
       }
-      console.log('Using fallback organization_id:', organizationId);
+      console.log('[API] Using fallback organization_id:', organizationId);
     }
 
-    console.log('Fetching pricing plans for organization_id:', organizationId);
+    console.log('[API] Fetching pricing plans for organization_id:', organizationId);
 
     const { data, error } = await supabase
       .from('pricingplan')
@@ -35,11 +37,11 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true);
 
     if (error) {
-      console.error('Error fetching pricing plans:', error);
+      console.error('[API] Error fetching pricing plans:', error);
       return NextResponse.json({ error: `Failed to fetch pricing plans: ${error.message}` }, { status: 500 });
     }
 
-    console.log('Fetched pricing plans:', data?.length || 0, 'plans');
+    console.log('[API] Successfully fetched pricing plans:', data?.length || 0, 'plans');
 
     // Transform data to flatten product info
     const transformed = data?.map(plan => {
@@ -54,9 +56,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(transformed || []);
+    return NextResponse.json(transformed || [], {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch (error: any) {
-    console.error('Error in GET /api/pricingplans:', error);
+    console.error('[API] Error in GET /api/pricingplans:', error);
     return NextResponse.json({ error: `Failed to fetch pricing plans: ${error.message}` }, { status: 500 });
   }
 }

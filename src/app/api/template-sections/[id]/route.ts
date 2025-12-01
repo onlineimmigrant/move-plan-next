@@ -36,6 +36,20 @@ export async function PUT(
       bodyKeys: Object.keys(body)
     });
 
+    // Prevent database operations for preview mode (id = 0)
+    if (id === '0' || parseInt(id) === 0) {
+      console.log('Skipping database operation for preview section (id=0)');
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: 'Preview mode - no database changes',
+          ...body,
+          id: 0
+        },
+        { status: 200 }
+      );
+    }
+
     // Validate required fields for update
     if (!body.section_title) {
       console.error('Validation failed: section_title is required');
@@ -124,6 +138,15 @@ export async function DELETE(
     const { id } = await params;
 
     console.log('Deleting template section:', id);
+
+    // Prevent database operations for preview mode (id = 0)
+    if (id === '0' || parseInt(id) === 0) {
+      console.log('Skipping database operation for preview section (id=0)');
+      return NextResponse.json(
+        { success: true, message: 'Preview mode - no database changes' },
+        { status: 200 }
+      );
+    }
 
     // Delete the template section (cascading will handle related records)
     const { error } = await supabaseAdmin
