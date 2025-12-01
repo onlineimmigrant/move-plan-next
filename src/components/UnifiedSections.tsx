@@ -11,6 +11,7 @@ import TemplateHeadingSection from '@/components/TemplateHeadingSection';
 import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
 import { TemplateSectionSkeleton } from '@/components/skeletons/TemplateSectionSkeletons';
 import { usePageSections } from '@/context/PageSectionsContext';
+import { useSettings } from '@/context/SettingsContext';
 
 const CACHE_DURATION = 60000; // 1 minute cache
 
@@ -41,13 +42,31 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   initialHeadingSections,
   initialPathname
 }) => {
-  // Don't use context - it persists across page navigations and causes all pages to show the same sections
-  // Instead, rely on client-side fetches per page based on basePath
+  const { settings } = useSettings();
+  const organizationId = settings?.organization_id || null;
   
-  // Initialize with empty data - let client fetch handle it
+  // Initialize with SSR data when available (eliminates initial fetch)
   const initialData = useMemo(() => {
+    if ((initialSections && initialSections.length > 0) || (initialHeadingSections && initialHeadingSections.length > 0)) {
+      const combined: UnifiedSection[] = [
+        ...(initialSections || []).map((section: any) => ({
+          id: section.id,
+          type: 'template_section' as const,
+          order: section.order || 0,
+          data: section,
+        })),
+        ...(initialHeadingSections || []).map((section: any) => ({
+          id: section.id,
+          type: 'heading_section' as const,
+          order: section.order || 0,
+          data: section,
+        })),
+      ];
+      combined.sort((a, b) => a.order - b.order);
+      return combined;
+    }
     return [];
-  }, []);
+  }, [initialSections, initialHeadingSections]);
   
   const [sections, setSections] = useState<UnifiedSection[]>(initialData);
   const [loading, setLoading] = useState(false);
@@ -73,13 +92,17 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   }, [effectivePathname, initialPathname, livePathname]);
 
   useEffect(() => {
-    // Always fetch - don't skip based on initial data
-    // This ensures each page gets its own sections based on basePath
+    // Skip fetch if SSR data is already present
+    if (initialData.length > 0) {
+      console.log('[UnifiedSections] Using SSR data, skipping initial fetch');
+      return;
+    }
     
     const fetchSections = async () => {
-      console.log('[UnifiedSections] Fetching sections for basePath:', basePath);
-      // Check client-side cache first
-      const cached = cachedSections.current.get(basePath);
+      console.log('[UnifiedSections] Fetching sections for basePath:', basePath, 'orgId:', organizationId);
+      // Multi-tenant/locale-aware cache key
+      const cacheKey = `${basePath}:${organizationId || 'null'}`;
+      const cached = cachedSections.current.get(cacheKey);
       const now = Date.now();
       
       if (cached && now - cached.timestamp < CACHE_DURATION) {
@@ -90,13 +113,14 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
 
       try {
         // Don't block - start as loaded and update when ready
-        const data = await singleFlight<UnifiedSection[]>(`unifiedSections:${basePath}`, async () => {
+        const data = await singleFlight<UnifiedSection[]>(`unifiedSections:${basePath}:${organizationId}`, async () => {
           // Fetch both template sections and heading sections in parallel
+          const orgParam = organizationId ? `&organizationId=${encodeURIComponent(organizationId)}` : '';
           const [templateResponse, headingResponse] = await Promise.all([
-            fetch(`/api/template-sections?url_page=${encodeURIComponent(basePath)}`, {
+            fetch(`/api/template-sections?url_page=${encodeURIComponent(basePath)}${orgParam}`, {
               method: 'GET',
             }),
-            fetch(`/api/template-heading-sections?url_page=${encodeURIComponent(basePath)}`, {
+            fetch(`/api/template-heading-sections?url_page=${encodeURIComponent(basePath)}${orgParam}`, {
               method: 'GET',
             }),
           ]);
@@ -138,7 +162,8 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
           return combined;
         });
 
-        cachedSections.current.set(basePath, { data, timestamp: now });
+        const cacheKey = `${basePath}:${organizationId || 'null'}`;
+        cachedSections.current.set(cacheKey, { data, timestamp: now });
         setSections(data || []);
       } catch (err) {
         console.error('[UnifiedSections] Error fetching sections:', err);
@@ -150,7 +175,7 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
     };
 
     fetchSections();
-  }, [basePath]);
+  }, [basePath, organizationId, initialData.length]);
 
   // Re-fetch when layout manager updates
   useEffect(() => {
@@ -158,12 +183,13 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
       const fetchSections = async () => {
         try {
           setLoading(true);
-          const data = await singleFlight<UnifiedSection[]>(`unifiedSections-update:${basePath}`, async () => {
+          const orgParam = organizationId ? `&organizationId=${encodeURIComponent(organizationId)}` : '';
+          const data = await singleFlight<UnifiedSection[]>(`unifiedSections-update:${basePath}:${organizationId}`, async () => {
             const [templateResponse, headingResponse] = await Promise.all([
-              fetch(`/api/template-sections?url_page=${encodeURIComponent(basePath)}`, {
+              fetch(`/api/template-sections?url_page=${encodeURIComponent(basePath)}${orgParam}`, {
                 method: 'GET',
               }),
-              fetch(`/api/template-heading-sections?url_page=${encodeURIComponent(basePath)}`, {
+              fetch(`/api/template-heading-sections?url_page=${encodeURIComponent(basePath)}${orgParam}`, {
                 method: 'GET',
               }),
             ]);
@@ -195,7 +221,8 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
           });
 
           const now = Date.now();
-          cachedSections.current.set(basePath, { data, timestamp: now });
+          const cacheKey = `${basePath}:${organizationId || 'null'}`;
+          cachedSections.current.set(cacheKey, { data, timestamp: now });
           setSections(data || []);
         } catch (err) {
           console.error('[UnifiedSections] Error refreshing sections:', err);
@@ -209,7 +236,7 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
 
     window.addEventListener('templateSectionsUpdated', handleRefresh);
     return () => window.removeEventListener('templateSectionsUpdated', handleRefresh);
-  }, [basePath]);
+  }, [basePath, organizationId]);
 
   if (loading) {
     // Don't show loading skeleton to avoid delaying LCP

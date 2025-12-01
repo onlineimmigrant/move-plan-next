@@ -67,13 +67,39 @@ export function usePostPageTOC(post: Post | null) {
       return;
     }
 
-    // Use setTimeout to ensure DOM is fully rendered
-    const timeoutId = setTimeout(() => {
-      applyTOCIds(contentRef.current!, toc);
-    }, 100);
+    // For markdown content, wait longer for LazyMarkdownRenderer's Suspense to resolve
+    const isMarkdown = post?.content_type === 'markdown';
+    const delay = isMarkdown ? 500 : 100;
+
+    // Retry mechanism to handle lazy-loaded content
+    let attempts = 0;
+    const maxAttempts = isMarkdown ? 10 : 3;
+    
+    const applyIds = () => {
+      if (!contentRef.current) return;
+      
+      const headings = contentRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      
+      // If we still don't have headings and have attempts left, retry
+      if (headings.length === 0 && attempts < maxAttempts) {
+        attempts++;
+        debug.log('usePostPageTOC', `⏳ Retry ${attempts}/${maxAttempts} - waiting for headings to render...`);
+        setTimeout(applyIds, delay);
+        return;
+      }
+      
+      // Apply IDs once headings are available
+      if (headings.length > 0) {
+        applyTOCIds(contentRef.current, toc);
+      } else {
+        debug.warn('usePostPageTOC', '⚠️ No headings found after', maxAttempts, 'attempts');
+      }
+    };
+
+    const timeoutId = setTimeout(applyIds, delay);
 
     return () => clearTimeout(timeoutId);
-  }, [toc, post?.content]);
+  }, [toc, post?.content, post?.content_type]);
 
   // Memoized scroll handler
   const handleScrollTo = useCallback((id: string) => {

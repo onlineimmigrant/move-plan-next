@@ -281,9 +281,19 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                             pre: ({node, ...props}) => (
                               <pre {...props} className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-6" />
                             ),
-                            p: ({node, ...props}) => (
-                              <p {...props} className="break-words" />
-                            ),
+                            p: ({node, children, ...props}) => {
+                              // Check if paragraph contains only an image
+                              const hasOnlyImage = node?.children?.length === 1 && 
+                                node.children[0].type === 'element' && 
+                                node.children[0].tagName === 'img';
+                              
+                              // If paragraph contains only image, render as div to avoid nesting issues
+                              if (hasOnlyImage) {
+                                return <div {...props} className="break-words my-4">{children}</div>;
+                              }
+                              
+                              return <p {...props} className="break-words" />;
+                            },
                           }}
                         />
                       ) : (

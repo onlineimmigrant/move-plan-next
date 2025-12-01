@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import { getOrganizationId } from '@/lib/supabase';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
 
+// Enable ISR with 60-second revalidation
+export const revalidate = 60;
+
 // Create Supabase client with service role for admin operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,6 +52,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const url_page = searchParams.get('url_page');
+  const orgIdParam = searchParams.get('organizationId');
 
   if (!url_page) {
     console.log('[Template Headings] Missing url_page parameter');
@@ -56,11 +60,11 @@ export async function GET(request: Request) {
   }
 
   const decodedUrlPage = decodeURIComponent(url_page);
-  console.log('[Template Headings] Decoded url_page:', decodedUrlPage);
+  console.log('[Template Headings] Decoded url_page:', decodedUrlPage, 'orgId:', orgIdParam);
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getCachedOrganizationId(baseUrl);
+    const organizationId = orgIdParam || await getCachedOrganizationId(baseUrl);
     if (!organizationId) {
       console.error('[Template Headings] Organization not found');
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -111,9 +115,8 @@ export async function GET(request: Request) {
     return NextResponse.json(headings, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'CDN-Cache-Control': 'no-store',
-        'Vercel-CDN-Cache-Control': 'no-store',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'CDN-Cache-Control': 'public, s-maxage=300',
       },
     });
   } catch (error) {

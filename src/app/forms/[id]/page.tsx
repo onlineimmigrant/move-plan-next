@@ -1,5 +1,5 @@
 // src/app/forms/[id]/page.tsx
-import { FormRenderer } from "@/components/tally/FormRenderer";
+import FormRenderer from "@/components/tally/FormRenderer";
 import { createSupabaseAIServerClient } from "@/lib/supabaseAI";
 import { notFound } from "next/navigation";
 import { getCurrentTenant } from "@/lib/tenant";

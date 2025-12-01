@@ -1,7 +1,7 @@
 // src/components/tally/FormRenderer.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "@/ui/Button";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,36 @@ const colorMap: Record<string, string> = {
   orange: "from-orange-50 to-amber-50",
 };
 
-export function FormRenderer({ form, settings }: { form: FormData; settings: Settings }) {
+// Move icon definitions outside component to avoid recreation
+const thankYouIcons = {
+  checkmark: (
+    <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  ),
+  heart: (
+    <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  ),
+  star: (
+    <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </svg>
+  ),
+  rocket: (
+    <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
+  trophy: (
+    <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 7h-5V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v2c0 2.21 1.79 4 4 4h.26A8.011 8.011 0 0011 17.93V19H8c-1.1 0-2 .9-2 2h12c0-1.1-.9-2-2-2h-3v-1.07c2.83-.54 5.09-2.74 5.74-5.57H20c2.21 0 4-1.79 4-4V9c0-1.1-.9-2-2-2z" />
+    </svg>
+  ),
+} as const;
+
+const FormRenderer = memo(function FormRenderer({ form, settings }: { form: FormData; settings: Settings }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -94,7 +123,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
   const kbdTextClass = isCompact ? 'text-xs px-1.5 py-0.5' : 'text-base px-3 py-1';
   const hintTextClass = isCompact ? 'text-sm' : 'text-lg';
 
-  const evaluateRule = (rule: LogicRule): boolean => {
+  const evaluateRule = useCallback((rule: LogicRule): boolean => {
     const refAnswer = (answers[rule.leftQuestionId] ?? '').toString();
     const value = (rule.value ?? '').toString();
     switch (rule.operator) {
@@ -117,9 +146,9 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
       default:
         return true;
     }
-  };
+  }, [answers]);
 
-  const passesLogic = (q: Question): boolean => {
+  const passesLogic = useCallback((q: Question): boolean => {
     // First check if validation.logic exists (new complex logic system)
     const lg = q.validation?.logic;
     if (lg && Array.isArray(lg.rules) && lg.rules.length > 0) {
@@ -134,11 +163,11 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
     
     // No logic conditions - always show
     return true;
-  };
+  }, [answers, evaluateRule]);
 
   const visibleQuestions = useMemo(() => {
     return form.questions.filter((q) => passesLogic(q));
-  }, [form.questions, answers]);
+  }, [form.questions, passesLogic]);
 
   // Clamp step when visibility changes
   useEffect(() => {
@@ -395,34 +424,6 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
     const buttonText = settings.thankYouButtonText;
     const buttonUrl = settings.thankYouButtonUrl;
 
-    const icons = {
-      checkmark: (
-        <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      ),
-      heart: (
-        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-        </svg>
-      ),
-      star: (
-        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-        </svg>
-      ),
-      rocket: (
-        <svg className="w-24 h-24 mx-auto mb-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      trophy: (
-        <svg className="w-24 h-24 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20 7h-5V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v2c0 2.21 1.79 4 4 4h.26A8.011 8.011 0 0011 17.93V19H8c-1.1 0-2 .9-2 2h12c0-1.1-.9-2-2-2h-3v-1.07c2.83-.54 5.09-2.74 5.74-5.57H20c2.21 0 4-1.79 4-4V9c0-1.1-.9-2-2-2z" />
-        </svg>
-      ),
-    };
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-gray-900" style={{ fontFamily: settings.font_family || 'inherit' }}>
         <motion.div
@@ -459,7 +460,7 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 className="text-green-500 mb-2"
                 style={{ color: themeColors.cssVars.primary.base }}
               >
-                {icons[thankYouIcon]}
+                {thankYouIcons[thankYouIcon]}
               </motion.div>
 
               <motion.h1
@@ -512,37 +513,22 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
                 </motion.div>
               )}
 
-              {/* Decorative confetti */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-                className="mt-12 flex justify-center gap-3"
-              >
-                {[...Array(7)].map((_, i) => (
-                  <motion.div
+              {/* Decorative confetti - simplified for performance */}
+              <div className="mt-12 flex justify-center gap-3">
+                {[...Array(5)].map((_, i) => (
+                  <div
                     key={i}
-                    initial={{ y: -30, opacity: 0, scale: 0 }}
-                    animate={{ y: 0, opacity: 1, scale: 1 }}
-                    transition={{
-                      delay: 0.9 + i * 0.08,
-                      duration: 0.6,
-                      repeat: Infinity,
-                      repeatType: 'reverse',
-                      repeatDelay: 1.5 + i * 0.2,
-                      ease: 'easeInOut',
-                    }}
-                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-lg"
+                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-lg animate-bounce"
                     style={{
-                      backgroundColor: i % 3 === 0 
+                      backgroundColor: i % 2 === 0 
                         ? themeColors.cssVars.primary.base 
-                        : i % 3 === 1 
-                        ? themeColors.cssVars.primary.light 
-                        : themeColors.cssVars.primary.hover,
+                        : themeColors.cssVars.primary.light,
+                      animationDelay: `${i * 100}ms`,
+                      animationDuration: '2s',
                     }}
                   />
                 ))}
-              </motion.div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -970,4 +956,6 @@ export function FormRenderer({ form, settings }: { form: FormData; settings: Set
       </div>
     </div>
   );
-}
+});
+
+export default FormRenderer;

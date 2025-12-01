@@ -782,7 +782,7 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
   return (
     prevProps.section.id === nextProps.section.id &&
     prevProps.section.section_title === nextProps.section.section_title &&
-    prevProps.section.website_metric.length === nextProps.section.website_metric.length
+    ((prevProps.section.website_metric?.length || 0) === (nextProps.section.website_metric?.length || 0))
   );
 });
 

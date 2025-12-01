@@ -69,25 +69,32 @@ export function applyTOCIds(contentElement: HTMLElement, toc: TOCItem[]): void {
   }
 
   debug.emoji('applyTOCIds', '🔧', 'Applying IDs to rendered DOM...');
-  const headings = contentElement.querySelectorAll('h1, h2, h3, h4, h5');
+  const headings = contentElement.querySelectorAll('h1, h2, h3, h4, h5, h6');
   
   debug.log('applyTOCIds', '  Total rendered headings:', headings.length);
   debug.log('applyTOCIds', '  TOC expects', toc.length, 'headings');
   
+  if (headings.length === 0) {
+    debug.warn('applyTOCIds', '⚠️ No headings found in DOM - content may not be rendered yet');
+    return;
+  }
+  
   if (headings.length !== toc.length) {
     debug.warn('applyTOCIds', '⚠️ MISMATCH: DOM has', headings.length, 'headings but TOC has', toc.length);
+    debug.log('applyTOCIds', 'This is normal if some headings are in collapsed sections or lazy-loaded');
   }
   
   headings.forEach((heading, index) => {
     const tagName = heading.tagName.toLowerCase();
     const oldId = heading.id;
-    const expectedId = heading.id || `${tagName}-${index + 1}`;
+    
+    // Use TOC ID if available, otherwise generate one
+    const expectedId = toc[index]?.tag_id || `${tagName}-${index + 1}`;
     
     // Set ID to match TOC
     heading.id = expectedId;
     debug.log('applyTOCIds', `  ${index + 1}. ${tagName.toUpperCase()}: ${oldId ? `"${oldId}"` : '(no id)'} → "${expectedId}"`);
   });
   
-  debug.log('applyTOCIds', '✅ Final IDs in DOM:', Array.from(headings).map(h => h.id));
-  debug.log('applyTOCIds', '📋 TOC expects these IDs:', toc.map(t => t.tag_id));
+  debug.log('applyTOCIds', '✅ Applied', headings.length, 'IDs to DOM headings');
 }

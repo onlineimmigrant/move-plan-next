@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, memo } from 'react';
-import { FormRenderer } from '@/components/tally/FormRenderer';
+import FormRenderer from '@/components/tally/FormRenderer';
 import { CompanyLogo } from '@/components/modals/TemplateSectionModal/components/forms/components/CompanyLogo';
 import { useSettings } from '@/context/SettingsContext';
 
@@ -85,8 +85,11 @@ function FormHarmonySection({ formId }: FormHarmonySectionProps) {
       try {
         setLoading(true);
         
-        // Fetch form data
-        const formResponse = await fetch(`/api/forms/${formId}`);
+        // Fetch form data - use simpler endpoint for faster response
+        const formResponse = await fetch(`/api/forms/${formId}`, {
+          // Add cache control for faster subsequent loads
+          next: { revalidate: 60 } // Cache for 1 minute
+        });
         
         if (!formResponse.ok) {
           throw new Error('Form not found or not published');

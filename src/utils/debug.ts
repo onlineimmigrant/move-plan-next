@@ -15,7 +15,7 @@ export const debug = {
    */
   log: (namespace: string, ...args: any[]) => {
     if (DEBUG) {
-      // console.log(`[${namespace}]`, ...args);
+      console.log(`[${namespace}]`, ...args);
     }
   },
 

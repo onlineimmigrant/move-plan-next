@@ -334,29 +334,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let templateHeadingSections: any[] = [];
   try {
     if (organizationId) {
-      const [{ data: tsData, error: tsError }, { data: thsData, error: thsError }] = await Promise.all([
-        supabaseServer
-          .from('website_templatesection')
-          .select('*')
-          .eq('url_page', urlPage)
-          .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-          .order('order', { ascending: true }),
-        supabaseServer
-          .from('website_templatesectionheading')
-          .select('*')
-          .eq('url_page', urlPage)
-          .or(`organization_id.eq.${organizationId},organization_id.is.null`)
-          .order('order', { ascending: true })
+      const orgParam = encodeURIComponent(String(organizationId));
+      const urlParam = encodeURIComponent(urlPage);
+      const baseUrl = currentDomain.startsWith('http') ? currentDomain : `https://${currentDomain}`;
+      const [tsRes, thsRes] = await Promise.all([
+        fetch(`${baseUrl}/api/template-sections?url_page=${urlParam}&organizationId=${orgParam}`, {
+          // Let route handler ISR caching work
+          next: { revalidate: 60 },
+        }),
+        fetch(`${baseUrl}/api/template-heading-sections?url_page=${urlParam}&organizationId=${orgParam}`, {
+          next: { revalidate: 60 },
+        })
       ]);
 
-      if (tsError) {
-        console.error('[RootLayout] Error fetching template sections:', tsError);
+      if (!tsRes.ok) {
+        console.error('[RootLayout] Error fetching template sections via API:', await tsRes.text());
+      } else {
+        templateSections = await tsRes.json();
       }
-      if (thsError) {
-        console.error('[RootLayout] Error fetching template heading sections:', thsError);
+
+      if (!thsRes.ok) {
+        console.error('[RootLayout] Error fetching template heading sections via API:', await thsRes.text());
+      } else {
+        templateHeadingSections = await thsRes.json();
       }
-      templateSections = tsData || [];
-      templateHeadingSections = thsData || [];
     }
   } catch (e) {
     console.error('[RootLayout] Unexpected error fetching template sections:', e);
