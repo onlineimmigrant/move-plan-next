@@ -55,6 +55,7 @@ const Header: React.FC<HeaderProps> = ({
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollYRef = useRef(0);
@@ -354,6 +355,11 @@ const Header: React.FC<HeaderProps> = ({
     basket.reduce((sum, item) => sum + item.quantity, 0),
     [basket]
   );
+
+  // Set mounted state to prevent hydration mismatch for basket
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const renderMenuItems = useMemo(() => (
     <>
@@ -931,7 +937,7 @@ const Header: React.FC<HeaderProps> = ({
               )}
               
               {/* Basket */}
-              {totalItems > 0 && (
+              {isMounted && totalItems > 0 && (
                 <LocalizedLink
                   href="/basket"
                   className="cursor-pointer relative"
@@ -1167,7 +1173,7 @@ const Header: React.FC<HeaderProps> = ({
             )}
             
             {/* Basket */}
-            {totalItems > 0 && (
+            {isMounted && totalItems > 0 && (
               <LocalizedLink
                 href="/basket"
                 className="cursor-pointer relative"
@@ -1205,7 +1211,7 @@ const Header: React.FC<HeaderProps> = ({
         )}
 
         <div className="flex items-center md:hidden flex-shrink-0">
-          {totalItems > 0 && (
+          {isMounted && totalItems > 0 && (
             <LocalizedLink
               href="/basket"
               className="cursor-pointer relative mr-4"

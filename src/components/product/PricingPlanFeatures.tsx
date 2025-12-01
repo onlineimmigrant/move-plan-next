@@ -7,6 +7,7 @@ import { ChevronDownIcon, ChevronDoubleUpIcon } from '@heroicons/react/24/outlin
 import { useState, useEffect, useRef } from 'react';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { useProductTranslations } from './useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Feature {
   id: string;
@@ -36,6 +37,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
 
   // Check if the content is scrollable or can be scrollable when collapsed
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
           ref={scrollContainerRef}
           className={`${
             isExpanded ? 'max-h-none' : 'max-h-[5.0rem] overflow-y-auto'
-          } scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-100 pr-2 pb-6 transition-all duration-300 ease-in-out`}
+          } scrollbar-thin scrollbar-thumb-${themeColors.primary.bg} scrollbar-track-gray-100 pr-2 pb-6 transition-all duration-300 ease-in-out`}
           style={{ scrollbarWidth: 'thin' }}
         >
           <ul className="space-y-3 sm:space-y-4">
@@ -111,14 +113,14 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
                 key={feature.id}
                 className="flex items-start gap-3 pb-3 sm:pb-4 last:pb-0"
               >
-                <svg className="w-5 h-5 text-sky-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-5 h-5 text-${themeColors.primary.bg} flex-shrink-0 mt-0.5`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">
                     <Link
                       href={`/features/${feature.slug}`}
-                      className="flex items-center transition-all duration-300 group text-sky-600 hover:text-sky-700 no-underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      className={`flex items-center transition-all duration-300 group text-${themeColors.primary.text} hover:text-${themeColors.primary.textHover} no-underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-${themeColors.primary.ring}`}
                     >
                       {feature.name}
                       <RightArrowDynamic />
@@ -137,18 +139,18 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
             {isExpanded ? (
               <button
                 onClick={collapseFeatures}
-                className="p-2 rounded-lg bg-white border border-sky-200 hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-200"
+                className={`p-2 rounded-lg bg-white border border-${themeColors.primary.border} hover:bg-${themeColors.primary.bgLighter} hover:border-${themeColors.primary.bgLight} shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-${themeColors.primary.ring} transition-all duration-200`}
                 aria-label={t.collapseFeaturesAriaLabel}
               >
-                <ChevronDoubleUpIcon className="h-6 w-6 text-sky-600" aria-hidden="true" />
+                <ChevronDoubleUpIcon className={`h-6 w-6 text-${themeColors.primary.text}`} aria-hidden="true" />
               </button>
             ) : (
               <button
                 onClick={toggleExpand}
-                className="p-2 rounded-lg bg-white border border-sky-200 hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 transition-all duration-200"
+                className={`p-2 rounded-lg bg-white border border-${themeColors.primary.border} hover:bg-${themeColors.primary.bgLighter} hover:border-${themeColors.primary.bgLight} shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-${themeColors.primary.ring} transition-all duration-200`}
                 aria-label={t.expandFeaturesAriaLabel}
               >
-                <ChevronDownIcon className="h-6 w-6 text-sky-600" aria-hidden="true" />
+                <ChevronDownIcon className={`h-6 w-6 text-${themeColors.primary.text}`} aria-hidden="true" />
               </button>
             )}
           </div>

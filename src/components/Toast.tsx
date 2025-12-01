@@ -1,15 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { FaCheckCircle, FaExclamationCircle, FaTimes, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ToastProps {
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
   onClose: () => void;
   duration?: number; // Duration in milliseconds
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
-export default function Toast({ message, type, onClose, duration = 5000 }: ToastProps) {
+export default function Toast({ message, type, onClose, duration = 5000, action }: ToastProps) {
   const toastRef = useRef<HTMLDivElement>(null);
+  const { primary } = useThemeColors();
 
   // Auto-dismiss after duration
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
     switch (type) {
       case 'success':
         return {
-          bgColor: 'sky-600',
+          bgColor: primary.bg,
           icon: <FaCheckCircle className="h-8 w-8" />,
         };
       case 'error':
@@ -62,7 +68,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
   return (
     <div
       ref={toastRef}
-      className={`fixed top-4 right-4 z-[10100] flex items-center p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
+      className={`fixed top-4 right-4 z-[10100] flex items-center justify-between p-4 rounded-md shadow-lg border-2 bg-white text-gray-700 border-${bgColor} max-w-sm animate-slide-in`}
       role="alert"
       aria-live="assertive"
       tabIndex={-1}
@@ -71,13 +77,27 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
         <span>{icon}</span>
         <p className="text-sm font-semibold">{message}</p>
       </div>
-      <button
-        onClick={onClose}
-        className="ml-4 text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-700"
-        aria-label="Close notification"
-      >
-        <FaTimes className="h-4 w-4" />
-      </button>
+      <div className="flex items-center space-x-2 ml-4">
+        {action && (
+          <button
+            onClick={() => {
+              action.onClick();
+              onClose();
+            }}
+            className={`px-3 py-1 text-xs font-semibold text-white bg-${primary.bg} hover:bg-${primary.bgHover} rounded transition-colors focus:outline-none focus:ring-2 focus:ring-${primary.ring}`}
+            aria-label={action.label}
+          >
+            {action.label}
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded"
+          aria-label="Close notification"
+        >
+          <FaTimes className="h-4 w-4" />
+        </button>
+      </div>
       <style jsx>{`
         @keyframes slide-in {
           from {

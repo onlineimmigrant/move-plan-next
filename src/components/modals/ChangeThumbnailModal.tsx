@@ -7,6 +7,7 @@ import { Rnd } from 'react-rnd';
 import Button from '@/ui/Button';
 import { generateVideoThumbnail } from '@/lib/videoThumbnail';
 import { supabase } from '@/lib/supabaseClient';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChangeThumbnailModalProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export default function ChangeThumbnailModal({
   onThumbnailChanged,
   entityType = 'product',
 }: ChangeThumbnailModalProps) {
+  const themeColors = useThemeColors();
+  const { primary } = themeColors;
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentThumbnailUrl || null);
   const [currentTime, setCurrentTime] = useState(1);
@@ -306,6 +309,23 @@ export default function ChangeThumbnailModal({
             </div>
           )}
 
+          {/* Capture Button */}
+          <Button
+            variant="outline"
+            onClick={captureFrame}
+            className={`w-full backdrop-blur-sm 
+                     border-white/30 dark:border-gray-700/30 shadow-lg transition-all duration-300
+                     hover:shadow-xl hover:scale-[1.02] bg-${primary.bgLight} hover:bg-${primary.bg} 
+                     text-${primary.text} border-${primary.border}`}
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Capture Current Frame
+            <kbd className="ml-auto px-2 py-0.5 text-xs bg-white/20 dark:bg-gray-700/30 rounded border border-white/20">Space</kbd>
+          </Button>
+
           {/* Time Scrubber */}
           <div className="space-y-3 bg-white/30 dark:bg-gray-800/30 backdrop-blur-xl 
                         rounded-xl p-4 border border-white/20 dark:border-gray-700/20">
@@ -378,26 +398,7 @@ export default function ChangeThumbnailModal({
               ))}
             </div>
           </div>
-
-          {/* Capture Button */}
-          <Button
-            variant="outline"
-            onClick={captureFrame}
-            className="w-full bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm 
-                     hover:bg-white/60 dark:hover:bg-gray-800/60 border-white/30 
-                     dark:border-gray-700/30 shadow-lg transition-all duration-300
-                     hover:shadow-xl hover:scale-[1.02]"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Capture Current Frame
-            <kbd className="ml-auto px-2 py-0.5 text-xs bg-white/20 dark:bg-gray-700/30 rounded border border-white/20">Space</kbd>
-          </Button>
-        </div>
-
-        {/* Before/After Comparison */}
+        </div>        {/* Before/After Comparison */}
         {previewUrl && currentThumbnailUrl && (
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <label className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">

@@ -20,6 +20,8 @@ export function ToastContainer() {
           message={toast.message}
           type={toast.type}
           onClose={() => removeToast(toast.id)}
+          duration={toast.duration}
+          action={toast.action}
         />
       ))}
     </div>

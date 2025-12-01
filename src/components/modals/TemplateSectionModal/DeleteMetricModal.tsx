@@ -75,7 +75,7 @@ export default function DeleteMetricModal({
       size="md"
       draggable={false}
       resizable={false}
-      className="z-[70]"
+      zIndex={10020}
     >
       <div className="space-y-4 sm:space-y-6">
         {!deleteMode ? (

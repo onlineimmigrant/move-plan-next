@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { memo, useMemo } from 'react';
 import { useProductTranslations } from './useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type ProductSubType = {
   id: number;
@@ -22,6 +23,7 @@ const CategoriesBar = memo(function CategoriesBar({
   activeSubTypeName,
 }: CategoriesBarProps) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
   
   // Memoized filtered sub-types for better performance
   const visibleSubTypes = useMemo(() => 
@@ -38,8 +40,8 @@ const CategoriesBar = memo(function CategoriesBar({
         className={`
           cursor-pointer px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex-shrink-0
           ${activeSubTypeName === null 
-            ? 'bg-sky-100 text-sky-600 ring-2 ring-sky-200' 
-            : 'bg-gray-50 text-gray-700 hover:bg-sky-50 hover:text-sky-600'
+            ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text} ring-2 ring-${themeColors.primary.border}` 
+            : `bg-gray-50 text-gray-700 hover:bg-${themeColors.primary.bgLighter} hover:text-${themeColors.primary.textHover}`
           }
         `}
       >
@@ -57,8 +59,8 @@ const CategoriesBar = memo(function CategoriesBar({
             className={`
               cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex-shrink-0
               ${isActive 
-                ? 'bg-sky-100 text-sky-600 ring-2 ring-sky-200' 
-                : 'bg-gray-50 text-gray-700 hover:bg-sky-50 hover:text-sky-600'
+                ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text} ring-2 ring-${themeColors.primary.border}` 
+                : `bg-gray-50 text-gray-700 hover:bg-${themeColors.primary.bgLighter} hover:text-${themeColors.primary.textHover}`
               }
             `}
           >

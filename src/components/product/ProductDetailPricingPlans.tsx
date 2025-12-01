@@ -8,6 +8,7 @@ import Link from 'next/link';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import PricingPlanFeatures from './PricingPlanFeatures';
 import { useProductTranslations } from './useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Define types for pricing plans and props
 interface Feature {
@@ -117,23 +118,25 @@ const CustomToast = memo(
 CustomToast.displayName = 'CustomToast';
 
 // Enhanced utility function for plan card styles with glassmorphism
-  const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => `
-    relative cursor-pointer
-    transition-all duration-300 ease-in-out
-    ${
-      isActive
-        ? 'rounded-2xl border-2 border-sky-400 shadow-2xl shadow-sky-200/50 scale-[1.03]'
-        : 'rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:border-sky-200/80'
-    }
-    ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}
-    backdrop-blur-sm bg-white/80
-  `;
-
 const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   pricingPlans = [],
   amazonBooksUrl,
 }: ProductDetailPricingPlansProps) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
+  
+  const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => `
+    relative cursor-pointer
+    transition-all duration-300 ease-in-out
+    ${
+      isActive
+        ? `rounded-2xl border-2 border-${themeColors.primary.border} shadow-2xl shadow-${themeColors.primary.bgLight}/50 scale-[1.03]`
+        : `rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:border-${themeColors.primary.bgLight}/80`
+    }
+    ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}
+    backdrop-blur-sm bg-white/80
+  `;
+  
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
@@ -259,7 +262,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
 
       {/* Glassmorphism background for pricing section */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-sky-50/40 to-blue-50/60 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl shadow-blue-100/20"></div>
+        <div className={`absolute inset-0 bg-gradient-to-br from-white/60 via-${themeColors.primary.bgLighter}/40 to-${themeColors.primary.bgLight}/60 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl shadow-${themeColors.primary.bgLight}/20`}></div>
         <div className="relative p-6 md:p-8">
           <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${
             pricingPlans.length >= 3 
@@ -301,7 +304,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                     <div className="relative px-4 sm:px-6 pt-7 sm:pt-11 pb-3 sm:pb-5 min-h-[100px] sm:min-h-[140px]">
                       {/* Glassmorphism overlay for active cards */}
                       {isActive && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-sky-100/90 via-blue-50/60 to-indigo-50/80 rounded-2xl"></div>
+                        <div className={`absolute inset-0 bg-gradient-to-br from-${themeColors.primary.bgLight}/90 via-${themeColors.primary.bgLighter}/60 to-${themeColors.primary.bgLight}/80 rounded-2xl`}></div>
                       )}
                       
                       {/* Refined Promotion Badge - Elegant and Attention-grabbing */}
@@ -402,7 +405,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         <div className="flex justify-between items-end gap-2 sm:gap-4">
                           <h2
                             className={`text-base sm:text-lg font-semibold ${
-                              isActive ? 'text-sky-600' : 'text-gray-800'
+                              isActive ? `text-${themeColors.primary.text}` : 'text-gray-800'
                             } ${isOutOfStock ? 'text-gray-400' : ''}`}
                           >
                             {plan.package || t.product}
@@ -441,8 +444,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                   selectedPlanStatus !== 'out of stock' && !isLoading
                     ? isSelectedPlanActive
                       ? isAdded
-                        ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-sky-200 scale-105'
-                        : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 hover:shadow-xl hover:shadow-sky-300 hover:scale-105'
+                        ? `bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgHover} text-white shadow-${themeColors.primary.bgLight} scale-105`
+                        : `bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgActive} text-white hover:from-${themeColors.primary.bgHover} hover:to-${themeColors.primary.bgActive} hover:shadow-xl hover:shadow-${themeColors.primary.bgLight} hover:scale-105`
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
                     : 'bg-gray-200 text-gray-700 cursor-not-allowed'
                 }`}
@@ -468,7 +471,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 <Link href="/checkout">
                   <Button
                     variant="start"
-                    className="h-14 md:h-16 text-base md:text-lg font-semibold bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 shadow-lg hover:shadow-xl hover:shadow-sky-300"
+                    className={`h-14 md:h-16 text-base md:text-lg font-semibold bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgActive} hover:from-${themeColors.primary.bgHover} hover:to-${themeColors.primary.bgActive} shadow-lg hover:shadow-xl hover:shadow-${themeColors.primary.bgLight}`}
                     aria-label={t.proceedToCheckout}
                   >
                     <span>{t.proceedToCheckout}</span>

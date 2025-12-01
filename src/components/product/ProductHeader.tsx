@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { useProductTranslations } from './useProductTranslations';
 import { supabase } from '@/lib/supabaseClient';
 import dynamic from 'next/dynamic';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Dynamically import ProductVideoGenerator to avoid loading it unless needed
 const ProductVideoGeneratorInline = dynamic(
@@ -34,6 +35,7 @@ const ProductHeader = memo(function ProductHeader({
   onGenerateVideo 
 }: ProductHeaderProps) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
   const [isFixed, setIsFixed] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -95,7 +97,7 @@ const ProductHeader = memo(function ProductHeader({
       <div className="mt-4 flex flex-col">
         <Link
           href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
-          className="flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-sky-600 tracking-wide hover:text-sky-700 no-underline hover:no-underline mb-2"
+          className={`flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-${themeColors.primary.text} tracking-wide hover:text-${themeColors.primary.textHover} no-underline hover:no-underline mb-2`}
         >
           <span className="transition-transform duration-200 group-hover:-translate-x-1">
             {productSubType?.name || t.allProducts}

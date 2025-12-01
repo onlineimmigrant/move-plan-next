@@ -10,6 +10,7 @@ import IconButton from '@/ui/IconButton';
 import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
 import UnsplashAttribution from '@/components/UnsplashAttribution';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type Product = {
   id: number;
@@ -52,6 +53,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
   organizationType?: string;
 }) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubType, setActiveSubType] = useState<ProductSubType | null>(null);
@@ -242,7 +244,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
             <div className="relative group">
               <h1 className="text-center text-xl font-bold text-gray-900 tracking-wide mb-6 sm:mb-0">
                 {getPageTitle(organizationType)}
-                <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+                <span className={`absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-${themeColors.primary.bg} rounded-full`} />
               </h1>
               {isAdmin && (
                 <div className="absolute -top-8 left-0 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
@@ -279,7 +281,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                className={`w-full pl-10 pr-3 py-2 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-${themeColors.primary.ring} focus:border-transparent transition-all duration-200`}
               />
             </div>
           </div>
@@ -360,7 +362,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
                         } catch {}
                       }}
                     >
-                      <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-sky-400 transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]">
+                      <h2 className={`text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-${themeColors.primary.textHover} transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]`}>
                         {product.product_name ?? t.unnamedProduct}
                       </h2>
                       <div className="mt-auto">
@@ -376,7 +378,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
                           </div>
                         </div>
                         <div className="flex justify-end">
-                          <span className="text-sky-400 transition-all duration-300 group-hover:translate-x-1">
+                          <span className={`text-${themeColors.primary.text} transition-all duration-300 group-hover:translate-x-1`}>
                             <ArrowRightIcon className="h-5 w-5" />
                           </span>
                         </div>
@@ -394,7 +396,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
             <button
               type="button"
               onClick={loadMoreItems}
-              className="px-6 py-3 text-gray-600 font-medium hover:text-sky-400 hover:bg-sky-50 rounded-lg transition-all duration-200 border border-gray-200 hover:border-sky-200"
+              className={`px-6 py-3 text-gray-600 font-medium hover:text-${themeColors.primary.textHover} hover:bg-${themeColors.primary.bgLighter} rounded-lg transition-all duration-200 border border-gray-200 hover:border-${themeColors.primary.border}`}
             >
               {t.loadMoreProducts}
             </button>

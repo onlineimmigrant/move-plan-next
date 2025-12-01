@@ -47,11 +47,14 @@ export default function PaymentForm({
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [email, setEmail] = useState(customerEmail || '');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [payBarVisible, setPayBarVisible] = useState(false);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
     isMountedRef.current = true;
     console.log('PaymentForm mounted, elements:', elements);
+    // Animate mobile pay bar appearance
+    setTimeout(() => setPayBarVisible(true), 50);
     return () => {
       isMountedRef.current = false;
       console.log('PaymentForm unmounted');
@@ -262,16 +265,18 @@ export default function PaymentForm({
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
+    <form id="payment-form" onSubmit={handleSubmit} className="backdrop-blur-sm bg-white/30 dark:bg-gray-800/30 p-3 sm:p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 relative overflow-hidden pb-24 sm:pb-0">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
+      <div className="relative z-10">
+      <div className="mb-2 sm:mb-3">
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
           Email Address <span className="text-red-500">*</span>
         </label>
         <input
           type="email"
           value={email}
           onChange={handleEmailChange}
-          className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
+          className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
           placeholder="Enter email"
           required
         />
@@ -280,23 +285,23 @@ export default function PaymentForm({
         )}
       </div>
 
-      <div className="mb-3">
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
+      <div className="mb-2 sm:mb-3">
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
           Payment Details
         </label>
-        <div className="bg-white rounded-lg">
+        <div className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg border border-white/60 dark:border-gray-600/60 p-0">
           <PaymentElement id="payment-element" options={paymentElementOptions} />
         </div>
       </div>
 
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Promo Code</h3>
+      <div className="mb-2 sm:mb-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">Promo Code</h3>
         <div className="flex items-center space-x-2">
           <input
             type="text"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
+            className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
             placeholder={t.enterPromoCode}
             disabled={promoLoading}
           />
@@ -304,7 +309,7 @@ export default function PaymentForm({
             type="button"
             onClick={handlePromoCodeApply}
             disabled={promoLoading}
-            className={`py-1.5 px-3 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+            className={`py-1.5 px-2.5 sm:px-3 text-sm font-medium text-white bg-gray-600/90 backdrop-blur-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 ${
               promoLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
           >
@@ -327,18 +332,31 @@ export default function PaymentForm({
         </div>
       )}
 
-      <Button
-      variant='start'
-        type="submit"
-        disabled={isLoading || !stripe || !elements || isApplyingPromo}
-        className={`
- bg-sky-500 
-   
-          ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}
-        `}
-      >
-        {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
-      </Button>
+      {/* Desktop / larger screens button */}
+      <div className="hidden sm:block">
+        <Button
+          variant='start'
+          type="submit"
+          disabled={isLoading || !stripe || !elements || isApplyingPromo}
+          className={`${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
+          aria-label={t.payNow}
+        >
+          {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
+        </Button>
+      </div>
+      </div>
+      {/* Mobile fixed footer button */}
+      <div className={`sm:hidden fixed left-0 right-0 bottom-0 z-40 px-4 py-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl bg-white/85 dark:bg-gray-900/85 border-t border-white/40 dark:border-gray-700/40 transition-all duration-300 ${payBarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <Button
+          variant='start'
+          type="submit"
+          disabled={isLoading || !stripe || !elements || isApplyingPromo}
+          className={`w-full ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
+          aria-label={t.payNow}
+        >
+          {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
+        </Button>
+      </div>
     </form>
   );
 }

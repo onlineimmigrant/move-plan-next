@@ -4,6 +4,7 @@ import { Disclosure } from '@headlessui/react';
 import { HiMinus,  HiCheck } from 'react-icons/hi';
 import Link from 'next/link';
 import { useProductTranslations } from './useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 
 interface Feature {
@@ -22,17 +23,18 @@ export default function AssociatedFeaturesDisclosure({
   associatedFeatures,
 }: AssociatedFeaturesDisclosureProps) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
   
   return (
     <div className="mt-4 w-full">
       <Disclosure>
         {({ open }) => (
           <div className="w-full">
-            <Disclosure.Button className="flex rounded-full px-2 items-center justify-between w-full py-2 text-xs font-normal text-sky-500 hover:text-gray-700 transition-colors duration-200">
+            <Disclosure.Button className={`flex rounded-full px-2 items-center justify-between w-full py-2 text-xs font-normal text-${themeColors.primary.bg} hover:text-gray-700 transition-colors duration-200`}>
               <span>{t.associatedFeatures}</span>
               <span className="ml-2">
                 {open ? (
-                  <HiMinus className="w-4 h-4 text-sky-500" />
+                  <HiMinus className={`w-4 h-4 text-${themeColors.primary.bg}`} />
                 ) : (
                   " "
                 )}

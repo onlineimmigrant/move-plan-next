@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import { useProductTranslations } from './useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Define types for the product
 type Product = {
@@ -24,6 +25,7 @@ export default function CategoryBarProductDetailPage({
   currentProduct,
 }: CategoryBarProductDetailPageProps) {
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -143,14 +145,14 @@ export default function CategoryBarProductDetailPage({
 
               {/* Product Name */}
               <div className="p-3">
-                <h3 className="text-sm font-medium text-gray-900 line-clamp-1 truncate group-hover:text-sky-600 transition-colors">
+                <h3 className={`text-sm font-medium text-gray-900 line-clamp-1 truncate group-hover:text-${themeColors.primary.text} transition-colors`}>
                   {product.product_name}
                 </h3>
               </div>
 
               {/* Hover Indicator */}
               <div className="absolute top-2 right-2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
-                <svg className="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 text-${themeColors.primary.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
