@@ -24,6 +24,8 @@ interface ProductHeaderProps {
   productImage?: string;
   productDescription?: string;
   onGenerateVideo?: () => void;
+  billingCycle?: 'monthly' | 'annual';
+  onBillingCycleChange?: (v: 'monthly' | 'annual') => void;
 }
 
 const ProductHeader = memo(function ProductHeader({ 
@@ -32,7 +34,9 @@ const ProductHeader = memo(function ProductHeader({
   productId,
   productImage,
   productDescription,
-  onGenerateVideo 
+  onGenerateVideo,
+  billingCycle,
+  onBillingCycleChange,
 }: ProductHeaderProps) {
   const { t } = useProductTranslations();
   const themeColors = useThemeColors();
@@ -95,15 +99,46 @@ const ProductHeader = memo(function ProductHeader({
       `}
     >
       <div className="mt-4 flex flex-col">
-        <Link
-          href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
-          className={`flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-${themeColors.primary.text} tracking-wide hover:text-${themeColors.primary.textHover} no-underline hover:no-underline mb-2`}
-        >
-          <span className="transition-transform duration-200 group-hover:-translate-x-1">
-            {productSubType?.name || t.allProducts}
-          </span>
-          <RightArrowDynamic />
-        </Link>
+        <div className="flex items-center justify-between mb-2 gap-3">
+          <Link
+            href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
+            className={`flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-${themeColors.primary.text} tracking-wide hover:text-${themeColors.primary.textHover} no-underline hover:no-underline`}
+          >
+            <span className="transition-transform duration-200 group-hover:-translate-x-1">
+              {productSubType?.name || t.allProducts}
+            </span>
+            <RightArrowDynamic />
+          </Link>
+          {onBillingCycleChange && billingCycle && (
+            <div className="inline-flex items-center rounded-full border border-gray-200 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => onBillingCycleChange('monthly')}
+                className={`px-3 py-1 text-xs font-medium ${
+                  billingCycle === 'monthly'
+                    ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text}`
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                aria-pressed={billingCycle === 'monthly'}
+              >
+                Monthly
+              </button>
+              <span className="h-4 w-px bg-gray-200" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={() => onBillingCycleChange('annual')}
+                className={`px-3 py-1 text-xs font-medium ${
+                  billingCycle === 'annual'
+                    ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text}`
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                aria-pressed={billingCycle === 'annual'}
+              >
+                Annual
+              </button>
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-gray-900">
             {productName}

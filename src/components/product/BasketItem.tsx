@@ -29,8 +29,14 @@ interface BasketItemProps {
       promotion_price?: number;
       is_promotion?: boolean;
       links_to_image?: string;
+      type?: string;
+      recurring_interval?: string;
+      recurring_interval_count?: number;
+      annual_size_discount?: number;
+      computed_price?: number;
     };
     quantity: number;
+    billingCycle?: 'monthly' | 'annual';
   };
   updateQuantity: (planId: number, quantity: number) => void;
   removeFromBasket: (planId: number) => void;
@@ -43,11 +49,11 @@ const BasketItem = memo(function BasketItem({
   removeFromBasket,
   associatedFeatures = [],
 }: BasketItemProps) {
-  const { t } = useProductTranslations();
+  const { t, getSafeTranslation } = useProductTranslations();
   const themeColors = useThemeColors();
   const { primary } = themeColors;
   const toast = useToast();
-  const { plan, quantity } = item;
+  const { plan, quantity, billingCycle } = item;
   const removedItemRef = useRef<{ planId: number; quantity: number } | null>(null);
   const { 
     product_name, 
@@ -57,7 +63,8 @@ const BasketItem = memo(function BasketItem({
     price, 
     promotion_price, 
     is_promotion, 
-    links_to_image 
+    links_to_image,
+    recurring_interval 
   } = plan;
 
   // Optimistic UI state
@@ -69,14 +76,57 @@ const BasketItem = memo(function BasketItem({
     setOptimisticQuantity(quantity);
   }, [quantity]);
 
-  const finalPriceRaw = (is_promotion && promotion_price ? promotion_price : price) * optimisticQuantity / 100;
-  const unitPriceRaw = (is_promotion && promotion_price ? promotion_price : price) / 100;
+  const computeUnit = () => {
+    const baseUnit = typeof plan.computed_price === 'number' ? plan.computed_price : ((price ?? 0) / 100);
+    const isRecurring = (plan.type || recurring_interval) ? true : false;
+    if (billingCycle === 'annual' && isRecurring) {
+      let count = (typeof plan.recurring_interval_count === 'number' && plan.recurring_interval_count > 0)
+        ? plan.recurring_interval_count
+        : (() => {
+            const v = String(recurring_interval || '').toLowerCase();
+            if (v === 'month' || v === 'monthly') return 12;
+            if (v === 'week' || v === 'weekly') return 52;
+            if (v === 'day' || v === 'daily') return 365;
+            if (v === 'quarter' || v === 'quarterly') return 4;
+            if (v === 'year' || v === 'annually' || v === 'annual') return 1;
+            return 1;
+          })();
+      const discountRaw = plan.annual_size_discount;
+      let multiplier = 1;
+      if (typeof discountRaw === 'number') {
+        if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
+      }
+      return baseUnit * count * multiplier;
+    }
+    // Monthly/recurring or one-time: prefer computed_price; else cents with promo
+    if (typeof plan.computed_price === 'number') return plan.computed_price;
+    const cents = (is_promotion && typeof promotion_price === 'number') ? promotion_price : price;
+    return (cents || 0) / 100;
+  };
+
+  const unitPriceRaw = computeUnit();
+  const finalPriceRaw = unitPriceRaw * optimisticQuantity;
 
   const currencyCode = plan.currency || 'GBP';
   const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode, minimumFractionDigits: 2 });
   const finalPrice = finalPriceRaw; // keep raw numeric for calculations
   const formattedFinal = formatter.format(finalPrice);
   const formattedUnit = formatter.format(unitPriceRaw);
+
+  const intervalLabel = (() => {
+    if (billingCycle === 'annual' && (plan.type || recurring_interval)) {
+      return getSafeTranslation('perYear', 'per year');
+    }
+    if (!recurring_interval) return null;
+    const v = String(recurring_interval).toLowerCase();
+    if (v === 'month' || v === 'monthly') return getSafeTranslation('perMonth', 'per month');
+    if (v === 'week' || v === 'weekly') return getSafeTranslation('perWeek', 'per week');
+    if (v === 'year' || v === 'annually' || v === 'annual') return getSafeTranslation('perYear', 'per year');
+    if (v === 'day' || v === 'daily') return getSafeTranslation('perDay', 'per day');
+    if (v === 'quarter' || v === 'quarterly') return getSafeTranslation('perQuarter', 'per quarter');
+    // Fallback for custom intervals like "3 months"
+    return getSafeTranslation('everyX', `every ${recurring_interval}`).replace('{interval}', String(recurring_interval));
+  })();
 
   const debouncedUpdate = useCallback((newQuantity: number) => {
     if (debounceTimer.current) {
@@ -170,6 +220,9 @@ const BasketItem = memo(function BasketItem({
             {measure && (
               <p className="text-xs text-gray-500 mt-1">{measure}</p>
             )}
+            {recurring_interval && (
+              <p className="text-xs text-gray-500 mt-1">{getSafeTranslation('billed', 'Billed')} {intervalLabel || String(recurring_interval)}</p>
+            )}
           </div>
           <div className="flex items-center space-x-2 justify-center sm:justify-end">
             {quantity > 1 && (
@@ -231,6 +284,9 @@ const BasketItem = memo(function BasketItem({
               <p className="text-sm text-gray-500 line-through">
                 {formatter.format(price * quantity / 100)}
               </p>
+              {intervalLabel && (
+                <p className="text-xs text-gray-600 mt-0.5">{intervalLabel}</p>
+              )}
             </div>
           ) : (
             <p className="text-lg font-bold text-gray-900" aria-live="polite" aria-atomic="true">
@@ -241,6 +297,9 @@ const BasketItem = memo(function BasketItem({
             <p className="text-xs text-gray-500">
               {formattedUnit} {t.each}
             </p>
+          )}
+          {!is_promotion && intervalLabel && (
+            <p className="text-xs text-gray-600 mt-0.5">{intervalLabel}</p>
           )}
         </div>
         
@@ -256,6 +315,9 @@ const BasketItem = memo(function BasketItem({
             <p className="text-xs text-gray-500 line-through">
               {formatter.format(price * quantity / 100)}
             </p>
+            {intervalLabel && (
+              <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
+            )}
           </div>
         ) : (
           <p className="text-base font-bold text-gray-900">
@@ -266,6 +328,9 @@ const BasketItem = memo(function BasketItem({
           <p className="text-[10px] text-gray-500">
             {formattedUnit} {t.each}
           </p>
+        )}
+        {!is_promotion && intervalLabel && (
+          <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
         )}
       </div>
       {/* Icon-only remove button bottom-left */}

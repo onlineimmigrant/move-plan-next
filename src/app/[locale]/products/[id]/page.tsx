@@ -5,15 +5,13 @@ import PerfDetailMount from '@/components/perf/PerfDetailMount';
 import { supabase, getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { detectUserCurrency, getPriceForCurrency } from '@/lib/currency';
-import ProductDetailPricingPlans from '@/components/product/ProductDetailPricingPlans';
 import CategoryBarProductDetailPage from '@/components/product/CategoryBarProductDetailPage';
 import FAQSection from '@/components/TemplateSections/FAQSection';
 import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
-import parse from 'html-react-parser';
 import ProgressBar from '@/components/product/ProgressBar';
 import { getBasket } from '@/lib/basketUtils';
 import ProductDetailMediaDisplay from '@/components/product/ProductDetailMediaDisplay';
-import ProductHeader from '@/components/product/ProductHeader';
+import ClientProductDetail from '@/components/product/ClientProductDetail';
 import { headers } from 'next/headers';
 
 
@@ -406,43 +404,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               >
                 Skip to pricing plans
               </a>
-              <ProductHeader 
-                productSubType={product.product_sub_type} 
+              <ClientProductDetail
+                productSubType={product.product_sub_type}
                 productName={product_name}
                 productId={product.id}
                 productImage={links_to_image}
                 productDescription={product_description}
+                pricingPlans={product.pricing_plans || []}
+                amazonBooksUrl={product.amazon_books_url}
               />
-              {product_description && (
-                <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg shadow-blue-100/10 mt-4 md:mt-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/20 rounded-2xl"></div>
-                  <div className="relative text-gray-700 text-base md:text-lg font-normal leading-relaxed">
-                    {parse(product_description)}
-                  </div>
-                </div>
-              )}
-              {product.pricing_plans && product.pricing_plans.length > 0 ? (
-                <div id="pricing-plans" className={product_description ? 'mt-8' : 'mt-6'}>
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-sky-500/5 to-indigo-500/5 rounded-3xl blur-3xl"></div>
-                    <div className="relative">
-                      <ProductDetailPricingPlans pricingPlans={product.pricing_plans} amazonBooksUrl={product.amazon_books_url} />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-6 bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-8 shadow-lg">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-600 font-medium">No pricing plans available at the moment</p>
-                    <p className="text-gray-500 text-sm mt-2">Please check back later or contact support</p>
-                  </div>
-                </div>
-              )}
             </div>
             <div className="order-1 md:order-1 lg:col-span-6 py-4 sm:pt-6 md:pb-8 flex justify-center items-start">
               <div className="w-full max-w-lg -mx-4 md:mx-0 space-y-8">

@@ -128,6 +128,8 @@ export const productTranslations = {
     basket: 'Basket',
     checkout: 'Checkout',
     payment: 'Payment',
+    nextCheckout: 'Next: Checkout',
+    nextPayment: 'Next: Payment',
     
     // Payment form
     payNow: 'Pay Now',
@@ -136,6 +138,12 @@ export const productTranslations = {
     applying: 'Applying...',
     enterPromoCode: 'Enter promo code (e.g., WELCOME20)',
     enterEmail: 'Enter your email',
+    emailAddress: 'Email Address',
+    emailPlaceholder: 'Enter email',
+    paymentDetails: 'Payment Details',
+    promoCode: 'Promo Code',
+    promoCodeApplied: 'Promo code applied!',
+    percentOffDiscount: '% off',
     unexpectedError: 'An unexpected error occurred',
     unexpectedPaymentError: 'An unexpected error occurred during payment',
     failedToApplyPromo: 'Failed to apply promo code',
@@ -230,7 +238,7 @@ export const productTranslations = {
     items: 'items',
     clearAll: 'Clear All',
     itemsInYourBasket: 'Items in your basket',
-    continueShopping: 'Continue Shopping',
+    continueShopping: 'Shop More',
     orderSummary: 'Order Summary',
     shipping: 'Shipping',
     free: 'Free',
@@ -318,6 +326,15 @@ export const productTranslations = {
     backToFeatures: 'Back to Features',
     featureNotFound: 'Feature not found',
     featureNotFoundDescription: 'The feature you are looking for does not exist or has been removed.',
+    
+    // Cadence labels
+    perMonth: 'per month',
+    perWeek: 'per week',
+    perYear: 'per year',
+    perDay: 'per day',
+    perQuarter: 'per quarter',
+    everyX: 'every {interval}',
+    billed: 'Billed',
   },
   
   es: {
@@ -448,6 +465,8 @@ export const productTranslations = {
     basket: 'Carrito',
     checkout: 'Pago',
     payment: 'Procesamiento',
+    nextCheckout: 'Siguiente: Pago',
+    nextPayment: 'Siguiente: Procesamiento',
     
     // Payment form
     payNow: 'Pagar Ahora',
@@ -456,6 +475,12 @@ export const productTranslations = {
     applying: 'Aplicando...',
     enterPromoCode: 'Ingrese código promocional (ej., WELCOME20)',
     enterEmail: 'Ingrese su email',
+    emailAddress: 'Dirección de Correo Electrónico',
+    emailPlaceholder: 'Ingrese su email',
+    paymentDetails: 'Detalles de Pago',
+    promoCode: 'Código Promocional',
+    promoCodeApplied: '¡Código promocional aplicado!',
+    percentOffDiscount: '% de descuento',
     unexpectedError: 'Ocurrió un error inesperado',
     unexpectedPaymentError: 'Ocurrió un error inesperado durante el pago',
     failedToApplyPromo: 'Error al aplicar código promocional',
@@ -550,7 +575,7 @@ export const productTranslations = {
     items: 'artículos',
     clearAll: 'Limpiar Todo',
     itemsInYourBasket: 'Artículos en tu cesta',
-    continueShopping: 'Continuar Comprando',
+    continueShopping: 'Comprar Más',
     orderSummary: 'Resumen del Pedido',
     shipping: 'Envío',
     free: 'Gratis',
@@ -615,6 +640,15 @@ export const productTranslations = {
     backToFeatures: 'Volver a Características',
     featureNotFound: 'Característica no encontrada',
     featureNotFoundDescription: 'La característica que estás buscando no existe o ha sido eliminada.',
+    
+    // Cadence labels
+    perMonth: 'por mes',
+    perWeek: 'por semana',
+    perYear: 'por año',
+    perDay: 'por día',
+    perQuarter: 'por trimestre',
+    everyX: 'cada {interval}',
+    billed: 'Facturado',
   },
   
   fr: {
@@ -745,6 +779,8 @@ export const productTranslations = {
     basket: 'Panier',
     checkout: 'Commande',
     payment: 'Paiement',
+    nextCheckout: 'Suivant: Commande',
+    nextPayment: 'Suivant: Paiement',
     
     // Payment form
     payNow: 'Payer Maintenant',
@@ -753,6 +789,12 @@ export const productTranslations = {
     applying: 'Application...',
     enterPromoCode: 'Entrez le code promo (ex., WELCOME20)',
     enterEmail: 'Entrez votre email',
+    emailAddress: 'Adresse E-mail',
+    emailPlaceholder: 'Entrez votre email',
+    paymentDetails: 'Détails de Paiement',
+    promoCode: 'Code Promo',
+    promoCodeApplied: 'Code promo appliqué!',
+    percentOffDiscount: '% de réduction',
     unexpectedError: 'Une erreur inattendue s\'est produite',
     unexpectedPaymentError: 'Une erreur inattendue s\'est produite lors du paiement',
     failedToApplyPromo: 'Échec de l\'application du code promo',
@@ -847,7 +889,7 @@ export const productTranslations = {
     items: 'articles',
     clearAll: 'Tout Effacer',
     itemsInYourBasket: 'Articles dans votre panier',
-    continueShopping: 'Continuer les Achats',
+    continueShopping: 'Acheter Plus',
     orderSummary: 'Résumé de Commande',
     shipping: 'Livraison',
     free: 'Gratuit',
@@ -912,6 +954,15 @@ export const productTranslations = {
     backToFeatures: 'Retour aux Fonctionnalités',
     featureNotFound: 'Fonctionnalité introuvable',
     featureNotFoundDescription: 'La fonctionnalité que vous recherchez n\'existe pas ou a été supprimée.',
+    
+    // Cadence labels
+    perMonth: 'par mois',
+    perWeek: 'par semaine',
+    perYear: 'par an',
+    perDay: 'par jour',
+    perQuarter: 'par trimestre',
+    everyX: 'tous les {interval}',
+    billed: 'Facturé',
   },
   
   de: {
@@ -1042,6 +1093,8 @@ export const productTranslations = {
     basket: 'Warenkorb',
     checkout: 'Kasse',
     payment: 'Zahlung',
+    nextCheckout: 'Weiter: Kasse',
+    nextPayment: 'Weiter: Zahlung',
     
     // Payment form
     payNow: 'Jetzt Bezahlen',
@@ -1050,6 +1103,12 @@ export const productTranslations = {
     applying: 'Anwenden...',
     enterPromoCode: 'Promo-Code eingeben (z.B., WELCOME20)',
     enterEmail: 'E-Mail eingeben',
+    emailAddress: 'E-Mail-Adresse',
+    emailPlaceholder: 'E-Mail eingeben',
+    paymentDetails: 'Zahlungsdetails',
+    promoCode: 'Promo-Code',
+    promoCodeApplied: 'Promo-Code angewendet!',
+    percentOffDiscount: '% Rabatt',
     unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten',
     unexpectedPaymentError: 'Ein unerwarteter Fehler ist bei der Zahlung aufgetreten',
     failedToApplyPromo: 'Fehler beim Anwenden des Promo-Codes',
@@ -1144,7 +1203,7 @@ export const productTranslations = {
     items: 'Artikel',
     clearAll: 'Alles Löschen',
     itemsInYourBasket: 'Artikel in Ihrem Warenkorb',
-    continueShopping: 'Weiter Einkaufen',
+    continueShopping: 'Mehr Kaufen',
     orderSummary: 'Bestellübersicht',
     shipping: 'Versand',
     free: 'Kostenlos',
@@ -1207,6 +1266,15 @@ export const productTranslations = {
     backToFeatures: 'Zurück zu Funktionen',
     featureNotFound: 'Funktion nicht gefunden',
     featureNotFoundDescription: 'Die gesuchte Funktion existiert nicht oder wurde entfernt.',
+    
+    // Cadence labels
+    perMonth: 'pro Monat',
+    perWeek: 'pro Woche',
+    perYear: 'pro Jahr',
+    perDay: 'pro Tag',
+    perQuarter: 'pro Quartal',
+    everyX: 'alle {interval}',
+    billed: 'Abgerechnet',
     
     // Legacy features page
     availableProducts: 'Verfügbare Produkte',
@@ -1342,6 +1410,8 @@ export const productTranslations = {
     basket: 'Корзина',
     checkout: 'Оформление',
     payment: 'Платеж',
+    nextCheckout: 'Следующий: Оформление',
+    nextPayment: 'Следующий: Платеж',
     
     // Payment form
     payNow: 'Оплатить Сейчас',
@@ -1350,6 +1420,12 @@ export const productTranslations = {
     applying: 'Применение...',
     enterPromoCode: 'Введите промо-код (например, WELCOME20)',
     enterEmail: 'Введите ваш email',
+    emailAddress: 'Адрес Электронной Почты',
+    emailPlaceholder: 'Введите email',
+    paymentDetails: 'Детали Платежа',
+    promoCode: 'Промо-код',
+    promoCodeApplied: 'Промо-код применен!',
+    percentOffDiscount: '% скидка',
     unexpectedError: 'Произошла неожиданная ошибка',
     unexpectedPaymentError: 'Произошла неожиданная ошибка при оплате',
     failedToApplyPromo: 'Не удалось применить промо-код',
@@ -1444,7 +1520,7 @@ export const productTranslations = {
     items: 'товары',
     clearAll: 'Очистить Все',
     itemsInYourBasket: 'Товары в вашей корзине',
-    continueShopping: 'Продолжить Покупки',
+    continueShopping: 'Купить Ещё',
     cartEmptyDescription: 'Похоже, вы еще не добавили товары в корзину',
     removeItem: 'Удалить товар',
     updateQuantity: 'Обновить количество',
@@ -1527,6 +1603,15 @@ export const productTranslations = {
     backToFeatures: 'Назад к Функциям',
     featureNotFound: 'Функция не найдена',
     featureNotFoundDescription: 'Функция, которую вы ищете, не существует или была удалена.',
+    
+    // Cadence labels
+    perMonth: 'в месяц',
+    perWeek: 'в неделю',
+    perYear: 'в год',
+    perDay: 'в день',
+    perQuarter: 'в квартал',
+    everyX: 'каждые {interval}',
+    billed: 'Выставление счета',
   },
   
   it: {
@@ -1657,6 +1742,8 @@ export const productTranslations = {
     basket: 'Carrello',
     checkout: 'Checkout',
     payment: 'Pagamento',
+    nextCheckout: 'Prossimo: Checkout',
+    nextPayment: 'Prossimo: Pagamento',
     
     // Payment form
     payNow: 'Paga Ora',
@@ -1665,6 +1752,12 @@ export const productTranslations = {
     applying: 'Applicando...',
     enterPromoCode: 'Inserisci codice promo (es., WELCOME20)',
     enterEmail: 'Inserisci la tua email',
+    emailAddress: 'Indirizzo Email',
+    emailPlaceholder: 'Inserisci email',
+    paymentDetails: 'Dettagli di Pagamento',
+    promoCode: 'Codice Promo',
+    promoCodeApplied: 'Codice promo applicato!',
+    percentOffDiscount: '% di sconto',
     unexpectedError: 'Si è verificato un errore imprevisto',
     unexpectedPaymentError: 'Si è verificato un errore imprevisto durante il pagamento',
     failedToApplyPromo: 'Impossibile applicare il codice promo',
@@ -1759,7 +1852,7 @@ export const productTranslations = {
     items: 'articoli',
     clearAll: 'Cancella Tutto',
     itemsInYourBasket: 'Articoli nel tuo carrello',
-    continueShopping: 'Continua a Fare Acquisti',
+    continueShopping: 'Acquista Altro',
     cartEmptyDescription: 'Sembra che tu non abbia ancora aggiunto articoli al carrello',
     removeItem: 'Rimuovi articolo',
     updateQuantity: 'Aggiorna quantità',
@@ -1842,6 +1935,15 @@ export const productTranslations = {
     backToFeatures: 'Torna alle Funzionalità',
     featureNotFound: 'Funzionalità non trovata',
     featureNotFoundDescription: 'La funzionalità che stai cercando non esiste o è stata rimossa.',
+    
+    // Cadence labels
+    perMonth: 'al mese',
+    perWeek: 'a settimana',
+    perYear: 'all\'anno',
+    perDay: 'al giorno',
+    perQuarter: 'per trimestre',
+    everyX: 'ogni {interval}',
+    billed: 'Fatturato',
   },
   
   pt: {
@@ -1972,6 +2074,8 @@ export const productTranslations = {
     basket: 'Carrinho',
     checkout: 'Finalizar',
     payment: 'Pagamento',
+    nextCheckout: 'Próximo: Finalizar',
+    nextPayment: 'Próximo: Pagamento',
     
     // Payment form
     payNow: 'Pagar Agora',
@@ -1980,6 +2084,12 @@ export const productTranslations = {
     applying: 'Aplicando...',
     enterPromoCode: 'Digite o código promo (ex., WELCOME20)',
     enterEmail: 'Digite seu email',
+    emailAddress: 'Endereço de Email',
+    emailPlaceholder: 'Digite seu email',
+    paymentDetails: 'Detalhes de Pagamento',
+    promoCode: 'Código Promo',
+    promoCodeApplied: 'Código promo aplicado!',
+    percentOffDiscount: '% de desconto',
     unexpectedError: 'Ocorreu um erro inesperado',
     unexpectedPaymentError: 'Ocorreu um erro inesperado durante o pagamento',
     failedToApplyPromo: 'Falha ao aplicar código promo',
@@ -2157,6 +2267,15 @@ export const productTranslations = {
     backToFeatures: 'Voltar aos Recursos',
     featureNotFound: 'Recurso não encontrado',
     featureNotFoundDescription: 'O recurso que você está procurando não existe ou foi removido.',
+    
+    // Cadence labels
+    perMonth: 'por mês',
+    perWeek: 'por semana',
+    perYear: 'por ano',
+    perDay: 'por dia',
+    perQuarter: 'por trimestre',
+    everyX: 'a cada {interval}',
+    billed: 'Faturado',
   },
   
   pl: {
@@ -2287,6 +2406,8 @@ export const productTranslations = {
     basket: 'Koszyk',
     checkout: 'Zamówienie',
     payment: 'Płatność',
+    nextCheckout: 'Następny: Zamówienie',
+    nextPayment: 'Następny: Płatność',
     
     // Payment form
     payNow: 'Zapłać Teraz',
@@ -2295,6 +2416,12 @@ export const productTranslations = {
     applying: 'Stosowanie...',
     enterPromoCode: 'Wprowadź kod promocyjny (np., WELCOME20)',
     enterEmail: 'Wprowadź swój email',
+    emailAddress: 'Adres e-mail',
+    emailPlaceholder: 'Wpisz email',
+    paymentDetails: 'Szczegóły płatności',
+    promoCode: 'Kod promocyjny',
+    promoCodeApplied: 'Kod promocyjny zastosowany!',
+    percentOffDiscount: '% zniżki',
     unexpectedError: 'Wystąpił nieoczekiwany błąd',
     unexpectedPaymentError: 'Wystąpił nieoczekiwany błąd podczas płatności',
     failedToApplyPromo: 'Nie udało się zastosować kodu promocyjnego',
@@ -2389,7 +2516,7 @@ export const productTranslations = {
     items: 'przedmioty',
     clearAll: 'Wyczyść Wszystko',
     itemsInYourBasket: 'Przedmioty w twoim koszyku',
-    continueShopping: 'Kontynuuj Zakupy',
+    continueShopping: 'Kup Więcej',
     cartEmptyDescription: 'Wygląda na to, że nie dodałeś jeszcze przedmiotów do koszyka',
     removeItem: 'Usuń przedmiot',
     updateQuantity: 'Aktualizuj ilość',
@@ -2472,6 +2599,15 @@ export const productTranslations = {
     backToFeatures: 'Powrót do Funkcji',
     featureNotFound: 'Funkcja nie znaleziona',
     featureNotFoundDescription: 'Funkcja, której szukasz, nie istnieje lub została usunięta.',
+    
+    // Cadence labels
+    perMonth: 'miesięcznie',
+    perWeek: 'tygodniowo',
+    perYear: 'rocznie',
+    perDay: 'dziennie',
+    perQuarter: 'kwartalnie',
+    everyX: 'co {interval}',
+    billed: 'Rozliczane',
   },
   
   zh: {
@@ -2602,6 +2738,8 @@ export const productTranslations = {
     basket: '购物车',
     checkout: '结账',
     payment: '支付',
+    nextCheckout: '下一步：结账',
+    nextPayment: '下一步：支付',
     
     // Payment form
     payNow: '立即支付',
@@ -2610,6 +2748,12 @@ export const productTranslations = {
     applying: '正在应用...',
     enterPromoCode: '输入促销代码（例如，WELCOME20）',
     enterEmail: '输入您的邮箱',
+    emailAddress: '电子邮件地址',
+    emailPlaceholder: '输入邮箱',
+    paymentDetails: '支付详情',
+    promoCode: '促销代码',
+    promoCodeApplied: '促销代码已应用！',
+    percentOffDiscount: '% 折扣',
     unexpectedError: '发生了意外错误',
     unexpectedPaymentError: '支付过程中发生了意外错误',
     failedToApplyPromo: '应用促销代码失败',
@@ -2704,7 +2848,7 @@ export const productTranslations = {
     items: '商品',
     clearAll: '清除全部',
     itemsInYourBasket: '您购物篮中的商品',
-    continueShopping: '继续购物',
+    continueShopping: '选购更多',
     cartEmptyDescription: '看起来您还没有向购物车添加商品',
     removeItem: '移除商品',
     updateQuantity: '更新数量',
@@ -2787,6 +2931,15 @@ export const productTranslations = {
     backToFeatures: '返回功能',
     featureNotFound: '功能未找到',
     featureNotFoundDescription: '您正在寻找的功能不存在或已被删除。',
+    
+    // Cadence labels
+    perMonth: '每月',
+    perWeek: '每周',
+    perYear: '每年',
+    perDay: '每天',
+    perQuarter: '每季度',
+    everyX: '每 {interval}',
+    billed: '计费',
   },
   
   ja: {
@@ -2917,6 +3070,8 @@ export const productTranslations = {
     basket: 'カート',
     checkout: 'チェックアウト',
     payment: '支払い',
+    nextCheckout: '次へ：チェックアウト',
+    nextPayment: '次へ：支払い',
     
     // Payment form
     payNow: '今すぐ支払う',
@@ -2925,6 +3080,12 @@ export const productTranslations = {
     applying: '適用中...',
     enterPromoCode: 'プロモコードを入力（例：WELCOME20）',
     enterEmail: 'メールアドレスを入力',
+    emailAddress: 'メールアドレス',
+    emailPlaceholder: 'メールを入力',
+    paymentDetails: '支払い詳細',
+    promoCode: 'プロモコード',
+    promoCodeApplied: 'プロモコードが適用されました！',
+    percentOffDiscount: '% オフ',
     unexpectedError: '予期しないエラーが発生しました',
     unexpectedPaymentError: '支払い中に予期しないエラーが発生しました',
     failedToApplyPromo: 'プロモコードの適用に失敗しました',
@@ -3019,7 +3180,7 @@ export const productTranslations = {
     items: 'アイテム',
     clearAll: 'すべてクリア',
     itemsInYourBasket: 'バスケット内のアイテム',
-    continueShopping: 'ショッピングを続ける',
+    continueShopping: 'もっと見る',
     cartEmptyDescription: 'まだカートにアイテムを追加していないようです',
     removeItem: 'アイテムを削除',
     updateQuantity: '数量を更新',
@@ -3102,5 +3263,14 @@ export const productTranslations = {
     backToFeatures: '機能に戻る',
     featureNotFound: '機能が見つかりません',
     featureNotFoundDescription: 'お探しの機能は存在しないか、削除されました。',
+    
+    // Cadence labels
+    perMonth: '月あたり',
+    perWeek: '週あたり',
+    perYear: '年あたり',
+    perDay: '日あたり',
+    perQuarter: '四半期あたり',
+    everyX: '{interval}ごと',
+    billed: '請求',
   }
 };

@@ -3,10 +3,10 @@
 
 import { useState, useEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
 import { useBasket, BasketItem } from '../../../context/BasketContext';
-import ProgressBar from '../../../components/product/ProgressBar';
 import BasketItemComponent from '@/components/product/BasketItem';
 import { HiShoppingBag } from 'react-icons/hi';
 import Link from 'next/link';
+import Button from '@/ui/Button';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { createClient } from '@supabase/supabase-js';
@@ -17,6 +17,7 @@ import { useConfetti } from '@/hooks/useConfetti';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { useKeyboardShortcuts, SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import { useRouter } from 'next/navigation';
+import { getCurrencySymbol } from '@/utils/pricingUtils';
 
 // Lazy load PaymentForm for code splitting
 const PaymentForm = lazy(() => import('../../../components/product/PaymentForm'));
@@ -161,6 +162,7 @@ export default function CheckoutPage() {
   const [finalCurrency, setFinalCurrency] = useState<string>('GBP');
   const [isMounted, setIsMounted] = useState(false);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
   const hasFetchedIntentRef = useRef(false);
   const isProcessingRef = useRef(false);
   const initialClientSecretRef = useRef<string | null>(null);
@@ -182,6 +184,18 @@ export default function CheckoutPage() {
     setIsMounted(true);
   }, []);
 
+  // Offline detection
+  useEffect(() => {
+    const updateOnlineStatus = () => setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+    updateOnlineStatus();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
   // Log clientSecret changes
   useEffect(() => {
     console.log('clientSecret updated:', clientSecret);
@@ -199,9 +213,23 @@ export default function CheckoutPage() {
           .select('email')
           .eq('id', session.user.id)
           .single();
+
         if (error) {
-          console.error('Error fetching user email:', error);
-        } else if (data && data.email && !isSubmittingRef.current) {
+          // Treat "no rows" and similar as benign; avoid noisy empty error logs
+          const benignStatuses = new Set([404, 406]);
+          const benignCodes = new Set(['PGRST116']); // PostgREST no rows
+          const isBenign = benignStatuses.has((error as any).status) || benignCodes.has((error as any).code);
+          if (!isBenign) {
+            console.warn('Could not fetch user email', {
+              code: (error as any).code,
+              status: (error as any).status,
+              message: (error as any).message || 'Unknown error',
+            });
+          }
+          return;
+        }
+
+        if (data?.email && !isSubmittingRef.current) {
           setCustomerEmail(data.email);
         }
       }
@@ -215,11 +243,33 @@ export default function CheckoutPage() {
     : 0;
   const totalPrice = isMounted
     ? basket.reduce((sum, item: BasketItem) => {
-        const price =
-          item.plan.is_promotion && item.plan.promotion_price
-            ? item.plan.promotion_price
-            : item.plan.price;
-        return sum + (price || 0) * item.quantity / 100;
+        const p: any = item.plan || {};
+        const baseUnit = typeof p.computed_price === 'number' ? p.computed_price : ((p.price ?? 0) / 100);
+        const isRecurring = (p.type || p.recurring_interval) ? true : false;
+        let unit = baseUnit;
+        if (item.billingCycle === 'annual' && isRecurring) {
+          let count = (typeof p.recurring_interval_count === 'number' && p.recurring_interval_count > 0)
+            ? p.recurring_interval_count
+            : (() => {
+                const v = String(p.recurring_interval || '').toLowerCase();
+                if (v === 'month' || v === 'monthly') return 12;
+                if (v === 'week' || v === 'weekly') return 52;
+                if (v === 'day' || v === 'daily') return 365;
+                if (v === 'quarter' || v === 'quarterly') return 4;
+                if (v === 'year' || v === 'annually' || v === 'annual') return 1;
+                return 1;
+              })();
+          const discountRaw = p.annual_size_discount;
+          let multiplier = 1;
+          if (typeof discountRaw === 'number') {
+            if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
+          }
+          unit = baseUnit * count * multiplier;
+        } else if (typeof p.computed_price !== 'number') {
+          const cents = (p.is_promotion && typeof p.promotion_price === 'number') ? p.promotion_price : p.price;
+          unit = (cents || 0) / 100;
+        }
+        return sum + unit * item.quantity;
       }, 0)
     : 0;
 
@@ -230,6 +280,32 @@ export default function CheckoutPage() {
   }, [isMounted, totalPrice]);
 
   const currency = isMounted && basket.length > 0 ? basket[0].plan.currency || 'GBP' : 'GBP';
+
+  // Helper to fetch JSON with retry and backoff
+  const fetchJsonWithRetry = useCallback(
+    async (url: string, options: RequestInit, retries = 3, backoffMs = 500): Promise<any> => {
+      let lastError: any;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const res = await fetch(url, options);
+          const rawText = await res.text().catch(() => '');
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${rawText}`);
+          }
+          return rawText ? JSON.parse(rawText) : {};
+        } catch (err) {
+          lastError = err;
+          // Abort retries if offline
+          const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+          if (offline) break;
+          // Exponential backoff
+          await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, attempt)));
+        }
+      }
+      throw lastError || new Error('Request failed');
+    },
+    []
+  );
 
   const managePaymentIntent = useCallback(
     async (email?: string, isCustomerUpdateOnly: boolean = false) => {
@@ -251,42 +327,41 @@ export default function CheckoutPage() {
           isCustomerUpdateOnly,
         });
 
-        const res = await fetch('/api/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: Math.round(totalPrice * 100),
-            currency: currency.toLowerCase(),
-            metadata: {
-              item_count: totalItems,
-              item_ids: basket
-                .filter((item) => item.plan.id !== undefined)
-                .map((item) => item.plan.id)
-                .join(','),
-              items: JSON.stringify(
-                basket
+        const data = await fetchJsonWithRetry(
+          '/api/create-payment-intent',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: Math.round(totalPrice * 100),
+              currency: currency.toLowerCase(),
+              metadata: {
+                item_count: totalItems,
+                item_ids: basket
                   .filter((item) => item.plan.id !== undefined)
-                  .map((item) => ({
-                    id: item.plan.id,
-                    product_name: item.plan.product_name || 'Unknown Product',
-                    package: item.plan.package || 'Standard',
-                    measure: item.plan.measure || 'One-time',
-                  }))
-              ),
-            },
-            promoCodeId: promoCodeId || undefined,
-            paymentIntentId: paymentIntentId || undefined,
-            customerEmail: email || undefined,
-            isCustomerUpdateOnly,
-          }),
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`Failed to process Payment Intent: ${res.status} ${errorText}`);
-        }
-
-        const data = await res.json();
+                  .map((item) => item.plan.id)
+                  .join(','),
+                items: JSON.stringify(
+                  basket
+                    .filter((item) => item.plan.id !== undefined)
+                    .map((item) => ({
+                      id: item.plan.id,
+                      product_name: item.plan.product_name || 'Unknown Product',
+                      package: item.plan.package || 'Standard',
+                      measure: item.plan.measure || 'One-time',
+                      billing_cycle: item.billingCycle || 'monthly',
+                    }))
+                ),
+              },
+              promoCodeId: promoCodeId || undefined,
+              paymentIntentId: paymentIntentId || undefined,
+              customerEmail: email || undefined,
+              isCustomerUpdateOnly,
+            }),
+          },
+          3,
+          600
+        );
         console.log('Payment Intent response:', data);
 
         if (!isCustomerUpdateOnly) {
@@ -302,7 +377,12 @@ export default function CheckoutPage() {
         }
       } catch (err: any) {
         console.error('Error processing Payment Intent:', err);
-        setError(err.message || 'Failed to initialize payment');
+        const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+        if (offline) {
+          setError('You appear to be offline. Please reconnect and try again.');
+        } else {
+          setError(err.message || 'Failed to initialize payment');
+        }
       } finally {
         if (!isCustomerUpdateOnly) {
           setPaymentIntentLoading(false);
@@ -310,7 +390,7 @@ export default function CheckoutPage() {
         isProcessingRef.current = false;
       }
     },
-    [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId]
+    [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId, fetchJsonWithRetry]
   );
 
   // Initial payment intent creation (remove session.user.id dependency)
@@ -367,25 +447,34 @@ export default function CheckoutPage() {
     console.log('Payment succeeded, clearing basket and payment data');
     if (paymentIntentId) {
       try {
-        const response = await fetch(`/api/verify-payment-intent?session_id=${paymentIntentId}`);
-        const result = await response.json();
+        const response = await fetch(`/api/verify-payment-intent?session_id=${paymentIntentId}`, {
+          method: 'POST',
+        });
+        const rawText = await response.text().catch(() => '');
+        let result: any = {};
+        try {
+          result = rawText ? JSON.parse(rawText) : {};
+        } catch (e) {
+          console.error('Invalid JSON from /api/verify-payment-intent:', rawText);
+        }
         console.log('Payment intent verification result:', result);
         if (response.ok) {
-          setFinalAmount(result.amount / 100);
-          setFinalCurrency(result.currency.toUpperCase());
+          setFinalAmount((result.amount || 0) / 100);
+          setFinalCurrency(((result.currency as string) || '').toUpperCase());
         } else {
-          console.error('Failed to verify payment intent:', result.error);
+          const errorMessage = (result && (result.error || result.message)) || response.statusText || `HTTP ${response.status}`;
+          console.error('Failed to verify payment intent:', errorMessage);
           setFinalAmount(discountedAmount);
-          setFinalCurrency(currency);
+          setFinalCurrency((currency || '').toUpperCase());
         }
       } catch (err) {
         console.error('Error fetching payment intent:', err);
         setFinalAmount(discountedAmount);
-        setFinalCurrency(currency);
+        setFinalCurrency((currency || '').toUpperCase());
       }
     } else {
       setFinalAmount(discountedAmount);
-      setFinalCurrency(currency);
+      setFinalCurrency((currency || '').toUpperCase());
     }
     setPaymentSucceeded(true);
     clearBasket();
@@ -441,25 +530,20 @@ export default function CheckoutPage() {
     [managePaymentIntent]
   );
 
-  if (paymentSucceeded) {
-    // Fire confetti on mount
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        fireConfetti();
-      }, 300);
-      return () => clearTimeout(timer);
-    }, [fireConfetti]);
+  // Fire confetti when payment succeeds (must not call hooks conditionally)
+  useEffect(() => {
+    if (!paymentSucceeded) return;
+    const timer = setTimeout(() => {
+      fireConfetti();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [paymentSucceeded, fireConfetti]);
 
+  if (paymentSucceeded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          {/* Header Section with integrated progress bar */}
           <div className="rounded-3xl shadow-lg border border-gray-200 mb-8 backdrop-blur-sm bg-white/95">
-            {/* Progress Bar */}
-            <div className="border-b border-gray-200/60">
-              <ProgressBar stage={3} />
-            </div>
-            
             {/* Header Content */}
             <div className="p-6">
             <div className="flex items-center justify-center">
@@ -475,18 +559,19 @@ export default function CheckoutPage() {
             </div>
             </div>
           </div>
-        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-8 mt-8">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-8 mt-8">
           <div className={`p-6 bg-gradient-to-br from-emerald-100 to-${primary.bgLighter} rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner`}>
             <span className="text-4xl">🎉</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-            {t.paymentSuccessful}
-          </h1>
+          {/* Success heading already shown above; avoid repeating here */}
           <p className="text-gray-600 text-base mb-2 leading-relaxed">
             {t.thankYouForPurchase}
           </p>
           <p className="text-gray-600 text-base mb-8 font-semibold">
-            {t.amountPaid} {finalCurrency} <AnimatedCounter value={finalAmount} decimals={2} />
+            {t.amountPaid}
+            {' '}
+            {getCurrencySymbol((finalCurrency || '').toUpperCase())}
+            <AnimatedCounter value={finalAmount} decimals={2} />
           </p>
           <Link href="/products">
             <span className={`text-${primary.text} hover:text-${primary.textHover} text-sm font-semibold inline-block transition-colors duration-200 bg-${primary.bgLighter} hover:bg-${primary.bgLight} px-6 py-3 rounded-full border border-${primary.border} hover:border-${primary.border}`}>
@@ -502,14 +587,8 @@ export default function CheckoutPage() {
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header Section with integrated progress bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="rounded-3xl shadow-lg border border-gray-200 mb-8 backdrop-blur-sm bg-white/95">
-            {/* Progress Bar */}
-            <div className="border-b border-gray-200/60">
-              <ProgressBar stage={2} />
-            </div>
-            
             {/* Header Content */}
             <div className="p-6">
             <div className="flex items-center justify-between">
@@ -519,7 +598,9 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t.checkout}</h1>
-                  <p className="text-sm text-gray-600 mt-1">{t.loadingOrderDetails}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {t.loadingOrderDetails} <span className="text-gray-400">· {t.nextPayment}</span>
+                  </p>
                 </div>
               </div>
               <button
@@ -543,16 +624,10 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 pt-20">
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Header Section with integrated progress bar */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
         <div className="rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 mb-6 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
-          {/* Progress Bar */}
-          <div className="border-b border-gray-200/60">
-            <ProgressBar stage={2} />
-          </div>
-          
           {/* Header Content */}
           <div className="p-3 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -562,16 +637,23 @@ export default function CheckoutPage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">{t.checkout}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">{t.reviewAndCompleteOrder}</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                  {t.reviewAndCompleteOrder} <span className="text-gray-400">· {t.nextPayment}</span>
+                </p>
               </div>
             </div>
+            <Link href="/products">
+              <Button variant="outline" size="sm" className="rounded-xl">
+                {t.continueShopping} →
+              </Button>
+            </Link>
           </div>
           </div>
           </div>
         </div>
 
       {basket.length === 0 ? (
-        <div className="text-center py-12 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-3xl shadow-xl border border-white/40 dark:border-gray-700/40 mt-6 max-w-2xl mx-auto relative overflow-hidden">
+        <div className="text-center py-12 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-xl border border-white/40 dark:border-gray-700/40 mt-6 max-w-2xl mx-auto relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
           <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
@@ -579,30 +661,33 @@ export default function CheckoutPage() {
           </div>
           <p className="text-gray-600 text-base mb-6">{t.cartEmpty}</p>
           <Link href="/products">
-            <span className={`text-${primary.text} hover:text-${primary.textHover} text-sm font-semibold mt-4 inline-block transition-colors duration-200 bg-${primary.bgLighter} hover:bg-${primary.bgLight} px-6 py-3 rounded-full border border-${primary.border} hover:border-${primary.border}`}>
+            <Button variant="outline" size="lg" className="mt-4 rounded-full">
               {t.startShopping} →
-            </span>
+            </Button>
           </Link>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-2 mb-6">
           {/* Left Column: Order Items */}
-          <div className="relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 space-y-3">
+          <div className="relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 space-y-4 sm:space-y-3">
             <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
               <h3 className="font-bold text-gray-900 mb-3 sm:mb-4">{t.orderItems}</h3>
-              {basket
-                .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
-                .map((item) => (
-                  <BasketItemComponent
-                    key={item.plan.id}
-                    item={item}
-                    updateQuantity={updateQuantity}
-                    removeFromBasket={removeFromBasket}
-                    associatedFeatures={[]}
-                  />
-                ))}
+              <div className="space-y-3">
+                {basket
+                  .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+                  .map((item, index) => (
+                    <div key={item.plan.id} className={index > 0 ? 'border-t border-gray-200 pt-4' : ''}>
+                      <BasketItemComponent
+                        item={item}
+                        updateQuantity={updateQuantity}
+                        removeFromBasket={removeFromBasket}
+                        associatedFeatures={[]}
+                      />
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
 
@@ -615,9 +700,6 @@ export default function CheckoutPage() {
                   {t.orderTotal} ({totalItems} {totalItems === 1 ? t.item : t.items})
                 </h2>
                 <div className="flex items-center justify-center sm:justify-end space-x-2" aria-live="polite" aria-atomic="true">
-                  <span className="text-sm sm:text-base font-bold text-gray-900 uppercase">
-                    {currency}
-                  </span>
                   {(() => {
                     const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'GBP', minimumFractionDigits: 2 });
                     return (
@@ -667,9 +749,31 @@ export default function CheckoutPage() {
                   />
                 ) : (
                   <div className="text-center text-red-500 py-8 bg-red-50 rounded-xl">
-                    <p className="font-semibold">⚠️ {t.failedToLoadPaymentDetails}</p>
+                    <p className="font-semibold mb-3">⚠️ {t.failedToLoadPaymentDetails}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl"
+                      onClick={() => managePaymentIntent(customerEmail || undefined, false)}
+                      aria-label="Retry loading payment details"
+                    >
+                      Retry
+                    </Button>
                   </div>
                 )}
+              </div>
+              {isOffline && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-xl text-center">
+                  <p className="text-yellow-700 text-sm font-medium">You are offline. Some actions are disabled until you reconnect.</p>
+                </div>
+              )}
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500">
+                  All prices in
+                  <span className={`ml-1 inline-block px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-${primary.bgLighter} text-${primary.text} border border-${primary.border} align-middle`}>
+                    {(currency || 'GBP').toUpperCase()}
+                  </span>
+                </p>
               </div>
             </div>
           </div>

@@ -25,11 +25,12 @@ export interface PricingPlan {
 export interface BasketItem {
   plan: PricingPlan;
   quantity: number;
+  billingCycle?: 'monthly' | 'annual';
 }
 
 interface BasketContextType {
   basket: BasketItem[];
-  addToBasket: (plan: PricingPlan) => Promise<void>;
+  addToBasket: (plan: PricingPlan, billingCycle?: 'monthly' | 'annual') => Promise<void>;
   updateQuantity: (planId: number, quantity: number) => void;
   removeFromBasket: (planId: number) => void;
   clearBasket: () => void;
@@ -64,14 +65,28 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Memoized basket calculations for better performance
   const basketStats = useMemo(() => {
+    const getUnitAmount = (bi: BasketItem) => {
+      const p: any = bi.plan || {};
+      const baseMonthly = typeof p.computed_price === 'number' ? p.computed_price : ((p.price ?? 0) / 100);
+      const type = p.type || p.recurring_interval ? 'recurring' : 'one_time';
+      if (bi.billingCycle === 'annual' && type === 'recurring' && typeof p.recurring_interval_count === 'number' && p.recurring_interval_count > 0) {
+        const discountRaw = p.annual_size_discount;
+        let multiplier = 1;
+        if (typeof discountRaw === 'number') {
+          if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
+        }
+        return baseMonthly * p.recurring_interval_count * multiplier;
+      }
+      // Monthly/one-time: prefer computed price; fallback to cents
+      if (typeof p.computed_price === 'number') return p.computed_price;
+      // Include promotion if only cents are available
+      const cents = (p.is_promotion && typeof p.promotion_price === 'number') ? p.promotion_price : (p.price ?? 0);
+      return cents / 100;
+    };
+
     const totalItems = basket.reduce((sum, item) => sum + item.quantity, 0);
-    const totalValue = basket.reduce((sum, item) => {
-      const price = item.plan.is_promotion && item.plan.promotion_price
-        ? item.plan.promotion_price
-        : item.plan.price;
-      return sum + (price * item.quantity / 100);
-    }, 0);
-    
+    const totalValue = basket.reduce((sum, item) => sum + getUnitAmount(item) * item.quantity, 0);
+
     return { totalItems, totalValue };
   }, [basket]);
 
@@ -90,7 +105,7 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => clearTimeout(timeoutId);
   }, [basket]);
 
-  const addToBasket = useCallback(async (plan: PricingPlan) => {
+  const addToBasket = useCallback(async (plan: PricingPlan, billingCycle: 'monthly' | 'annual' = 'monthly') => {
     const planWithFallback: PricingPlan = {
       ...plan,
       currency_symbol: plan.currency_symbol || '$',
@@ -101,11 +116,11 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
       if (existingItem) {
         return prev.map((item) =>
           item.plan.id === plan.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + 1, billingCycle }
             : item
         );
       }
-      return [...prev, { plan: planWithFallback, quantity: 1 }];
+      return [...prev, { plan: planWithFallback, quantity: 1, billingCycle }];
     });
   }, []);
 

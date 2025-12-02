@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useBasket } from '../../context/BasketContext';
 import Button from '@/ui/Button';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
-import PricingPlanFeatures from './PricingPlanFeatures';
 import { useProductTranslations } from './useProductTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -24,6 +25,10 @@ type PricingPlan = {
   slug?: string;
   package?: string;
   measure?: string;
+  recurring_interval?: string;
+  recurring_interval_count?: number;
+  annual_size_discount?: number;
+  type?: 'recurring' | 'one_time' | string;
   currency: string;
   currency_symbol: string;
   price: number;
@@ -47,6 +52,7 @@ type PricingPlan = {
 interface ProductDetailPricingPlansProps {
   pricingPlans: PricingPlan[];
   amazonBooksUrl?: string;
+  billingCycle?: 'monthly' | 'annual';
 }
 
 interface Toast {
@@ -118,12 +124,19 @@ const CustomToast = memo(
 CustomToast.displayName = 'CustomToast';
 
 // Enhanced utility function for plan card styles with glassmorphism
+// Lazily load features section to reduce initial payload
+const LazyPricingPlanFeatures = dynamic(() => import('./PricingPlanFeatures'));
+
 const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   pricingPlans = [],
   amazonBooksUrl,
+  billingCycle = 'monthly',
 }: ProductDetailPricingPlansProps) {
-  const { t } = useProductTranslations();
+  const { t, getSafeTranslation } = useProductTranslations();
   const themeColors = useThemeColors();
+  const router = useRouter();
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const [featuresVisible, setFeaturesVisible] = useState(false);
   
   const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => `
     relative cursor-pointer
@@ -150,6 +163,24 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   // Track hydration state
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Observe visibility for features section lazy render
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setFeaturesVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -208,7 +239,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
 
     setIsLoading(true);
     try {
-      await addToBasket(selectedPlan);
+      await addToBasket(selectedPlan, billingCycle);
       setIsAdded(true);
       showToast(t.addedToCart, 'success');
       setTimeout(() => setIsAdded(false), 2000);
@@ -218,7 +249,14 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     } finally {
       setIsLoading(false);
     }
-  }, [selectedPlan, addToBasket, t]);
+  }, [selectedPlan, addToBasket, t, billingCycle]);
+
+  // Prefetch checkout route on hover to speed navigation
+  const prefetchCheckout = useCallback(() => {
+    try {
+      router.prefetch('/checkout');
+    } catch {}
+  }, [router]);
 
   const getStatus = useCallback((plan: PricingPlan | null) => {
     if (!plan) return t.outOfStock;
@@ -244,6 +282,70 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     return <div className="text-gray-500 px-4 sm:px-8">{t.noPricingPlans}</div>;
   }
 
+  // Centralized Intl price formatter
+  const formatAmount = useCallback(
+    (amount: number, currency: string) => {
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      } catch {
+        return `${amount.toFixed(2)} ${currency}`;
+      }
+    },
+    []
+  );
+
+  const getDisplayPrice = useCallback((plan: PricingPlan) => {
+    const currency = plan.user_currency || plan.currency || 'USD';
+    const base = plan.computed_price ?? (plan.price ?? 0) / 100;
+    if (
+      billingCycle === 'annual' &&
+      plan.type === 'recurring' &&
+      typeof plan.recurring_interval_count === 'number' &&
+      plan.recurring_interval_count > 0
+    ) {
+      const discountRaw = plan.annual_size_discount;
+      let multiplier = 1;
+      if (typeof discountRaw === 'number') {
+        if (discountRaw > 1) {
+          multiplier = (100 - discountRaw) / 100;
+        } else if (discountRaw > 0 && discountRaw <= 1) {
+          multiplier = discountRaw;
+        }
+      }
+      const annualAmount = base * plan.recurring_interval_count * multiplier;
+      return formatAmount(annualAmount, currency);
+    }
+    if (plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent)) {
+      if (plan.promotion_percent) {
+        return formatAmount(base * (1 - plan.promotion_percent / 100), currency);
+      }
+      if (typeof plan.promotion_price === 'number') {
+        return formatAmount(plan.promotion_price, currency);
+      }
+    }
+    return formatAmount(base, currency);
+  }, [formatAmount, billingCycle]);
+
+  const getOriginalPrice = useCallback((plan: PricingPlan) => {
+    const currency = plan.user_currency || plan.currency || 'USD';
+    const base = plan.computed_price ?? (plan.price ?? 0) / 100;
+    if (
+      billingCycle === 'annual' &&
+      plan.type === 'recurring' &&
+      typeof plan.recurring_interval_count === 'number' &&
+      plan.recurring_interval_count > 0
+    ) {
+      const annualUndiscounted = base * plan.recurring_interval_count;
+      return formatAmount(annualUndiscounted, currency);
+    }
+    return formatAmount(base, currency);
+  }, [formatAmount, billingCycle]);
+
   return (
     <div className="mt-2 md:mt-6 relative pt-4 sm:pt-2">
       <div className="absolute top-0 right-0 z-50 space-y-2">
@@ -261,7 +363,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
       </div>
 
       {/* Glassmorphism background for pricing section */}
-      <div className="relative">
+      <div className="relative" role="radiogroup" aria-label={t.selectPlan}>
         <div className={`absolute inset-0 bg-gradient-to-br from-white/60 via-${themeColors.primary.bgLighter}/40 to-${themeColors.primary.bgLight}/60 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl shadow-${themeColors.primary.bgLight}/20`}></div>
         <div className="relative p-6 md:p-8">
           <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${
@@ -280,20 +382,16 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                   <div
                     className={`
                       ${planCardStyles(isOutOfStock, isActive)}
+                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${themeColors.primary.bgLight}
                     `}
-                    role="button"
+                    role="radio"
+                    aria-checked={isActive}
                     tabIndex={isOutOfStock ? -1 : 0}
                     onClick={() => !isOutOfStock && handlePlanSelect(plan)}
                     onKeyDown={(e) => !isOutOfStock && handleKeyDown(e, plan, idx)}
                     aria-label={`${t.selectPlan} ${plan.package || t.unknown} plan, priced at ${
-                      plan.computed_currency_symbol || plan.currency_symbol
-                    }${plan.is_promotion && (plan.promotion_price || plan.promotion_percent) 
-                      ? (plan.computed_price 
-                          ? (plan.promotion_percent 
-                              ? (plan.computed_price * (1 - plan.promotion_percent / 100)).toFixed(2)
-                              : plan.computed_price.toFixed(2))
-                          : (plan.promotion_price ? plan.promotion_price.toFixed(2) : '0.00')) 
-                      : (plan.computed_price || (plan.price / 100))}, ${
+                      getDisplayPrice(plan)
+                    }, ${
                       normalizedStatus === 'in stock'
                         ? t.inStock.toLowerCase()
                         : normalizedStatus === 'low stock'
@@ -361,26 +459,28 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                           {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
                             <div className="flex flex-col items-end space-y-0.5">
                               <div className="flex items-baseline space-x-1.5">
-                                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
-                                  {plan.computed_currency_symbol || plan.currency_symbol}
-                                  {(() => {
-                                    // Use computed price if available (already in currency units)
-                                    // Otherwise use legacy price (stored in cents, need to divide by 100)
-                                    const basePrice = plan.computed_price || ((plan.price || 0) / 100);
-                                    if (plan.promotion_percent) {
-                                      return (basePrice * (1 - plan.promotion_percent / 100)).toFixed(2);
-                                    } else if (plan.promotion_price) {
-                                      // Use promotion_price directly (already in currency units)
-                                      return plan.promotion_price.toFixed(2);
-                                    }
-                                    return basePrice.toFixed(2);
-                                  })()}
-                                </span>
+                                <span className="text-2xl sm:text-3xl font-bold text-gray-800">{getDisplayPrice(plan)}</span>
                               </div>
                               <span className="text-sm text-gray-400 font-medium line-through">
-                                {plan.computed_currency_symbol || plan.currency_symbol}
-                                {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
+                                {getOriginalPrice(plan)}
                               </span>
+                              {(plan.recurring_interval || plan.measure) && (
+                                <span className="text-[11px] text-gray-500">{
+                                  (() => {
+                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.recurring_interval_count) {
+                                      return getSafeTranslation('perYear', 'per year');
+                                    }
+                                    const interval = (plan.recurring_interval || '').toString().toLowerCase();
+                                    if (!interval) return plan.measure || null;
+                                    if (interval === 'month' || interval === 'monthly') return getSafeTranslation('perMonth', 'per month');
+                                    if (interval === 'week' || interval === 'weekly') return getSafeTranslation('perWeek', 'per week');
+                                    if (interval === 'year' || interval === 'annually' || interval === 'annual') return getSafeTranslation('perYear', 'per year');
+                                    if (interval === 'day' || interval === 'daily') return getSafeTranslation('perDay', 'per day');
+                                    if (interval === 'quarter' || interval === 'quarterly') return getSafeTranslation('perQuarter', 'per quarter');
+                                    return getSafeTranslation('everyX', `every ${plan.recurring_interval}`).replace('{interval}', String(plan.recurring_interval));
+                                  })()
+                                }</span>
+                              )}
                             </div>
                           ) : (
                             <div className="flex flex-col items-end space-y-0.5">
@@ -389,14 +489,28 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                                   className={`text-2xl sm:text-3xl font-bold ${
                                     isOutOfStock ? 'text-gray-400' : 'text-gray-800'
                                   }`}
-                                >
-                                  {plan.computed_currency_symbol || plan.currency_symbol}
-                                  {(plan.computed_price || ((plan.price || 0) / 100)).toFixed(2)}
-                                </span>
+                                >{getDisplayPrice(plan)}</span>
                               </div>
                               <span className="text-sm text-transparent">
                                 {/* Placeholder for alignment */}
                               </span>
+                              {(plan.recurring_interval || plan.measure) && (
+                                <span className="text-[11px] text-gray-500">{
+                                  (() => {
+                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.recurring_interval_count) {
+                                      return getSafeTranslation('perYear', 'per year');
+                                    }
+                                    const interval = (plan.recurring_interval || '').toString().toLowerCase();
+                                    if (!interval) return plan.measure || null;
+                                    if (interval === 'month' || interval === 'monthly') return getSafeTranslation('perMonth', 'per month');
+                                    if (interval === 'week' || interval === 'weekly') return getSafeTranslation('perWeek', 'per week');
+                                    if (interval === 'year' || interval === 'annually' || interval === 'annual') return getSafeTranslation('perYear', 'per year');
+                                    if (interval === 'day' || interval === 'daily') return getSafeTranslation('perDay', 'per day');
+                                    if (interval === 'quarter' || interval === 'quarterly') return getSafeTranslation('perQuarter', 'per quarter');
+                                    return getSafeTranslation('everyX', `every ${plan.recurring_interval}`).replace('{interval}', String(plan.recurring_interval));
+                                  })()
+                                }</span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -473,6 +587,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                     variant="start"
                     className={`h-14 md:h-16 text-base md:text-lg font-semibold bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgActive} hover:from-${themeColors.primary.bgHover} hover:to-${themeColors.primary.bgActive} shadow-lg hover:shadow-xl hover:shadow-${themeColors.primary.bgLight}`}
                     aria-label={t.proceedToCheckout}
+                    onMouseEnter={prefetchCheckout}
                   >
                     <span>{t.proceedToCheckout}</span>
                     <RightArrowDynamic />
@@ -517,8 +632,11 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
           </a>
         </div>
       )}
-
-      {selectedPlan && <PricingPlanFeatures selectedPlan={selectedPlan} />}
+      <div ref={sectionRef} className="mt-4">
+        {featuresVisible && selectedPlan && (
+          <LazyPricingPlanFeatures selectedPlan={selectedPlan} />
+        )}
+      </div>
     </div>
   );
 });

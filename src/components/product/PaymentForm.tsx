@@ -265,45 +265,63 @@ export default function PaymentForm({
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit} className="backdrop-blur-sm bg-white/30 dark:bg-gray-800/30 p-3 sm:p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 relative overflow-hidden pb-24 sm:pb-0">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
+    <form 
+      id="payment-form" 
+      onSubmit={handleSubmit} 
+      className="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 p-3 sm:p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 relative overflow-hidden pb-24 sm:pb-0 shadow-md"
+      aria-label="Payment form"
+      noValidate
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
       <div className="relative z-10">
       <div className="mb-2 sm:mb-3">
-        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-          Email Address <span className="text-red-500">*</span>
+        <label htmlFor="email-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+          {t.emailAddress} <span className="text-red-500" aria-label="required">*</span>
         </label>
         <input
+          id="email-input"
           type="email"
           value={email}
           onChange={handleEmailChange}
           className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
-          placeholder="Enter email"
+          placeholder={t.emailPlaceholder}
           required
+          aria-required="true"
+          aria-invalid={emailError ? 'true' : 'false'}
+          aria-describedby={emailError ? 'email-error' : undefined}
         />
         {emailError && (
-          <div className="mt-1 text-red-500 text-sm font-medium">{emailError}</div>
+          <p id="email-error" className="mt-1 text-red-500 text-sm font-medium" role="alert" aria-live="assertive">{emailError}</p>
         )}
       </div>
 
       <div className="mb-2 sm:mb-3">
-        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
-          Payment Details
+        <label htmlFor="payment-element" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+          {t.paymentDetails}
         </label>
-        <div className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg border border-white/60 dark:border-gray-600/60 p-0">
+        <div 
+          className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg border border-white/60 dark:border-gray-600/60 p-0"
+          role="group"
+          aria-label="Payment card details"
+        >
           <PaymentElement id="payment-element" options={paymentElementOptions} />
         </div>
       </div>
 
       <div className="mb-2 sm:mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">Promo Code</h3>
-        <div className="flex items-center space-x-2">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">{t.promoCode}</h3>
+        <div className="flex items-center space-x-2" role="group" aria-label="Promotional code">
           <input
+            id="promo-code-input"
             type="text"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
             className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
             placeholder={t.enterPromoCode}
             disabled={promoLoading}
+            aria-label="Enter promotional code"
+            aria-invalid={promoError ? 'true' : 'false'}
+            aria-describedby={promoError ? 'promo-error' : promoApplied ? 'promo-success' : undefined}
           />
           <button
             type="button"
@@ -312,34 +330,37 @@ export default function PaymentForm({
             className={`py-1.5 px-2.5 sm:px-3 text-sm font-medium text-white bg-gray-600/90 backdrop-blur-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 ${
               promoLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
+            aria-label={promoLoading ? 'Applying promotional code' : 'Apply promotional code'}
           >
             {promoLoading ? t.applying : t.apply}
           </button>
         </div>
         {promoError && (
-          <div className="mt-1 mb-1 text-red-500 text-sm font-medium">{promoError}</div>
+          <p id="promo-error" className="mt-1 mb-1 text-red-500 text-sm font-medium" role="alert" aria-live="assertive">{promoError}</p>
         )}
         {promoApplied && (
-          <div className="mt-1 mb-1 text-teal-500 text-sm font-medium">
-            Promo code applied! {localDiscountPercent.toFixed(2)}% off
-          </div>
+          <p id="promo-success" className="mt-1 mb-1 text-teal-500 text-sm font-medium" role="status" aria-live="polite">
+            {t.promoCodeApplied} {localDiscountPercent.toFixed(2)}{t.percentOffDiscount}
+          </p>
         )}
       </div>
 
       {message && (
-        <div id="payment-message" className="mt-1 mb-3 text-red-500 text-sm font-medium">
+        <p id="payment-message" className="mt-1 mb-3 text-red-500 text-sm font-medium" role="alert" aria-live="assertive">
           {message}
-        </div>
+        </p>
       )}
 
       {/* Desktop / larger screens button */}
-      <div className="hidden sm:block">
+      <div className="hidden sm:block mb-2">
         <Button
           variant='start'
           type="submit"
-          disabled={isLoading || !stripe || !elements || isApplyingPromo}
+          disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
           className={`${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
-          aria-label={t.payNow}
+          aria-label={isLoading ? 'Processing payment' : 'Pay now and complete order'}
+          aria-busy={isLoading}
+          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
         >
           {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
         </Button>
@@ -350,9 +371,11 @@ export default function PaymentForm({
         <Button
           variant='start'
           type="submit"
-          disabled={isLoading || !stripe || !elements || isApplyingPromo}
+          disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
           className={`w-full ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
-          aria-label={t.payNow}
+          aria-label={isLoading ? 'Processing payment' : 'Pay now and complete order'}
+          aria-busy={isLoading}
+          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
         >
           {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
         </Button>

@@ -30,7 +30,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
 
     const sizeStyles: Record<Size, string> = {
-      sm: 'px-3 py-1.5 text-xs',
+      sm: 'px-2.5 sm:px-3 py-1.5 sm:py-2 text-sm',
       default: 'px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-sm',
       lg: 'px-6 py-3 text-base',
       admin: 'px-3 py-1.5 text-xs',
@@ -45,7 +45,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       start: 'btn-primary w-full font-medium text-white font-semibold py-2 rounded-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-2 transition-all duration-300 ease-out shadow-md',
       close: 'absolute top-2 right-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500',
       link: 'btn-link px-0 sm:px-0 focus:ring-gray-500 hover:underline focus:outline-none focus:ring-2',
-      outline: 'btn-outline shadow-sm bg-transparent border border-gray-300 text-gray-700',
+      outline: 'btn-outline shadow-sm bg-transparent border-2 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0',
       'light-outline': 'shadow-sm bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
       danger: 'shadow-lg bg-red-600 text-white hover:bg-red-700 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:ring-red-500',
       manage: 'btn-primary relative w-full py-3.5 px-4 text-white font-medium rounded-xl shadow-lg hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0 disabled:transform-none disabled:shadow-none transition-all duration-300 ease-out',
@@ -64,6 +64,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         case 'secondary':
           return {
             backgroundColor: themeColors.cssVars.secondary.base,
+          } as React.CSSProperties;
+        case 'outline':
+          return {
+            borderColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base,
           } as React.CSSProperties;
         case 'manage':
           return {

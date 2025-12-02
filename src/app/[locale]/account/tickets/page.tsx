@@ -211,7 +211,7 @@ const handleRespond = async () => {
     <div className="flex py-4 pt-16 h-screen mx-auto max-w-5xl">
       {toast && <Toast {...toast} onClose={() => setToast(null)} duration={5000} />}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center relative"
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-sky-600 text-white rounded-full flex items-center justify-center"
         onClick={() => setIsSidebarOpen(true)}
       >
         <Menu className="w-6 h-6" />

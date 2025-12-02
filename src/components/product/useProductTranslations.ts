@@ -28,8 +28,11 @@ export function useProductTranslations() {
     getTranslation: (key: keyof typeof translations) => translations[key],
     
     // Helper function to get translation with fallback
-    getSafeTranslation: (key: keyof typeof translations, fallback?: string) => {
-      return translations[key] || fallback || productTranslations.en[key] || key;
+    getSafeTranslation: (key: string, fallback?: string) => {
+      const value = (translations as any)?.[key];
+      if (value) return value as string;
+      const enValue = (productTranslations.en as any)?.[key];
+      return (enValue as string) || fallback || key;
     },
     
     // Utility functions for common product actions
