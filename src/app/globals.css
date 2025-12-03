@@ -1,66 +1,24 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-/* Dynamic Google Fonts - loaded only when needed based on organization settings */
-/* This reduces initial bundle by ~600KB by not loading all fonts upfront */
+/* Font CSS Variables - Actual fonts loaded async via <link> in layout.tsx to avoid blocking LCP */
+/* This approach prevents render-blocking @import statements while maintaining font flexibility */
 
-/* Mulish - General purpose sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap');
 :root {
+  /* Core fonts loaded via Next.js (Inter, JetBrains Mono) */
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  
+  /* Additional fonts loaded async via <link media="print"> in layout.tsx */
   --font-mulish: 'Mulish', system-ui, -apple-system, sans-serif;
-}
-
-/* Roboto - Modern geometric sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-:root {
   --font-roboto: 'Roboto', system-ui, -apple-system, sans-serif;
-}
-
-/* Poppins - Friendly rounded sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-:root {
   --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
-}
-
-/* Lato - Clean humanist sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
-:root {
   --font-lato: 'Lato', system-ui, -apple-system, sans-serif;
-}
-
-/* Open Sans - Neutral sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap');
-:root {
   --font-opensans: 'Open Sans', system-ui, -apple-system, sans-serif;
-}
-
-/* Montserrat - Urban geometric sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-:root {
   --font-montserrat: 'Montserrat', system-ui, -apple-system, sans-serif;
-}
-
-/* Nunito - Rounded sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap');
-:root {
   --font-nunito: 'Nunito', system-ui, -apple-system, sans-serif;
-}
-
-/* Raleway - Elegant sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap');
-:root {
   --font-raleway: 'Raleway', system-ui, -apple-system, sans-serif;
-}
-
-/* Ubuntu - Humanist sans-serif */
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap');
-:root {
   --font-ubuntu: 'Ubuntu', system-ui, -apple-system, sans-serif;
-}
-
-/* Merriweather - Classic serif */
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
-:root {
   --font-merriweather: 'Merriweather', 'Georgia', serif;
 }
 
