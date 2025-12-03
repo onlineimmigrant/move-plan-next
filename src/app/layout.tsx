@@ -216,6 +216,12 @@ export async function generateMetadata(): Promise<Metadata> {
       }],
       locale: currentLocale,
       type: ogType,
+      // Add article-specific metadata for blog posts
+      ...(ogType === 'article' && seoData.articlePublishedTime && {
+        publishedTime: seoData.articlePublishedTime,
+        modifiedTime: seoData.articleModifiedTime,
+        authors: seoData.articleAuthor ? [seoData.articleAuthor] : undefined,
+      }),
     },
     
     twitter: {

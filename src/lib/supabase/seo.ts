@@ -15,6 +15,10 @@ export interface SEOData {
   seo_og_url?: string;
   structuredData: Array<Record<string, any>>;
   faqs: Array<{ question: string; answer: string }>;
+  // Article-specific metadata for blog posts
+  articlePublishedTime?: string;
+  articleModifiedTime?: string;
+  articleAuthor?: string;
 }
 
 interface Product {
@@ -536,12 +540,17 @@ async function generateDynamicPageSEO(pathname: string, baseUrl: string, organiz
         .select('*')
         .eq('slug', slug)
         .eq('organization_id', organizationId)
-        .eq('display_this_post', true)
         .single();
       
       if (post && !postError) {
-        console.log('[generateDynamicPageSEO] Found blog post, generating Article structured data for:', post.title);
-        return generateBlogPostSEO(post, baseUrl, organizationId, pathname);
+        // Check display_config.display_this_post (JSONB field)
+        const shouldDisplay = post.display_config?.display_this_post ?? post.display_this_post ?? true;
+        if (shouldDisplay) {
+          console.log('[generateDynamicPageSEO] Found blog post, generating Article structured data for:', post.title);
+          return generateBlogPostSEO(post, baseUrl, organizationId, pathname);
+        } else {
+          console.log('[generateDynamicPageSEO] Blog post found but not set to display');
+        }
       } else {
         console.log('[generateDynamicPageSEO] No blog post found for slug:', slug, 'error:', postError?.message || 'No data');
       }
@@ -810,6 +819,12 @@ async function generateBlogPostSEO(post: any, baseUrl: string, organizationId: s
     canonicalUrl,
     seo_og_image: post.main_photo || post.additional_photo || settings?.seo_og_image,
     seo_og_url: canonicalUrl,
+    // Article-specific OpenGraph metadata
+    articlePublishedTime: post.created_on,
+    articleModifiedTime: post.last_modified,
+    articleAuthor: post.is_company_author 
+      ? siteName 
+      : (post.author ? `${post.author.first_name} ${post.author.last_name}` : 'Author'),
     structuredData: [
       {
         '@context': 'https://schema.org',
