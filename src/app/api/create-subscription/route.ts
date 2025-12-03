@@ -30,8 +30,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Basket is empty' }, { status: 400 });
     }
 
+    // Email is required for subscriptions (for invoice and customer creation)
     if (!customerEmail) {
-      return NextResponse.json({ error: 'Customer email is required' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Email is required for subscription purchases. Please enter your email to continue.' 
+      }, { status: 400 });
     }
 
     // 1. Create or retrieve Stripe Customer

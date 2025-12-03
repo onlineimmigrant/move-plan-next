@@ -74,8 +74,19 @@ export async function POST(request: Request) {
             console.warn('[Finalize] Invoice settlement error:', payError.message);
           }
         } else {
-          // Production: webhook handles this
-          console.log('[Finalize] Production: Webhook will settle invoice');
+          // Production: settle invoice (webhook may also handle this as backup)
+          try {
+            await stripe.invoices.update(invoiceId, {
+              metadata: {
+                finalize_payment_intent: paymentIntentId,
+                finalize_completed: new Date().toISOString(),
+              },
+            });
+            await stripe.invoices.pay(invoiceId, { paid_out_of_band: true });
+            console.log('[Finalize] Production: Draft invoice marked paid_out_of_band');
+          } catch (payError: any) {
+            console.warn('[Finalize] Production invoice settlement error:', payError.message);
+          }
         }
       }
       

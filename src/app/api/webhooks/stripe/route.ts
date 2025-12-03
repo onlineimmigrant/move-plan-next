@@ -262,18 +262,43 @@ export async function POST(request: Request) {
     }
 
     // Extract organization ID from metadata
-    const organizationId = extractOrganizationId(eventData);
+    let organizationId = extractOrganizationId(eventData);
     console.log('[Webhook] Extracted organization_id:', organizationId);
 
+    // Fallback: try to use default/first organization if no metadata
+    // This handles Stripe objects created outside our application
     if (!organizationId) {
-      console.error('[Webhook] No organization_id found in event metadata');
-      return NextResponse.json({ 
-        error: 'No organization ID in metadata. Ensure organization_id is set when creating Stripe objects.' 
-      }, { status: 400 });
+      console.warn('[Webhook] No organization_id in metadata - trying fallback');
+      
+      // Try to get default organization (you may want to customize this logic)
+      const { data: orgs, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, stripe_webhook_secret, stripe_secret_key')
+        .not('stripe_webhook_secret', 'is', null)
+        .limit(1);
+      
+      if (orgError || !orgs || orgs.length === 0) {
+        console.error('[Webhook] No organization found and no fallback available');
+        return NextResponse.json({ 
+          error: 'No organization ID in metadata. Ensure organization_id is set when creating Stripe objects.' 
+        }, { status: 400 });
+      }
+      
+      // Use first organization as fallback
+      organizationId = orgs[0].id;
+      console.log('[Webhook] Using fallback organization:', organizationId);
     }
 
     // Fetch organization-specific Stripe keys
     console.log('[Webhook] Fetching keys for organization:', organizationId);
+    
+    if (!organizationId) {
+      console.error('[Webhook] Organization ID is null after fallback attempts');
+      return NextResponse.json({ 
+        error: 'Could not determine organization for this webhook event' 
+      }, { status: 400 });
+    }
+    
     const stripeKeys = await getOrganizationStripeKeys(organizationId);
     
     if (!stripeKeys.webhookSecret) {
@@ -591,6 +616,23 @@ export async function POST(request: Request) {
     if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
       console.log(`Processing ${event.type} event:`, event.data.object);
       const subscription = event.data.object as Stripe.Subscription;
+      
+      // Extract organization_id from subscription metadata if available
+      const subOrgId = subscription.metadata?.organization_id;
+      if (!subOrgId && organizationId) {
+        // Add organization_id to subscription for future events
+        try {
+          await stripe.subscriptions.update(subscription.id, {
+            metadata: {
+              ...subscription.metadata,
+              organization_id: organizationId,
+            },
+          });
+          console.log('[Webhook] Added organization_id to subscription metadata');
+        } catch (updateErr: any) {
+          console.warn('[Webhook] Could not update subscription metadata:', updateErr.message);
+        }
+      }
 
       const subscriptionData = {
         stripe_subscription_id: subscription.id,
@@ -600,7 +642,7 @@ export async function POST(request: Request) {
         status: subscription.status,
         current_period_start: (subscription as any)?.current_period_start ? new Date((subscription as any).current_period_start * 1000).toISOString() : null,
         current_period_end: (subscription as any)?.current_period_end ? new Date((subscription as any).current_period_end * 1000).toISOString() : null,
-        cancel_at_period_end: subscription.cancel_at_period_end,
+        // cancel_at_period_end column doesn't exist in schema - removed
         cancelled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
         updated_at: new Date().toISOString(),
       };
