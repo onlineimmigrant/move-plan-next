@@ -5,7 +5,7 @@
  * to dramatically reduce database queries and improve TTFB
  */
 
-import { SEOData } from './seo';
+import { SEOData } from '../supabase/seo';
 
 // In-memory cache with TTL
 interface CacheEntry {

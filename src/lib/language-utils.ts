@@ -44,7 +44,7 @@ export type DefaultLocale = typeof DEFAULT_SUPPORTED_LOCALES[number];
  * @param settings - Settings object containing supported_locales
  * @returns Array of supported locale codes
  */
-export function getSupportedLocales(settings?: { supported_locales?: string[] }): string[] {
+export function getSupportedLocales(settings?: { supported_locales?: string[] | null }): string[] {
   if (settings?.supported_locales && Array.isArray(settings.supported_locales) && settings.supported_locales.length > 0) {
     // Validate that all locales exist in LANGUAGE_LOCALE_MAP
     const validLocales = settings.supported_locales.filter(locale => 
