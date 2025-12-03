@@ -112,9 +112,13 @@ const ProductHeader = memo(function ProductHeader({
                 onClick={() => onBillingCycleChange('monthly')}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                   billingCycle === 'monthly'
-                    ? 'bg-blue-50/80 text-blue-700 shadow-sm'
+                    ? 'shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/50'
                 }`}
+                style={billingCycle === 'monthly' ? {
+                  backgroundColor: themeColors.cssVars.primary.lighter,
+                  color: themeColors.cssVars.primary.base,
+                } : {}}
                 aria-pressed={billingCycle === 'monthly'}
               >
                 Monthly
@@ -124,9 +128,13 @@ const ProductHeader = memo(function ProductHeader({
                 onClick={() => onBillingCycleChange('annual')}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                   billingCycle === 'annual'
-                    ? 'bg-blue-50/80 text-blue-700 shadow-sm'
+                    ? 'shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/50'
                 }`}
+                style={billingCycle === 'annual' ? {
+                  backgroundColor: themeColors.cssVars.primary.lighter,
+                  color: themeColors.cssVars.primary.base,
+                } : {}}
                 aria-pressed={billingCycle === 'annual'}
               >
                 Annual

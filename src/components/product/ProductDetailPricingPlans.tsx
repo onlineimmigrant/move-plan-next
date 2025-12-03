@@ -141,12 +141,27 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   
   const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => {
     if (isOutOfStock) {
-      return 'relative cursor-not-allowed overflow-hidden transition-all duration-300 ease-in-out rounded-lg bg-gray-50/30 backdrop-blur-sm opacity-60 z-0';
+      return {
+        className: 'relative cursor-not-allowed overflow-hidden transition-all duration-300 ease-in-out rounded-lg bg-gray-50/30 backdrop-blur-sm opacity-60 z-0',
+        style: {}
+      };
     }
     if (isActive) {
-      return 'relative cursor-pointer overflow-hidden transition-all duration-500 ease-in-out border border-blue-400/60 rounded-lg bg-blue-50/30 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 z-10';
+      return {
+        className: 'relative cursor-pointer overflow-hidden transition-all duration-500 ease-in-out rounded-lg backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 z-10',
+        style: {
+          borderWidth: '1px',
+          borderColor: themeColors.cssVars.primary.border,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        }
+      };
     }
-    return 'relative cursor-pointer overflow-hidden transition-all duration-300 ease-in-out rounded-lg bg-blue-50/20 backdrop-blur-sm hover:bg-blue-50/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 z-0';
+    return {
+      className: 'relative cursor-pointer overflow-hidden transition-all duration-300 ease-in-out rounded-lg backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 z-0',
+      style: {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      }
+    };
   };
   
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
@@ -386,10 +401,13 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               const normalizedStatus = status.toLowerCase();
               const isOutOfStock = normalizedStatus === 'out of stock';
 
+              const cardStyles = planCardStyles(isOutOfStock, isActive);
+              
               return (
                 <div key={plan.id} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
                   <div
-                    className={planCardStyles(isOutOfStock, isActive)}
+                    className={cardStyles.className}
+                    style={cardStyles.style}
                     role="radio"
                     aria-checked={isActive}
                     tabIndex={isOutOfStock ? -1 : 0}
@@ -406,22 +424,6 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                     }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
                   >
                     <div className="relative px-5 sm:px-6 pt-8 sm:pt-10 pb-4 sm:pb-5">
-                      
-                      {/* Refined Promotion Badge - Elegant and Attention-grabbing with pulse */}
-                      {plan.is_promotion && plan.promotion_price !== undefined && (
-                        <div className="absolute -top-2.5 -right-2.5 z-20">
-                          <div className="relative animate-pulse" style={{ animationDuration: '2s' }}>
-                            <span className="relative block px-3 py-1 text-xs font-semibold text-red-600 bg-red-50/90 rounded-full border border-red-200/60 backdrop-blur-sm">
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                <span>{plan.promotion_percent}{t.percentOff}</span>
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Subtle Status Badge - Informational and Minimal */}
                       <div className="absolute top-2 sm:top-4 left-3 sm:left-4 z-10">
@@ -459,8 +461,22 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         <div className="flex justify-end">
                           {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
                             <div className="flex flex-col items-end space-y-1">
-                              <div className="flex items-baseline space-x-1.5">
-                                <span className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-br from-red-600 to-pink-600 bg-clip-text text-transparent">
+                              {/* Inline: Discount % | Crossed Price | New Price */}
+                              <div className="flex items-baseline gap-3 sm:gap-4">
+                                {plan.promotion_percent && (
+                                  <span className="text-xs font-semibold" style={{ color: themeColors.cssVars.primary.base }}>
+                                    {plan.promotion_percent}{t.percentOff}
+                                  </span>
+                                )}
+                                <span className="text-base text-gray-500 font-medium line-through">
+                                  {getOriginalPrice(plan)}
+                                </span>
+                                <span 
+                                  className={`text-2xl sm:text-3xl font-extrabold ${
+                                    isOutOfStock ? 'text-gray-400' : ''
+                                  }`}
+                                  style={!isOutOfStock ? { color: themeColors.cssVars.primary.base } : {}}
+                                >
                                   {(() => {
                                     const price = getDisplayPrice(plan);
                                     const { symbol, whole, decimal } = formatPriceWithSmallDecimals(price);
@@ -472,38 +488,6 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                                   })()}
                                 </span>
                               </div>
-                              <span className="text-sm text-gray-400 font-medium line-through">
-                                {getOriginalPrice(plan)}
-                              </span>
-                              {(() => {
-                                const currency = plan.user_currency || plan.currency || 'USD';
-                                const base = plan.computed_price ?? (plan.price ?? 0) / 100;
-                                let savings = 0;
-                                if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
-                                  const discountRaw = plan.annual_size_discount;
-                                  let multiplier = 1;
-                                  if (typeof discountRaw === 'number') {
-                                    if (discountRaw > 1) {
-                                      multiplier = (100 - discountRaw) / 100;
-                                    } else if (discountRaw > 0 && discountRaw <= 1) {
-                                      multiplier = discountRaw;
-                                    }
-                                  }
-                                  const commitmentMonths = plan.commitment_months || 12;
-                                  const annualUndiscounted = base * commitmentMonths;
-                                  const annualDiscounted = base * commitmentMonths * multiplier;
-                                  savings = annualUndiscounted - annualDiscounted;
-                                } else if (plan.promotion_percent) {
-                                  savings = base * (plan.promotion_percent / 100);
-                                } else if (typeof plan.promotion_price === 'number') {
-                                  savings = base - plan.promotion_price;
-                                }
-                                return savings > 0 ? (
-                                  <span className="text-xs font-bold text-red-600">
-                                    Save {formatAmount(savings, currency)}{billingCycle === 'annual' ? '/year' : ''}
-                                  </span>
-                                ) : null;
-                              })()}
                               {(plan.recurring_interval || plan.measure) && (
                                 <span className="text-xs text-gray-500 font-medium">{
                                   (() => {
@@ -572,8 +556,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         <div className="flex justify-between items-end gap-2 sm:gap-4">
                           <h2
                             className={`text-lg sm:text-xl font-semibold ${
-                              isActive ? 'text-blue-700' : 'text-gray-800'
-                            } ${isOutOfStock ? 'text-gray-400' : ''}`}
+                              isOutOfStock ? 'text-gray-400' : ''
+                            }`}
+                            style={!isOutOfStock && isActive ? { color: themeColors.cssVars.primary.base } : !isOutOfStock ? { color: '#1f2937' } : {}}
                           >
                             {plan.package || t.product}
                           </h2>
@@ -593,7 +578,11 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
       <div className="mt-4 md:mt-6 px-4 sm:px-0 space-y-3">
         {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.computed_price ? selectedPlan.computed_price === 0 : (selectedPlan.promotion_price || 0) === 0)))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-medium border-2 border-blue-500 hover:border-blue-600 md:hover:scale-[1.02] active:scale-100 transition-all duration-200" aria-label={t.registerForFreeTrial}>
+            <Button 
+              variant="start" 
+              className="h-14 md:h-16 text-base md:text-lg font-medium md:hover:scale-[1.02] active:scale-100 transition-all duration-200" 
+              aria-label={t.registerForFreeTrial}
+            >
               {t.register}
               <RightArrowDynamic />
             </Button>
@@ -610,9 +599,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                   selectedPlanStatus !== 'out of stock' && !isLoading
                     ? isSelectedPlanActive
                       ? isAdded
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-600 scale-[1.02]'
-                        : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-600 hover:from-blue-700 hover:to-blue-800 hover:border-blue-700 md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-700 border-2 border-gray-300 hover:bg-white hover:border-blue-400 md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
+                        ? 'scale-[1.02]'
+                        : 'md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
+                      : 'bg-white/80 backdrop-blur-sm text-gray-700 border-2 border-gray-300 hover:bg-white hover:border-gray-400 md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-60 border-2 border-gray-300'
                 }`}
               aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
@@ -654,7 +643,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 <Link href="/checkout">
                   <Button
                     variant="start"
-                    className="h-16 md:h-[4.5rem] text-lg md:text-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-2 border-blue-600 hover:border-blue-700 md:hover:scale-[1.02] active:scale-100 transition-all duration-200"
+                    className="h-16 md:h-[4.5rem] text-lg md:text-xl font-semibold md:hover:scale-[1.02] active:scale-100 transition-all duration-200"
                     aria-label={t.proceedToCheckout}
                     onMouseEnter={prefetchCheckout}
                   >

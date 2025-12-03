@@ -36,6 +36,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useProductTranslations();
+  const themeColors = useThemeColors();
 
   // Check if the content is scrollable or can be scrollable when collapsed
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
   if (!selectedPlan.features || selectedPlan.features.length === 0) {
     return (
       <div className="mt-3 px-4 sm:px-0">
-        <h2 className="text-base font-semibold text-gray-800 mb-3">{t.featuresIncluded}</h2>
+        <h2 className="text-base font-semibold mb-3" style={{ color: themeColors.cssVars.primary.base }}>{t.featuresIncluded}</h2>
         <p className="text-sm text-gray-500">{t.noFeaturesListed}</p>
       </div>
     );
@@ -79,7 +80,7 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
 
   return (
     <div className="mt-3 px-4 sm:px-0">
-      <h2 className="text-base font-semibold text-gray-800 mb-3">{t.featuresIncluded}</h2>
+      <h2 className="text-base font-semibold mb-3" style={{ color: themeColors.cssVars.primary.base }}>{t.featuresIncluded}</h2>
       <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-xl md:rounded-2xl p-4 md:p-5">
         <div
           ref={scrollContainerRef}
@@ -93,13 +94,14 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
                 key={feature.id}
                 className="flex items-start gap-3 last:pb-0"
               >
-                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: themeColors.cssVars.primary.base }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/features/${feature.slug}`}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline no-underline focus:outline-none inline-flex items-center gap-1 group transition-colors duration-200"
+                    className="text-sm font-medium hover:underline no-underline focus:outline-none inline-flex items-center gap-1 group transition-colors duration-200"
+                    style={{ color: themeColors.cssVars.primary.base }}
                   >
                     {feature.name}
                     <RightArrowDynamic />
@@ -116,7 +118,8 @@ export default function PricingPlanFeatures({ selectedPlan }: PricingPlanFeature
           <div className="mt-3 pt-3 border-t border-gray-200/60 flex justify-center">
             <button
               onClick={isExpanded ? collapseFeatures : toggleExpand}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none transition-colors duration-200"
+              className="text-sm font-medium focus:outline-none transition-colors duration-200"
+              style={{ color: themeColors.cssVars.primary.base }}
               aria-label={isExpanded ? t.collapseFeaturesAriaLabel : t.expandFeaturesAriaLabel}
             >
               {isExpanded ? '← Show less' : 'Show more →'}
