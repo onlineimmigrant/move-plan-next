@@ -6,6 +6,7 @@ import { Settings } from '@/types/settings';
 import { pageMetadataDefinitions } from '@/lib/page-metadata-definitions';
 import { fetchMenuItems, getDomain, getSettingsWithFallback, getFaviconUrl, getLanguageFromSettings, getLocaleFromSettings } from '@/lib/layout-utils';
 import { getSupportedLocales } from '@/lib/language-utils';
+import { getPathnameFromHeaders, extractLocaleFromPathname, stripLocaleFromPathname, buildHreflangAlternates } from '@/lib/seo/pathname-utils';
 import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GTMComponents';
 import { Metadata } from 'next';
 import { fetchPageSEOData, fetchDefaultSEOData } from '@/lib/supabase/seo';
@@ -13,7 +14,6 @@ import Script from 'next/script';
 import LayoutSEO from '@/components/LayoutSEO';
 import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
-import ClientStructuredDataInjector from '@/components/ClientStructuredDataInjector';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerSafe';
 import { Inter, Roboto, Poppins, Lato, Open_Sans, Montserrat, Nunito, Raleway, Ubuntu, Merriweather, JetBrains_Mono, Mulish } from 'next/font/google';
@@ -160,64 +160,42 @@ export async function generateMetadata(): Promise<Metadata> {
   const currentDomain = await getDomain();
   const headersList = await headers();
   
-  // Get current pathname from headers with fallbacks
-  function getPathnameFromHeaders(headersList: Headers): string {
-    const xPathname = headersList.get('x-pathname');
-    const xUrl = headersList.get('x-url');
-    const referer = headersList.get('referer');
-    
-    if (xPathname) return xPathname;
-    if (xUrl) return xUrl;
-    
-    // Extract from referer as fallback
-    if (referer) {
-      try {
-        const url = new URL(referer);
-        return url.pathname;
-      } catch (e) {
-        console.warn('⚠️ [Layout generateMetadata] Could not parse referer URL:', referer);
-      }
-    }
-    
-    // Ultimate fallback
-    return '/';
-  }
+  // Get full pathname WITH locale (e.g., /fr/about)
+  const fullPathname = getPathnameFromHeaders(headersList);
   
-  let pathname = getPathnameFromHeaders(headersList);
+  // Extract locale from pathname
+  const currentLocale = extractLocaleFromPathname(fullPathname);
   
-  // Handle locale paths for metadata generation
-  const localePattern = /^\/(?:en|es|fr|de|ru|it|pt|zh|ja|pl|nl)(?:\/(.*))?$/;
-  const localeMatch = pathname.match(localePattern);
+  // Get pathname WITHOUT locale for SEO data lookup (DB stores without locale)
+  const pathnameWithoutLocale = stripLocaleFromPathname(fullPathname);
   
-  if (localeMatch) {
-    // If it's just a locale (like /fr), treat as homepage for SEO
-    const remainingPath = localeMatch[1];
-    if (!remainingPath || remainingPath === '') {
-      pathname = '/';
-    } else {
-      pathname = '/' + remainingPath;
-    }
-  }
-  
-  
-  // Use comprehensive SEO system
+  // Use comprehensive SEO system (query DB with locale-stripped path)
   let seoData;
   try {
-    seoData = await fetchPageSEOData(pathname, currentDomain);
+    seoData = await fetchPageSEOData(pathnameWithoutLocale, currentDomain);
   } catch (error) {
     console.error('❌ [Layout generateMetadata] Error fetching SEO data, using fallback:', error);
-    seoData = await fetchDefaultSEOData(currentDomain, pathname);
+    seoData = await fetchDefaultSEOData(currentDomain, pathnameWithoutLocale);
   }
 
   const settings = await getSettingsWithFallback(currentDomain);
   const siteName = getSiteName(settings);
+  const supportedLocales = getSupportedLocales(settings);
   
-  // Extract locale from pathname - pathname format: /en/... or /sk/... etc
-  let currentLocale = 'en'; // default fallback
-  const metadataLocaleMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
-  if (metadataLocaleMatch) {
-    currentLocale = metadataLocaleMatch[1];
-  }
+  // Build canonical URL WITH locale (important for international SEO)
+  const canonicalUrl = `${currentDomain.replace(/\/$/, '')}${fullPathname}`;
+  
+  // Build hreflang alternates for all supported languages
+  const hreflangAlternates = buildHreflangAlternates(
+    currentDomain,
+    pathnameWithoutLocale,
+    supportedLocales
+  );
+  
+  // Determine og:type based on content
+  const isBlogPost = pathnameWithoutLocale.includes('/blog/') || 
+                     pathnameWithoutLocale.match(/^\/[^\/]+$/) !== null; // Single segment might be blog post
+  const ogType = isBlogPost ? 'article' : 'website';
 
   // Enhanced metadata with SEO system data
   return {
@@ -228,7 +206,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: seoData.title || siteName,
       description: seoData.description || 'Welcome to our platform',
-      url: seoData.canonicalUrl || currentDomain,
+      url: canonicalUrl,
       siteName,
       images: [{ 
         url: seoData.seo_og_image || settings.seo_og_image || '/images/codedharmony.png', 
@@ -237,7 +215,7 @@ export async function generateMetadata(): Promise<Metadata> {
         alt: seoData.title || siteName 
       }],
       locale: currentLocale,
-      type: 'website',
+      type: ogType,
     },
     
     twitter: {
@@ -260,8 +238,26 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     
     alternates: { 
-      canonical: seoData.canonicalUrl || currentDomain 
+      canonical: canonicalUrl,
+      // Add hreflang for all supported languages
+      languages: hreflangAlternates
     },
+    
+    // Add Organization structured data globally
+    other: {
+      'organization-schema': JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: siteName,
+        url: currentDomain,
+        logo: `${currentDomain}/logo.png`,
+        sameAs: [
+          // Add your social media links here
+          // 'https://twitter.com/yourhandle',
+          // 'https://linkedin.com/company/yourcompany'
+        ]
+      })
+    }
   };
 }
 
@@ -270,37 +266,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   
   // Get current pathname to extract locale
   const headersList = await headers();
-  
-  // Get current pathname from headers with fallbacks
-  function getPathnameFromHeaders(headersList: Headers): string {
-    const xPathname = headersList.get('x-pathname');
-    const xUrl = headersList.get('x-url');
-    const referer = headersList.get('referer');
-    
-    if (xPathname) return xPathname;
-    if (xUrl) return xUrl;
-    
-    // Extract from referer as fallback
-    if (referer) {
-      try {
-        const url = new URL(referer);
-        return url.pathname;
-      } catch (e) {
-        console.warn('⚠️ [RootLayout] Could not parse referer URL:', referer);
-      }
-    }
-    
-    return '/';
-  }
-  
   const pathname = getPathnameFromHeaders(headersList);
   
   // Extract locale from pathname for dynamic language setting
-  let currentLocale = 'en'; // default fallback
-  const layoutLocaleMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
-  if (layoutLocaleMatch) {
-    currentLocale = layoutLocaleMatch[1];
-  }
+  const currentLocale = extractLocaleFromPathname(pathname);
   
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
@@ -323,12 +292,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Server-side fetch of template sections for SSR to avoid SEO/SSR mismatch
   // Determine url_page (map '/' to '/home' to match DB convention)
   // IMPORTANT: Strip locale prefix before DB lookup (DB stores paths without locale)
-  const urlPage = (() => {
-    // Strip locale prefix (e.g., /en/my-post -> /my-post)
-    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
-    const normalized = pathWithoutLocale === '/' || pathWithoutLocale === '' ? '/home' : pathWithoutLocale;
-    return normalized;
-  })();
+  const pathWithoutLocale = stripLocaleFromPathname(pathname);
+  const urlPage = pathWithoutLocale === '/' || pathWithoutLocale === '' ? '/home' : pathWithoutLocale;
 
   let templateSections: any[] = [];
   let templateHeadingSections: any[] = [];

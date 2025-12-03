@@ -4,6 +4,7 @@ const supabaseServer = supabase;
 import { getOrganizationId, getSettings } from '../getSettings';
 import { getBreadcrumbStructuredData } from '../getBreadcrumbs';
 import { SECTION_ROUTES } from '../postUtils';
+import { seoCache, getCacheTTL } from '../seo/cache';
 
 export interface SEOData {
   title?: string;
@@ -143,6 +144,13 @@ function isValidArticle(article: Article): article is Article & { title: string;
 }
 
 export async function fetchPageSEOData(pathname: string, baseUrl: string): Promise<SEOData> {
+  // Check cache first
+  const cachedData = seoCache.get(pathname, baseUrl);
+  if (cachedData) {
+    console.log('[fetchPageSEOData] Cache hit for:', pathname);
+    return cachedData;
+  }
+
   try {
     const organizationId = await getOrganizationId(baseUrl);
     if (!organizationId) {
@@ -379,6 +387,11 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
     }
 
     console.log('[fetchPageSEOData] Page SEO data fetched:', seoData.title);
+    
+    // Cache the result before returning
+    const ttl = getCacheTTL(pathname);
+    seoCache.set(pathname, baseUrl, seoData, ttl);
+    
     return seoData;
   } catch (error: any) {
     console.error('[fetchPageSEOData] Error:', error.message);

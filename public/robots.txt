@@ -1,3 +1,11 @@
 User-agent: *
 Disallow: /admin/
 Disallow: /account/
+Disallow: /api/
+Allow: /api/og-image
+
+# Sitemap reference (update with your actual domain)
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl delay for polite crawling
+Crawl-delay: 1

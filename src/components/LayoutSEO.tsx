@@ -1,36 +1,15 @@
 import { headers } from 'next/headers';
 import { fetchPageSEOData, fetchDefaultSEOData } from '@/lib/supabase/seo';
 import { getDomain } from '@/lib/layout-utils';
-
-function getPathnameFromHeaders(headersList: Headers): string {
-  // Try multiple ways to extract pathname
-  const xPathname = headersList.get('x-pathname');
-  const xUrl = headersList.get('x-url');
-  const referer = headersList.get('referer');
-  
-  if (xPathname) return xPathname;
-  if (xUrl) return xUrl;
-  
-  // Extract from referer as fallback
-  if (referer) {
-    try {
-      const url = new URL(referer);
-      return url.pathname;
-    } catch (e) {
-      console.warn('⚠️ [LayoutSEO] Could not parse referer URL:', referer);
-    }
-  }
-  
-  // Ultimate fallback
-  return '/';
-}
+import { getPathnameFromHeaders, stripLocaleFromPathname } from '@/lib/seo/pathname-utils';
 
 export default async function LayoutSEO() {
   const currentDomain = await getDomain();
   const headersList = await headers();
   
-  // Get current pathname from headers with fallbacks
-  const pathname = getPathnameFromHeaders(headersList);
+  // Get current pathname and strip locale for SEO data lookup
+  const fullPathname = getPathnameFromHeaders(headersList);
+  const pathname = stripLocaleFromPathname(fullPathname);
   
   // Use comprehensive SEO system
   let seoData;
