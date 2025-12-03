@@ -1025,42 +1025,28 @@ export async function fetchProductSEOData(slug: string, baseUrl: string): Promis
               }
             }
           : undefined,
-        aggregateRating: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
+        ...(isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
           ? {
-              '@type': 'AggregateRating',
-              ratingValue: parseFloat(
-                (
-                  reviewsResult.data.reduce((sum: number, r: Review) => sum + (r.rating ?? 0), 0) / reviewsResult.data.length
-                ).toFixed(1)
-              ),
-              reviewCount: reviewsResult.data.length,
-            }
-          : {
-              '@type': 'AggregateRating',
-              ratingValue: 4.5,
-              reviewCount: 1,
-            },
-        review: isReviewArray(reviewsResult.data) && reviewsResult.data.length > 0
-          ? reviewsResult.data.map((review: Review) => ({
-              '@type': 'Review',
-              reviewRating: {
-                '@type': 'Rating',
-                ratingValue: review.rating ?? 0,
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: parseFloat(
+                  (
+                    reviewsResult.data.reduce((sum: number, r: Review) => sum + (r.rating ?? 0), 0) / reviewsResult.data.length
+                  ).toFixed(1)
+                ),
+                reviewCount: reviewsResult.data.length,
               },
-              author: { '@type': 'Person', name: review.user_name ?? 'Anonymous' },
-              reviewBody: review.comment ?? '',
-            }))
-          : [
-              {
+              review: reviewsResult.data.map((review: Review) => ({
                 '@type': 'Review',
                 reviewRating: {
                   '@type': 'Rating',
-                  ratingValue: 4.5,
+                  ratingValue: review.rating ?? 0,
                 },
-                author: { '@type': 'Person', name: 'Verified Customer' },
-                reviewBody: 'Great product, highly recommended!',
-              }
-            ],
+                author: { '@type': 'Person', name: review.user_name ?? 'Anonymous' },
+                reviewBody: review.comment ?? '',
+              }))
+            }
+          : {}), // No reviews: omit aggregateRating and review fields entirely
       }
     );
 
@@ -1264,27 +1250,20 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
           review && typeof review.rating === 'number' && review.rating > 0 && review.rating <= 5
         );
         
-        // Use actual reviews if available, otherwise use default rating
-        let avgRating: number;
-        let reviewCount: number;
-        let reviewsToDisplay: any[];
+        // Only use actual reviews if available
+        const hasValidReviews = validReviews.length > 0;
+        let avgRating: number | undefined;
+        let reviewCount: number | undefined;
+        let reviewsToDisplay: any[] = [];
         
-        if (validReviews.length > 0) {
+        if (hasValidReviews) {
           // Calculate rating from actual valid reviews
           avgRating = parseFloat((validReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / validReviews.length).toFixed(1));
           reviewCount = validReviews.length;
           reviewsToDisplay = validReviews;
           // console.log(`[fetchProductsListingSEOData] Product "${product.product_name}" has ${reviewCount} valid reviews, avg rating: ${avgRating}`);
         } else {
-          // Use default rating for products without reviews
-          avgRating = 4.9;
-          reviewCount = 1; // Set to 1 to indicate a default review
-          reviewsToDisplay = [{
-            rating: 4.9,
-            user_name: 'Verified Customer',
-            comment: 'Excellent product quality and service.'
-          }];
-          console.log(`[fetchProductsListingSEOData] Product "${product.product_name}" has no reviews, using default rating: ${avgRating}`);
+          console.log(`[fetchProductsListingSEOData] Product "${product.product_name}" has no reviews, omitting rating data`);
         }
 
         const productUrl = `${baseUrl.replace(/\/$/, '')}/products/${product.slug || product.id}`;
@@ -1297,20 +1276,22 @@ export async function fetchProductsListingSEOData(baseUrl: string, categoryId?: 
           description: `High-quality ${product.product_name || 'product'} available in our catalog.`,
           sku: product.id.toString(),
           url: productUrl,
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: Number(avgRating) || 4.9,
-            reviewCount: Number(reviewCount) || 1,
-          },
-          review: reviewsToDisplay.map((review: any) => ({
-            '@type': 'Review',
-            reviewRating: {
-              '@type': 'Rating',
-              ratingValue: review.rating,
+          ...(hasValidReviews && avgRating && reviewCount ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: Number(avgRating),
+              reviewCount: Number(reviewCount),
             },
-            author: { '@type': 'Person', name: review.user_name || 'Verified Customer' },
-            reviewBody: review.comment || 'Great product!',
-          })),
+            review: reviewsToDisplay.map((review: any) => ({
+              '@type': 'Review',
+              reviewRating: {
+                '@type': 'Rating',
+                ratingValue: review.rating,
+              },
+              author: { '@type': 'Person', name: review.user_name || 'Anonymous' },
+              reviewBody: review.comment || '',
+            }))
+          } : {}), // No reviews: omit aggregateRating and review fields
         };
 
         // Add image if available
@@ -1551,36 +1532,9 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
         // Add critical image field for Merchant Listings
         productSchema.image = settings?.seo_og_image || `${canonicalBaseUrl}/images/logo.svg`;
 
-        // Add aggregateRating for Product Snippets and Carousels
-        productSchema.aggregateRating = {
-          '@type': 'AggregateRating',
-          ratingValue: 4.5,
-          reviewCount: 127,
-          bestRating: 5,
-          worstRating: 1
-        };
-
-        // Add review for Product Snippets
-        productSchema.review = [
-          {
-            '@type': 'Review',
-            author: {
-              '@type': 'Person',
-              name: 'Sarah Johnson'
-            },
-            reviewBody: 'Excellent course materials and comprehensive content. Highly recommended for exam preparation.',
-            datePublished: '2024-09-15'
-          },
-          {
-            '@type': 'Review',
-            author: {
-              '@type': 'Person',
-              name: 'Michael Chen'
-            },
-            reviewBody: 'Great value for money. The study materials are well-structured and easy to follow.',
-            datePublished: '2024-09-10'
-          }
-        ];
+        // Note: aggregateRating and review are omitted for pricing modal products
+        // These should only be added if real customer reviews exist
+        // TODO: Fetch actual reviews from database if needed for homepage products
 
         // Add pricing information if available
         if (product.price_manual && product.price_manual > 0) {
