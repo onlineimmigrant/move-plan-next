@@ -274,11 +274,11 @@ export default function PaymentForm({
     <form 
       id="payment-form" 
       onSubmit={handleSubmit} 
-      className="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 p-3 sm:p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 relative overflow-hidden pb-24 sm:pb-0 shadow-md"
+      className="backdrop-blur-sm p-3 sm:p-4 rounded-2xl border border-gray-200/30 relative overflow-hidden pb-24 sm:pb-0 shadow-md" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
       aria-label="Payment form"
       noValidate
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
       <div className="relative z-10">
       <div className="mb-2 sm:mb-3">
         <label htmlFor="email-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
@@ -289,7 +289,7 @@ export default function PaymentForm({
           type="email"
           value={email}
           onChange={handleEmailChange}
-          className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
+          className="w-full py-2 px-3 border border-gray-200/40 backdrop-blur-sm rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
           placeholder={t.emailPlaceholder}
           required
           aria-required="true"
@@ -306,7 +306,7 @@ export default function PaymentForm({
           {t.paymentDetails}
         </label>
         <div 
-          className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg border border-white/60 dark:border-gray-600/60 p-0"
+          className="backdrop-blur-sm rounded-lg border border-gray-200/40 p-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
           role="group"
           aria-label="Payment card details"
         >
@@ -322,7 +322,7 @@ export default function PaymentForm({
             type="text"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
+            className="w-full py-2 px-3 border border-gray-200/40 backdrop-blur-sm rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
             placeholder={t.enterPromoCode}
             disabled={promoLoading || !networkInfo.isOnline}
             aria-label="Enter promotional code"
@@ -373,7 +373,7 @@ export default function PaymentForm({
       </div>
       </div>
       {/* Mobile fixed footer button */}
-      <div className={`sm:hidden fixed left-0 right-0 bottom-0 z-40 px-4 py-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl bg-white/85 dark:bg-gray-900/85 border-t border-white/40 dark:border-gray-700/40 transition-all duration-300 ${payBarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className={`sm:hidden fixed left-0 right-0 bottom-0 z-40 px-4 py-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm border-t border-gray-200/30 transition-all duration-300 ${payBarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
         <Button
           variant='start'
           type="submit"
