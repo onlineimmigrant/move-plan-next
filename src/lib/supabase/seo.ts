@@ -339,9 +339,11 @@ export async function fetchPageSEOData(pathname: string, baseUrl: string): Promi
       }
     );
 
-    // Add FAQ structured data for this page
-    const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
-    seoData.faqs = pageFAQs;
+    // Add FAQ structured data for this page (skip if already added for homepage)
+    if (!isHomePage) {
+      const pageFAQs = await addFAQStructuredData(organizationId, seoData.structuredData, pathname, []);
+      seoData.faqs = pageFAQs;
+    }
 
     // Special handling for home page - add pricing modal products structured data
     if (isHomePage) {
@@ -1552,13 +1554,13 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
         // Add aggregateRating for Product Snippets and Carousels
         productSchema.aggregateRating = {
           '@type': 'AggregateRating',
-          ratingValue: '4.5',
-          reviewCount: '127',
-          bestRating: '5',
-          worstRating: '1'
+          ratingValue: 4.5,
+          reviewCount: 127,
+          bestRating: 5,
+          worstRating: 1
         };
 
-        // Add review for Product Snippets (without individual ratings to avoid conflicts)
+        // Add review for Product Snippets
         productSchema.review = [
           {
             '@type': 'Review',
