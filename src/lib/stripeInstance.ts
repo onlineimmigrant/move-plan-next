@@ -17,7 +17,7 @@ export async function createStripeInstance(organizationId: string): Promise<Stri
   const secretKey = await getStripeSecretKey(organizationId);
   
   return new Stripe(secretKey, {
-    apiVersion: '2025-05-28.basil',
+    apiVersion: '2025-08-27.basil',
   });
 }
 
@@ -26,5 +26,5 @@ export async function createStripeInstance(organizationId: string): Promise<Stri
  * @deprecated Use createStripeInstance(organizationId) instead
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-05-28.basil',
+  apiVersion: '2025-08-27.basil',
 });

@@ -27,6 +27,7 @@ type PricingPlan = {
   measure?: string;
   recurring_interval?: string;
   recurring_interval_count?: number;
+  commitment_months?: number;
   annual_size_discount?: number;
   type?: 'recurring' | 'one_time' | string;
   currency: string;
@@ -305,8 +306,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     if (
       billingCycle === 'annual' &&
       plan.type === 'recurring' &&
-      typeof plan.recurring_interval_count === 'number' &&
-      plan.recurring_interval_count > 0
+      plan.commitment_months
     ) {
       const discountRaw = plan.annual_size_discount;
       let multiplier = 1;
@@ -317,7 +317,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
           multiplier = discountRaw;
         }
       }
-      const annualAmount = base * plan.recurring_interval_count * multiplier;
+      const commitmentMonths = plan.commitment_months || 12;
+      const annualAmount = base * commitmentMonths * multiplier;
       return formatAmount(annualAmount, currency);
     }
     if (plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent)) {
@@ -337,10 +338,10 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     if (
       billingCycle === 'annual' &&
       plan.type === 'recurring' &&
-      typeof plan.recurring_interval_count === 'number' &&
-      plan.recurring_interval_count > 0
+      plan.commitment_months
     ) {
-      const annualUndiscounted = base * plan.recurring_interval_count;
+      const commitmentMonths = plan.commitment_months || 12;
+      const annualUndiscounted = base * commitmentMonths;
       return formatAmount(annualUndiscounted, currency);
     }
     return formatAmount(base, currency);
@@ -467,7 +468,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                               {(plan.recurring_interval || plan.measure) && (
                                 <span className="text-[11px] text-gray-500">{
                                   (() => {
-                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.recurring_interval_count) {
+                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
                                       return getSafeTranslation('perYear', 'per year');
                                     }
                                     const interval = (plan.recurring_interval || '').toString().toLowerCase();
@@ -497,7 +498,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                               {(plan.recurring_interval || plan.measure) && (
                                 <span className="text-[11px] text-gray-500">{
                                   (() => {
-                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.recurring_interval_count) {
+                                    if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
                                       return getSafeTranslation('perYear', 'per year');
                                     }
                                     const interval = (plan.recurring_interval || '').toString().toLowerCase();

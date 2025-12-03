@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { fetchWithRetry } from '@/lib/retry';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Stripe, StripeElements } from '@stripe/stripe-js';
 import Button from '@/ui/Button';
@@ -40,6 +42,7 @@ export default function PaymentForm({
   const { t } = useProductTranslations();
   const [message, setMessage] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
+    const networkInfo = useNetworkStatus();
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
@@ -103,16 +106,18 @@ export default function PaymentForm({
 
     try {
       console.log('Validating promo code:', promoCode);
-      const response = await fetch('/api/validate-promo-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCode, totalPrice }),
-      });
-
-      const result = await response.json();
+      const result = await fetchWithRetry<{ success: boolean; discountPercent: number; promoCodeId: string; error?: string }>(
+        '/api/validate-promo-code',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: promoCode, totalPrice }),
+        },
+        { retries: 3, baseDelayMs: 400 }
+      );
       console.log('Promo code validation result:', result);
 
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || t.failedToValidatePromo);
       }
 
@@ -220,8 +225,9 @@ export default function PaymentForm({
         return;
       }
 
-      // Confirm the payment directly using stripe.confirmPayment
-      console.log('Confirming payment with elements:', elements);
+      // Simply confirm the payment with the existing client secret
+      // (subscription is already created by checkout page if needed)
+      console.log('Confirming payment...');
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -241,21 +247,21 @@ export default function PaymentForm({
           onError(t.unexpectedPaymentError);
         }
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('Payment succeeded inline:', paymentIntent);
-        // Pass the email directly to onSuccess
+        console.log('Payment succeeded:', paymentIntent);
+        // Keep loading state active - handleSuccess will manage it
         onSuccess(email);
       } else {
         console.log('Payment intent status:', paymentIntent?.status);
         const errorMsg = `${t.paymentDidNotSucceed} ${paymentIntent?.status}`;
         setMessage(errorMsg);
         onError(errorMsg);
+        setIsLoading(false);
       }
     } catch (err: any) {
       const errorMsg = err.message || t.paymentFailedUnexpectedly;
       console.error('Payment error:', err);
       setMessage(errorMsg);
       onError(errorMsg);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -318,7 +324,7 @@ export default function PaymentForm({
             onChange={(e) => setPromoCode(e.target.value)}
             className="w-full py-2 px-3 border border-white/60 dark:border-gray-600/60 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200"
             placeholder={t.enterPromoCode}
-            disabled={promoLoading}
+            disabled={promoLoading || !networkInfo.isOnline}
             aria-label="Enter promotional code"
             aria-invalid={promoError ? 'true' : 'false'}
             aria-describedby={promoError ? 'promo-error' : promoApplied ? 'promo-success' : undefined}
@@ -356,11 +362,11 @@ export default function PaymentForm({
         <Button
           variant='start'
           type="submit"
-          disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
+          disabled={isLoading || !stripe || !elements || isApplyingPromo || !networkInfo.isOnline}
           className={`${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
           aria-label={isLoading ? 'Processing payment' : 'Pay now and complete order'}
           aria-busy={isLoading}
-          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
+          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || !networkInfo.isOnline}
         >
           {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
         </Button>
@@ -371,11 +377,11 @@ export default function PaymentForm({
         <Button
           variant='start'
           type="submit"
-          disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
+          disabled={isLoading || !stripe || !elements || isApplyingPromo || !networkInfo.isOnline}
           className={`w-full ${isLoading || !stripe || !elements || isApplyingPromo ? 'cursor-not-allowed opacity-70' : ''}`}
           aria-label={isLoading ? 'Processing payment' : 'Pay now and complete order'}
           aria-busy={isLoading}
-          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || (typeof navigator !== 'undefined' && !navigator.onLine)}
+          aria-disabled={isLoading || !stripe || !elements || isApplyingPromo || !networkInfo.isOnline}
         >
           {isLoading ? t.processing : isApplyingPromo ? t.applyingDiscount : t.payNow}
         </Button>

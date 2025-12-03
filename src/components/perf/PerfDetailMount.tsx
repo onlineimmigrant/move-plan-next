@@ -11,10 +11,8 @@ export default function PerfDetailMount() {
         const delta = (now - clickTime).toFixed(0);
         performance.mark('PerfProdDetail-mounted');
         performance.measure('PerfProdDetail-navigation', 'PerfProdDetail-click', 'PerfProdDetail-mounted');
-        // eslint-disable-next-line no-console
         console.log(`[PerfProdDetail] mounted after ${delta}ms (click->mount)`);
       } else {
-        // eslint-disable-next-line no-console
         console.log('[PerfProdDetail] no click mark found');
       }
     } catch {}

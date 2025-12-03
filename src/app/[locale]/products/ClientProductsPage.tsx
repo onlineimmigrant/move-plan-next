@@ -228,7 +228,6 @@ const ClientProductsPage = memo(function ClientProductsPage({
         const clickTime = clickEntries[clickEntries.length - 1].startTime;
         const now = performance.now();
         const delta = (now - clickTime).toFixed(0);
-        // eslint-disable-next-line no-console
         console.log(`[Perf] Products page mounted ~${delta}ms after hero CTA click`);
         performance.mark('products-page-mounted');
         performance.measure('hero-cta-to-products-mounted', 'hero-cta-click', 'products-page-mounted');
@@ -357,7 +356,6 @@ const ClientProductsPage = memo(function ClientProductsPage({
                         try {
                           performance.mark('PerfProdDetail-click');
                           const ts = performance.now().toFixed(0);
-                          // eslint-disable-next-line no-console
                           console.log(`[PerfProdDetail] click at ${ts}ms product ${product.id}`);
                         } catch {}
                       }}

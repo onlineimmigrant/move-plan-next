@@ -1,60 +1,58 @@
-/**
- * Retry utility with exponential backoff
- * Handles transient network failures gracefully
- */
+// Generic retry utilities with exponential backoff
+// Focused, minimal implementation for fetch + arbitrary async functions.
 
-interface RetryOptions {
-  maxRetries?: number;
-  initialDelay?: number;
-  maxDelay?: number;
-  backoffFactor?: number;
-  shouldRetry?: (error: any) => boolean;
+export interface RetryOptions {
+  retries?: number;            // total attempts (default 3)
+  baseDelayMs?: number;        // initial delay (default 300ms)
+  maxDelayMs?: number;         // cap delay (default 4000ms)
+  jitter?: boolean;            // add random jitter (default true)
+  abortSignal?: AbortSignal;   // optional abort
+  onAttempt?: (attempt: number, error: unknown) => void; // hook
+  shouldRetry?: (error: unknown) => boolean;             // custom predicate
 }
 
-const defaultOptions: Required<RetryOptions> = {
-  maxRetries: 3,
-  initialDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
-  shouldRetry: (error: any) => {
-    // Retry on network errors or 5xx server errors
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      return true; // Network error
-    }
-    if (error.status >= 500 && error.status < 600) {
-      return true; // Server error
-    }
-    return false;
-  },
-};
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
-  const opts = { ...defaultOptions, ...options };
-  let lastError: any;
+export async function retry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
+  const {
+    retries = 3,
+    baseDelayMs = 300,
+    maxDelayMs = 4000,
+    jitter = true,
+    abortSignal,
+    onAttempt,
+    shouldRetry = () => true,
+  } = opts;
 
-  for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
+  let attempt = 0;
+  let lastError: unknown;
+  while (attempt < retries) {
+    if (abortSignal?.aborted) {
+      throw lastError || new Error('Aborted');
+    }
     try {
       return await fn();
-    } catch (error) {
-      lastError = error;
-
-      if (attempt === opts.maxRetries || !opts.shouldRetry(error)) {
-        throw error;
-      }
-
-      const delay = Math.min(
-        opts.initialDelay * Math.pow(opts.backoffFactor, attempt),
-        opts.maxDelay
-      );
-
-      console.warn(`Retry attempt ${attempt + 1}/${opts.maxRetries} after ${delay}ms`, error);
-      
-      await new Promise((resolve) => setTimeout(resolve, delay));
+    } catch (err) {
+      lastError = err;
+      if (onAttempt) onAttempt(attempt, err);
+      const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+      if (offline || attempt === retries - 1 || !shouldRetry(err)) break;
+      const delay = Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs) * (jitter ? (0.75 + Math.random() * 0.5) : 1);
+      await sleep(delay);
+      attempt++;
     }
   }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
 
-  throw lastError;
+// Convenience wrapper for fetch with JSON response
+export async function fetchWithRetry<T = any>(input: RequestInfo | URL, init?: RequestInit, opts?: RetryOptions): Promise<T> {
+  return retry(async () => {
+    const res = await fetch(input, init);
+    const text = await res.text().catch(() => '');
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
+    return (text ? JSON.parse(text) : {}) as T;
+  }, opts);
 }

@@ -534,7 +534,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                     try {
                       performance.mark('PerfBlog-click');
                       const ts = performance.now().toFixed(0);
-                      // eslint-disable-next-line no-console
                       console.log(`[PerfBlog] click at ${ts}ms from hero`);
                     } catch {}
                   }}

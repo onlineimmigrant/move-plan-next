@@ -70,7 +70,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { product_id, price, currency, is_active = true, type = 'one_time', recurring_interval, recurring_interval_count, attrs } = body;
+    const { 
+      product_id, 
+      price, 
+      currency, 
+      is_active = true, 
+      type = 'one_time', 
+      recurring_interval, 
+      commitment_months = 1,
+      annual_size_discount = 0,
+      attrs 
+    } = body;
 
     // Validate required fields
     if (!product_id || price === undefined || !currency) {
@@ -87,16 +97,18 @@ export async function POST(request: Request) {
       if (!recurring_interval || !['day', 'week', 'month', 'year'].includes(recurring_interval)) {
         return NextResponse.json({ error: 'Invalid or missing recurring_interval: must be "day", "week", "month", or "year"' }, { status: 400 });
       }
-      if (recurring_interval_count && (!Number.isInteger(recurring_interval_count) || recurring_interval_count <= 0)) {
-        return NextResponse.json({ error: 'recurring_interval_count must be a positive integer' }, { status: 400 });
-      }
-    } else if (recurring_interval || recurring_interval_count) {
-      return NextResponse.json({ error: 'recurring_interval and recurring_interval_count are not allowed for one_time type' }, { status: 400 });
+    } else if (recurring_interval) {
+      return NextResponse.json({ error: 'recurring_interval is not allowed for one_time type' }, { status: 400 });
     }
 
     // Validate price
     if (!Number.isInteger(price) || price < 0) {
       return NextResponse.json({ error: 'Price must be a non-negative integer' }, { status: 400 });
+    }
+
+    // Validate commitment_months
+    if (!Number.isInteger(commitment_months) || commitment_months <= 0) {
+      return NextResponse.json({ error: 'commitment_months must be a positive integer' }, { status: 400 });
     }
 
     // Fetch the associated product
@@ -120,7 +132,9 @@ export async function POST(request: Request) {
         is_active,
         type,
         recurring_interval: type === 'recurring' ? recurring_interval : null,
-        recurring_interval_count: type === 'recurring' && recurring_interval_count ? recurring_interval_count : null,
+        recurring_interval_count: 1, // Always 1 for proper Stripe billing
+        commitment_months,
+        annual_size_discount,
         attrs,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -132,22 +146,56 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Failed to create pricing plan: ${insertError?.message}` }, { status: 500 });
     }
 
-    // Create the price in Stripe
-    const createParams = {
+    // Create monthly billing price in Stripe
+    const monthlyPriceParams = {
       product: product.stripe_product_id,
       unit_amount: price,
       currency,
       active: is_active,
-      recurring: type === 'recurring' ? { interval: recurring_interval, interval_count: recurring_interval_count || 1 } : undefined,
-      metadata: attrs || undefined,
+      recurring: type === 'recurring' ? { interval: recurring_interval, interval_count: 1 } : undefined,
+      metadata: { 
+        ...attrs, 
+        billing_type: 'monthly',
+        commitment_months: String(commitment_months)
+      },
     };
 
-    const stripePrice = await stripe.prices.create(createParams);
+    const monthlyStripePrice = await stripe.prices.create(monthlyPriceParams);
+    console.log(`Created monthly price: ${monthlyStripePrice.id}`);
 
-    // Update the pricing plan with the stripe_price_id
+    // Create annual prepay price if discount offered and commitment >= 12 months
+    let annualStripePrice = null;
+    if (type === 'recurring' && annual_size_discount > 0 && commitment_months >= 12) {
+      const totalMonthly = price * commitment_months;
+      const annualAmount = Math.round(totalMonthly * (1 - annual_size_discount / 100));
+      
+      const annualPriceParams = {
+        product: product.stripe_product_id,
+        unit_amount: annualAmount,
+        currency,
+        active: is_active,
+        recurring: { interval: 'year' as const, interval_count: 1 },
+        metadata: {
+          ...attrs,
+          billing_type: 'annual_prepay',
+          commitment_months: String(commitment_months),
+          discount_percent: String(annual_size_discount),
+          monthly_equivalent: String(price),
+        },
+      };
+      
+      annualStripePrice = await stripe.prices.create(annualPriceParams);
+      console.log(`Created annual prepay price: ${annualStripePrice.id}`);
+    }
+
+    // Update the pricing plan with stripe price IDs
     const { error: updateError } = await supabase
       .from('pricingplan')
-      .update({ stripe_price_id: stripePrice.id, updated_at: new Date().toISOString() })
+      .update({ 
+        stripe_price_id: monthlyStripePrice.id,
+        stripe_price_id_annual: annualStripePrice?.id || null,
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', pricingPlan.id);
 
     if (updateError) {
@@ -157,10 +205,14 @@ export async function POST(request: Request) {
     // Set default_price if not already set
     const stripeProduct = await stripe.products.retrieve(product.stripe_product_id);
     if (!stripeProduct.default_price) {
-      await stripe.products.update(product.stripe_product_id, { default_price: stripePrice.id });
+      await stripe.products.update(product.stripe_product_id, { default_price: monthlyStripePrice.id });
     }
 
-    return NextResponse.json({ message: `Created pricing plan ${pricingPlan.id} and Stripe price ${stripePrice.id}` });
+    return NextResponse.json({ 
+      message: `Created pricing plan ${pricingPlan.id}`,
+      monthlyPriceId: monthlyStripePrice.id,
+      annualPriceId: annualStripePrice?.id || null,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: `Failed to create pricing plan: ${error.message}` }, { status: 500 });
   }

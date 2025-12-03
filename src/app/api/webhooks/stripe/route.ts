@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { getOrganizationStripeKeys } from '@/lib/getStripeKeys';
 
 // Initialize Supabase client with service role key
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -211,28 +209,110 @@ const getOrCreateUser = async (email: string, name?: string) => {
   }
 };
 
+/**
+ * Extract organization ID from Stripe event data
+ * Tries multiple metadata paths depending on event type
+ */
+function extractOrganizationId(eventData: any): string | null {
+  const obj = eventData?.data?.object;
+  if (!obj) return null;
+
+  // Try direct metadata
+  if (obj.metadata?.organization_id) {
+    return obj.metadata.organization_id;
+  }
+
+  // Try subscription metadata (for subscription events)
+  if (obj.subscription?.metadata?.organization_id) {
+    return obj.subscription.metadata.organization_id;
+  }
+
+  // Try customer metadata (for customer events)
+  if (obj.customer?.metadata?.organization_id) {
+    return obj.customer.metadata.organization_id;
+  }
+
+  // Try invoice's subscription metadata
+  if (obj.subscription && typeof obj.subscription === 'string') {
+    // Subscription ID only, can't extract metadata without fetching
+    return null;
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   try {
     console.log('Received webhook request');
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature')!;
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-    console.log('Webhook Secret:', webhookSecret ? '[REDACTED]' : 'MISSING');
-
-    if (!webhookSecret) {
-      console.error('Missing STRIPE_WEBHOOK_SECRET');
-      return NextResponse.json({ error: 'Missing webhook secret' }, { status: 400 });
+    if (!signature) {
+      console.error('Missing stripe-signature header');
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
+    // Parse event data to extract organization ID (before signature verification)
+    let eventData: any;
+    try {
+      eventData = JSON.parse(rawBody);
+    } catch (err) {
+      console.error('Failed to parse webhook body');
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    // Extract organization ID from metadata
+    const organizationId = extractOrganizationId(eventData);
+    console.log('[Webhook] Extracted organization_id:', organizationId);
+
+    if (!organizationId) {
+      console.error('[Webhook] No organization_id found in event metadata');
+      return NextResponse.json({ 
+        error: 'No organization ID in metadata. Ensure organization_id is set when creating Stripe objects.' 
+      }, { status: 400 });
+    }
+
+    // Fetch organization-specific Stripe keys
+    console.log('[Webhook] Fetching keys for organization:', organizationId);
+    const stripeKeys = await getOrganizationStripeKeys(organizationId);
+    
+    if (!stripeKeys.webhookSecret) {
+      console.error('[Webhook] No webhook secret configured for organization:', organizationId);
+      return NextResponse.json({ 
+        error: 'Webhook secret not configured for this organization' 
+      }, { status: 400 });
+    }
+
+    if (!stripeKeys.secretKey) {
+      console.error('[Webhook] No secret key configured for organization:', organizationId);
+      return NextResponse.json({ 
+        error: 'Stripe secret key not configured for this organization' 
+      }, { status: 400 });
+    }
+
+    // Create organization-specific Stripe instance
+    const stripe = new Stripe(stripeKeys.secretKey, {
+      apiVersion: '2025-08-27.basil',
+    });
+
+    // Verify webhook signature with organization's webhook secret
     let event: Stripe.Event;
     try {
-      console.log('Verifying webhook signature');
-      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-      console.log('Webhook event received:', event.type, 'with ID:', event.id);
+      console.log('[Webhook] Verifying signature for organization:', organizationId);
+      event = stripe.webhooks.constructEvent(rawBody, signature, stripeKeys.webhookSecret);
+      console.log('[Webhook] Signature verified successfully. Event type:', event.type, 'ID:', event.id);
     } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message);
+      console.error('[Webhook] Signature verification failed for organization:', organizationId, 'Error:', err.message);
       return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
+    }
+
+    // Validation: Ensure metadata org matches extracted org (security check)
+    const metadataOrgId = extractOrganizationId({ data: { object: event.data.object } });
+    if (metadataOrgId && metadataOrgId !== organizationId) {
+      console.warn('[Webhook] Organization ID mismatch!', { 
+        extracted: organizationId, 
+        metadata: metadataOrgId 
+      });
     }
 
     // Handle the customer.created event
@@ -322,6 +402,41 @@ export async function POST(request: Request) {
     if (event.type === 'payment_intent.succeeded') {
       console.log('Processing payment_intent.succeeded event:', event.data.object);
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+      // Check if this payment is for a subscription invoice
+      const subscriptionId = paymentIntent.metadata?.subscription_id;
+      const invoiceId = paymentIntent.metadata?.invoice_id;
+
+      if (subscriptionId && invoiceId) {
+        console.log('[Webhook] Payment is for subscription invoice:', invoiceId);
+        try {
+          const invoice = await stripe.invoices.retrieve(invoiceId);
+          
+          // DO NOT finalize draft invoices - this triggers automatic payment if customer has default PM
+          // We can pay draft invoices directly with paid_out_of_band
+          
+          if ((invoice.status === 'open' || invoice.status === 'draft') && paymentIntent.payment_method) {
+            console.log('[Webhook] Settling draft/open invoice with paid_out_of_band (payment already collected)');
+            
+            // Update invoice metadata to track the manual payment
+            await stripe.invoices.update(invoiceId, {
+              metadata: {
+                webhook_payment_intent: paymentIntent.id,
+                webhook_payment_completed: new Date().toISOString(),
+              },
+            });
+            
+            // Use paid_out_of_band to activate subscription without creating duplicate charge
+            // The actual payment was already collected via the manual PaymentIntent
+            await stripe.invoices.pay(invoiceId, { paid_out_of_band: true });
+            console.log('[Webhook] Invoice marked paid (out-of-band) to activate subscription');
+          } else {
+            console.log('[Webhook] Invoice already settled, status:', invoice.status);
+          }
+        } catch (invoiceError: any) {
+          console.error('[Webhook] Failed to settle invoice:', invoiceError.message);
+        }
+      }
 
       const customerId = paymentIntent.customer as string | null;
       if (!customerId) {
@@ -469,6 +584,119 @@ export async function POST(request: Request) {
       }
 
       console.log(`Successfully stored transaction ${paymentIntent.id} in Supabase`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle subscription events
+    if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+      console.log(`Processing ${event.type} event:`, event.data.object);
+      const subscription = event.data.object as Stripe.Subscription;
+
+      const subscriptionData = {
+        stripe_subscription_id: subscription.id,
+        stripe_customer_id: subscription.customer as string,
+        // Customer may be a string ID or a DeletedCustomer; safely access email
+        customer_email: typeof subscription.customer === 'string' ? null : (subscription.customer as any)?.email ?? null,
+        status: subscription.status,
+        current_period_start: (subscription as any)?.current_period_start ? new Date((subscription as any).current_period_start * 1000).toISOString() : null,
+        current_period_end: (subscription as any)?.current_period_end ? new Date((subscription as any).current_period_end * 1000).toISOString() : null,
+        cancel_at_period_end: subscription.cancel_at_period_end,
+        cancelled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log('Upserting subscription into subscriptions:', subscriptionData);
+
+      const { error: upsertError } = await supabase
+        .from('subscriptions')
+        .upsert(subscriptionData, { onConflict: 'stripe_subscription_id' });
+
+      if (upsertError) {
+        console.error(`Failed to upsert subscription ${subscription.id}:`, upsertError);
+        throw new Error(`Failed to upsert subscription: ${upsertError.message}`);
+      }
+
+      console.log(`Successfully upserted subscription ${subscription.id} into subscriptions`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle subscription deletion
+    if (event.type === 'customer.subscription.deleted') {
+      console.log(`Processing customer.subscription.deleted event:`, event.data.object);
+      const subscription = event.data.object as Stripe.Subscription;
+
+      console.log(`Updating subscription ${subscription.id} status to cancelled`);
+
+      const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('stripe_subscription_id', subscription.id);
+
+      if (updateError) {
+        console.error(`Failed to update subscription ${subscription.id}:`, updateError);
+        throw new Error(`Failed to update subscription: ${updateError.message}`);
+      }
+
+      console.log(`Successfully updated subscription ${subscription.id} to cancelled`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle invoice payment succeeded (for subscription renewals)
+    if (event.type === 'invoice.payment_succeeded') {
+      console.log(`Processing invoice.payment_succeeded event:`, event.data.object);
+      const invoice = event.data.object as any;
+
+      // Log payment
+      if ((invoice as any).subscription) {
+        console.log('Recording successful subscription payment:', {
+          invoice_id: invoice.id,
+          subscription_id: (invoice as any).subscription,
+          amount: invoice.amount_paid / 100.0,
+        });
+
+        // Update subscription status if needed
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'active',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('stripe_subscription_id', (invoice as any).subscription);
+
+        if (updateError) {
+          console.error(`Failed to update subscription status:`, updateError);
+        }
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // Handle invoice payment failed (for subscription renewals)
+    if (event.type === 'invoice.payment_failed') {
+      console.log(`Processing invoice.payment_failed event:`, event.data.object);
+      const invoice = event.data.object as any;
+
+      // Update subscription status to past_due
+      if ((invoice as any).subscription) {
+        console.log('Marking subscription as past_due:', (invoice as any).subscription);
+
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'past_due',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('stripe_subscription_id', (invoice as any).subscription);
+
+        if (updateError) {
+          console.error(`Failed to update subscription status:`, updateError);
+        }
+      }
+
       return NextResponse.json({ received: true });
     }
 

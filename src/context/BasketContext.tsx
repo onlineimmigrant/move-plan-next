@@ -19,6 +19,9 @@ export interface PricingPlan {
   product_id?: number;
   product_name?: string;
   links_to_image?: string;
+  type?: 'recurring' | 'one_time' | string;
+  stripe_price_id?: string;
+  stripe_price_id_annual?: string;
   [key: string]: any;
 }
 
@@ -26,6 +29,7 @@ export interface BasketItem {
   plan: PricingPlan;
   quantity: number;
   billingCycle?: 'monthly' | 'annual';
+  stripePriceId?: string;
 }
 
 interface BasketContextType {
@@ -69,13 +73,14 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
       const p: any = bi.plan || {};
       const baseMonthly = typeof p.computed_price === 'number' ? p.computed_price : ((p.price ?? 0) / 100);
       const type = p.type || p.recurring_interval ? 'recurring' : 'one_time';
-      if (bi.billingCycle === 'annual' && type === 'recurring' && typeof p.recurring_interval_count === 'number' && p.recurring_interval_count > 0) {
+      if (bi.billingCycle === 'annual' && type === 'recurring') {
+        const commitmentMonths = p.commitment_months || 12;
         const discountRaw = p.annual_size_discount;
         let multiplier = 1;
         if (typeof discountRaw === 'number') {
           if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
         }
-        return baseMonthly * p.recurring_interval_count * multiplier;
+        return baseMonthly * commitmentMonths * multiplier;
       }
       // Monthly/one-time: prefer computed price; fallback to cents
       if (typeof p.computed_price === 'number') return p.computed_price;
@@ -111,16 +116,26 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
       currency_symbol: plan.currency_symbol || '$',
     };
     
+    // Determine the correct Stripe Price ID
+    const isRecurring = plan.type === 'recurring';
+    let stripePriceId: string | undefined;
+    
+    if (isRecurring && billingCycle === 'annual' && plan.stripe_price_id_annual) {
+      stripePriceId = plan.stripe_price_id_annual;
+    } else if (plan.stripe_price_id) {
+      stripePriceId = plan.stripe_price_id;
+    }
+    
     setBasket((prev) => {
-      const existingItem = prev.find((item) => item.plan.id === plan.id);
+      const existingItem = prev.find((item) => item.plan.id === plan.id && item.billingCycle === billingCycle);
       if (existingItem) {
         return prev.map((item) =>
-          item.plan.id === plan.id
-            ? { ...item, quantity: item.quantity + 1, billingCycle }
+          item.plan.id === plan.id && item.billingCycle === billingCycle
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, { plan: planWithFallback, quantity: 1, billingCycle }];
+      return [...prev, { plan: planWithFallback, quantity: 1, billingCycle, stripePriceId }];
     });
   }, []);
 

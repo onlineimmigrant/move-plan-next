@@ -63,23 +63,13 @@ export default function BasketPage() {
       const baseUnit = typeof p.computed_price === 'number' ? p.computed_price : ((p.price ?? 0) / 100);
       const isRecurring = (p.type || p.recurring_interval) ? true : false;
       if (bi.billingCycle === 'annual' && isRecurring) {
-        let count = (typeof p.recurring_interval_count === 'number' && p.recurring_interval_count > 0)
-          ? p.recurring_interval_count
-          : (() => {
-              const v = String(p.recurring_interval || '').toLowerCase();
-              if (v === 'month' || v === 'monthly') return 12;
-              if (v === 'week' || v === 'weekly') return 52;
-              if (v === 'day' || v === 'daily') return 365;
-              if (v === 'quarter' || v === 'quarterly') return 4;
-              if (v === 'year' || v === 'annually' || v === 'annual') return 1;
-              return 1;
-            })();
+        const commitmentMonths = p.commitment_months || 12;
         const discountRaw = p.annual_size_discount;
         let multiplier = 1;
         if (typeof discountRaw === 'number') {
           if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
         }
-        return baseUnit * count * multiplier;
+        return baseUnit * commitmentMonths * multiplier;
       }
       if (typeof p.computed_price === 'number') return p.computed_price;
       const cents = (p.is_promotion && typeof p.promotion_price === 'number') ? p.promotion_price : p.price;

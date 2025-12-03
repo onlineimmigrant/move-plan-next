@@ -53,7 +53,8 @@ export function transformPricingPlans(
       // Direct annual plan exists - use currency-aware pricing
       annualPrice = annualPriceResult?.price ?? (annual?.price || monthlyPrice);
       annualPriceSymbol = annualPriceResult?.symbol || currencySymbol;
-      actualAnnualPrice = annualPrice ? parseFloat((annualPrice * (annual.recurring_interval_count || 12)).toFixed(2)) : undefined;
+      const commitmentMonths = annual.commitment_months || 12;
+      actualAnnualPrice = annualPrice ? parseFloat((annualPrice * commitmentMonths).toFixed(2)) : undefined;
     } else if (monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
       // Calculate annual price from monthly using discount
       const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
@@ -110,7 +111,7 @@ export function transformPricingPlans(
       annualCurrencySymbol: annualPriceSymbol,
       // Add recurring interval data for total calculation
       monthlyRecurringCount: monthly?.recurring_interval_count || 1,
-      annualRecurringCount: annual?.recurring_interval_count || 1,
+      annualRecurringCount: annual?.commitment_months || monthly?.commitment_months || 12,
       // Add the actual annual plan price for correct total calculation (already converted from cents)
       actualAnnualPrice,
       // Add discount information for display

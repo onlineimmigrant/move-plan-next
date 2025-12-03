@@ -80,23 +80,13 @@ const BasketItem = memo(function BasketItem({
     const baseUnit = typeof plan.computed_price === 'number' ? plan.computed_price : ((price ?? 0) / 100);
     const isRecurring = (plan.type || recurring_interval) ? true : false;
     if (billingCycle === 'annual' && isRecurring) {
-      let count = (typeof plan.recurring_interval_count === 'number' && plan.recurring_interval_count > 0)
-        ? plan.recurring_interval_count
-        : (() => {
-            const v = String(recurring_interval || '').toLowerCase();
-            if (v === 'month' || v === 'monthly') return 12;
-            if (v === 'week' || v === 'weekly') return 52;
-            if (v === 'day' || v === 'daily') return 365;
-            if (v === 'quarter' || v === 'quarterly') return 4;
-            if (v === 'year' || v === 'annually' || v === 'annual') return 1;
-            return 1;
-          })();
+      const commitmentMonths = (plan as any).commitment_months || 12;
       const discountRaw = plan.annual_size_discount;
       let multiplier = 1;
       if (typeof discountRaw === 'number') {
         if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
       }
-      return baseUnit * count * multiplier;
+      return baseUnit * commitmentMonths * multiplier;
     }
     // Monthly/recurring or one-time: prefer computed_price; else cents with promo
     if (typeof plan.computed_price === 'number') return plan.computed_price;

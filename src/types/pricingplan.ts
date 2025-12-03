@@ -11,6 +11,7 @@ export interface PricingPlan {
   currency_symbol?: string;
   recurring_interval?: 'month' | 'year' | 'week' | 'day' | 'one_time';
   recurring_interval_count?: number;
+  commitment_months?: number;
   
   // Calculated prices
   monthly_price_calculated?: number;
@@ -25,6 +26,7 @@ export interface PricingPlan {
   
   // Integration fields
   stripe_price_id?: string;
+  stripe_price_id_annual?: string;
   
   // Multi-currency support
   stripe_price_ids?: { [currency: string]: string };

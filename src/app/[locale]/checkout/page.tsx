@@ -17,6 +17,8 @@ import { useConfetti } from '@/hooks/useConfetti';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { useKeyboardShortcuts, SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import { useRouter } from 'next/navigation';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { fetchWithRetry } from '@/lib/retry';
 import { getCurrencySymbol } from '@/utils/pricingUtils';
 
 // Lazy load PaymentForm for code splitting
@@ -162,7 +164,7 @@ export default function CheckoutPage() {
   const [finalCurrency, setFinalCurrency] = useState<string>('GBP');
   const [isMounted, setIsMounted] = useState(false);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
-  const [isOffline, setIsOffline] = useState(false);
+  const networkInfo = useNetworkStatus();
   const hasFetchedIntentRef = useRef(false);
   const isProcessingRef = useRef(false);
   const initialClientSecretRef = useRef<string | null>(null);
@@ -184,17 +186,7 @@ export default function CheckoutPage() {
     setIsMounted(true);
   }, []);
 
-  // Offline detection
-  useEffect(() => {
-    const updateOnlineStatus = () => setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false);
-    updateOnlineStatus();
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
-    };
-  }, []);
+  // Using useNetworkStatus hook; no manual listeners needed here.
 
   // Log clientSecret changes
   useEffect(() => {
@@ -248,23 +240,13 @@ export default function CheckoutPage() {
         const isRecurring = (p.type || p.recurring_interval) ? true : false;
         let unit = baseUnit;
         if (item.billingCycle === 'annual' && isRecurring) {
-          let count = (typeof p.recurring_interval_count === 'number' && p.recurring_interval_count > 0)
-            ? p.recurring_interval_count
-            : (() => {
-                const v = String(p.recurring_interval || '').toLowerCase();
-                if (v === 'month' || v === 'monthly') return 12;
-                if (v === 'week' || v === 'weekly') return 52;
-                if (v === 'day' || v === 'daily') return 365;
-                if (v === 'quarter' || v === 'quarterly') return 4;
-                if (v === 'year' || v === 'annually' || v === 'annual') return 1;
-                return 1;
-              })();
+          const commitmentMonths = p.commitment_months || 12;
           const discountRaw = p.annual_size_discount;
           let multiplier = 1;
           if (typeof discountRaw === 'number') {
             if (discountRaw > 1) multiplier = (100 - discountRaw) / 100; else if (discountRaw > 0 && discountRaw <= 1) multiplier = discountRaw;
           }
-          unit = baseUnit * count * multiplier;
+          unit = baseUnit * commitmentMonths * multiplier;
         } else if (typeof p.computed_price !== 'number') {
           const cents = (p.is_promotion && typeof p.promotion_price === 'number') ? p.promotion_price : p.price;
           unit = (cents || 0) / 100;
@@ -281,35 +263,75 @@ export default function CheckoutPage() {
 
   const currency = isMounted && basket.length > 0 ? basket[0].plan.currency || 'GBP' : 'GBP';
 
-  // Helper to fetch JSON with retry and backoff
-  const fetchJsonWithRetry = useCallback(
-    async (url: string, options: RequestInit, retries = 3, backoffMs = 500): Promise<any> => {
-      let lastError: any;
-      for (let attempt = 0; attempt < retries; attempt++) {
-        try {
-          const res = await fetch(url, options);
-          const rawText = await res.text().catch(() => '');
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${rawText}`);
-          }
-          return rawText ? JSON.parse(rawText) : {};
-        } catch (err) {
-          lastError = err;
-          // Abort retries if offline
-          const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-          if (offline) break;
-          // Exponential backoff
-          await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, attempt)));
-        }
-      }
-      throw lastError || new Error('Request failed');
-    },
-    []
-  );
+  // Check if basket has recurring items
+  const hasRecurringItems = isMounted && basket.some(item => {
+    const plan: any = item.plan || {};
+    return plan.type === 'recurring';
+  });
+
+  // Use centralized fetchWithRetry
 
   const managePaymentIntent = useCallback(
     async (email?: string, isCustomerUpdateOnly: boolean = false) => {
       if (!isMounted || basket.length === 0 || isProcessingRef.current) return;
+
+      // Check if basket contains subscription/recurring items
+      const hasRecurringItems = basket.some(item => {
+        const plan: any = item.plan || {};
+        return plan.type === 'recurring';
+      });
+
+      // For subscription items, create subscription instead of payment intent
+      if (hasRecurringItems) {
+        const effectiveEmail = email || customerEmail;
+        
+        // Email is required for subscriptions
+        if (!effectiveEmail) {
+          console.log('Waiting for customer email before creating subscription');
+          setError('Please wait while we load your account details...');
+          isProcessingRef.current = false;
+          return;
+        }
+        
+        // Prevent duplicate subscription creation
+        if (clientSecret || paymentIntentId) {
+          console.log('Subscription already created, skipping');
+          isProcessingRef.current = false;
+          return;
+        }
+        
+        console.log('Basket contains recurring items, creating subscription with email:', effectiveEmail);
+        isProcessingRef.current = true;
+        setPaymentIntentLoading(true);
+        setError(null);
+        
+        try {
+          const response = await fetchWithRetry('/api/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              basketItems: basket,
+              customerEmail: effectiveEmail,
+            }),
+          });
+
+          if (!response.clientSecret) {
+            throw new Error('No client secret returned from subscription creation');
+          }
+
+          console.log('Subscription created, client secret obtained');
+          setClientSecret(response.clientSecret);
+          // Store the payment intent ID (not subscription ID) for verification
+          setPaymentIntentId(response.paymentIntentId || response.subscriptionId);
+        } catch (err: any) {
+          console.error('Failed to create subscription:', err);
+          setError(err.message || 'Failed to create subscription');
+        } finally {
+          setPaymentIntentLoading(false);
+          isProcessingRef.current = false;
+        }
+        return;
+      }
 
       isProcessingRef.current = true;
       if (!isCustomerUpdateOnly) {
@@ -327,7 +349,7 @@ export default function CheckoutPage() {
           isCustomerUpdateOnly,
         });
 
-        const data = await fetchJsonWithRetry(
+        const data = await fetchWithRetry(
           '/api/create-payment-intent',
           {
             method: 'POST',
@@ -359,8 +381,7 @@ export default function CheckoutPage() {
               isCustomerUpdateOnly,
             }),
           },
-          3,
-          600
+          { retries: 3, baseDelayMs: 600 }
         );
         console.log('Payment Intent response:', data);
 
@@ -390,38 +411,58 @@ export default function CheckoutPage() {
         isProcessingRef.current = false;
       }
     },
-    [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId, fetchJsonWithRetry]
+    [isMounted, basket, totalItems, totalPrice, currency, promoCodeId, paymentIntentId]
   );
 
-  // Initial payment intent creation (remove session.user.id dependency)
+  // Initial payment intent creation
   useEffect(() => {
-    if (!isMounted || basket.length === 0 || hasFetchedIntentRef.current) {
-      console.log('Skipping initial payment intent creation due to conditions:', {
-        isMounted,
-        basketLength: basket.length,
-        hasFetchedIntent: hasFetchedIntentRef.current,
-      });
+    console.log('[Effect] Initial payment intent check:', {
+      isMounted,
+      basketLength: basket.length,
+      hasFetchedIntent: hasFetchedIntentRef.current,
+      isProcessing: isProcessingRef.current,
+      hasRecurringItems,
+      customerEmail: !!customerEmail,
+      clientSecret: !!clientSecret,
+      paymentIntentId,
+    });
+    
+    if (!isMounted || basket.length === 0 || hasFetchedIntentRef.current || isProcessingRef.current) {
+      return;
+    }
+    
+    // Skip if we already have a client secret or payment intent
+    if (clientSecret || paymentIntentId) {
+      console.log('[Effect] Already have payment details, skipping');
+      hasFetchedIntentRef.current = true;
       return;
     }
 
+    // For recurring items, wait for email before creating subscription
+    if (hasRecurringItems && !customerEmail) {
+      console.log('[Effect] Waiting for customer email before creating subscription');
+      return;
+    }
+
+    console.log('[Effect] Creating payment intent/subscription');
     hasFetchedIntentRef.current = true;
-    managePaymentIntent(); // Create payment intent without customerEmail initially
-  }, [isMounted, basket, managePaymentIntent]);
+    managePaymentIntent(customerEmail || undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, basket.length, hasRecurringItems, customerEmail, clientSecret, paymentIntentId]);
 
-  // Update payment intent when promoCodeId or customerEmail changes
+  // Update payment intent when promoCodeId changes (for regular payments only)
   useEffect(() => {
-    if (!isMounted || basket.length === 0 || !paymentIntentId || !customerEmail) {
-      console.log('Skipping payment intent update due to conditions:', {
-        isMounted,
-        basketLength: basket.length,
-        paymentIntentId,
-        customerEmail,
-      });
+    if (!isMounted || basket.length === 0 || hasRecurringItems || isProcessingRef.current) {
       return;
     }
 
-    managePaymentIntent(customerEmail, true);
-  }, [promoCodeId, paymentIntentId, customerEmail, managePaymentIntent, isMounted, basket]);
+    // Only update if we already have a payment intent and customer email
+    if (paymentIntentId && customerEmail && hasFetchedIntentRef.current) {
+      console.log('Updating payment intent with promo code');
+      managePaymentIntent(customerEmail, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promoCodeId]);
 
   useEffect(() => {
     console.log('PromoCodeId state changed:', promoCodeId);
@@ -445,8 +486,25 @@ export default function CheckoutPage() {
 
   const handleSuccess = useCallback(async () => {
     console.log('Payment succeeded, clearing basket and payment data');
-    if (paymentIntentId) {
-      try {
+    try {
+      if (paymentIntentId) {
+        // First, finalize subscription if this is a subscription payment
+        console.log('Finalizing subscription payment...');
+        const finalizeResponse = await fetch('/api/finalize-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId }),
+        });
+        
+        if (finalizeResponse.ok) {
+          const finalizeResult = await finalizeResponse.json();
+          console.log('Subscription finalized:', finalizeResult);
+        } else {
+          const finalizeError = await finalizeResponse.json().catch(() => ({}));
+          console.warn('Subscription finalization failed (may not be a subscription):', finalizeError);
+        }
+        
+        // Then verify payment intent for amount details
         const response = await fetch(`/api/verify-payment-intent?session_id=${paymentIntentId}`, {
           method: 'POST',
         });
@@ -467,24 +525,23 @@ export default function CheckoutPage() {
           setFinalAmount(discountedAmount);
           setFinalCurrency((currency || '').toUpperCase());
         }
-      } catch (err) {
-        console.error('Error fetching payment intent:', err);
+      } else {
         setFinalAmount(discountedAmount);
         setFinalCurrency((currency || '').toUpperCase());
       }
-    } else {
-      setFinalAmount(discountedAmount);
-      setFinalCurrency((currency || '').toUpperCase());
-    }
-    setPaymentSucceeded(true);
-    clearBasket();
-    resetPaymentIntent();
-    if (typeof window !== 'undefined') {
-      console.log('localStorage after clearing:', {
-        basket: localStorage.getItem('basket'),
-        clientSecret: localStorage.getItem('clientSecret'),
-        paymentIntentId: localStorage.getItem('paymentIntentId'),
-      });
+      setPaymentSucceeded(true);
+      clearBasket();
+      resetPaymentIntent();
+      if (typeof window !== 'undefined') {
+        console.log('localStorage after clearing:', {
+          basket: localStorage.getItem('basket'),
+          clientSecret: localStorage.getItem('clientSecret'),
+          paymentIntentId: localStorage.getItem('paymentIntentId'),
+        });
+      }
+    } finally {
+      // Only now turn off loading state after everything completes
+      setIsLoading(false);
     }
   }, [paymentIntentId, discountedAmount, currency, clearBasket, resetPaymentIntent]);
 
@@ -762,9 +819,9 @@ export default function CheckoutPage() {
                   </div>
                 )}
               </div>
-              {isOffline && (
+              {!networkInfo.isOnline && (
                 <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-xl text-center">
-                  <p className="text-yellow-700 text-sm font-medium">You are offline. Some actions are disabled until you reconnect.</p>
+                  <p className="text-yellow-700 text-sm font-medium" role="status" aria-live="polite">You are offline. Some actions are disabled until you reconnect.</p>
                 </div>
               )}
               <div className="mt-3 text-center">
