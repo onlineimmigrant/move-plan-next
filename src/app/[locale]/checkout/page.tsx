@@ -601,7 +601,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <div className="rounded-3xl shadow-lg border border-gray-200 mb-8 backdrop-blur-sm bg-white/95">
+          <div className="rounded-3xl shadow-lg border border-gray-200/30 mb-8 backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             {/* Header Content */}
             <div className="p-6">
             <div className="flex items-center justify-center">
@@ -617,7 +617,7 @@ export default function CheckoutPage() {
             </div>
             </div>
           </div>
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-8 mt-8">
+        <div className="backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/30 p-8 mt-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
           <div className={`p-6 bg-gradient-to-br from-emerald-100 to-${primary.bgLighter} rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner`}>
             <span className="text-4xl">🎉</span>
           </div>
@@ -646,7 +646,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="rounded-3xl shadow-lg border border-gray-200 mb-8 backdrop-blur-sm bg-white/95">
+          <div className="rounded-3xl shadow-lg border border-gray-200/30 mb-8 backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             {/* Header Content */}
             <div className="p-6">
             <div className="flex items-center justify-between">
@@ -670,7 +670,7 @@ export default function CheckoutPage() {
             </div>
             </div>
           </div>
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-6 mt-6 max-w-2xl mx-auto">
+          <div className="backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/30 p-6 mt-6 max-w-2xl mx-auto" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             <div className="flex justify-between items-center mb-0">
               <h2 className="text-sm font-semibold text-gray-900">{t.loadingEllipsis}</h2>
             </div>
@@ -683,8 +683,8 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 pt-20">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 mb-6 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+        <div className="rounded-2xl shadow-md border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
           {/* Header Content */}
           <div className="p-3 sm:p-5">

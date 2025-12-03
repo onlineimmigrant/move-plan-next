@@ -173,45 +173,42 @@ const BasketItem = memo(function BasketItem({
   }, [plan.id, optimisticQuantity, product_name, planPackage, removeFromBasket, updateQuantity, toast]);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-lg bg-gradient-to-r from-white/60 to-white/40 dark:from-gray-800/60 dark:to-gray-700/40 rounded-xl hover:from-white/80 hover:to-white/60 dark:hover:from-gray-800/80 dark:hover:to-gray-700/60 transition-all duration-300 border border-white/60 dark:border-gray-700/60 hover:border-white/80 dark:hover:border-gray-600/80 shadow-sm hover:shadow-md relative overflow-hidden group">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <div className="relative z-10 md:contents flex flex-col space-y-2 sm:space-y-0 w-full">
+    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-sm rounded-xl hover:shadow-md transition-all duration-300 border border-gray-200/40 hover:border-gray-300/60 shadow-sm relative overflow-hidden group" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
       {/* Enhanced Product Image */}
-      <div className="flex-shrink-0 w-full sm:w-auto flex justify-center sm:block md:col-span-2">
+      <div className="relative z-10 flex-shrink-0 w-full sm:w-auto flex justify-center sm:block md:col-span-2">
         {links_to_image ? (
-          <div className="relative w-20 h-20 sm:w-16 sm:h-16 bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
+          <div className="relative w-28 h-28 sm:w-24 sm:h-24 bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
             <Image
               src={links_to_image}
               alt={product_name || 'Product'}
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 96px, 80px"
+              sizes="(max-width: 640px) 112px, 96px"
               placeholder="blur"
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
             />
           </div>
         ) : (
-          <div className="w-20 h-20 sm:w-16 sm:h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
+          <div className="w-28 h-28 sm:w-24 sm:h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
             <span className="text-gray-500 text-xs text-center font-medium">{t.noImage}</span>
           </div>
         )}
       </div>
 
       {/* Item Details */}
-      <div className="flex-1 min-w-0 w-full md:col-span-6 md:border-l md:border-white/40 dark:md:border-gray-700/40 md:pl-4 group-hover:md:border-white/70 dark:group-hover:md:border-gray-600/70 transition-colors">
+      <div className="relative z-10 flex-1 min-w-0 w-full md:col-span-6 md:border-l md:border-white/40 dark:md:border-gray-700/40 md:pl-4 group-hover:md:border-white/70 dark:group-hover:md:border-gray-600/70 transition-colors">
         <div className="mb-2 text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-gray-900 truncate">
               {product_name || t.product}
             </h3>
             {planPackage && (
-              <p className={`text-sm text-${primary.text} font-medium`}>{planPackage}</p>
+              <p className={`text-sm text-${primary.text} font-medium truncate`}>{planPackage}</p>
             )}
             {measure && (
               <p className="text-xs text-gray-500 mt-1">{measure}</p>
-            )}
-            {recurring_interval && (
-              <p className="text-xs text-gray-500 mt-1">{getSafeTranslation('billed', 'Billed')} {intervalLabel || String(recurring_interval)}</p>
             )}
           </div>
           <div className="flex items-center space-x-2 justify-center sm:justify-end">
@@ -223,21 +220,94 @@ const BasketItem = memo(function BasketItem({
           </div>
         </div>
 
-        {/* Enhanced Quantity Controls */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-1.5 sm:space-y-0 sm:space-x-2 mb-3">
-          <span className="text-sm text-gray-600 font-medium">{t.quantity}:</span>
-          <div className="flex items-center space-x-0 bg-white rounded-lg border border-gray-200" role="group" aria-label={t.quantity}>
+        {/* Mobile: Two-column layout for quantity and price */}
+        <div className="md:hidden grid grid-cols-2 gap-3 mt-3 mb-16">
+          {/* Left column: Quantity controls and Associated Features */}
+          <div className="space-y-3">
+            <div className="flex flex-col items-start space-y-1">
+              <span className="text-xs text-gray-600 font-medium">{t.quantity}:</span>
+              <div className="flex items-center space-x-0 bg-white rounded-md border border-gray-200 w-full" role="group" aria-label={t.quantity}>
+                <button
+                  onClick={handleDecrement}
+                  className="p-1.5 hover:bg-gray-50 transition-colors duration-200 rounded-l-md border-r border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400 flex-1"
+                  aria-label={`${t.decreaseQuantity} for ${product_name}`}
+                  disabled={optimisticQuantity <= 1}
+                  tabIndex={0}
+                >
+                  <HiMinus className="w-3.5 h-3.5 text-gray-600 mx-auto" />
+                </button>
+                <span 
+                  className="px-1.5 py-1.5 text-xs font-bold text-gray-900 text-center bg-gray-50 flex-1"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {optimisticQuantity}
+                </span>
+                <button
+                  onClick={handleIncrement}
+                  className="p-1.5 hover:bg-gray-50 transition-colors duration-200 rounded-r-md border-l border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400 flex-1"
+                  aria-label={`${t.increaseQuantity} for ${product_name}`}
+                  tabIndex={0}
+                >
+                  <HiPlus className="w-3.5 h-3.5 text-gray-600 mx-auto" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Associated Features - Mobile */}
+            {associatedFeatures.length > 0 && (
+              <div className="w-full">
+                <AssociatedFeaturesDisclosure associatedFeatures={associatedFeatures} />
+              </div>
+            )}
+          </div>
+
+          {/* Right column: Price */}
+          <div className="text-right flex flex-col justify-start" aria-live="polite" aria-atomic="true">
+            {is_promotion && promotion_price ? (
+              <div>
+                <p className="text-base font-bold text-gray-900">
+                  {formattedFinal}
+                </p>
+                <p className="text-xs text-gray-500 line-through">
+                  {formatter.format(price * quantity / 100)}
+                </p>
+                {intervalLabel && (
+                  <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-base font-bold text-gray-900">
+                {formattedFinal}
+              </p>
+            )}
+            {quantity > 1 && (
+              <p className="text-[10px] text-gray-500 mt-1">
+                {formattedUnit} {t.each}
+              </p>
+            )}
+            {!is_promotion && intervalLabel && (
+              <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop: Quantity Controls */}
+        <div className="hidden md:flex flex-col sm:flex-row items-center sm:items-start space-y-1 sm:space-y-0 sm:space-x-2 mb-3">
+          <span className="text-xs text-gray-600 font-medium">{t.quantity}:</span>
+          <div className="flex items-center space-x-0 bg-white rounded-md border border-gray-200" role="group" aria-label={t.quantity}>
             <button
               onClick={handleDecrement}
-              className="p-2 hover:bg-gray-50 transition-colors duration-200 rounded-l-lg border-r border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
+              className="p-1.5 hover:bg-gray-50 transition-colors duration-200 rounded-l-md border-r border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
               aria-label={`${t.decreaseQuantity} for ${product_name}`}
               disabled={optimisticQuantity <= 1}
               tabIndex={0}
             >
-              <HiMinus className="w-4 h-4 text-gray-600" />
+              <HiMinus className="w-3.5 h-3.5 text-gray-600" />
             </button>
             <span 
-              className="px-3 py-2 text-sm font-bold text-gray-900 min-w-[2.5rem] text-center bg-gray-50"
+              className="px-2.5 py-1.5 text-xs font-bold text-gray-900 min-w-[2rem] text-center bg-gray-50"
               role="status"
               aria-live="polite"
               aria-atomic="true"
@@ -246,25 +316,18 @@ const BasketItem = memo(function BasketItem({
             </span>
             <button
               onClick={handleIncrement}
-              className="p-2 hover:bg-gray-50 transition-colors duration-200 rounded-r-lg border-l border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
+              className="p-1.5 hover:bg-gray-50 transition-colors duration-200 rounded-r-md border-l border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400"
               aria-label={`${t.increaseQuantity} for ${product_name}`}
               tabIndex={0}
             >
-              <HiPlus className="w-4 h-4 text-gray-600" />
+              <HiPlus className="w-3.5 h-3.5 text-gray-600" />
             </button>
           </div>
         </div>
-
-        {/* Associated Features */}
-        {associatedFeatures.length > 0 && (
-          <div className="mt-3">
-            <AssociatedFeaturesDisclosure associatedFeatures={associatedFeatures} />
-          </div>
-        )}
       </div>
 
-      {/* Price (hidden on mobile, shown on md+) */}
-      <div className="hidden md:flex text-right flex-shrink-0 md:col-span-4 flex-col items-end justify-between md:border-l md:border-white/40 dark:md:border-gray-700/40 md:pl-4 group-hover:md:border-white/70 dark:group-hover:md:border-gray-600/70 transition-colors">
+      {/* Price (Desktop only) */}
+      <div className="relative z-10 hidden md:flex text-right flex-shrink-0 md:col-span-4 flex-col items-end justify-between md:border-l md:border-white/40 dark:md:border-gray-700/40 md:pl-4 group-hover:md:border-white/70 dark:group-hover:md:border-gray-600/70 transition-colors">
         <div className="mb-3">
           {is_promotion && promotion_price ? (
             <div>
@@ -293,44 +356,22 @@ const BasketItem = memo(function BasketItem({
           )}
         </div>
         
-      </div>
-      </div>
-      {/* Mobile price bottom-right */}
-      <div className="md:hidden absolute right-3 bottom-3 text-right" aria-live="polite" aria-atomic="true">
-        {is_promotion && promotion_price ? (
-          <div>
-            <p className="text-base font-bold text-gray-900">
-              {formattedFinal}
-            </p>
-            <p className="text-xs text-gray-500 line-through">
-              {formatter.format(price * quantity / 100)}
-            </p>
-            {intervalLabel && (
-              <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
-            )}
+        {/* Associated Features - Desktop only */}
+        {associatedFeatures.length > 0 && (
+          <div className="mt-3">
+            <AssociatedFeaturesDisclosure associatedFeatures={associatedFeatures} />
           </div>
-        ) : (
-          <p className="text-base font-bold text-gray-900">
-            {formattedFinal}
-          </p>
-        )}
-        {quantity > 1 && (
-          <p className="text-[10px] text-gray-500">
-            {formattedUnit} {t.each}
-          </p>
-        )}
-        {!is_promotion && intervalLabel && (
-          <p className="text-[11px] text-gray-600 mt-0.5">{intervalLabel}</p>
         )}
       </div>
-      {/* Icon-only remove button bottom-left */}
+      
+      {/* Delete button - Bottom left on mobile, inline on desktop */}
       <button
         onClick={handleRemove}
-        className="absolute left-3 bottom-3 p-2 rounded-lg bg-red-50/60 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200/60 hover:border-red-300 shadow-sm hover:shadow-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-400"
+        className="z-20 absolute left-3 bottom-3 md:relative md:left-0 md:bottom-0 p-1 text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none md:col-span-1 md:self-start"
         aria-label={`${t.remove} ${product_name || planPackage || t.product} from basket`}
         tabIndex={0}
       >
-        <HiTrash className="w-4 h-4" />
+        <HiTrash className="w-5 h-5" />
       </button>
     </div>
   );

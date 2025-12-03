@@ -169,11 +169,12 @@ export default function BasketPage() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header Section */}
         <div 
-          className="rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 mb-6 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 relative overflow-hidden"
+          className="rounded-2xl shadow-md border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
           role="region"
           aria-label="Shopping basket summary"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
           {/* Header Content */}
           <div className="p-3 sm:p-5">
@@ -241,8 +242,8 @@ export default function BasketPage() {
 
         {basket.length === 0 ? (
           /* Empty state aligned with checkout */
-          <div className="text-center py-12 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-xl border border-white/40 dark:border-gray-700/40 mt-6 max-w-2xl mx-auto relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+          <div className="text-center py-12 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
               <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
                 <HiShoppingBag className="w-12 h-12 text-gray-500" />
@@ -259,8 +260,8 @@ export default function BasketPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Enhanced Basket Items */}
             <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-              <div className="rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+              <div className="rounded-2xl shadow-md border border-gray-200/30 p-3 sm:p-5 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                 <div className="relative z-10">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">{t.itemsInYourBasket}</h2>
                 <div className="space-y-3">
@@ -283,8 +284,8 @@ export default function BasketPage() {
 
             {/* Enhanced Order Summary */}
             <div className="lg:col-span-1">
-              <div className="rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 lg:sticky lg:top-24 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+              <div className="rounded-2xl shadow-md border border-gray-200/30 p-3 sm:p-5 lg:sticky lg:top-24 backdrop-blur-sm overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                 <div className="relative z-10">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">{t.cartTotal}</h3>
                 
