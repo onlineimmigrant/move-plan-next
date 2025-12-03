@@ -15,6 +15,11 @@ ON pages(path, organization_id);
 CREATE INDEX IF NOT EXISTS idx_blog_post_slug_org_seo
 ON blog_post(slug, organization_id);
 
+-- Index for blog post display filtering
+-- Used when filtering posts by display_config.display_this_post
+CREATE INDEX IF NOT EXISTS idx_blog_post_display_org
+ON blog_post(organization_id, ((display_config->>'display_this_post')::boolean));
+
 -- Index for product SEO queries
 -- Used when generating product structured data and metadata
 CREATE INDEX IF NOT EXISTS idx_product_slug_org_seo

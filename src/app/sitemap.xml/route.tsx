@@ -24,6 +24,8 @@ interface SitemapPage {
   url: string;
   lastmod: string;
   priority: number;
+  images?: Array<{ loc: string; title?: string; caption?: string }>;
+  videos?: Array<{ content_loc: string; thumbnail_loc?: string; title?: string; description?: string }>;
 }
 
 interface StaticPageData {
@@ -51,6 +53,32 @@ interface FeatureData {
 interface ProductData {
   slug: string;
   updated_at: string | null;
+}
+
+interface ProductMediaData {
+  product_id: number;
+  image_url: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  is_video: boolean;
+  attrs: {
+    title?: string;
+    description?: string;
+    alt_text?: string;
+  } | null;
+}
+
+interface PostMediaData {
+  blog_post_id: number;
+  image_url: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  is_video: boolean;
+  attrs: {
+    title?: string;
+    description?: string;
+    alt_text?: string;
+  } | null;
 }
 
 // Cache for organization data to reduce database calls
@@ -213,7 +241,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       { data: staticPagesData, error: staticPagesError },
       { data: posts, error: postError },
       { data: features, error: featureError },
-      { data: products, error: productError }
+      { data: products, error: productError },
+      { data: productMedia, error: productMediaError },
+      { data: postMedia, error: postMediaError }
     ] = await Promise.all([
       supabase
         .from('sitemap_static_pages')
@@ -222,7 +252,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         .limit(1000), // Allow up to 1000 static pages
       supabase
         .from('blog_post')
-        .select('slug, last_modified, display_config, organization_config')
+        .select('id, slug, last_modified, display_config, organization_config')
         .eq('organization_id', effectiveOrgId)
         .eq('display_config->>display_this_post', 'true')
         .limit(1000), // Allow up to 1000 blog posts
@@ -233,9 +263,21 @@ export async function GET(request: NextRequest): Promise<Response> {
         .limit(1000), // Allow up to 1000 features
       supabase
         .from('product')
-        .select('slug, updated_at')
+        .select('id, slug, updated_at')
         .eq('organization_id', effectiveOrgId)
-        .limit(1000) // Allow up to 1000 products
+        .limit(1000), // Allow up to 1000 products
+      supabase
+        .from('product_media')
+        .select('product_id, image_url, video_url, thumbnail_url, is_video, attrs')
+        .eq('organization_id', effectiveOrgId)
+        .order('order', { ascending: true })
+        .limit(5000), // Allow multiple media per product
+      supabase
+        .from('post_media')
+        .select('blog_post_id, image_url, video_url, thumbnail_url, is_video, attrs')
+        .eq('organization_id', effectiveOrgId)
+        .order('order', { ascending: true })
+        .limit(5000) // Allow multiple media per post
     ]);
 
     // Log errors if any (only in development)
@@ -244,7 +286,26 @@ export async function GET(request: NextRequest): Promise<Response> {
       if (postError) console.warn('Sitemap - Blog posts error:', postError.message);
       if (featureError) console.warn('Sitemap - Features error:', featureError.message);
       if (productError) console.warn('Sitemap - Products error:', productError.message);
+      if (productMediaError) console.warn('Sitemap - Product media error:', productMediaError.message);
+      if (postMediaError) console.warn('Sitemap - Post media error:', postMediaError.message);
     }
+
+    // Create media lookup maps for efficient access
+    const productMediaMap = new Map<number, ProductMediaData[]>();
+    (productMedia || []).forEach((media: ProductMediaData) => {
+      if (!productMediaMap.has(media.product_id)) {
+        productMediaMap.set(media.product_id, []);
+      }
+      productMediaMap.get(media.product_id)!.push(media);
+    });
+
+    const postMediaMap = new Map<number, PostMediaData[]>();
+    (postMedia || []).forEach((media: PostMediaData) => {
+      if (!postMediaMap.has(media.blog_post_id)) {
+        postMediaMap.set(media.blog_post_id, []);
+      }
+      postMediaMap.get(media.blog_post_id)!.push(media);
+    });
 
     // Process additional static pages
     const additionalStaticPages: SitemapPage[] = (staticPagesData || []).map((page: StaticPageData) => ({
@@ -253,12 +314,33 @@ export async function GET(request: NextRequest): Promise<Response> {
       priority: page.priority || 1.0,
     }));
 
-    // Process blog posts
-    const dynamicPages: SitemapPage[] = (posts || []).map((post: BlogPostData) => ({
-      url: `${baseUrl}${getPostUrl({ section_id: post.organization_config?.section_id?.toString() ?? null, slug: post.slug })}`,
-      lastmod: formatDateToISO(post.last_modified),
-      priority: 0.8,
-    }));
+    // Process blog posts with media
+    const dynamicPages: SitemapPage[] = (posts || []).map((post: any) => {
+      const postMediaItems = postMediaMap.get(post.id) || [];
+      const images = postMediaItems
+        .filter(m => !m.is_video && m.image_url)
+        .map(m => ({
+          loc: m.image_url!,
+          title: m.attrs?.title || m.attrs?.alt_text,
+          caption: m.attrs?.description,
+        }));
+      const videos = postMediaItems
+        .filter(m => m.is_video && m.video_url)
+        .map(m => ({
+          content_loc: m.video_url!,
+          thumbnail_loc: m.thumbnail_url || undefined,
+          title: m.attrs?.title,
+          description: m.attrs?.description,
+        }));
+
+      return {
+        url: `${baseUrl}${getPostUrl({ section_id: post.organization_config?.section_id?.toString() ?? null, slug: post.slug })}`,
+        lastmod: formatDateToISO(post.last_modified),
+        priority: 0.8,
+        images: images.length > 0 ? images : undefined,
+        videos: videos.length > 0 ? videos : undefined,
+      };
+    });
 
     // Process features
     const dynamicFeaturePages: SitemapPage[] = (features || [])
@@ -269,14 +351,35 @@ export async function GET(request: NextRequest): Promise<Response> {
         priority: 0.8,
       }));
 
-    // Process products
+    // Process products with media
     const dynamicProductsPages: SitemapPage[] = (products || [])
-      .filter((product: ProductData) => product.slug && product.slug.trim().length > 0)
-      .map((product: ProductData) => ({
-        url: `${baseUrl}/products/${product.slug}`,
-        lastmod: formatDateToISO(product.updated_at),
-        priority: 0.8,
-      }));
+      .filter((product: any) => product.slug && product.slug.trim().length > 0)
+      .map((product: any) => {
+        const prodMediaItems = productMediaMap.get(product.id) || [];
+        const images = prodMediaItems
+          .filter(m => !m.is_video && m.image_url)
+          .map(m => ({
+            loc: m.image_url!,
+            title: m.attrs?.title || m.attrs?.alt_text,
+            caption: m.attrs?.description,
+          }));
+        const videos = prodMediaItems
+          .filter(m => m.is_video && m.video_url)
+          .map(m => ({
+            content_loc: m.video_url!,
+            thumbnail_loc: m.thumbnail_url || undefined,
+            title: m.attrs?.title,
+            description: m.attrs?.description,
+          }));
+
+        return {
+          url: `${baseUrl}/products/${product.slug}`,
+          lastmod: formatDateToISO(product.updated_at),
+          priority: 0.8,
+          images: images.length > 0 ? images : undefined,
+          videos: videos.length > 0 ? videos : undefined,
+        };
+      });
 
     // Combine all pages and remove duplicates
     const allPages = [
@@ -432,14 +535,53 @@ function generateSitemap(pages: SitemapPage[]): string {
     }));
 
   const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
 ${validPages
-  .map(page => `  <url>
+  .map(page => {
+    let urlBlock = `  <url>
     <loc>${escapeXml(page.url)}</loc>
     <lastmod>${validateLastmod(page.lastmod)}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${page.priority.toFixed(1)}</priority>
-  </url>`)
+    <priority>${page.priority.toFixed(1)}</priority>`;
+    
+    // Add image entries
+    if (page.images && page.images.length > 0) {
+      page.images.forEach(img => {
+        urlBlock += `\n    <image:image>
+      <image:loc>${escapeXml(img.loc)}</image:loc>`;
+        if (img.title) {
+          urlBlock += `\n      <image:title>${escapeXml(img.title)}</image:title>`;
+        }
+        if (img.caption) {
+          urlBlock += `\n      <image:caption>${escapeXml(img.caption)}</image:caption>`;
+        }
+        urlBlock += `\n    </image:image>`;
+      });
+    }
+    
+    // Add video entries
+    if (page.videos && page.videos.length > 0) {
+      page.videos.forEach(vid => {
+        urlBlock += `\n    <video:video>
+      <video:content_loc>${escapeXml(vid.content_loc)}</video:content_loc>`;
+        if (vid.thumbnail_loc) {
+          urlBlock += `\n      <video:thumbnail_loc>${escapeXml(vid.thumbnail_loc)}</video:thumbnail_loc>`;
+        }
+        if (vid.title) {
+          urlBlock += `\n      <video:title>${escapeXml(vid.title)}</video:title>`;
+        }
+        if (vid.description) {
+          urlBlock += `\n      <video:description>${escapeXml(vid.description)}</video:description>`;
+        }
+        urlBlock += `\n    </video:video>`;
+      });
+    }
+    
+    urlBlock += `\n  </url>`;
+    return urlBlock;
+  })
   .join('\n')}
 </urlset>`;
 
