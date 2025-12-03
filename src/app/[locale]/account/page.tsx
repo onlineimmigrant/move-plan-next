@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Toast from '@/components/Toast';
 import { useStudentStatus } from '@/lib/StudentContext';
 import { useAuth } from '@/context/AuthContext';
@@ -21,12 +22,27 @@ import {
 } from '@heroicons/react/24/outline';
 import { UserCircleIcon as UserCircleIconSolid } from '@heroicons/react/24/solid';
 import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
-import TicketsAccountModal from '@/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal';
-import MeetingsBookingModal from '@/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal';
 import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { logger } from '@/lib/logger';
+
+// Dynamic import modals to reduce bundle size (~50-100KB savings)
+const TicketsAccountModal = dynamic(
+  () => import('@/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal'),
+  { 
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div></div>
+  }
+);
+
+const MeetingsBookingModal = dynamic(
+  () => import('@/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal'),
+  { 
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div></div>
+  }
+);
 
 // TypeScript interfaces for component props
 interface DashboardLinkItem {

@@ -3,13 +3,13 @@
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/context/AuthContext';
 import { useStudentStatus } from '@/lib/StudentContext';
 import AccountTabEduProCourse from '@/components/edupro/AccountTabEduProCourse';
 import TabNavigation from '@/components/edupro/TheoryPracticeBooksTabs/TabNavigation';
 import Toast from '@/components/Toast';
-import EpubViewer from '@/components/edupro/EpubViewer';
 import LessonContent from '@/components/edupro/LessonContent';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import {
@@ -26,6 +26,19 @@ import ProgressStatisticsCurrent from '@/components/quiz/ProgressStatisticsCurre
 import Button from '@/ui/Button';
 import ChatWidget from '@/components/modals/ChatWidget/ChatWidget';
 import Tooltip from '@/components/Tooltip';
+
+// Dynamic import EpubViewer to reduce bundle size (~150-200KB savings)
+const EpubViewer = dynamic(() => import('@/components/edupro/EpubViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg">
+      <div className="flex flex-col items-center gap-3">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+        <div className="text-gray-600 font-medium">Loading book viewer...</div>
+      </div>
+    </div>
+  ),
+});
 
 
 
