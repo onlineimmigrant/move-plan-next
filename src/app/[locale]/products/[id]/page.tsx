@@ -417,14 +417,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <div className="order-1 md:order-1 lg:col-span-6 py-4 sm:pt-6 md:pb-8 flex justify-center items-start">
               <div className="w-full max-w-lg -mx-4 md:mx-0 space-y-8">
                 {product_media && product_media.length > 0 ? (
-                  <div className="bg-white/40 backdrop-blur-sm border-0 md:border border-white/20 rounded-none md:rounded-2xl md:p-4">
-                    <ProductDetailMediaDisplay mediaItems={product_media} />
+                  <div className="relative">
+                    {/* Triple-layer glass effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-sky-500/5 to-indigo-500/5 rounded-none md:rounded-2xl blur-xl"></div>
+                    <div className="relative bg-white/40 backdrop-blur-sm border-0 md:border border-white/20 rounded-none md:rounded-2xl md:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                      <ProductDetailMediaDisplay mediaItems={product_media} />
+                    </div>
                   </div>
                 ) : (
                   <>
                     {links_to_image ? (
-                      <div className="group relative bg-white/60 backdrop-blur-sm border border-white/30 rounded-3xl p-6 shadow-2xl shadow-blue-100/20 hover:shadow-3xl hover:shadow-blue-100/30 transition-all duration-500">
+                      <div className="group relative bg-white/60 backdrop-blur-sm border border-white/30 rounded-3xl p-6 hover:shadow-3xl hover:shadow-blue-100/30 transition-all duration-500" style={{ boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.5)' }}>
                         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/30 rounded-3xl group-hover:to-blue-50/40 transition-all duration-500"></div>
+                        {/* Glass reflection effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div className="relative rounded-2xl overflow-hidden group/img">
                           <Image
                             src={links_to_image}
@@ -488,8 +494,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <p className="text-gray-500 font-medium text-lg">No image available</p>
-                        <p className="text-gray-400 text-sm mt-2">Product image coming soon</p>
+                         <p className="text-gray-500 font-medium text-lg">No image available</p>
+                         <p className="text-gray-400 text-sm mt-2">Product image coming soon</p>
                       </div>
                     )}
                   </>

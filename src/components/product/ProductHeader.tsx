@@ -26,6 +26,7 @@ interface ProductHeaderProps {
   onGenerateVideo?: () => void;
   billingCycle?: 'monthly' | 'annual';
   onBillingCycleChange?: (v: 'monthly' | 'annual') => void;
+  pricingPlans?: { type?: string }[];
 }
 
 const ProductHeader = memo(function ProductHeader({ 
@@ -37,6 +38,7 @@ const ProductHeader = memo(function ProductHeader({
   onGenerateVideo,
   billingCycle,
   onBillingCycleChange,
+  pricingPlans,
 }: ProductHeaderProps) {
   const { t } = useProductTranslations();
   const themeColors = useThemeColors();
@@ -93,44 +95,37 @@ const ProductHeader = memo(function ProductHeader({
         md:static md:bg-transparent md:shadow-none
         ${
           isFixed
-            ? 'fixed top-0 left-0 right-0 z-[51] bg-white/80 backdrop-blur-md shadow-2xl shadow-blue-100/20 border-b border-white/30'
+            ? 'fixed top-0 left-0 right-0 z-[51] bg-white/80 backdrop-blur-md shadow-2xl shadow-blue-100/20 border-b border-white/30 py-2'
             : 'relative'
         }
       `}
     >
-      <div className="mt-4 flex flex-col">
-        <div className="flex items-center justify-between mb-2 gap-3">
-          <Link
-            href={productSubType ? `/products?category=${productSubType.id}` : '/products'}
-            className={`flex items-center transition-all duration-200 group font-medium text-xs sm:text-sm text-${themeColors.primary.text} tracking-wide hover:text-${themeColors.primary.textHover} no-underline hover:no-underline`}
-          >
-            <span className="transition-transform duration-200 group-hover:-translate-x-1">
-              {productSubType?.name || t.allProducts}
-            </span>
-            <RightArrowDynamic />
-          </Link>
-          {onBillingCycleChange && billingCycle && (
-            <div className="inline-flex items-center rounded-full border border-gray-200 bg-white/70 backdrop-blur-sm shadow-sm overflow-hidden">
+      <div className={isFixed ? '' : 'mt-4 flex flex-col'}>
+        <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-white/40 backdrop-blur-sm border border-gray-100/50">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-gray-900" style={{ letterSpacing: '-0.02em', textShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            {productName}
+          </h1>
+          {onBillingCycleChange && billingCycle && pricingPlans?.some(plan => plan.type === 'recurring') && (
+            <div className="inline-flex items-center gap-1 rounded-lg border border-gray-200/40 bg-white/50 backdrop-blur-md p-0.5">
               <button
                 type="button"
                 onClick={() => onBillingCycleChange('monthly')}
-                className={`px-3 py-1 text-xs font-medium ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                   billingCycle === 'monthly'
-                    ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text}`
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-blue-50/80 text-blue-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/50'
                 }`}
                 aria-pressed={billingCycle === 'monthly'}
               >
                 Monthly
               </button>
-              <span className="h-4 w-px bg-gray-200" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => onBillingCycleChange('annual')}
-                className={`px-3 py-1 text-xs font-medium ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
                   billingCycle === 'annual'
-                    ? `bg-${themeColors.primary.bgLight} text-${themeColors.primary.text}`
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-blue-50/80 text-blue-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/50'
                 }`}
                 aria-pressed={billingCycle === 'annual'}
               >
@@ -139,14 +134,10 @@ const ProductHeader = memo(function ProductHeader({
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight text-gray-900">
-            {productName}
-          </h1>
-          
-          {/* AI Video Generator Button - Only for Admin/Owner */}
-          {isAdmin && productId && productImage && (
-            <button
+        
+        {/* AI Video Generator Button - Only for Admin/Owner */}
+        {isAdmin && productId && productImage && (
+          <button
               onClick={() => setShowVideoGenerator(!showVideoGenerator)}
               className="group relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               title="Generate AI Talking Video"
@@ -172,7 +163,6 @@ const ProductHeader = memo(function ProductHeader({
             </button>
           )}
         </div>
-      </div>
       
       {/* AI Video Generator Panel - Collapsible */}
       {isAdmin && showVideoGenerator && productId && productImage && (

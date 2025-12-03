@@ -27,6 +27,8 @@ html {
   scroll-padding-top: 5rem;
 }
 
+/* (reverted) */
+
 /* Highlight target elements when scrolled to from TOC */
 .highlight-target {
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));

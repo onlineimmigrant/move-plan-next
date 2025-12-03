@@ -139,17 +139,15 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const [featuresVisible, setFeaturesVisible] = useState(false);
   
-  const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => `
-    relative cursor-pointer
-    transition-all duration-300 ease-in-out
-    ${
-      isActive
-        ? `rounded-2xl border-2 border-${themeColors.primary.border} shadow-2xl shadow-${themeColors.primary.bgLight}/50 scale-[1.03]`
-        : `rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:border-${themeColors.primary.bgLight}/80`
+  const planCardStyles = (isOutOfStock: boolean, isActive: boolean) => {
+    if (isOutOfStock) {
+      return 'relative cursor-not-allowed overflow-hidden transition-all duration-300 ease-in-out rounded-lg bg-gray-50/30 backdrop-blur-sm opacity-60 z-0';
     }
-    ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}
-    backdrop-blur-sm bg-white/80
-  `;
+    if (isActive) {
+      return 'relative cursor-pointer overflow-hidden transition-all duration-500 ease-in-out border border-blue-400/60 rounded-lg bg-blue-50/30 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 z-10';
+    }
+    return 'relative cursor-pointer overflow-hidden transition-all duration-300 ease-in-out rounded-lg bg-blue-50/20 backdrop-blur-sm hover:bg-blue-50/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 z-0';
+  };
   
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -300,6 +298,18 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
     []
   );
 
+  // Helper to split price into whole and decimal parts for styling
+  const formatPriceWithSmallDecimals = useCallback((priceString: string) => {
+    // Match currency symbol, whole number, and decimal part
+    const match = priceString.match(/^([^\d]*)(\d+(?:,\d{3})*)([.,]\d+)?$/);
+    if (match) {
+      const [, symbol, whole, decimal] = match;
+      return { symbol, whole, decimal: decimal || '' };
+    }
+    // Fallback if pattern doesn't match
+    return { symbol: '', whole: priceString, decimal: '' };
+  }, []);
+
   const getDisplayPrice = useCallback((plan: PricingPlan) => {
     const currency = plan.user_currency || plan.currency || 'USD';
     const base = plan.computed_price ?? (plan.price ?? 0) / 100;
@@ -363,11 +373,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
         ))}
       </div>
 
-      {/* Glassmorphism background for pricing section */}
-      <div className="relative" role="radiogroup" aria-label={t.selectPlan}>
-        <div className={`absolute inset-0 bg-gradient-to-br from-white/60 via-${themeColors.primary.bgLighter}/40 to-${themeColors.primary.bgLight}/60 backdrop-blur-sm rounded-3xl border border-white/30 shadow-2xl shadow-${themeColors.primary.bgLight}/20`}></div>
-        <div className="relative p-6 md:p-8">
-          <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${
+      {/* Pricing cards grid */}
+      <div className="relative" role="radiogroup" aria-label={t.selectPlan} aria-live="polite">
+        <div className={`grid grid-cols-1 ${
             pricingPlans.length >= 3 
               ? 'sm:grid-cols-2' 
               : 'sm:grid-cols-2'
@@ -379,12 +387,9 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               const isOutOfStock = normalizedStatus === 'out of stock';
 
               return (
-                <div key={plan.id} className="pricing-wrapper animate-fade-in-up p-3" style={{ animationDelay: `${idx * 100}ms` }}>
+                <div key={plan.id} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
                   <div
-                    className={`
-                      ${planCardStyles(isOutOfStock, isActive)}
-                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${themeColors.primary.bgLight}
-                    `}
+                    className={planCardStyles(isOutOfStock, isActive)}
                     role="radio"
                     aria-checked={isActive}
                     tabIndex={isOutOfStock ? -1 : 0}
@@ -400,20 +405,15 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         : t.outOfStock.toLowerCase()
                     }${plan.is_promotion && plan.promotion_price !== undefined ? `, ${t.onSale}` : ''}`}
                   >
-                    <div className="relative px-4 sm:px-6 pt-7 sm:pt-11 pb-3 sm:pb-5 min-h-[100px] sm:min-h-[140px]">
-                      {/* Glassmorphism overlay for active cards */}
-                      {isActive && (
-                        <div className={`absolute inset-0 bg-gradient-to-br from-${themeColors.primary.bgLight}/90 via-${themeColors.primary.bgLighter}/60 to-${themeColors.primary.bgLight}/80 rounded-2xl`}></div>
-                      )}
+                    <div className="relative px-5 sm:px-6 pt-8 sm:pt-10 pb-4 sm:pb-5">
                       
-                      {/* Refined Promotion Badge - Elegant and Attention-grabbing */}
+                      {/* Refined Promotion Badge - Elegant and Attention-grabbing with pulse */}
                       {plan.is_promotion && plan.promotion_price !== undefined && (
-                        <div className="absolute -top-3 -right-3 z-20">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full blur-sm opacity-60"></div>
-                            <span className="relative block px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-red-500 via-red-600 to-pink-600 rounded-full shadow-lg border-2 border-white/40 backdrop-blur-sm">
+                        <div className="absolute -top-2.5 -right-2.5 z-20">
+                          <div className="relative animate-pulse" style={{ animationDuration: '2s' }}>
+                            <span className="relative block px-3 py-1 text-xs font-semibold text-red-600 bg-red-50/90 rounded-full border border-red-200/60 backdrop-blur-sm">
                               <span className="flex items-center gap-1">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                                 <span>{plan.promotion_percent}{t.percentOff}</span>
@@ -428,7 +428,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         {(() => {
                           if (normalizedStatus === 'in stock') {
                             return (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-green-600 bg-green-50/80 border border-green-200/50 rounded-md">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-green-700 bg-green-50/60 border border-green-200/40 rounded-md">
                                 <div className="w-1 h-1 bg-green-500 rounded-full"></div>
                                 {t.inStock}
                               </span>
@@ -436,7 +436,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                           }
                           if (normalizedStatus === 'low stock') {
                             return (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-yellow-600 bg-yellow-50/80 border border-yellow-200/50 rounded-md">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-medium text-yellow-700 bg-yellow-50/60 border border-yellow-200/40 rounded-md">
                                 <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
                                 {t.lowStock}
                               </span>
@@ -454,19 +454,58 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         })()}
                       </div>
 
-                      <div className="relative flex flex-col gap-2 sm:gap-4">
+                      <div className="relative flex flex-col gap-3 sm:gap-4">
                         {/* Price at top right */}
                         <div className="flex justify-end">
                           {plan.is_promotion && (plan.promotion_price !== undefined || plan.promotion_percent) ? (
-                            <div className="flex flex-col items-end space-y-0.5">
+                            <div className="flex flex-col items-end space-y-1">
                               <div className="flex items-baseline space-x-1.5">
-                                <span className="text-2xl sm:text-3xl font-bold text-gray-800">{getDisplayPrice(plan)}</span>
+                                <span className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-br from-red-600 to-pink-600 bg-clip-text text-transparent">
+                                  {(() => {
+                                    const price = getDisplayPrice(plan);
+                                    const { symbol, whole, decimal } = formatPriceWithSmallDecimals(price);
+                                    return (
+                                      <>
+                                        {symbol}{whole}<span className="text-lg sm:text-xl">{decimal}</span>
+                                      </>
+                                    );
+                                  })()}
+                                </span>
                               </div>
                               <span className="text-sm text-gray-400 font-medium line-through">
                                 {getOriginalPrice(plan)}
                               </span>
+                              {(() => {
+                                const currency = plan.user_currency || plan.currency || 'USD';
+                                const base = plan.computed_price ?? (plan.price ?? 0) / 100;
+                                let savings = 0;
+                                if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
+                                  const discountRaw = plan.annual_size_discount;
+                                  let multiplier = 1;
+                                  if (typeof discountRaw === 'number') {
+                                    if (discountRaw > 1) {
+                                      multiplier = (100 - discountRaw) / 100;
+                                    } else if (discountRaw > 0 && discountRaw <= 1) {
+                                      multiplier = discountRaw;
+                                    }
+                                  }
+                                  const commitmentMonths = plan.commitment_months || 12;
+                                  const annualUndiscounted = base * commitmentMonths;
+                                  const annualDiscounted = base * commitmentMonths * multiplier;
+                                  savings = annualUndiscounted - annualDiscounted;
+                                } else if (plan.promotion_percent) {
+                                  savings = base * (plan.promotion_percent / 100);
+                                } else if (typeof plan.promotion_price === 'number') {
+                                  savings = base - plan.promotion_price;
+                                }
+                                return savings > 0 ? (
+                                  <span className="text-xs font-bold text-red-600">
+                                    Save {formatAmount(savings, currency)}{billingCycle === 'annual' ? '/year' : ''}
+                                  </span>
+                                ) : null;
+                              })()}
                               {(plan.recurring_interval || plan.measure) && (
-                                <span className="text-[11px] text-gray-500">{
+                                <span className="text-xs text-gray-500 font-medium">{
                                   (() => {
                                     if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
                                       return getSafeTranslation('perYear', 'per year');
@@ -484,19 +523,29 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                               )}
                             </div>
                           ) : (
-                            <div className="flex flex-col items-end space-y-0.5">
+                            <div className="flex flex-col items-end space-y-1">
                               <div className="flex items-baseline space-x-1.5">
                                 <span
                                   className={`text-2xl sm:text-3xl font-bold ${
                                     isOutOfStock ? 'text-gray-400' : 'text-gray-800'
                                   }`}
-                                >{getDisplayPrice(plan)}</span>
+                                >
+                                  {(() => {
+                                    const price = getDisplayPrice(plan);
+                                    const { symbol, whole, decimal } = formatPriceWithSmallDecimals(price);
+                                    return (
+                                      <>
+                                        {symbol}{whole}<span className="text-lg sm:text-xl">{decimal}</span>
+                                      </>
+                                    );
+                                  })()}
+                                </span>
                               </div>
                               <span className="text-sm text-transparent">
                                 {/* Placeholder for alignment */}
                               </span>
                               {(plan.recurring_interval || plan.measure) && (
-                                <span className="text-[11px] text-gray-500">{
+                                <span className="text-xs text-gray-500 font-medium">{
                                   (() => {
                                     if (billingCycle === 'annual' && plan.type === 'recurring' && plan.commitment_months) {
                                       return getSafeTranslation('perYear', 'per year');
@@ -516,16 +565,19 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                           )}
                         </div>
 
+                        {/* Subtle divider */}
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200/60 to-transparent"></div>
+
                         {/* Package name and measure in separate row */}
                         <div className="flex justify-between items-end gap-2 sm:gap-4">
                           <h2
-                            className={`text-base sm:text-lg font-semibold ${
-                              isActive ? `text-${themeColors.primary.text}` : 'text-gray-800'
+                            className={`text-lg sm:text-xl font-semibold ${
+                              isActive ? 'text-blue-700' : 'text-gray-800'
                             } ${isOutOfStock ? 'text-gray-400' : ''}`}
                           >
                             {plan.package || t.product}
                           </h2>
-                          <span className="text-xs sm:text-sm font-medium text-gray-500">
+                          <span className="text-sm sm:text-base font-semibold text-gray-600">
                             {plan.measure}
                           </span>
                         </div>
@@ -535,14 +587,13 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 </div>
               );
             })}
-          </div>
         </div>
       </div>
 
-      <div className="mt-6 md:mt-8 grid sm:grid-cols-1 gap-3 md:gap-4 px-4 sm:px-8">
+      <div className="mt-4 md:mt-6 px-4 sm:px-0 space-y-3">
         {activePlanCount === 0 || (selectedPlan && ((selectedPlan.computed_price || selectedPlan.price / 100) === 0 || (selectedPlan.is_promotion && (selectedPlan.computed_price ? selectedPlan.computed_price === 0 : (selectedPlan.promotion_price || 0) === 0)))) ? (
           <Link href="/register-free-trial">
-            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-semibold" aria-label={t.registerForFreeTrial}>
+            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-medium border-2 border-blue-500 hover:border-blue-600 md:hover:scale-[1.02] active:scale-100 transition-all duration-200" aria-label={t.registerForFreeTrial}>
               {t.register}
               <RightArrowDynamic />
             </Button>
@@ -554,28 +605,45 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               onClick={handleAddToBasket}
               disabled={selectedPlanStatus === 'out of stock' || isLoading}
               className={`
-                h-14 md:h-16 text-base md:text-lg font-semibold shadow-lg
+                h-14 md:h-16 text-base md:text-lg font-medium
                 ${
                   selectedPlanStatus !== 'out of stock' && !isLoading
                     ? isSelectedPlanActive
                       ? isAdded
-                        ? `bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgHover} text-white shadow-${themeColors.primary.bgLight} scale-105`
-                        : `bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgActive} text-white hover:from-${themeColors.primary.bgHover} hover:to-${themeColors.primary.bgActive} hover:shadow-xl hover:shadow-${themeColors.primary.bgLight} hover:scale-105`
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:scale-105'
-                    : 'bg-gray-200 text-gray-700 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-600 scale-[1.02]'
+                        : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-600 hover:from-blue-700 hover:to-blue-800 hover:border-blue-700 md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
+                      : 'bg-white/80 backdrop-blur-sm text-gray-700 border-2 border-gray-300 hover:bg-white hover:border-blue-400 md:hover:scale-[1.02] active:scale-100 transition-all duration-200'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-60 border-2 border-gray-300'
                 }`}
               aria-disabled={selectedPlanStatus === 'out of stock' || isLoading}
               aria-label={isLoading ? t.addingToCart : isAdded ? t.addedToCart : t.addToCart}
             >
               {isLoading ? (
-                <span>{t.loading}</span>
+                <div className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5" style={{ animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)', willChange: 'transform' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{t.loading}</span>
+                </div>
               ) : (
                 <>
-                  <ShoppingCartIcon
-                    className="w-5 md:w-6 h-5 md:h-6 mr-2 md:mr-3 transition-transform duration-300 group-hover:scale-110"
-                    aria-hidden="true"
-                  />
-                  <span>{isAdded ? t.added : t.addToCart}</span>
+                  {isAdded ? (
+                    <>
+                      <svg className="w-5 md:w-6 h-5 md:h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>{t.added}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCartIcon
+                        className="w-5 md:w-6 h-5 md:h-6 mr-2 transition-transform duration-300 group-hover:scale-110"
+                        aria-hidden="true"
+                      />
+                      <span>{t.addToCart}</span>
+                    </>
+                  )}
                 </>
               )}
             </Button>
@@ -586,7 +654,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 <Link href="/checkout">
                   <Button
                     variant="start"
-                    className={`h-14 md:h-16 text-base md:text-lg font-semibold bg-gradient-to-r from-${themeColors.primary.bg} to-${themeColors.primary.bgActive} hover:from-${themeColors.primary.bgHover} hover:to-${themeColors.primary.bgActive} shadow-lg hover:shadow-xl hover:shadow-${themeColors.primary.bgLight}`}
+                    className="h-16 md:h-[4.5rem] text-lg md:text-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-2 border-blue-600 hover:border-blue-700 md:hover:scale-[1.02] active:scale-100 transition-all duration-200"
                     aria-label={t.proceedToCheckout}
                     onMouseEnter={prefetchCheckout}
                   >
@@ -596,14 +664,14 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                 </Link>
               ) : null
             ) : (
-              <div className="h-14 md:h-16 w-full" /> // Placeholder to match button height
+              <div className="h-16 md:h-[4.5rem] w-full" /> // Placeholder to match button height
             )}
           </>
         )}
       </div>
 
       {amazonBooksUrl && (
-        <div className="mt-3 md:mt-4 px-4 sm:px-8">
+        <div className="mt-3 md:mt-4 px-4 sm:px-0">
           <a
             href={amazonBooksUrl}
             title={t.getItOnAmazonKindle}
@@ -611,7 +679,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
             rel="noopener noreferrer"
             aria-label={t.buyOnAmazonAriaLabel}
           >
-            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-semibold flex items-center bg-[#FF9900] text-gray-900 hover:text-white shadow-lg hover:shadow-xl">
+            <Button variant="start" className="h-14 md:h-16 text-base md:text-lg font-medium flex items-center bg-gradient-to-r from-[#FF9900] to-[#FF8800] text-white hover:from-[#FF8800] hover:to-[#FF7700] border-2 border-[#FF9900] hover:border-[#FF8800] md:hover:scale-[1.02] active:scale-100 transition-all duration-200">
               <svg
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"

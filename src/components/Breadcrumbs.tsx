@@ -228,7 +228,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   return (
     <div className=''>
       <nav 
-        className="backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 w-full sm:fixed sm:bottom-0 relative sm:mt-0 mt-8 mb-4 sm:mb-0 py-3 px-4 sm:px-6 sm:z-51" 
+        className="backdrop-blur-md bg-white/50 dark:bg-gray-900/50 w-full py-3 px-4 sm:px-6" 
         aria-label="Breadcrumb"
       >
         <ol className="flex flex-wrap justify-start gap-1.5 items-center text-sm max-w-7xl mx-auto">

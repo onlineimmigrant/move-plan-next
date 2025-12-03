@@ -65,23 +65,21 @@ const ClientProductDetail = memo(function ClientProductDetail({
         productDescription={productDescription}
         billingCycle={billingCycle}
         onBillingCycleChange={setBillingCycle}
+        pricingPlans={pricingPlans}
       />
       {productDescription && (
-        <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 shadow-lg shadow-blue-100/10 mt-4 md:mt-6">
+        <div className="relative bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl px-6 py-2 mt-2 md:mt-3 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/20 rounded-2xl"></div>
+          {/* Subtle texture overlay for glass realism */}
+          <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' /%3E%3C/svg%3E")' }}></div>
           <div className="relative text-gray-700 text-base md:text-lg font-normal leading-relaxed">
             {parse(productDescription)}
           </div>
         </div>
       )}
       {pricingPlans && pricingPlans.length > 0 ? (
-        <div id="pricing-plans" className={productDescription ? 'mt-8' : 'mt-6'}>
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-sky-500/5 to-indigo-500/5 rounded-3xl blur-3xl"></div>
-            <div className="relative">
-              <ProductDetailPricingPlans pricingPlans={pricingPlans} amazonBooksUrl={amazonBooksUrl} billingCycle={billingCycle} />
-            </div>
-          </div>
+        <div id="pricing-plans" className={productDescription ? 'mt-3' : 'mt-3'}>
+          <ProductDetailPricingPlans pricingPlans={pricingPlans} amazonBooksUrl={amazonBooksUrl} billingCycle={billingCycle} />
         </div>
       ) : (
         <div className="mt-6 bg-white/60 backdrop-blur-sm border border-white/30 rounded-2xl p-8 shadow-lg">
