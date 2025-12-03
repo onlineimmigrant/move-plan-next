@@ -1595,8 +1595,8 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
           };
         }
 
-        // Add brand information
-        if (settings?.site) {
+        // Add brand information only if not already present (avoid duplicate)
+        if (settings?.site && !productSchema.brand) {
           productSchema.brand = {
             '@type': 'Brand',
             name: settings.site,
@@ -1614,6 +1614,9 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
 
     // Add ItemList for all pricing modal products
     if (structuredData.length > 0) {
+      // Use consistent image across all items for carousel (Google requirement)
+      const consistentImage = settings?.seo_og_image || `${canonicalBaseUrl}/images/logo.svg`;
+      
       const itemListSchema = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
@@ -1629,7 +1632,9 @@ async function fetchHomePageProductsStructuredData(baseUrl: string, organization
             '@id': product['@id'],
             name: product.name,
             url: product.url, // This will be the pricing modal URL
-            image: product.image, // Required for Carousels
+            image: consistentImage, // Same image for all carousel items (Google requirement)
+            // Include offers to make valid Product snippet
+            offers: product.offers,
           },
         })),
       };

@@ -313,29 +313,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://pub.r2.wvservices.exchange" />
         <link rel="preconnect" href="https://pub.r2.wvservices.exchange" crossOrigin="anonymous" />
         
-        {/* Async load Google Fonts - won't block LCP (media="print" trick) */}
-        {/* Combined request for all fonts to minimize HTTP requests */}
+        {/* Async load Google Fonts - won't block LCP */}
+        {/* Using onLoad inline handler instead of script to avoid hydration issues */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap"
           media="print"
-          id="async-fonts"
+          // @ts-ignore - onLoad is valid for link elements
+          onLoad="this.media='all'"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Switch font loading from print to all media after load (non-blocking)
-              var fontLink = document.getElementById('async-fonts');
-              if (fontLink) {
-                if (fontLink.addEventListener) {
-                  fontLink.addEventListener('load', function() { this.media = 'all'; });
-                } else {
-                  fontLink.media = 'all'; // Fallback for older browsers
-                }
-              }
-            `
-          }}
-        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap"
+          />
+        </noscript>
         
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
