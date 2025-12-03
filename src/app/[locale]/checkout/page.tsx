@@ -450,7 +450,6 @@ export default function CheckoutPage() {
     console.log('[Effect] Creating payment intent/subscription');
     hasFetchedIntentRef.current = true;
     managePaymentIntent(customerEmail || undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted, basket.length, hasRecurringItems, customerEmail, clientSecret, paymentIntentId]);
 
   // Update payment intent when promoCodeId changes (for regular payments only)
@@ -464,7 +463,6 @@ export default function CheckoutPage() {
       console.log('Updating payment intent with promo code');
       managePaymentIntent(customerEmail, true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promoCodeId]);
 
   useEffect(() => {

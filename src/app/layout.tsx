@@ -304,34 +304,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* DNS Prefetch & Preconnect for performance */}
         <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
         <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         {/* eslint-disable-next-line @next/next/google-font-preconnect */}
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://pub.r2.wvservices.exchange" />
         <link rel="preconnect" href="https://pub.r2.wvservices.exchange" crossOrigin="anonymous" />
-        
-        {/* Async load Google Fonts - won't block LCP */}
-        {/* Using onLoad inline handler instead of script to avoid hydration issues */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap"
-          media="print"
-          // @ts-expect-error - onLoad is valid for link elements but not in TypeScript HTMLLinkElement interface
-          onLoad="this.media='all'"
-        />
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-          <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap"
-          />
-        </noscript>
         
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />

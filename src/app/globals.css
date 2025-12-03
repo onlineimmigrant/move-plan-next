@@ -1,15 +1,15 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-/* Font CSS Variables - Actual fonts loaded async via <link> in layout.tsx to avoid blocking LCP */
-/* This approach prevents render-blocking @import statements while maintaining font flexibility */
+/* Load Google Fonts - placed after Tailwind to avoid blocking critical CSS */
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap');
 
 :root {
   /* Core fonts loaded via Next.js (Inter, JetBrains Mono) */
   --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
   --font-jetbrains-mono: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   
-  /* Additional fonts loaded async via <link media="print"> in layout.tsx */
+  /* Additional Google Fonts loaded via @import above */
   --font-mulish: 'Mulish', system-ui, -apple-system, sans-serif;
   --font-roboto: 'Roboto', system-ui, -apple-system, sans-serif;
   --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
