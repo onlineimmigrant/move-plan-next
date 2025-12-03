@@ -203,6 +203,29 @@ export async function generateMetadata(): Promise<Metadata> {
     description: seoData.description || 'Welcome to our platform',
     keywords: Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords,
     
+    // Mobile optimization
+    viewport: {
+      width: 'device-width',
+      initialScale: 1,
+      maximumScale: 5,
+    },
+    
+    // PWA theme color - responsive
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+      { media: '(prefers-color-scheme: dark)', color: '#1f2937' },
+    ],
+    
+    // Web App Manifest
+    manifest: '/manifest.json',
+    
+    // Apple Web App
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: siteName,
+    },
+    
     openGraph: {
       title: seoData.title || siteName,
       description: seoData.description || 'Welcome to our platform',
@@ -415,6 +438,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={language} data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} />
+        
+        {/* DNS Prefetch & Preconnect for performance */}
+        <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
+        <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://js.stripe.com" />
+        <link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://pub.r2.wvservices.exchange" />
+        <link rel="preconnect" href="https://pub.r2.wvservices.exchange" crossOrigin="anonymous" />
+        
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
         
