@@ -642,8 +642,7 @@ export async function POST(request: Request) {
         status: subscription.status,
         current_period_start: (subscription as any)?.current_period_start ? new Date((subscription as any).current_period_start * 1000).toISOString() : null,
         current_period_end: (subscription as any)?.current_period_end ? new Date((subscription as any).current_period_end * 1000).toISOString() : null,
-        // cancel_at_period_end column doesn't exist in schema - removed
-        cancelled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+        // Note: cancel_at_period_end and cancelled_at columns don't exist in schema
         updated_at: new Date().toISOString(),
       };
 
@@ -673,7 +672,7 @@ export async function POST(request: Request) {
         .from('subscriptions')
         .update({
           status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
+          // Note: cancelled_at column doesn't exist in schema
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_subscription_id', subscription.id);
@@ -688,8 +687,8 @@ export async function POST(request: Request) {
     }
 
     // Handle invoice payment succeeded (for subscription renewals)
-    if (event.type === 'invoice.payment_succeeded') {
-      console.log(`Processing invoice.payment_succeeded event:`, event.data.object);
+    if (event.type === 'invoice.payment_succeeded' || event.type === 'invoice.paid') {
+      console.log(`Processing ${event.type} event:`, event.data.object);
       const invoice = event.data.object as any;
 
       // Log payment

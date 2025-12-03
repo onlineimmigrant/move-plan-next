@@ -286,9 +286,9 @@ export default function CheckoutPage() {
         const effectiveEmail = email || customerEmail;
         
         // Email is required for subscriptions
+        // If no email provided yet, skip creation silently (will be created on form submission)
         if (!effectiveEmail) {
-          console.log('Waiting for customer email before creating subscription');
-          setError('Please wait while we load your account details...');
+          console.log('No email yet - subscription will be created when user submits payment');
           isProcessingRef.current = false;
           return;
         }
@@ -438,9 +438,12 @@ export default function CheckoutPage() {
       return;
     }
 
-    // For recurring items, wait for email before creating subscription
+    // For recurring items WITHOUT authenticated email, skip initial creation
+    // The subscription will be created when user enters email and clicks pay
     if (hasRecurringItems && !customerEmail) {
-      console.log('[Effect] Waiting for customer email before creating subscription');
+      console.log('[Effect] Subscription requires email - will be created when user submits payment');
+      // Set flag to prevent re-running this effect
+      hasFetchedIntentRef.current = true;
       return;
     }
 
@@ -804,6 +807,48 @@ export default function CheckoutPage() {
                     setCustomerEmail={setCustomerEmailCallback}
                     updatePaymentIntentWithEmail={updatePaymentIntentWithEmailCallback}
                   />
+                ) : hasRecurringItems && !customerEmail ? (
+                  <div className="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 shadow-md">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+                    <div className="relative z-10">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Enter your email to continue</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        A subscription requires an email address. Please enter your email to proceed with payment.
+                      </p>
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const email = formData.get('email') as string;
+                        if (email) {
+                          setPaymentIntentLoading(true);
+                          await managePaymentIntent(email, false);
+                          setPaymentIntentLoading(false);
+                        }
+                      }}>
+                        <div className="mb-4">
+                          <label htmlFor="subscription-email" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                            Email Address <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="subscription-email"
+                            name="email"
+                            type="email"
+                            required
+                            className="w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors"
+                            placeholder="your@email.com"
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          variant="start"
+                          className="w-full"
+                          disabled={paymentIntentLoading}
+                        >
+                          {paymentIntentLoading ? 'Processing...' : 'Continue to Payment'}
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center text-red-500 py-8 bg-red-50 rounded-xl">
                     <p className="font-semibold mb-3">⚠️ {t.failedToLoadPaymentDetails}</p>

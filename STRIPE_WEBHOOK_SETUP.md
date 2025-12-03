@@ -268,15 +268,60 @@ Create an admin interface to manage organization Stripe settings.
 Error: Webhook signature verification failed
 ```
 
-**Causes:**
-- Incorrect webhook secret in database
-- Webhook configured with different secret than stored
-- Organization not found in database
+**Common Causes:**
+1. **Webhook secret mismatch** - Database secret doesn't match Stripe Dashboard
+2. **Using `stripe listen` secret in production** - Local dev secret (whsec_...) used instead of production webhook secret
+3. **Multiple webhooks configured** - Different webhook endpoints with different secrets
+4. **Organization not found** - Organization ID doesn't exist in database
+5. **Raw body not preserved** - Middleware or proxy modified the request body
 
 **Solution:**
-1. Check `organizations.stripe_webhook_secret` matches Stripe Dashboard
-2. Verify organization ID exists in database
-3. Re-copy webhook secret from Stripe Dashboard
+
+**For Development (`stripe listen`):**
+1. Run `stripe listen --forward-to http://localhost:3000/api/webhooks/stripe`
+2. Copy the webhook signing secret shown (starts with `whsec_`)
+3. **Either:**
+   - **Option A:** Add to `.env.local`:
+     ```bash
+     STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+     ```
+   - **Option B:** Add to organization in database:
+     ```sql
+     UPDATE organizations 
+     SET stripe_webhook_secret = 'whsec_xxxxxxxxxxxxx'
+     WHERE id = 'your-org-id';
+     ```
+4. Restart your dev server
+5. Test with `stripe trigger payment_intent.succeeded`
+
+**For Production:**
+1. Go to **Stripe Dashboard** → **Developers** → **Webhooks**
+2. Find your webhook endpoint URL
+3. Click to view the webhook details
+4. Copy the **Signing secret** (starts with `whsec_`)
+5. Update organization in database:
+   ```sql
+   UPDATE organizations 
+   SET stripe_webhook_secret = 'whsec_xxxxxxxxxxxxx'
+   WHERE id = 'your-production-org-id';
+   ```
+6. **IMPORTANT:** Make sure you're using the production webhook secret, NOT the `stripe listen` secret
+
+**Verify Configuration:**
+```sql
+-- Check if webhook secret is set correctly
+SELECT id, name, 
+       LEFT(stripe_webhook_secret, 10) || '...' as webhook_secret_preview,
+       LEFT(stripe_secret_key, 10) || '...' as secret_key_preview
+FROM organizations 
+WHERE id = 'your-org-id';
+```
+
+**Debug Tips:**
+- Check application logs for the exact organization ID being used
+- Verify the webhook secret starts with `whsec_`
+- Ensure no middleware is modifying the request body
+- Test signature verification in isolation
 
 ### No Organization ID in Metadata
 ```
