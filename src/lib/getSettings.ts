@@ -52,24 +52,51 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
     return null;
   }
 
-  // console.log('Querying organization for URL:', currentUrl);
+  console.log('[getOrganizationId] Querying for URL:', currentUrl, 'isLocal:', isLocal, 'will check field:', isLocal ? 'base_url_local' : 'base_url');
+  
+  let data: any = null;
+  let error: any = null;
   
   // First try: Check if currentUrl matches any domain in the domains array
-  let { data, error } = await supabase
-    .from('organizations')
-    .select('id, type, domains')
-    .contains('domains', [currentUrl])
-    .maybeSingle();
-  
-  // Second try: Fall back to base_url/base_url_local match if domains lookup fails
-  if (!data && !error) {
+  try {
     const result = await supabase
       .from('organizations')
-      .select('id, type, domains')
-      .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+      .select('id, type, domains, base_url, base_url_local')
+      .contains('domains', [currentUrl])
+      .limit(1)
       .maybeSingle();
     data = result.data;
     error = result.error;
+    console.log('[getOrganizationId] Domains query:', { hasData: !!data, error: error?.message });
+  } catch (e: any) {
+    // Ignore "multiple rows" errors and continue to fallback
+    if (!e?.message?.includes('multiple') && !e?.message?.includes('no rows')) {
+      error = e;
+    }
+  }
+  
+  // Second try: Fall back to base_url/base_url_local match if domains lookup fails
+  if (!data && !error) {
+    try {
+      console.log('[getOrganizationId] Trying', isLocal ? 'base_url_local' : 'base_url', 'query with:', currentUrl);
+      const result = await supabase
+        .from('organizations')
+        .select('id, type, domains, base_url, base_url_local')
+        .eq(isLocal ? 'base_url_local' : 'base_url', currentUrl)
+        .limit(1)
+        .maybeSingle();
+      data = result.data;
+      error = result.error;
+      console.log('[getOrganizationId] Base URL query:', { hasData: !!data, error: error?.message, foundId: data?.id });
+    } catch (e: any) {
+      // If still failing, fall back to TENANT_ID
+      if (e?.message?.includes('multiple')) {
+        console.warn('Multiple organizations found for URL:', currentUrl, 'Using first match or TENANT_ID fallback');
+        error = null; // Clear error to trigger TENANT_ID fallback
+      } else if (!e?.message?.includes('no rows')) {
+        error = e;
+      }
+    }
   }
 
   if (error) {

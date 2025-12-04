@@ -7,7 +7,7 @@ function MediaScrollPropertyPlan({ lines, currentLine }) {
   const [media, setMedia] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [errorStates, setErrorStates] = useState([]);
-  const cld = new Cloudinary({ cloud: { cloudName: 'dzagcqrbp' } });
+  const cld = new Cloudinary({ cloud: { cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME } });
 
   // Filter media based on the current line's id
   useEffect(() => {

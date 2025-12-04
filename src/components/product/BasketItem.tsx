@@ -173,7 +173,7 @@ const BasketItem = memo(function BasketItem({
   }, [plan.id, optimisticQuantity, product_name, planPackage, removeFromBasket, updateQuantity, toast]);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-sm rounded-xl transition-all duration-300 border border-gray-200/40 hover:border-gray-300/60 relative overflow-hidden group" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-sm rounded-xl transition-all duration-300 border border-gray-200/40 hover:border-gray-300/60 relative overflow-hidden group pb-3 md:pb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
       {/* Enhanced Product Image */}
@@ -364,10 +364,10 @@ const BasketItem = memo(function BasketItem({
         )}
       </div>
       
-      {/* Delete button - Bottom left on mobile, inline on desktop */}
+      {/* Delete button - Top right on mobile, bottom left on desktop */}
       <button
         onClick={handleRemove}
-        className="z-20 absolute left-3 bottom-3 md:relative md:left-0 md:bottom-0 p-1 text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none md:col-span-1 md:self-start"
+        className="mt-4 z-20 absolute right-3 top-6 md:right-3 md:bottom-3 md:top-auto p-1 text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none md:mt-4"
         aria-label={`${t.remove} ${product_name || planPackage || t.product} from basket`}
         tabIndex={0}
       >

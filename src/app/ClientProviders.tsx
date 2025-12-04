@@ -56,7 +56,7 @@ import CookieSettingsComponent from '@/components/cookie/CookieSettings';
 
 import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
 import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
-import { hideNavbarFooterPrefixes } from '@/lib/hiddenRoutes';
+import { hideNavbarFooterPrefixes, hideFooterOnlyPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
 import { TemplateHeadingSection } from '@/types/template_heading_section';
@@ -125,7 +125,7 @@ export default function ClientProviders({
   templateHeadingSections = [],
   pathnameFromServer,
 }: ClientProvidersProps) {
-  const pathname = pathnameFromServer || usePathname() || '/'; // Prefer server-provided pathname for SSR
+  const pathname = usePathname() || '/'; // Use client-side pathname for navigation updates
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [headings, setHeadings] = useState<TemplateHeadingSection[]>([]);
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
@@ -261,7 +261,10 @@ export default function ClientProviders({
     });
   }, [pathname, cache]);
 
-  const showNavbarFooter = !hideNavbarFooterPrefixes.some((prefix) => pathname.startsWith(prefix));
+  const showNavbarFooter = useMemo(() => 
+    !hideNavbarFooterPrefixes.some((prefix) => pathname.startsWith(prefix)),
+    [pathname]
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -293,6 +296,7 @@ export default function ClientProviders({
                                 {/* VideoCall Modal - Renders at root level (z-2000) */}
                                 <ManagedVideoCall />
                                 <BannerAwareContent
+                                  key={`${pathname}-${showNavbarFooter}`}
                                   showNavbarFooter={showNavbarFooter}
                                   menuItems={menuItems}
                                   loading={loading}
@@ -398,12 +402,12 @@ function BannerAwareContent({
   return (
     <>
       <BannerContainer banners={fixedBanners} />
-      <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full main-content-wrapper">
+      <div style={{ marginTop: `${fixedBannersHeight}px` }} className="w-full">
         {showNavbarFooter ? (
           <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
             <main className="w-full">
               {children}
-              <UnifiedSections />
+              <UnifiedSections initialPathname={pathname} />
               <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>

@@ -7,19 +7,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Validate and initialize Twilio client
-const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+// Lazy initialization of Twilio client
+let twilioClient: ReturnType<typeof twilio> | null = null;
 
-if (!twilioAccountSid || !twilioAuthToken) {
-  throw new Error('Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN in environment variables');
+function getTwilioClient() {
+  if (!twilioClient) {
+    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+
+    if (!twilioAccountSid || !twilioAuthToken) {
+      throw new Error('Twilio conversations feature not configured. Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN.');
+    }
+
+    if (!twilioAccountSid.startsWith('AC')) {
+      throw new Error('Invalid TWILIO_ACCOUNT_SID format. Must start with AC.');
+    }
+
+    twilioClient = twilio(twilioAccountSid, twilioAuthToken);
+  }
+  return twilioClient;
 }
-
-if (!twilioAccountSid.startsWith('AC')) {
-  throw new Error('TWILIO_ACCOUNT_SID must start with AC');
-}
-
-const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
 export async function POST(request: Request) {
   try {
@@ -29,14 +36,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Initialize Twilio client (throws if not configured)
+    let client;
+    try {
+      client = getTwilioClient();
+    } catch (error: any) {
+      console.error('Twilio not configured:', error.message);
+      return NextResponse.json({ 
+        error: 'Conversations feature not available',
+        details: 'Twilio integration not configured for this organization'
+      }, { status: 503 });
+    }
+
     // Create Twilio conversation
-    const conversation = await twilioClient.conversations.v1.conversations.create({
+    const conversation = await client.conversations.v1.conversations.create({
       friendlyName: `Ticket ${ticket_id}`,
     });
 
     // Add customer as participant using identity
     // Note: Ensure customer_phone is in E.164 format (e.g., +12025550123)
-    const participant = await twilioClient.conversations.v1
+    const participant = await client.conversations.v1
       .conversations(conversation.sid)
       .participants.create({
         identity: customer_phone, // Use phone number as identity

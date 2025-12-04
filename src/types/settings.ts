@@ -87,4 +87,5 @@ export interface Settings {
   primary_shade?: number | null; // Primary color base shade (400, 500, 600, 700, 800)
   secondary_color?: string | null; // Secondary color family (e.g., 'gray', 'slate', 'zinc')
   secondary_shade?: number | null; // Secondary color base shade (400, 500, 600, 700, 800)
+  company_name?: string | null; // Company name for display purposes
 }

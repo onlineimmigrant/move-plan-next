@@ -24,6 +24,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
     const stripe = await createStripeInstance(organizationId);
+    
+    // Log Stripe mode for debugging
+    const stripeKeyPreview = (await import('@/lib/getStripeKeys')).getStripeSecretKey(organizationId)
+      .then(key => key.substring(0, 12) + '...')
+      .catch(() => 'env-fallback');
+    const keyPreview = await stripeKeyPreview;
+    const isTestMode = keyPreview.includes('sk_test');
+    console.log('[Subscription] Stripe mode:', isTestMode ? 'TEST' : 'LIVE', 'key:', keyPreview);
 
     // Validate input
     if (!basketItems || basketItems.length === 0) {
@@ -97,6 +105,33 @@ export async function POST(request: Request) {
         });
         return NextResponse.json(
           { error: `Missing Stripe Price ID for plan: ${plan.package || plan.id}` },
+          { status: 400 }
+        );
+      }
+      
+      // Validate that the price exists in Stripe
+      try {
+        const priceCheck = await stripe.prices.retrieve(stripePriceId);
+        console.log(`[Subscription] Validated price ${stripePriceId}: ${priceCheck.active ? 'active' : 'inactive'}, ${priceCheck.currency} ${priceCheck.unit_amount ? priceCheck.unit_amount / 100 : 'N/A'}`);
+        if (!priceCheck.active) {
+          console.error(`[Subscription] Price ${stripePriceId} is inactive in Stripe`);
+          return NextResponse.json(
+            { error: `Price ${stripePriceId} is not active. Please contact support.` },
+            { status: 400 }
+          );
+        }
+      } catch (priceError: any) {
+        console.error(`[Subscription] Price ${stripePriceId} not found in Stripe:`, priceError.message);
+        const isTestMode = keyPreview.includes('sk_test');
+        return NextResponse.json(
+          { 
+            error: `Price not found in Stripe ${isTestMode ? 'TEST' : 'LIVE'} mode. The price ID '${stripePriceId}' may exist in ${isTestMode ? 'LIVE' : 'TEST'} mode only. Please update your pricing plan configuration or switch Stripe modes.`,
+            details: {
+              priceId: stripePriceId,
+              stripeMode: isTestMode ? 'TEST' : 'LIVE',
+              suggestion: 'Check Dashboard → Products → Prices in the correct mode, or update the pricing_plan table with the correct price ID for this mode.'
+            }
+          },
           { status: 400 }
         );
       }

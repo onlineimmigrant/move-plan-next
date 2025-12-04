@@ -11,5 +11,10 @@ export const hideNavbarFooterPrefixes = [
   '/login', 
   '/signup', 
   '/register',  
-  '/reset-password'
+  '/reset-password',
+  '/basket',
+  '/checkout'
 ];
+
+// Pages where we hide ONLY footer (keep navbar visible)
+export const hideFooterOnlyPrefixes: string[] = [];

@@ -6,6 +6,7 @@ import { useBasket, BasketItem } from '../../../context/BasketContext';
 import BasketItemComponent from '@/components/product/BasketItem';
 import { HiShoppingBag } from 'react-icons/hi';
 import Link from 'next/link';
+import Image from 'next/image';
 import Button from '@/ui/Button';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
@@ -20,6 +21,8 @@ import { useRouter } from 'next/navigation';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { fetchWithRetry } from '@/lib/retry';
 import { getCurrencySymbol } from '@/utils/pricingUtils';
+import { useSettings } from '@/context/SettingsContext';
+import LocalizedLink from '@/components/LocalizedLink';
 
 // Lazy load PaymentForm for code splitting
 const PaymentForm = lazy(() => import('../../../components/product/PaymentForm'));
@@ -151,6 +154,7 @@ export default function CheckoutPage() {
   const { primary } = themeColors;
   const { fireConfetti } = useConfetti();
   const router = useRouter();
+  const { settings } = useSettings();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -599,7 +603,30 @@ export default function CheckoutPage() {
 
   if (paymentSucceeded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Logo Header */}
+        <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200/30">
+          <div className="max-w-4xl mx-auto">
+            <LocalizedLink href="/" className="inline-block">
+              {settings?.image ? (
+                <Image
+                  src={settings.image}
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  className="h-8 w-auto"
+                  priority={true}
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                  sizes="48px"
+                  quality={90}
+                />
+              ) : (
+                <span className="text-xl font-semibold text-gray-900">{settings?.company_name || 'Store'}</span>
+              )}
+            </LocalizedLink>
+          </div>
+        </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <div className="rounded-3xl shadow-lg border border-gray-200/30 mb-8 backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             {/* Header Content */}
@@ -644,7 +671,30 @@ export default function CheckoutPage() {
 
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Logo Header */}
+        <div className="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200/30">
+          <div className="max-w-7xl mx-auto">
+            <LocalizedLink href="/" className="inline-block">
+              {settings?.image ? (
+                <Image
+                  src={settings.image}
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  className="h-8 w-auto"
+                  priority={true}
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                  sizes="48px"
+                  quality={90}
+                />
+              ) : (
+                <span className="text-xl font-semibold text-gray-900">{settings?.company_name || 'Store'}</span>
+              )}
+            </LocalizedLink>
+          </div>
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="rounded-3xl shadow-lg border border-gray-200/30 mb-8 backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             {/* Header Content */}
@@ -681,35 +731,31 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="rounded-2xl border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-          {/* Header Content */}
-          <div className="p-3 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl shadow-md flex-shrink-0`}>
-                <HiShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">{t.checkout}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                  {t.reviewAndCompleteOrder} <span className="text-gray-400">· {t.nextPayment}</span>
-                </p>
-              </div>
-            </div>
-            <Link href="/products">
-              <Button variant="outline" size="sm" className="rounded-xl">
-                {t.continueShopping} →
-              </Button>
-            </Link>
-          </div>
-          </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+      {/* Logo Header */}
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 border-b border-gray-200/30">
+        <div className="max-w-7xl mx-auto">
+          <LocalizedLink href="/" className="inline-block">
+            {settings?.image ? (
+              <Image
+                src={settings.image}
+                alt="Logo"
+                width={48}
+                height={48}
+                className="h-8 w-auto"
+                priority={true}
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                sizes="48px"
+                quality={90}
+              />
+            ) : (
+              <span className="text-xl font-semibold text-gray-900">{settings?.company_name || 'Store'}</span>
+            )}
+          </LocalizedLink>
         </div>
-
+      </div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
       {basket.length === 0 ? (
         <div className="text-center py-12 backdrop-blur-sm rounded-2xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
@@ -718,33 +764,64 @@ export default function CheckoutPage() {
             <HiShoppingBag className="w-12 h-12 text-gray-500" />
           </div>
           <p className="text-gray-600 text-base mb-6">{t.cartEmpty}</p>
-          <Link href="/products">
-            <Button variant="outline" size="lg" className="mt-4 rounded-full">
+          <Link href="/products" className="w-full sm:w-auto">
+            <Button variant="outline" size="lg" className="mt-4 rounded-full w-full sm:w-auto">
               {t.startShopping} →
             </Button>
           </Link>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-2 mb-6">
-          {/* Left Column: Order Items */}
-          <div className="lg:col-span-2 relative overflow-hidden backdrop-blur-sm rounded-2xl border border-gray-200/30 p-3 sm:p-5 space-y-4 sm:space-y-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-            <div className="relative z-10">
-              <h3 className="font-bold text-gray-900 mb-3 sm:mb-4">{t.orderItems}</h3>
-              <div className="space-y-3">
-                {basket
-                  .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
-                  .map((item, index) => (
-                    <div key={item.plan.id} className={index > 0 ? 'border-t border-gray-200 pt-4' : ''}>
-                      <BasketItemComponent
-                        item={item}
-                        updateQuantity={updateQuantity}
-                        removeFromBasket={removeFromBasket}
-                        associatedFeatures={[]}
-                      />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Column: Header + Order Items */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Header Section - Mobile: standalone, Desktop: part of left column */}
+            <div className="rounded-2xl border border-gray-200/30 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+              <div className="relative z-10">
+                {/* Header Content */}
+                <div className="p-3 sm:p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl shadow-md flex-shrink-0`}>
+                        <HiShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">{t.checkout}</h1>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                          {t.reviewAndCompleteOrder} <span className="text-gray-400">· {t.nextPayment}</span>
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                    <Link href="/products" className="w-full sm:w-auto">
+                      <Button variant="outline" size="sm" className="rounded-xl w-full sm:w-auto">
+                        {t.continueShopping} →
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div className="relative overflow-hidden backdrop-blur-sm rounded-2xl border border-gray-200/30 p-3 sm:p-5" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+              <div className="relative z-10">
+                <h3 className="font-bold text-gray-900 mb-3 sm:mb-4">{t.orderItems}</h3>
+                <div className="space-y-3">
+                  {basket
+                    .filter((item): item is BasketItem & { plan: { id: number } } => item.plan.id !== undefined)
+                    .map((item, index) => (
+                      <div key={item.plan.id} className={index > 0 ? 'border-t border-gray-200 pt-4' : ''}>
+                        <BasketItemComponent
+                          item={item}
+                          updateQuantity={updateQuantity}
+                          removeFromBasket={removeFromBasket}
+                          associatedFeatures={[]}
+                        />
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           </div>
@@ -754,7 +831,7 @@ export default function CheckoutPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0 mb-5">
-                <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                <h2 className="font-bold text-gray-900 tracking-tight">
                   {t.orderTotal} <span className="text-gray-400">•</span> {totalItems} {totalItems === 1 ? t.item : t.items}
                 </h2>
                 <div className="flex items-center justify-center sm:justify-end space-x-2" aria-live="polite" aria-atomic="true">
@@ -820,7 +897,7 @@ export default function CheckoutPage() {
                         }
                       }}>
                         <div className="mb-4">
-                          <label htmlFor="subscription-email" className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                          <label htmlFor="subscription-email" className="block text-sm font-semibold text-gray-900 mb-2">
                             Email Address <span className="text-red-500">*</span>
                           </label>
                           <input

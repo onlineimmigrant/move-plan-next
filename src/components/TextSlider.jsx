@@ -7,7 +7,7 @@ const TextSlider = ({ lines = [], resources = [], onLineChange }) => {
   const [currentLine, setCurrentLine] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [errorStates, setErrorStates] = useState([]);
-  const cld = new Cloudinary({ cloud: { cloudName: 'dzagcqrbp' } });
+  const cld = new Cloudinary({ cloud: { cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME } });
 
   // Debug logging
   useEffect(() => {

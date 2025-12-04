@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useBasket, BasketItem } from '../../../context/BasketContext';
 import BasketItemComponent from '@/components/product/BasketItem';
 import { HiTrash, HiShoppingBag, HiArrowRight } from 'react-icons/hi';
@@ -12,6 +13,8 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { useKeyboardShortcuts, SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import { useRouter } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
+import LocalizedLink from '@/components/LocalizedLink';
 
 // Interface for a feature (aligned with BasketItemComponent)
 interface Feature {
@@ -34,6 +37,7 @@ export default function BasketPage() {
   const themeColors = useThemeColors();
   const { primary } = themeColors;
   const router = useRouter();
+  const { settings } = useSettings();
   const [isMounted, setIsMounted] = useState(false);
   const [featuresMap, setFeaturesMap] = useState<{ [key: number]: Feature[] }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -165,81 +169,31 @@ export default function BasketPage() {
   }, [fetchFeatures]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Header Section */}
-        <div 
-          className="rounded-2xl border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-          role="region"
-          aria-label="Shopping basket summary"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-          <div className="relative z-10">
-          {/* Header Content */}
-          <div className="p-3 sm:p-5">
-          <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl flex-shrink-0`}>
-                <HiShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">{t.shoppingBasket}</h1>
-                <p 
-                  className="text-xs sm:text-sm text-gray-600 mt-1 hidden sm:block"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  {totalItems} {totalItems === 1 ? t.item : t.items} <span className="text-gray-400">· {t.nextCheckout}</span>
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {basket.length > 0 && (
-                <button
-                  onClick={handleClearBasket}
-                  disabled={isLoading}
-                  className="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 disabled:opacity-50 border border-red-200 hover:border-red-300"
-                  aria-label={`Clear all ${totalItems} ${totalItems === 1 ? 'item' : 'items'} from basket`}
-                  aria-describedby="clear-basket-hint"
-                >
-                  <HiTrash className="w-4 h-4" aria-hidden="true" />
-                  <span className="text-sm font-medium hidden sm:inline">Clear All</span>
-                  <span className="text-sm font-medium sm:hidden">Clear</span>
-                  <span id="clear-basket-hint" className="sr-only">This will remove all items from your shopping basket</span>
-                </button>
-              )}
-              <Link href="/products" className="hidden sm:block" aria-label="Continue shopping for more products">
-                <Button variant="outline" size="sm" className="rounded-xl">
-                  {t.continueShopping} →
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          <div className="sm:hidden">
-            <p 
-              className="text-xs text-gray-600 mb-2"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {totalItems} {totalItems === 1 ? t.item : t.items} <span className="text-gray-400">· {t.nextCheckout}</span>
-            </p>
-            <Link href="/products" className="w-full block" aria-label="Continue shopping for more products">
-              <Button variant="outline" size="default" className="w-full rounded-xl">
-                {t.continueShopping} →
-              </Button>
-            </Link>
-          </div>
-          </div>
-          </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+      {/* Logo Header */}
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 border-b border-gray-200/30">
+        <div className="max-w-7xl mx-auto">
+          <LocalizedLink href="/" className="inline-block">
+            {settings?.image ? (
+              <Image
+                src={settings.image}
+                alt="Logo"
+                width={48}
+                height={48}
+                className="h-8 w-auto"
+                priority={true}
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                sizes="48px"
+                quality={90}
+              />
+            ) : (
+              <span className="text-xl font-semibold text-gray-900">{settings?.company_name || 'Store'}</span>
+            )}
+          </LocalizedLink>
         </div>
-
+      </div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
         {basket.length === 0 ? (
           /* Empty state aligned with checkout */
           <div className="text-center py-12 backdrop-blur-sm rounded-2xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
@@ -258,8 +212,82 @@ export default function BasketPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Enhanced Basket Items */}
+            {/* Left Column: Header + Basket Items */}
             <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+              {/* Header Section - Mobile: standalone, Desktop: part of left column */}
+              <div 
+                className="rounded-2xl border border-gray-200/30 backdrop-blur-sm relative overflow-hidden"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                role="region"
+                aria-label="Shopping basket summary"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+                <div className="relative z-10">
+                  {/* Header Content */}
+                  <div className="p-3 sm:p-5">
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl flex-shrink-0`}>
+                            <HiShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                          </div>
+                          <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight truncate">{t.shoppingBasket}</h1>
+                            <p 
+                              className="text-xs sm:text-sm text-gray-600 mt-1 hidden sm:block"
+                              role="status"
+                              aria-live="polite"
+                              aria-atomic="true"
+                            >
+                              {totalItems} {totalItems === 1 ? t.item : t.items} <span className="text-gray-400">· {t.nextCheckout}</span>
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {basket.length > 0 && (
+                            <button
+                              onClick={handleClearBasket}
+                              disabled={isLoading}
+                              className="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 disabled:opacity-50 border border-red-200 hover:border-red-300"
+                              aria-label={`Clear all ${totalItems} ${totalItems === 1 ? 'item' : 'items'} from basket`}
+                              aria-describedby="clear-basket-hint"
+                            >
+                              <HiTrash className="w-4 h-4" aria-hidden="true" />
+                              <span className="text-sm font-medium hidden sm:inline">Clear All</span>
+                              <span className="text-sm font-medium sm:hidden">Clear</span>
+                              <span id="clear-basket-hint" className="sr-only">This will remove all items from your shopping basket</span>
+                            </button>
+                          )}
+                          <Link href="/products" className="hidden sm:block" aria-label="Continue shopping for more products">
+                            <Button variant="outline" size="sm" className="rounded-xl">
+                              {t.continueShopping} →
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                      
+                      <div className="sm:hidden">
+                        <p 
+                          className="text-xs text-gray-600 mb-2"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
+                        >
+                          {totalItems} {totalItems === 1 ? t.item : t.items} <span className="text-gray-400">· {t.nextCheckout}</span>
+                        </p>
+                        <Link href="/products" className="w-full block" aria-label="Continue shopping for more products">
+                          <Button variant="outline" size="default" className="w-full rounded-xl">
+                            {t.continueShopping} →
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Basket Items */}
               <div className="rounded-2xl border border-gray-200/30 p-3 sm:p-5 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                 <div className="relative z-10">

@@ -357,7 +357,7 @@ export default function PaymentForm({
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
       <div className="relative z-10">
       <div className="mb-2 sm:mb-3">
-        <label htmlFor="email-input" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+        <label htmlFor="email-input" className="block text-sm font-semibold text-gray-900 mb-1.5">
           {t.emailAddress} <span className="text-red-500" aria-label="required">*</span>
         </label>
         <input
@@ -365,7 +365,7 @@ export default function PaymentForm({
           type="email"
           value={email}
           onChange={handleEmailChange}
-          className="w-full py-2.5 px-3 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 border-0"
+          className="w-full py-2.5 px-3 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 border border-gray-200/30"
           style={{ 
             backgroundColor: 'transparent',
             backgroundImage: 'none',
@@ -384,7 +384,7 @@ export default function PaymentForm({
       </div>
 
       <div className="mb-2 sm:mb-3">
-        <label htmlFor="payment-element" className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+        <label htmlFor="payment-element" className="block text-sm font-semibold text-gray-900 mb-1.5">
           {t.paymentDetails}
         </label>
         <div 
@@ -397,14 +397,14 @@ export default function PaymentForm({
       </div>
 
       <div className="mb-2 sm:mb-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">{t.promoCode}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1.5">{t.promoCode}</h3>
         <div className="flex items-center space-x-2" role="group" aria-label="Promotional code">
           <input
             id="promo-code-input"
             type="text"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="w-full py-2.5 px-3 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 backdrop-blur-sm border-0"
+            className="w-full py-2.5 px-3 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 backdrop-blur-sm border border-gray-200/30"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
             placeholder={t.enterPromoCode}
             disabled={promoLoading || !networkInfo.isOnline}
