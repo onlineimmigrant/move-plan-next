@@ -9,15 +9,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const HALLO3_URL = process.env.HALLO3_URL!;
-
-if (!HALLO3_URL) {
-  console.error('[generate-video] HALLO3_URL not configured in environment');
+function getHallo3Url(): string {
+  const url = process.env.HALLO3_URL;
+  if (!url) {
+    throw new Error('HALLO3_URL not configured in environment');
+  }
+  return url;
 }
 
 export async function POST(req: NextRequest) {
   console.log('[generate-video] Request received');
-  console.log('[generate-video] HALLO3_URL:', HALLO3_URL);
+  
+  let HALLO3_URL;
+  try {
+    HALLO3_URL = getHallo3Url();
+    console.log('[generate-video] HALLO3_URL:', HALLO3_URL);
+  } catch (error: any) {
+    console.error('[generate-video] HALLO3_URL not configured:', error.message);
+    return NextResponse.json({ 
+      error: 'AI video generation feature not available',
+      details: 'Hallo3 service not configured'
+    }, { status: 503 });
+  }
   
   try {
     // Authenticate user

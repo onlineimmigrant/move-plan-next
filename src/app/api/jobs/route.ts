@@ -2,13 +2,32 @@
 import { MongoClient } from 'mongodb';
 import { NextResponse } from 'next/server';
 
-const client = new MongoClient(process.env.MONGODB_URI!);
+let mongoClient: MongoClient | null = null;
+
+function getMongoClient(): MongoClient {
+  if (!mongoClient) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('MONGODB_URI is not defined');
+    }
+    mongoClient = new MongoClient(uri);
+  }
+  return mongoClient;
+}
 
 export async function GET() {
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is not defined');
+    let client;
+    try {
+      client = getMongoClient();
+    } catch (error: any) {
+      console.error('MongoDB not configured:', error.message);
+      return NextResponse.json({ 
+        error: 'Job scraping feature not available',
+        details: 'MongoDB not configured for this organization'
+      }, { status: 503 });
     }
+    
     await client.connect();
     const db = client.db('job_tool');
     const jobs = await db

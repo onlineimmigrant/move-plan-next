@@ -2,10 +2,31 @@
 import { MongoClient } from 'mongodb';
 import { NextResponse } from 'next/server';
 
-const client = new MongoClient(process.env.MONGODB_URI!);
+let mongoClient: MongoClient | null = null;
+
+function getMongoClient(): MongoClient {
+  if (!mongoClient) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('MONGODB_URI is not configured');
+    }
+    mongoClient = new MongoClient(uri);
+  }
+  return mongoClient;
+}
 
 export async function POST(request: Request) {
   try {
+    let client;
+    try {
+      client = getMongoClient();
+    } catch (error: any) {
+      console.error('MongoDB not configured:', error.message);
+      return NextResponse.json({ 
+        error: 'Job webhook feature not available' 
+      }, { status: 503 });
+    }
+
     const data = await request.json();
     const jobs = data.items.map((item: any) => ({
       title: item.title,
