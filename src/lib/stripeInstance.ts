@@ -25,6 +25,20 @@ export async function createStripeInstance(organizationId: string): Promise<Stri
  * Get Stripe instance (legacy - uses env var)
  * @deprecated Use createStripeInstance(organizationId) instead
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-08-27.basil',
+let legacyStripeInstance: Stripe | null = null;
+
+export const stripe = new Proxy({} as Stripe, {
+  get(target, prop) {
+    if (!legacyStripeInstance) {
+      const secretKey = process.env.STRIPE_SECRET_KEY;
+      if (!secretKey) {
+        throw new Error('STRIPE_SECRET_KEY not configured. Use createStripeInstance(organizationId) instead.');
+      }
+      legacyStripeInstance = new Stripe(secretKey, {
+        apiVersion: '2025-08-27.basil',
+      });
+    }
+    const value = (legacyStripeInstance as any)[prop];
+    return typeof value === 'function' ? value.bind(legacyStripeInstance) : value;
+  }
 });
