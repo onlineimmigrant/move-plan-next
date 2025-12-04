@@ -169,7 +169,7 @@ export default function BasketPage() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header Section */}
         <div 
-          className="rounded-2xl shadow-md border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden"
+          className="rounded-2xl border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden"
           style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
           role="region"
           aria-label="Shopping basket summary"
@@ -181,7 +181,7 @@ export default function BasketPage() {
           <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl shadow-md flex-shrink-0`}>
+              <div className={`p-2 bg-gradient-to-br from-${primary.bg} to-${primary.bgActive} rounded-xl flex-shrink-0`}>
                 <HiShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
               <div className="min-w-0">
@@ -242,10 +242,10 @@ export default function BasketPage() {
 
         {basket.length === 0 ? (
           /* Empty state aligned with checkout */
-          <div className="text-center py-12 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="text-center py-12 backdrop-blur-sm rounded-2xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
-              <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
+              <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center">
                 <HiShoppingBag className="w-12 h-12 text-gray-500" />
               </div>
               <p className="text-gray-600 text-base mb-6">{t.cartEmpty}</p>
@@ -260,7 +260,7 @@ export default function BasketPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Enhanced Basket Items */}
             <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-              <div className="rounded-2xl shadow-md border border-gray-200/30 p-3 sm:p-5 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div className="rounded-2xl border border-gray-200/30 p-3 sm:p-5 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                 <div className="relative z-10">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">{t.itemsInYourBasket}</h2>
@@ -284,7 +284,7 @@ export default function BasketPage() {
 
             {/* Enhanced Order Summary */}
             <div className="lg:col-span-1">
-              <div className="rounded-2xl shadow-md border border-gray-200/30 p-3 sm:p-5 lg:sticky lg:top-24 backdrop-blur-sm overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div className="rounded-2xl border border-gray-200/30 p-3 sm:p-5 lg:sticky lg:top-24 backdrop-blur-sm overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                 <div className="relative z-10">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">{t.cartTotal}</h3>
@@ -319,7 +319,7 @@ export default function BasketPage() {
                 >
                   <Button 
                     variant="start" 
-                    className="w-full justify-center whitespace-nowrap py-3 text-base font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                    className="w-full justify-center whitespace-nowrap py-3 text-base font-bold transform hover:-translate-y-0.5 transition-all duration-200"
                     data-testid="proceed-to-checkout-button"
                     aria-label={`${t.proceedToCheckout} - Total: ${currencySymbol}${totalPrice.toFixed(2)} (${(currencyCode || 'GBP').toUpperCase()}) - Press C to checkout`}
                   >

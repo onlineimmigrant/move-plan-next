@@ -617,7 +617,7 @@ export default function CheckoutPage() {
             </div>
             </div>
           </div>
-        <div className="backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/30 p-8 mt-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+        <div className="backdrop-blur-sm rounded-2xl border border-gray-200/30 p-8 mt-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
           <div className={`p-6 bg-gradient-to-br from-emerald-100 to-${primary.bgLighter} rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner`}>
             <span className="text-4xl">🎉</span>
           </div>
@@ -670,7 +670,7 @@ export default function CheckoutPage() {
             </div>
             </div>
           </div>
-          <div className="backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/30 p-6 mt-6 max-w-2xl mx-auto" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="backdrop-blur-sm rounded-3xl border border-gray-200/30 p-6 mt-6 max-w-2xl mx-auto" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
             <div className="flex justify-between items-center mb-0">
               <h2 className="text-sm font-semibold text-gray-900">{t.loadingEllipsis}</h2>
             </div>
@@ -683,7 +683,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 pt-20">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="rounded-2xl shadow-md border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+        <div className="rounded-2xl border border-gray-200/30 mb-6 backdrop-blur-sm relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
           {/* Header Content */}
@@ -711,8 +711,8 @@ export default function CheckoutPage() {
         </div>
 
       {basket.length === 0 ? (
-        <div className="text-center py-12 backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-xl border border-white/40 dark:border-gray-700/40 mt-6 max-w-2xl mx-auto relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+        <div className="text-center py-12 backdrop-blur-sm rounded-2xl border border-gray-200/30 mt-6 max-w-2xl mx-auto relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           <div className="relative z-10">
           <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-inner">
             <HiShoppingBag className="w-12 h-12 text-gray-500" />
@@ -726,10 +726,10 @@ export default function CheckoutPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-2 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-2 mb-6">
           {/* Left Column: Order Items */}
-          <div className="relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 space-y-4 sm:space-y-3">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+          <div className="lg:col-span-2 relative overflow-hidden backdrop-blur-sm rounded-2xl border border-gray-200/30 p-3 sm:p-5 space-y-4 sm:space-y-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
               <h3 className="font-bold text-gray-900 mb-3 sm:mb-4">{t.orderItems}</h3>
               <div className="space-y-3">
@@ -750,12 +750,12 @@ export default function CheckoutPage() {
           </div>
 
           {/* Right Column: Order Total & Payment */}
-          <div className="relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 rounded-2xl shadow-md border border-white/40 dark:border-gray-700/40 p-3 sm:p-5 lg:sticky lg:top-24">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+          <div className="relative overflow-hidden backdrop-blur-sm rounded-2xl border border-gray-200/30 p-3 lg:sticky lg:top-24" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0 mb-5">
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 text-center sm:text-left">
-                  {t.orderTotal} ({totalItems} {totalItems === 1 ? t.item : t.items})
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                  {t.orderTotal} <span className="text-gray-400">•</span> {totalItems} {totalItems === 1 ? t.item : t.items}
                 </h2>
                 <div className="flex items-center justify-center sm:justify-end space-x-2" aria-live="polite" aria-atomic="true">
                   {(() => {
@@ -806,13 +806,9 @@ export default function CheckoutPage() {
                     updatePaymentIntentWithEmail={updatePaymentIntentWithEmailCallback}
                   />
                 ) : hasRecurringItems && !customerEmail ? (
-                  <div className="backdrop-blur-xl bg-white/70 dark:bg-gray-800/70 p-4 rounded-2xl border border-white/40 dark:border-gray-700/40 shadow-md">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
+                  <div className="backdrop-blur-sm p-4 rounded-2xl border border-gray-200/30 relative overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                     <div className="relative z-10">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Enter your email to continue</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        A subscription requires an email address. Please enter your email to proceed with payment.
-                      </p>
                       <form onSubmit={async (e) => {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
@@ -832,7 +828,10 @@ export default function CheckoutPage() {
                             name="email"
                             type="email"
                             required
-                            className="w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors"
+                            className="w-full py-2.5 px-3 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 border border-gray-200/30"
+                            style={{ 
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                            }}
                             placeholder="your@email.com"
                           />
                         </div>

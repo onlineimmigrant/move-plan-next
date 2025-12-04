@@ -268,13 +268,89 @@ export default function PaymentForm({
 
   const paymentElementOptions = {
     layout: 'accordion' as const,
+    appearance: {
+      theme: 'none' as const,
+      variables: {
+        colorPrimary: '#6b7280',
+        colorBackground: 'rgba(255, 255, 255, 0.05)',
+        colorText: '#111827',
+        colorDanger: '#dc2626',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSizeBase: '14px',
+        spacingUnit: '3px',
+        borderRadius: '16px',
+        fontWeightNormal: '400',
+        fontWeightBold: '600',
+      },
+      rules: {
+        '.Input': {
+          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          boxShadow: 'none',
+          padding: '10px 12px',
+          fontSize: '14px',
+          color: '#111827',
+          lineHeight: '1.5',
+        },
+        '.Input:focus': {
+          border: 'none',
+          boxShadow: 'none',
+          outline: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        },
+        '.Input:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        },
+        '.Input::placeholder': {
+          color: '#9ca3af',
+        },
+        '.Input--invalid': {
+          border: '1px solid #dc2626',
+          boxShadow: 'none',
+        },
+        '.Label': {
+          fontSize: '14px',
+          fontWeight: '600',
+          color: '#111827',
+          marginBottom: '6px',
+        },
+        '.Tab': {
+          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          boxShadow: 'none',
+          padding: '10px 12px',
+        },
+        '.Tab:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        },
+        '.Tab--selected': {
+          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          boxShadow: 'none',
+        },
+        '.Block': {
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          boxShadow: 'none',
+          border: 'none',
+          padding: '12px',
+        },
+        '.AccordionItem': {
+          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          boxShadow: 'none',
+        },
+        '.AccordionItem:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        },
+      },
+    },
   };
 
   return (
     <form 
       id="payment-form" 
       onSubmit={handleSubmit} 
-      className="backdrop-blur-sm p-3 sm:p-4 rounded-2xl border border-gray-200/30 relative overflow-hidden pb-24 sm:pb-0 shadow-md" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+      className="backdrop-blur-sm p-3 sm:p-4 rounded-2xl border border-gray-200/30 relative overflow-hidden pb-24 sm:pb-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
       aria-label="Payment form"
       noValidate
     >
@@ -289,7 +365,13 @@ export default function PaymentForm({
           type="email"
           value={email}
           onChange={handleEmailChange}
-          className="w-full py-2 px-3 border border-gray-200/40 backdrop-blur-sm rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+          className="w-full py-2.5 px-3 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 border-0"
+          style={{ 
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
+            WebkitBoxShadow: '0 0 0 1000px transparent inset',
+            boxShadow: 'none'
+          }}
           placeholder={t.emailPlaceholder}
           required
           aria-required="true"
@@ -306,7 +388,7 @@ export default function PaymentForm({
           {t.paymentDetails}
         </label>
         <div 
-          className="backdrop-blur-sm rounded-lg border border-gray-200/40 p-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+          className="rounded-2xl overflow-hidden"
           role="group"
           aria-label="Payment card details"
         >
@@ -322,7 +404,8 @@ export default function PaymentForm({
             type="text"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            className="w-full py-2 px-3 border border-gray-200/40 backdrop-blur-sm rounded-lg text-sm focus:border-gray-600 focus:ring-1 focus:ring-gray-600 transition-colors duration-200" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+            className="w-full py-2.5 px-3 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors duration-200 backdrop-blur-sm border-0"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
             placeholder={t.enterPromoCode}
             disabled={promoLoading || !networkInfo.isOnline}
             aria-label="Enter promotional code"
@@ -333,7 +416,7 @@ export default function PaymentForm({
             type="button"
             onClick={handlePromoCodeApply}
             disabled={promoLoading}
-            className={`py-1.5 px-2.5 sm:px-3 text-sm font-medium text-white bg-gray-600/90 backdrop-blur-sm rounded-lg hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+            className={`py-1.5 px-2.5 sm:px-3 text-sm font-medium text-white bg-gray-600 rounded-xl hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 ${
               promoLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
             aria-label={promoLoading ? 'Applying promotional code' : 'Apply promotional code'}

@@ -173,13 +173,13 @@ const BasketItem = memo(function BasketItem({
   }, [plan.id, optimisticQuantity, product_name, planPackage, removeFromBasket, updateQuantity, toast]);
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-sm rounded-xl hover:shadow-md transition-all duration-300 border border-gray-200/40 hover:border-gray-300/60 shadow-sm relative overflow-hidden group" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+    <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 p-3 sm:p-4 backdrop-blur-sm rounded-xl transition-all duration-300 border border-gray-200/40 hover:border-gray-300/60 relative overflow-hidden group" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
       {/* Enhanced Product Image */}
       <div className="relative z-10 flex-shrink-0 w-full sm:w-auto flex justify-center sm:block md:col-span-2">
         {links_to_image ? (
-          <div className="relative w-28 h-28 sm:w-24 sm:h-24 bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
+          <div className="relative w-28 h-28 sm:w-24 sm:h-24 bg-white rounded-lg overflow-hidden border border-gray-200">
             <Image
               src={links_to_image}
               alt={product_name || 'Product'}
@@ -191,7 +191,7 @@ const BasketItem = memo(function BasketItem({
             />
           </div>
         ) : (
-          <div className="w-28 h-28 sm:w-24 sm:h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
+          <div className="w-28 h-28 sm:w-24 sm:h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200">
             <span className="text-gray-500 text-xs text-center font-medium">{t.noImage}</span>
           </div>
         )}
