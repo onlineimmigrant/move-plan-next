@@ -10,8 +10,12 @@ import { FaPlayCircle } from 'react-icons/fa';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import { HoverEditButtons } from '@/ui/Button';
 
-// Lazy load ReactPlayer for video backgrounds
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
+// Conditionally lazy load ReactPlayer only when needed (not imported if no video)
+// This saves ~50KB bundle size when video is not used
+const ReactPlayer = dynamic(() => import('react-player'), { 
+  ssr: false,
+  loading: () => null 
+});
 
 // Lazy load heavy animation components - only when actually used
 const DotGrid = dynamic(() => import('@/components/AnimateElements/DotGrid'), { 
@@ -118,13 +122,11 @@ const getTranslatedContent = (
   
   // If translation exists and is not empty, use it
   if (translatedContent && translatedContent.trim() !== '') {
-    console.log(`Translation: Found translation for locale '${locale}', using translated content`);
     return translatedContent;
   }
 
   // If no translation for current locale, return the original default content
   // (NOT English translation, but the actual default field value)
-  console.log(`Translation: No translation found for locale '${locale}', using default content`);
   return defaultContent;
 };
 
@@ -205,7 +207,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   useEffect(() => {
     const handleHeroUpdate = async (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log('[Hero] Received hero-section-updated event:', customEvent.detail);
       
       // Fetch fresh data from API to ensure we have the latest
       if (hero.id) {
@@ -213,11 +214,12 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
           const response = await fetch(`/api/hero-section/${hero.id}`);
           if (response.ok) {
             const updatedHero = await response.json();
-            console.log('[Hero] Fetched updated hero data:', updatedHero);
             setHero(updatedHero);
           }
         } catch (error) {
-          console.error('[Hero] Failed to fetch updated hero data:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[Hero] Failed to fetch updated hero data:', error);
+          }
           // Fallback to event detail if fetch fails
           setHero(customEvent.detail);
         }
@@ -241,31 +243,41 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const shouldShowInlineImage = hero.image && !isImageFullPage;
   // Note: Inline text editing removed - use modal editor instead
 
-  // Extract locale from pathname (e.g., /en/page -> en)
-  const pathSegments = pathname.split('/').filter(segment => segment !== '');
-  const pathLocale = pathSegments[0];
-  
-  // List of supported locales
-  const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
-  
-  // Determine the current locale
-  // Only consider it a locale if it's exactly 2 characters AND in our supported list
-  const currentLocale = (pathLocale && pathLocale.length === 2 && supportedLocales.includes(pathLocale)) 
-    ? pathLocale 
-    : null;
+  // Memoize locale detection to avoid repeated pathname parsing
+  const currentLocale = useMemo(() => {
+    const pathSegments = pathname.split('/').filter(segment => segment !== '');
+    const pathLocale = pathSegments[0];
+    
+    // List of supported locales
+    const supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'pt', 'it', 'nl', 'pl', 'ja', 'zh'];
+    
+    // Only consider it a locale if it's exactly 2 characters AND in our supported list
+    return (pathLocale && pathLocale.length === 2 && supportedLocales.includes(pathLocale)) 
+      ? pathLocale 
+      : null;
+  }, [pathname]);
 
-  // Get content - if no locale, use default fields directly
-  const translatedH1Title = currentLocale 
-    ? getTranslatedContent(hero.title, hero.title_translation, currentLocale)
-    : hero.title; // Direct default field
+  // Memoize translated content to reduce recalculations on re-renders
+  const translatedH1Title = useMemo(() => 
+    currentLocale 
+      ? getTranslatedContent(hero.title, hero.title_translation, currentLocale)
+      : hero.title,
+    [currentLocale, hero.title, hero.title_translation]
+  );
 
-  const translatedPDescription = currentLocale
-    ? getTranslatedContent(hero.description, hero.description_translation, currentLocale)
-    : hero.description; // Direct default field
+  const translatedPDescription = useMemo(() => 
+    currentLocale
+      ? getTranslatedContent(hero.description, hero.description_translation, currentLocale)
+      : hero.description,
+    [currentLocale, hero.description, hero.description_translation]
+  );
 
-  const translatedButton = currentLocale
-    ? getTranslatedContent(hero.button || '', hero.button_translation || {}, currentLocale)
-    : hero.button || ''; // Direct default field
+  const translatedButton = useMemo(() => 
+    currentLocale
+      ? getTranslatedContent(hero.button || '', hero.button_translation || {}, currentLocale)
+      : hero.button || '',
+    [currentLocale, hero.button, hero.button_translation]
+  );
 
   useEffect(() => {
     const currentRef = heroRef.current;
@@ -449,12 +461,9 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
               crossOrigin="anonymous"
               onPlay={() => setIsVideoPlaying(true)}
               onPause={() => setIsVideoPlaying(false)}
-              onError={(e) => {
-                console.error('[Hero] Video error:', e);
-              }}
             />
           ) : (
-            // ReactPlayer for YouTube and Vimeo
+            // ReactPlayer for YouTube and Vimeo (lazy loaded)
             <div className="w-full h-full">
               <ReactPlayer
                 url={getVideoUrl(hero.video_url, hero.video_player)}
@@ -565,7 +574,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 {hero.button_style?.isVideo ? (
                   <Link
                     href={hero.button_style?.url || '/products'}
-                    prefetch
                     onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
                   >
@@ -605,7 +613,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 {hero.button_style?.isVideo ? (
                   <Link
                     href={hero.button_style?.url || '/products'}
-                    prefetch
                     onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
                   >
@@ -614,7 +621,6 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                 ) : (
                   <Link
                     href={hero.button_style?.url || '/products'}
-                    prefetch
                     onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`rounded-full py-3 px-6 text-base font-medium text-white shadow-sm hover:opacity-80 animate-hero-button-get-started ${isVisible ? 'animate' : ''}`}
                     style={buttonStyle}

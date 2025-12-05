@@ -25,6 +25,7 @@ type PricingPlan = {
   slug?: string;
   package?: string;
   measure?: string;
+  description?: string;
   recurring_interval?: string;
   recurring_interval_count?: number;
   commitment_months?: number;
@@ -289,7 +290,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   ).length;
 
   const isSelectedPlanActive = pricingPlans.some(
-    (plan) => plan.slug === selectedPlan?.slug && getStatus(plan).toLowerCase() !== 'out of stock'
+    (plan) => plan.id === selectedPlan?.id && getStatus(plan).toLowerCase() !== 'out of stock'
   );
 
   if (!pricingPlans || pricingPlans.length === 0) {
@@ -396,7 +397,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
               : 'sm:grid-cols-2'
           }`}>
             {pricingPlans.map((plan, idx) => {
-              const isActive = plan.slug === selectedPlan?.slug;
+              const isActive = plan.id === selectedPlan?.id;
               const status = getStatus(plan);
               const normalizedStatus = status.toLowerCase();
               const isOutOfStock = normalizedStatus === 'out of stock';
@@ -472,7 +473,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                                   {getOriginalPrice(plan)}
                                 </span>
                                 <span 
-                                  className={`text-2xl sm:text-3xl font-extrabold ${
+                                  className={`text-xl sm:text-2xl font-extrabold ${
                                     isOutOfStock ? 'text-gray-400' : ''
                                   }`}
                                   style={!isOutOfStock ? { color: themeColors.cssVars.primary.base } : {}}
@@ -482,7 +483,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                                     const { symbol, whole, decimal } = formatPriceWithSmallDecimals(price);
                                     return (
                                       <>
-                                        {symbol}{whole}<span className="text-lg sm:text-xl">{decimal}</span>
+                                        {symbol}{whole}<span className="text-base sm:text-lg">{decimal}</span>
                                       </>
                                     );
                                   })()}
@@ -510,8 +511,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                             <div className="flex flex-col items-end space-y-1">
                               <div className="flex items-baseline space-x-1.5">
                                 <span
-                                  className={`text-2xl sm:text-3xl font-bold ${
-                                    isOutOfStock ? 'text-gray-400' : 'text-gray-800'
+                                  className={`text-xl sm:text-2xl font-bold ${
+                                    isOutOfStock ? 'text-gray-400' : isActive ? 'text-gray-800' : 'text-gray-600'
                                   }`}
                                 >
                                   {(() => {
@@ -519,7 +520,7 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                                     const { symbol, whole, decimal } = formatPriceWithSmallDecimals(price);
                                     return (
                                       <>
-                                        {symbol}{whole}<span className="text-lg sm:text-xl">{decimal}</span>
+                                        {symbol}{whole}<span className="text-base sm:text-lg">{decimal}</span>
                                       </>
                                     );
                                   })()}
@@ -552,18 +553,21 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
                         {/* Subtle divider */}
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-200/60 to-transparent"></div>
 
-                        {/* Package name and measure in separate row */}
+                        {/* Package name and measure/description in separate row */}
                         <div className="flex justify-between items-end gap-2 sm:gap-4">
                           <h2
-                            className={`text-lg sm:text-xl font-semibold ${
+                            className={`text-sm sm:text-base font-semibold truncate max-w-[50%] ${
                               isOutOfStock ? 'text-gray-400' : ''
                             }`}
-                            style={!isOutOfStock && isActive ? { color: themeColors.cssVars.primary.base } : !isOutOfStock ? { color: '#1f2937' } : {}}
+                            style={!isOutOfStock && isActive ? { color: themeColors.cssVars.primary.base } : !isOutOfStock ? { color: '#6b7280' } : {}}
+                            title={plan.package || t.product}
                           >
                             {plan.package || t.product}
                           </h2>
-                          <span className="text-sm sm:text-base font-semibold text-gray-600">
-                            {plan.measure}
+                          <span className={`text-xs sm:text-sm font-semibold truncate max-w-[50%] ${
+                            isOutOfStock ? 'text-gray-400' : isActive ? 'text-gray-600' : 'text-gray-500'
+                          }`} title={plan.type === 'one_time' ? plan.description : plan.measure}>
+                            {plan.type === 'one_time' ? (plan.description || plan.measure) : plan.measure}
                           </span>
                         </div>
                       </div>

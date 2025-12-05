@@ -233,14 +233,7 @@ const PricingCard = memo<PricingCardProps>(({
                 </li>
               ))
             ) : features.length === 0 ? (
-              <li className="text-center py-8">
-                <div className="text-gray-400 mb-2">
-                  <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
-                </div>
-                <p className="text-sm text-gray-500 font-light">No features available</p>
-              </li>
+              null
             ) : (
               <>
                 {featuresToShow.map((feature, index) => {
@@ -320,6 +313,19 @@ const PricingCard = memo<PricingCardProps>(({
         </div>
       </div>
     </div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo - only re-render if these props change
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.description === nextProps.description &&
+    prevProps.monthlyPrice === nextProps.monthlyPrice &&
+    prevProps.annualPrice === nextProps.annualPrice &&
+    prevProps.isAnnual === nextProps.isAnnual &&
+    prevProps.isExpanded === nextProps.isExpanded &&
+    prevProps.isLoadingFeatures === nextProps.isLoadingFeatures &&
+    prevProps.features.length === nextProps.features.length &&
+    prevProps.realFeatures?.length === nextProps.realFeatures?.length
   );
 });
 

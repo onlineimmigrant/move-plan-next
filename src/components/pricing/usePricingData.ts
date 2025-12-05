@@ -115,20 +115,21 @@ export function usePlanFeatures(
         );
         
         const results = await Promise.all(featurePromises);
-        const featuresMap: Record<number, Feature[]> = {};
+        const featuresMap: Record<string, Feature[]> = {};
         
         // Process all responses
         for (const result of results) {
+          const planIdKey = String(result.plan.id);
           if ('error' in result) {
-            console.error(`Network error for plan ${result.plan.id}:`, result.error);
-            featuresMap[result.plan.id] = [];
+            console.error(`Network error for plan ${planIdKey}:`, result.error);
+            featuresMap[planIdKey] = [];
           } else if (result.response.ok) {
             const features = await result.response.json();
-            featuresMap[result.plan.id] = features;
+            featuresMap[planIdKey] = features;
           } else {
             const errorData = await result.response.json().catch(() => ({}));
-            console.error(`Error fetching features for plan ${result.plan.id}:`, errorData);
-            featuresMap[result.plan.id] = [];
+            console.error(`Error fetching features for plan ${planIdKey}:`, errorData);
+            featuresMap[planIdKey] = [];
           }
         }
         

@@ -30,17 +30,18 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import { detectUserCurrency, getPriceForCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
+import { PricingPlan } from '@/types/pricingplan';
 import PricingCard from '@/components/pricing/PricingCard';
-// Lazy load comparison table - only loads when user scrolls down
-const PricingComparisonTable = lazy(() => import('@/components/pricing/PricingComparisonTable'));
+import PricingComparisonTable from '@/components/pricing/PricingComparisonTable';
 import { 
   generateProductPricingUrl, 
   generateBasicPricingUrl,
@@ -51,78 +52,258 @@ import {
   productNameToIdentifier
 } from '@/utils/pricingUtils';
 import { PRICING_CONSTANTS } from '@/utils/pricingConstants';
-import { usePricingTranslations } from './usePricingTranslations';
-import { useCurrencyDetection } from './useCurrencyDetection';
-import { usePricingPlans, usePlanFeatures } from './usePricingData';
-import { transformPricingPlans } from './transformPricingPlans';
-import type { PricingModalProps, PricingComparison } from './types';
-import { PRICING_GRID_CLASSES, PRICING_MODAL_STYLES, TOGGLE_STYLES, PRODUCT_TAB_STYLES, DISCOUNT_BADGE_STYLES, TEXT_STYLES } from './pricingModalStyles';
-import { ANIMATION_CLASSES, ANIMATION_TIMING, getCardAnimationDelay } from './animations';
-import { PricingErrorBoundary } from './PricingErrorBoundary';
-import { announceToScreenReader, MODAL_ARIA_ATTRS, getToggleLabel } from './accessibilityUtils';
-import { measureTimeToInteractive } from './performanceUtils';
 
 // Re-export utility functions for external use
 export { generateProductPricingUrl, generateBasicPricingUrl };
 
-/**
- * Full-screen pricing modal component that displays pricing plans with product selection,
- * currency detection, and feature comparison. Supports URL-based product linking.
- * 
- * @param {PricingModalProps} props - Component props
- * @param {boolean} props.isOpen - Controls modal visibility
- * @param {Function} props.onClose - Callback when modal is closed
- * @param {PricingComparison} [props.pricingComparison] - Optional pricing comparison data for translations
- * 
- * @example
- * <PricingModal 
- *   isOpen={showPricing} 
- *   onClose={() => setShowPricing(false)}
- *   pricingComparison={comparisonData}
- * />
- */
+// Feature interface for pricing modal
+interface Feature {
+  id: string;
+  name: string;
+  content: string;
+  slug: string;
+  type: 'features' | 'modules' | 'support';
+  order: number;
+}
+
+// Static translations for pricing modal
+const PRICINGPLAN_TRANSLATIONS = {
+  en: { 
+    monthly: 'Monthly',
+    annual: 'Annual',
+    compareAllFeatures: 'Compare all features',
+    seeEverythingIncluded: 'See everything that\'s included in each plan',
+    features: 'Features',
+    mostPopular: 'Most popular',
+    limitedTimeOffer: 'Limited Time Offer',
+    viewMore: 'View more',
+    viewLess: 'View less',
+    buyNow: 'Buy Now',
+    getStarted: 'Get Started'
+  },
+  es: { 
+    monthly: 'Mensual',
+    annual: 'Anual',
+    compareAllFeatures: 'Comparar todas las características',
+    seeEverythingIncluded: 'Ve todo lo que está incluido en cada plan',
+    features: 'Características',
+    mostPopular: 'Más popular',
+    limitedTimeOffer: 'Oferta por tiempo limitado',
+    viewMore: 'Ver más',
+    viewLess: 'Ver menos',
+    buyNow: 'Comprar ahora',
+    getStarted: 'Comenzar'
+  },
+  fr: { 
+    monthly: 'Mensuel',
+    annual: 'Annuel',
+    compareAllFeatures: 'Comparer toutes les fonctionnalités',
+    seeEverythingIncluded: 'Voir tout ce qui est inclus dans chaque plan',
+    features: 'Fonctionnalités',
+    mostPopular: 'Le plus populaire',
+    limitedTimeOffer: 'Offre à durée limitée',
+    viewMore: 'Voir plus',
+    viewLess: 'Voir moins',
+    buyNow: 'Acheter maintenant',
+    getStarted: 'Commencer'
+  },
+  de: { 
+    monthly: 'Monatlich',
+    annual: 'Jährlich',
+    compareAllFeatures: 'Alle Funktionen vergleichen',
+    seeEverythingIncluded: 'Sehen Sie alles, was in jedem Plan enthalten ist',
+    features: 'Funktionen',
+    mostPopular: 'Am beliebtesten',
+    limitedTimeOffer: 'Zeitlich begrenztes Angebot',
+    viewMore: 'Mehr anzeigen',
+    viewLess: 'Weniger anzeigen',
+    buyNow: 'Jetzt kaufen',
+    getStarted: 'Loslegen'
+  },
+  ru: { 
+    monthly: 'Ежемесячно',
+    annual: 'Ежегодно',
+    compareAllFeatures: 'Сравнить все функции',
+    seeEverythingIncluded: 'Посмотрите все, что включено в каждый план',
+    features: 'Функции',
+    mostPopular: 'Популярный',
+    limitedTimeOffer: 'Ограниченное по времени предложение',
+    viewMore: 'Показать больше',
+    viewLess: 'Показать меньше',
+    buyNow: 'Купить сейчас',
+    getStarted: 'Начать'
+  },
+  it: { 
+    monthly: 'Mensile',
+    annual: 'Annuale',
+    compareAllFeatures: 'Confronta tutte le funzionalità',
+    seeEverythingIncluded: 'Vedi tutto ciò che è incluso in ogni piano',
+    features: 'Funzionalità',
+    mostPopular: 'Popolare',
+    limitedTimeOffer: 'Offerta a tempo limitato',
+    viewMore: 'Vedi di più',
+    viewLess: 'Vedi meno',
+    buyNow: 'Acquista ora',
+    getStarted: 'Inizia'
+  },
+  pt: { 
+    monthly: 'Mensal',
+    annual: 'Anual',
+    compareAllFeatures: 'Compare todos os recursos',
+    seeEverythingIncluded: 'Veja tudo o que está incluído em cada plano',
+    features: 'Recursos',
+    mostPopular: 'Popular',
+    limitedTimeOffer: 'Oferta por tempo limitado',
+    viewMore: 'Ver mais',
+    viewLess: 'Ver menos',
+    buyNow: 'Comprar agora',
+    getStarted: 'Começar'
+  },
+  pl: { 
+    monthly: 'Miesięczny',
+    annual: 'Roczny',
+    compareAllFeatures: 'Porównaj wszystkie funkcje',
+    seeEverythingIncluded: 'Zobacz wszystko, co jest zawarte w każdym planie',
+    features: 'Funkcje',
+    mostPopular: 'Najpopularniejszy',
+    limitedTimeOffer: 'Oferta ograniczona czasowo',
+    viewMore: 'Zobacz więcej',
+    viewLess: 'Zobacz mniej',
+    buyNow: 'Kup teraz',
+    getStarted: 'Rozpocznij'
+  },
+  zh: { 
+    monthly: '每月',
+    annual: '每年',
+    compareAllFeatures: '比较所有功能',
+    seeEverythingIncluded: '查看每个计划包含的所有内容',
+    features: '功能',
+    mostPopular: '最受欢迎',
+    limitedTimeOffer: '限时优惠',
+    viewMore: '查看更多',
+    viewLess: '查看更少',
+    buyNow: '立即购买',
+    getStarted: '开始使用'
+  },
+  ja: { 
+    monthly: '月額',
+    annual: '年額',
+    compareAllFeatures: 'すべての機能を比較',
+    seeEverythingIncluded: '各プランに含まれるすべてを確認',
+    features: '機能',
+    mostPopular: '最も人気',
+    limitedTimeOffer: '期間限定オファー',
+    viewMore: 'もっと見る',
+    viewLess: '少なく表示',
+    buyNow: '今すぐ購入',
+    getStarted: '開始する'
+  }
+};
+
+interface SamplePricingPlan {
+  name: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  period: string;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  buttonText: string;
+  buttonVariant: 'primary' | 'secondary';
+  monthlyRecurringCount: number;
+  annualRecurringCount: number;
+  actualAnnualPrice?: number; // For real data: the actual annual plan price
+  annualSizeDiscount?: number; // New field for annual discount percentage
+  planId?: number; // Plan ID for feature lookup
+  realFeatures?: Feature[]; // Real feature objects with full data
+  productSlug?: string; // Product slug for linking to product page
+  order: number; // Order field for sorting plans
+  isPromotion?: boolean; // Promotion flag
+  promotionPrice?: number; // Promotional price
+  monthlyPromotionPrice?: number; // Monthly promotional price
+  annualPromotionPrice?: number; // Annual promotional price
+  currencySymbol?: string; // Currency symbol for monthly price
+  annualCurrencySymbol?: string; // Currency symbol for annual price
+}
+
+interface PricingComparison {
+  id: number;
+  created_at: string;
+  name: string;
+  description: string;
+  name_translation: Record<string, string>;
+  description_translation: Record<string, string>;
+  organization_id: number;
+}
+
+interface PricingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  pricingComparison?: PricingComparison | null;
+}
+
+// Hook to get translations based on current locale
+function usePricingTranslations() {
+  const pathname = usePathname();
+  const { settings } = useSettings();
+  
+  // Extract locale from pathname (e.g., /en/page -> en)
+  const pathLocale = pathname.split('/')[1];
+  
+  // Use path locale if valid, otherwise fall back to application's default language, then English
+  const defaultLanguage = settings?.language || 'en';
+  const currentLocale = (pathLocale && PRICINGPLAN_TRANSLATIONS[pathLocale as keyof typeof PRICINGPLAN_TRANSLATIONS]) 
+    ? pathLocale 
+    : defaultLanguage;
+  
+  // Get translations for current locale or fallback to English
+  const translations = PRICINGPLAN_TRANSLATIONS[currentLocale as keyof typeof PRICINGPLAN_TRANSLATIONS] || PRICINGPLAN_TRANSLATIONS.en;
+  
+  return {
+    ...translations,
+    currentLocale,
+    hasTranslations: true
+  };
+}
+
+// No more sample data - using real database content only
+
 export default function PricingModal({ isOpen, onClose, pricingComparison }: PricingModalProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PricingComparisonProduct | null>(null);
-  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>(() => {
-    // Load from localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('pricing-expanded-features');
-        return saved ? JSON.parse(saved) : {};
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [planFeatures, setPlanFeatures] = useState<Record<string, Feature[]>>({});
+  const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
   const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
-  const [hoveredProductId, setHoveredProductId] = useState<number | null>(null);
-  const modalRef = React.useRef<HTMLDivElement>(null);
-  
+  const [userCurrency, setUserCurrency] = useState('USD');
+  const [currencySymbol, setCurrencySymbol] = useState('$');
   const translations = usePricingTranslations();
   const pathname = usePathname();
   const { settings } = useSettings();
-  const themeColors = useThemeColors();
   
   // Get current locale for content translations
   const currentLocale = getLocaleFromPathname(pathname);
 
-  // Fetch pricing plans
-  const { pricingPlans, isLoadingPlans, error: plansError } = usePricingPlans(
-    settings?.organization_id,
-    selectedProduct?.id,
-    'USD' // Will be updated by currency detection
-  );
-  
-  // Detect user currency
-  const { userCurrency, currencySymbol } = useCurrencyDetection(pricingPlans);
-  
-  // Fetch plan features
-  const { planFeatures, isLoadingFeatures, error: featuresError } = usePlanFeatures(
-    pricingPlans,
-    settings?.organization_id
-  );
+  // Detect user currency when pricing plans are loaded
+  useEffect(() => {
+    // Only detect currency after pricing plans are loaded for smart base currency detection
+    if (pricingPlans.length > 0) {
+      const detectedCurrency = detectUserCurrency(undefined, undefined, pricingPlans);
+      setUserCurrency(detectedCurrency);
+      
+      // Set currency symbol based on detected currency
+      const currencySymbols: Record<string, string> = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'PLN': 'zł',
+        'RUB': '₽'
+      };
+      setCurrencySymbol(currencySymbols[detectedCurrency] || '$');
+    }
+  }, [pricingPlans]); // Depend on pricingPlans to re-run when they're loaded
 
   // Update URL hash when product changes
   const handleProductSelect = useCallback((product: PricingComparisonProduct) => {
@@ -130,105 +311,307 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     updatePricingHash(product);
   }, []);
 
-  const displayPlans = useMemo(() => 
-    transformPricingPlans(pricingPlans, planFeatures, userCurrency, currencySymbol), 
-    [pricingPlans, planFeatures, userCurrency, currencySymbol]
-  );
+  // Fetch pricing plans when selected product changes
+  useEffect(() => {
+    const fetchPricingPlans = async () => {
+      if (!settings?.organization_id) return;
+      
+      setIsLoadingPlans(true);
+      
+      try {
+        const productParam = selectedProduct?.id ? `&productId=${selectedProduct.id}` : '';
+        const currencyParam = `&currency=${userCurrency}`;
+        const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=plans${productParam}${currencyParam}`;
+        
+        console.log('[PricingModal] Fetching plans for product:', selectedProduct?.product_name || 'ALL PRODUCTS');
+        console.log('[PricingModal] Selected product ID:', selectedProduct?.id);
+        console.log('[PricingModal] API URL:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-currency': userCurrency,
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[PricingModal] Fetched', data.length, 'plans for product:', selectedProduct?.product_name || 'ALL');
+          console.log('[PricingModal] Plan product IDs:', data.map((p: any) => ({ id: p.id, product_id: p.product_id, package: p.package })));
+          setPricingPlans(data);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Error fetching pricing plans:', errorData);
+          setPricingPlans([]);
+        }
+      } catch (error) {
+        console.error('Network error fetching pricing plans:', error);
+        setPricingPlans([]);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
+    fetchPricingPlans();
+  }, [settings?.organization_id, selectedProduct?.id, userCurrency]);
+
+  // Fetch features for pricing plans when they change
+  useEffect(() => {
+    const fetchFeaturesForPlans = async () => {
+      if (!pricingPlans.length || !settings?.organization_id) return;
+      
+      setIsLoadingFeatures(true);
+      const featuresMap: Record<string, Feature[]> = {};
+      
+      try {
+        // Fetch ALL features for the organization at once (more efficient than per-plan requests)
+        const url = `/api/pricingplan-features?organization_id=${encodeURIComponent(settings.organization_id)}`;
+        
+        console.log('[PricingModal] Fetching all features for organization:', settings.organization_id);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const allFeatures = await response.json();
+          console.log('[PricingModal] Fetched features:', allFeatures.length, 'total features');
+          
+          // Group features by pricingplan_id
+          allFeatures.forEach((pf: any) => {
+            const planId = pf.pricingplan_id;
+            if (!featuresMap[planId]) {
+              featuresMap[planId] = [];
+            }
+            // Extract the actual feature data
+            if (pf.feature) {
+              featuresMap[planId].push(pf.feature);
+            }
+          });
+          
+          console.log('[PricingModal] Grouped features by plan:', Object.keys(featuresMap).length, 'plans have features');
+          console.log('[PricingModal] Sample plan IDs with features:', Object.keys(featuresMap).slice(0, 3));
+        } else {
+          console.error('Error fetching features:', await response.json().catch(() => ({})));
+        }
+        
+        setPlanFeatures(featuresMap);
+      } catch (error) {
+        console.error('Network error fetching features:', error);
+        setPlanFeatures({});
+      } finally {
+        setIsLoadingFeatures(false);
+      }
+    };
+
+    fetchFeaturesForPlans();
+  }, [pricingPlans, settings?.organization_id]);
+
+  // Transform real pricing plans into display format
+  const transformPricingPlans = useCallback((plans: PricingPlan[]): SamplePricingPlan[] => {
+    console.log('[transformPricingPlans] Input plans:', plans.length);
+    if (!plans || plans.length === 0) return []; // Return empty array when no plans available
+    
+    // Group by package name to show monthly/annual variants together
+    // Each unique package gets its own card
+    const plansByPackage: { [key: string]: { monthly?: PricingPlan; annual?: PricingPlan } } = {};
+    
+    plans.forEach(plan => {
+      // Skip null or undefined plans
+      if (!plan) return;
+      
+      // Use package name as the key, with plan ID as fallback for uniqueness
+      const packageName = plan.package || `Plan ${plan.id}`;
+      
+      // For subscription plans with monthly/annual variants, group by package
+      // For one-time plans, each gets its own unique key
+      let packageKey: string;
+      if (plan.recurring_interval === 'month' || plan.recurring_interval === 'year') {
+        // Subscription plans: group by package name (monthly and annual variants together)
+        packageKey = packageName;
+      } else {
+        // One-time plans: each plan gets its own card using unique ID
+        packageKey = `${plan.id}_${packageName}`;
+      }
+      
+      if (!plansByPackage[packageKey]) {
+        plansByPackage[packageKey] = {};
+      }
+      
+      if (plan.recurring_interval === 'month') {
+        plansByPackage[packageKey].monthly = plan;
+      } else if (plan.recurring_interval === 'year') {
+        plansByPackage[packageKey].annual = plan;
+      } else {
+        // Handle one-time purchases and plans with null recurring_interval
+        // Each one-time plan gets its own entry
+        plansByPackage[packageKey].monthly = plan;
+      }
+    });
+    
+    const transformedPlans = Object.entries(plansByPackage).map(([packageKey, { monthly, annual }], index) => {
+      // Use the package name as the card title
+      const packageName = monthly?.package || annual?.package || 'Unknown Package';
+      
+      // Transform plan data
+      
+      // Get currency-aware prices using our utility function
+      const monthlyPriceResult = getPriceForCurrency(monthly, userCurrency);
+      const annualPriceResult = getPriceForCurrency(annual, userCurrency);
+      
+      // Use raw prices directly as they are already in the correct currency units (not cents)
+      // The database stores prices in pence/cents format (35000 = £350.00)
+      const monthlyPrice = (monthly?.price || 0) / 100; // Divide by 100 to convert pence to pounds
+      const monthlyPriceSymbol = monthly?.currency_symbol || currencySymbol;
+      
+      // Calculate annual price with priority:
+      // 1. Use annual plan's monthly_price_calculated if available
+      // 2. Calculate from monthly price using annual_size_discount if available
+      // 3. Fallback to monthly price
+      let annualPrice = monthlyPrice;
+      let actualAnnualPrice = undefined;
+      let annualPriceSymbol = monthlyPriceSymbol;
+      
+      if (annual?.monthly_price_calculated) {
+        // Direct annual plan exists - use raw price divided by 100
+        annualPrice = (annual?.price || monthlyPrice * 100) / 100;
+        annualPriceSymbol = annual?.currency_symbol || currencySymbol;
+        const commitmentMonths = annual.commitment_months || 12;
+        actualAnnualPrice = annualPrice ? parseFloat((annualPrice * commitmentMonths).toFixed(2)) : undefined;
+      } else if (monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
+        // Calculate annual price from monthly using discount
+        const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
+        annualPrice = parseFloat((monthlyPrice * discountMultiplier).toFixed(2));
+        actualAnnualPrice = parseFloat((annualPrice * 12).toFixed(2)); // Calculate actual annual total
+        annualPriceSymbol = monthlyPriceSymbol; // Use same symbol
+      }
+      
+      // Get features for this plan
+      const planId = monthly?.id || annual?.id;
+      const planIdNumber = planId ? (typeof planId === 'number' ? planId : parseInt(String(planId), 10)) : undefined;
+      const realFeatures = planIdNumber ? (planFeatures[planIdNumber] || []) : [];
+      
+      console.log('[PricingModal] Plan ID:', planIdNumber, 'Features found:', realFeatures.length);
+
+      // Handle promotion pricing with currency awareness
+      const monthlyIsPromotion = monthly?.is_promotion && (monthly?.promotion_price !== undefined || monthly?.promotion_percent !== undefined);
+      const annualIsPromotion = annual?.is_promotion && (annual?.promotion_price !== undefined || annual?.promotion_percent !== undefined);
+      
+      let monthlyPromotionPrice = undefined;
+      let annualPromotionPrice = undefined;
+      
+      if (monthlyIsPromotion) {
+        if (monthly?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage of the converted price
+          monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
+        } else if (monthly?.promotion_price !== undefined) {
+          // Use promotion_price divided by 100 (stored in pence)
+          monthlyPromotionPrice = monthly.promotion_price / 100;
+        }
+      }
+      
+      if (annualIsPromotion) {
+        if (annual?.promotion_percent !== undefined) {
+          // Calculate promotion price from percentage of the converted price
+          annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
+        } else if (annual?.promotion_price !== undefined) {
+          // Use promotion_price divided by 100 (stored in pence)
+          annualPromotionPrice = annual.promotion_price / 100;
+        }
+      } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
+        // Calculate annual promotion price from monthly promotion using discount
+        const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
+        annualPromotionPrice = parseFloat((monthlyPromotionPrice * discountMultiplier).toFixed(2));
+      }
+
+      // Plan transformed successfully
+
+      return {
+        name: packageName,
+        monthlyPrice: parseFloat(monthlyPrice.toFixed(2)),
+        annualPrice: parseFloat(annualPrice.toFixed(2)),
+        period: '/month',
+        description: monthly?.description || annual?.description || '',
+        features: [], // Will be populated after sorting and filtering
+        buttonText: monthly?.type === 'one_time' ? 'Buy Now' : 'Get Started', // Will be translated in render
+        // Add currency information
+        currencySymbol: monthlyPriceSymbol,
+        annualCurrencySymbol: annualPriceSymbol,
+        // Add recurring interval data for total calculation
+        monthlyRecurringCount: monthly?.recurring_interval_count || 1,
+        annualRecurringCount: annual?.commitment_months || monthly?.commitment_months || 12,
+        // Add the actual annual plan price for correct total calculation (already converted from cents)
+        actualAnnualPrice,
+        // Add discount information for display
+        annualSizeDiscount: monthly?.annual_size_discount || annual?.annual_size_discount || 0,
+        // Store the actual plan ID and features for feature comparison table
+        planId: planIdNumber,
+        realFeatures: realFeatures || [],
+        // Add product slug for linking to product page
+        productSlug: monthly?.product?.slug || annual?.product?.slug || '',
+        // Store the order for sorting
+        order: monthly?.order_number || annual?.order_number || 999, // Default to 999 if no order specified
+        // Promotion fields
+        isPromotion: monthlyIsPromotion || annualIsPromotion,
+        promotionPrice: monthlyIsPromotion ? monthlyPromotionPrice : annualIsPromotion ? annualPromotionPrice : undefined,
+        monthlyPromotionPrice,
+        annualPromotionPrice,
+      };
+    }).sort((a, b) => a.order - b.order);
+
+    // After sorting, show only explicitly linked features for each plan
+    const sortedPlans = transformedPlans.map((plan, sortedIndex) => {
+      // Show only the features explicitly linked to this pricing plan
+      const displayFeatures = (plan.realFeatures || []).map(feature => feature.name);
+
+      return {
+        ...plan,
+        features: displayFeatures,
+        highlighted: sortedIndex === 1, // Highlight the second plan after sorting
+        buttonVariant: (sortedIndex === 1 ? 'primary' : 'secondary') as 'primary' | 'secondary',
+      };
+    });
+
+    console.log('[transformPricingPlans] Output plans:', sortedPlans.length, 'First plan:', sortedPlans[0]);
+    return sortedPlans;
+  }, [planFeatures, userCurrency, currencySymbol]);
+
+  const displayPlans = useMemo(() => transformPricingPlans(pricingPlans), [transformPricingPlans, pricingPlans]);
 
   // Check if any plans are one-time payments to hide annual/monthly toggle
   const hasOneTimePlans = useMemo(() => pricingPlans.some(plan => plan.type === 'one_time'), [pricingPlans]);
 
-  /**
-   * Get translated title for pricing modal
-   * Falls back to default English text if no comparison data provided
-   */
-  const getTranslatedTitle = useCallback(() => {
+  // Get translated title and description
+  const getTranslatedTitle = () => {
     if (!pricingComparison) return "Choose the plan that's right for you.";
+    // Use the translation system with fallback to 'en' when currentLocale is null
     const localeToUse = currentLocale || 'en';
     return getTranslatedMenuContent(pricingComparison.name, pricingComparison.name_translation, localeToUse);
-  }, [pricingComparison, currentLocale]);
+  };
 
-  /**
-   * Get translated description for pricing modal
-   * Falls back to default English text if no comparison data provided
-   */
-  const getTranslatedDescription = useCallback(() => {
+  const getTranslatedDescription = () => {
     if (!pricingComparison) return "Cancel or change plans anytime. No hidden fees, no surprises.";
+    // Use the translation system with fallback to 'en' when currentLocale is null
     const localeToUse = currentLocale || 'en';
     return getTranslatedMenuContent(pricingComparison.description, pricingComparison.description_translation, localeToUse);
-  }, [pricingComparison, currentLocale]);
+  };
 
-  /**
-   * Lock body scroll when modal is open to prevent background scrolling
-   */
   useEffect(() => {
     if (isOpen) {
-      // Store original overflow value
-      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-      
-      return () => {
-        // Restore original overflow value
-        document.body.style.overflow = originalOverflow;
-      };
+    } else {
+      document.body.style.overflow = 'unset';
     }
-  }, [isOpen]);
 
-  /**
-   * Focus trap - keeps keyboard navigation within modal
-   */
-  useEffect(() => {
-    if (!isOpen || !modalRef.current) return;
-
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button:not(:disabled), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      
-      if (!focusableElements || focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
+    return () => {
+      document.body.style.overflow = 'unset';
     };
-
-    document.addEventListener('keydown', handleTabKey);
-    return () => document.removeEventListener('keydown', handleTabKey);
   }, [isOpen]);
 
-  /**
-   * Persist expanded features to localStorage
-   */
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('pricing-expanded-features', JSON.stringify(expandedFeatures));
-      } catch (error) {
-        console.error('Failed to save expanded state:', error);
-      }
-    }
-  }, [expandedFeatures]);
-
-  /**
-   * Handle modal open/close effects:
-   * - Set up keyboard listeners (ESC to close)
-   * - Parse initial product from URL hash
-   * - Update URL hash if needed
-   * - Measure time to interactive
-   */
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -237,12 +620,17 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     };
 
     if (isOpen) {
-      measureTimeToInteractive('pricing-modal-open');
       document.addEventListener('keydown', handleEscape);
       
       // Capture the initial product identifier from URL hash when modal opens
       const productIdentifier = parseProductFromHash();
       setInitialProductIdentifier(productIdentifier);
+      
+      if (productIdentifier) {
+        // console.log('PricingModal: Detected product identifier in URL:', productIdentifier);
+      } else {
+        // console.log('PricingModal: No product identifier in URL, will use default');
+      }
       
       // Update URL hash when modal opens (if no specific product is targeted)
       const currentHash = window.location.hash;
@@ -251,55 +639,76 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       if (hashParts.length === 0 || (hashParts.length === 1 && hashParts[0] !== 'pricing')) {
         // No hash or incorrect hash, set to #pricing
         window.history.replaceState(null, '', window.location.pathname + window.location.search + '#pricing');
+      } else if (hashParts.length === 1 && hashParts[0] === 'pricing') {
+        // Just #pricing, leave as is for now (will be updated when product is selected)
       }
+      // If hashParts.length >= 2, we already have a product identifier, keep it as is
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, parseProductFromHash]);
 
   if (!isOpen) return null;
 
   return (
-    <PricingErrorBoundary>
-      <div className={PRICING_MODAL_STYLES.container}>
-        {/* Backdrop */}
-        <div 
-          className={PRICING_MODAL_STYLES.backdrop}
-          onClick={() => {
-            onClose();
-            removePricingHash();
-          }}
-          aria-hidden="true"
-        />
-        
-        {/* Modal - Full Screen */}
-        <div className={PRICING_MODAL_STYLES.modal}>
-          <div 
-            ref={modalRef} 
-            className={`${PRICING_MODAL_STYLES.content} ${ANIMATION_CLASSES.modalFadeIn} ${ANIMATION_TIMING.modalEntry}`}
-            {...MODAL_ARIA_ATTRS}
-          >
+    <div className="fixed inset-0 z-50">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        onClick={() => {
+          onClose();
+          // Remove hash when clicking backdrop
+          removePricingHash();
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Modal - Full Screen */}
+      <div className="relative h-full w-full flex">
+        <div className="relative bg-white w-full h-full overflow-hidden flex flex-col">
           
           {/* Header */}
-          <div className={PRICING_MODAL_STYLES.header}>
+          <div className="relative bg-white px-6 py-6 sm:px-8 sm:py-8 flex-shrink-0 border-b border-gray-100">
+            {/* Logo - Top Left */}
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+              {settings?.image ? (
+                <Image
+                  src={settings.image}
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  className="h-8 w-auto"
+                  priority={true}
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
+                  sizes="48px"
+                  quality={90}
+                />
+              ) : (
+                <span className="text-lg font-semibold text-gray-900">{settings?.company_name || 'Store'}</span>
+              )}
+            </div>
+            
+            {/* Close Button - Top Right */}
             <button
               onClick={() => {
                 onClose();
+                // Remove hash when clicking close button
                 removePricingHash();
               }}
-              className={PRICING_MODAL_STYLES.closeButton}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-50"
               aria-label="Close pricing modal"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
             
             <div className="text-center max-w-4xl mx-auto">
-              <h2 id="pricing-modal-title" className={TEXT_STYLES.title}>
+              <h2 className="text-3xl sm:text-4xl lg:text-4xl font-extralight tracking-tight mb-3 sm:mb-4 text-gray-700 leading-tight">
                 {getTranslatedTitle()}
               </h2>
-              <p id="pricing-modal-description" className={TEXT_STYLES.description}>
+              <p className="hidden sm:block text-base sm:text-lg font-light text-gray-500 leading-relaxed mb-6 max-w-2xl mx-auto">
                 {getTranslatedDescription()}
               </p>
               
@@ -315,51 +724,32 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
               {/* Pricing Toggle - Only show for recurring plans */}
               {!hasOneTimePlans && (
                 <div className="flex justify-center">
-                  <div className={TOGGLE_STYLES.container}>
+                  <div className="relative bg-gray-50/70 p-0.5 rounded-full border border-gray-200/50 backdrop-blur-sm">
+                    <div className={` ${
+                      isAnnual ? 'transform translate-x-full' : 'transform translate-x-0'
+                    }`}></div>
                     <button 
-                      onClick={() => {
-                        setIsAnnual(false);
-                        announceToScreenReader('Switched to monthly billing');
-                      }}
-                      className={!isAnnual ? TOGGLE_STYLES.button.active : TOGGLE_STYLES.button.inactive}
-                      aria-label={getToggleLabel(false)}
-                      aria-pressed={!isAnnual}
+                      onClick={() => setIsAnnual(false)}
+                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
+                        !isAnnual 
+                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
                     >
                       {translations.monthly}
                     </button>
                     <button 
-                      onClick={() => {
-                        setIsAnnual(true);
-                        announceToScreenReader('Switched to annual billing');
-                      }}
-                      className={isAnnual ? TOGGLE_STYLES.button.active : TOGGLE_STYLES.button.inactive}
-                      aria-label={getToggleLabel(true)}
-                      aria-pressed={isAnnual}
+                      onClick={() => setIsAnnual(true)}
+                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
+                        isAnnual 
+                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
                     >
-                      <span>{translations.annual}</span>
-                      {(() => {
-                        const firstPlan = displayPlans[0];
-                        const discount = firstPlan?.annualSizeDiscount;
-                        return discount && discount > 0 ? (
-                          <span 
-                            className={DISCOUNT_BADGE_STYLES.base}
-                            style={{
-                              background: isAnnual 
-                                ? `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})` 
-                                : `${themeColors.cssVars.primary.base}15`,
-                              color: isAnnual 
-                                ? 'white' 
-                                : themeColors.cssVars.primary.base,
-                              fontWeight: '600',
-                              boxShadow: isAnnual 
-                                ? `0 2px 4px ${themeColors.cssVars.primary.base}30` 
-                                : 'none',
-                            }}
-                          >
-                            -{discount}%
-                          </span>
-                        ) : null;
-                      })()}
+                      {translations.annual}
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                        %
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -368,38 +758,15 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           </div>
 
           {/* Content */}
-          <div className={PRICING_MODAL_STYLES.body}>
+          <div className="flex-1 bg-white px-6 py-6 sm:px-8 sm:py-8 overflow-y-auto">
             
 
 
             {/* Pricing Cards - Smaller on Desktop */}
-            <div className={PRICING_GRID_CLASSES.container}>
-              {plansError ? (
-                // Error state - failed to load plans
-                <div className="col-span-full text-center py-12">
-                  <div className="max-w-md mx-auto">
-                    <div className="text-red-400 mb-4">
-                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                    </div>
-                    <h3 className={TEXT_STYLES.errorTitle}>Failed to load pricing plans</h3>
-                    <p className={TEXT_STYLES.errorDescription}>{plansError}</p>
-                    <button 
-                      onClick={() => window.location.reload()}
-                      className="mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      style={{ 
-                        backgroundColor: themeColors.cssVars.primary.base,
-                        color: 'white'
-                      }}
-                    >
-                      Retry
-                    </button>
-                  </div>
-                </div>
-              ) : isLoadingPlans ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-4xl xl:max-w-5xl mx-auto mb-20">
+              {isLoadingPlans ? (
                 // Loading skeleton
-                Array.from({ length: PRICING_GRID_CLASSES.skeletonCount }).map((_, index) => (
+                Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
                     className="relative bg-white rounded-3xl border border-gray-200 shadow-sm p-8 animate-pulse"
@@ -412,27 +779,11 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                     </div>
                   </div>
                 ))
-              ) : displayPlans.length === 0 ? (
-                // Error state - no plans available
-                <div className="col-span-full text-center py-12">
-                  <div className="max-w-md mx-auto">
-                    <div className="text-gray-400 mb-4">
-                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <h3 className={TEXT_STYLES.errorTitle}>No pricing plans available</h3>
-                    <p className={TEXT_STYLES.errorDescription}>Please try again later or contact support if the problem persists.</p>
-                  </div>
-                </div>
               ) : (
-                displayPlans.map((plan, index) => (
-                  <div
-                    key={plan.name}
-                    className={`${ANIMATION_CLASSES.cardFadeIn} ${ANIMATION_TIMING.cardEntry} ${getCardAnimationDelay(index)}`}
-                  >
-                    <PricingCard
-                      name={plan.name}
+                displayPlans.map((plan) => (
+                  <PricingCard
+                    key={`${plan.planId}-${plan.name}`}
+                    name={plan.name}
                     description={plan.description}
                     monthlyPrice={plan.monthlyPrice}
                     annualPrice={plan.annualPrice}
@@ -461,33 +812,25 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                     translations={translations}
                     isLoadingFeatures={isLoadingFeatures}
                   />
-                </div>
-              ))
-            )}
+                ))
+              )}
             </div>
 
-            {/* Feature Comparison Table - Lazy loaded */}
-            <Suspense fallback={
-              <div className="max-w-6xl mx-auto mb-20 animate-pulse">
-                <div className="h-12 bg-gray-200 rounded mb-8 max-w-md mx-auto"></div>
-                <div className="h-64 bg-gray-100 rounded"></div>
-              </div>
-            }>
-              <PricingComparisonTable
-                plans={displayPlans}
-                isAnnual={isAnnual}
-                hasOneTimePlans={hasOneTimePlans}
-                currencySymbol={currencySymbol}
-                translations={{
-                  features: translations.compareAllFeatures,
-                  limitedTimeOffer: translations.limitedTimeOffer,
-                }}
-              />
-            </Suspense>
-          </div>
+            {/* Feature Comparison Table */}
+            <PricingComparisonTable
+              plans={displayPlans}
+              isAnnual={isAnnual}
+              hasOneTimePlans={hasOneTimePlans}
+              currencySymbol={currencySymbol}
+              translations={{
+                features: translations.compareAllFeatures,
+                limitedTimeOffer: translations.limitedTimeOffer,
+              }}
+            />
+
           </div>
         </div>
       </div>
-    </PricingErrorBoundary>
+    </div>
   );
 }

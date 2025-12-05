@@ -176,37 +176,37 @@ function PricingPlansView({
     }
   };
 
-  const handleDeletePlan = async (id: number) => {
+  const handleDeletePlan = async (id: string | number) => {
     if (confirm('Are you sure you want to delete this pricing plan?')) {
       try {
-        await onDeletePlan(id.toString());
-        if (expandedPlanId === id.toString()) setExpandedPlanId(null);
+        await onDeletePlan(String(id));
+        if (expandedPlanId === String(id)) setExpandedPlanId(null);
       } catch (error) {
         console.error('Error deleting plan:', error);
       }
     }
   };
 
-  const handleToggleExpand = (planId: number) => {
-    const planIdStr = planId.toString();
+  const handleToggleExpand = (planId: string | number) => {
+    const planIdStr = String(planId);
     setExpandedPlanId(expandedPlanId === planIdStr ? null : planIdStr);
     setShowForm(false);
   };
 
   // Drag-and-drop handlers
-  const handleDragStart = (e: React.DragEvent, planId: number) => {
-    setDraggedPlanId(planId.toString());
+  const handleDragStart = (e: React.DragEvent, planId: string | number) => {
+    setDraggedPlanId(String(planId));
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent, planId: number, productId: number) => {
+  const handleDragOver = (e: React.DragEvent, planId: string | number, productId: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
     // Only allow drop within same product group
-    const draggedPlan = pricingPlans.find(p => p.id.toString() === draggedPlanId);
+    const draggedPlan = pricingPlans.find(p => String(p.id) === draggedPlanId);
     if (draggedPlan && (draggedPlan.product_id || 0) === productId) {
-      setDragOverPlanId(planId.toString());
+      setDragOverPlanId(String(planId));
     }
   };
 
@@ -214,16 +214,16 @@ function PricingPlansView({
     setDragOverPlanId(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, targetPlanId: number, productId: number) => {
+  const handleDrop = async (e: React.DragEvent, targetPlanId: string | number, productId: number) => {
     e.preventDefault();
     
-    if (!draggedPlanId || draggedPlanId === targetPlanId.toString()) {
+    if (!draggedPlanId || draggedPlanId === String(targetPlanId)) {
       setDraggedPlanId(null);
       setDragOverPlanId(null);
       return;
     }
 
-    const draggedPlan = pricingPlans.find(p => p.id.toString() === draggedPlanId);
+    const draggedPlan = pricingPlans.find(p => String(p.id) === draggedPlanId);
     if (!draggedPlan || (draggedPlan.product_id || 0) !== productId) {
       setDraggedPlanId(null);
       setDragOverPlanId(null);
@@ -232,7 +232,7 @@ function PricingPlansView({
 
     // Reorder plans within the product group
     const productPlans = groupedPlans[productId] || [];
-    const draggedIndex = productPlans.findIndex(p => p.id.toString() === draggedPlanId);
+    const draggedIndex = productPlans.findIndex(p => String(p.id) === draggedPlanId);
     const targetIndex = productPlans.findIndex(p => p.id === targetPlanId);
 
     if (draggedIndex === -1 || targetIndex === -1) {

@@ -19,7 +19,7 @@ interface MenuSectionProps {
   onDragEnd: (event: any) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onEdit: (id: string, field: 'display_name' | 'description' | 'url_name', value: string) => void;
+  onEdit: (id: string, field: 'display_name' | 'description' | 'url_name' | 'display_as_card', value: string | boolean) => void;
   onSubmenuEdit: (menuItemId: string, submenuId: string, field: 'name' | 'description' | 'url_name' | 'image', value: string) => void;
   onSubmenuToggle: (menuItemId: string, submenuId: string) => void;
   onSubmenuDelete: (menuItemId: string, submenuId: string) => void;
@@ -65,7 +65,7 @@ export function MenuSection({
   const [inlineEdit, setInlineEdit] = useState<{
     menuItemId: string | null;
     submenuId?: string | null;
-    field: 'display_name' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description' | null;
+    field: 'display_name' | 'description' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description' | null;
     value: string;
   }>({ menuItemId: null, submenuId: null, field: null, value: '' });
 
@@ -94,11 +94,11 @@ export function MenuSection({
 
   /**
    * Opens inline edit modal for menu items or submenu items
-   * Supports editing: display_name, url_name, submenu_name, submenu_url, submenu_description
+   * Supports editing: display_name, description, url_name, submenu_name, submenu_url, submenu_description
    */
   const handleInlineEditOpen = (
     menuItemId: string,
-    field: 'display_name' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description',
+    field: 'display_name' | 'description' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description',
     currentValue: string,
     submenuId?: string
   ) => {
@@ -116,7 +116,7 @@ export function MenuSection({
     }
     
     // Allow empty description
-    if (inlineEdit.field !== 'submenu_description' && !inlineEdit.value.trim()) {
+    if (inlineEdit.field !== 'submenu_description' && inlineEdit.field !== 'description' && !inlineEdit.value.trim()) {
       toast.error('Value cannot be empty');
       return;
     }
@@ -136,7 +136,7 @@ export function MenuSection({
           : inlineEdit.value.trim();
         
         onSubmenuEdit(inlineEdit.menuItemId, inlineEdit.submenuId, field, value);
-      } else if (inlineEdit.field === 'display_name' || inlineEdit.field === 'url_name') {
+      } else if (inlineEdit.field === 'display_name' || inlineEdit.field === 'url_name' || inlineEdit.field === 'description') {
         // Handle menu item edit
         if (inlineEdit.field === 'url_name') {
           const cleanSlug = inlineEdit.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -482,10 +482,11 @@ export function MenuSection({
                 <label id="inline-edit-title" htmlFor="inline-edit-input" className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
                   Edit {
                     inlineEdit.field === 'display_name' ? 'Name' :
+                    inlineEdit.field === 'description' ? 'Description' :
                     inlineEdit.field === 'url_name' ? 'URL' :
                     inlineEdit.field === 'submenu_name' ? 'Submenu Name' :
                     inlineEdit.field === 'submenu_url' ? 'Submenu URL' :
-                    'Description'
+                    'Submenu Description'
                   }
                 </label>
                 <button
@@ -498,7 +499,7 @@ export function MenuSection({
                   </svg>
                 </button>
               </div>
-              {inlineEdit.field === 'submenu_description' ? (
+              {inlineEdit.field === 'submenu_description' || inlineEdit.field === 'description' ? (
                 <textarea
                   id="inline-edit-input"
                   value={inlineEdit.value}
@@ -511,7 +512,7 @@ export function MenuSection({
                   style={{
                     '--tw-ring-color': `${primary.base}30`
                   } as React.CSSProperties}
-                  placeholder="Enter submenu description (160 chars recommended)"
+                  placeholder={inlineEdit.field === 'description' ? 'Enter menu description (160 chars recommended)' : 'Enter submenu description (160 chars recommended)'}
                   rows={3}
                   maxLength={300}
                   autoFocus
@@ -539,7 +540,7 @@ export function MenuSection({
                   autoFocus
                 />
               )}
-              {inlineEdit.field === 'submenu_description' && (
+              {(inlineEdit.field === 'submenu_description' || inlineEdit.field === 'description') && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {inlineEdit.value.length}/300 · Press Ctrl+Enter to save
                 </p>

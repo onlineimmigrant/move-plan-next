@@ -23,7 +23,7 @@ export interface SamplePricingPlan {
   annualRecurringCount: number;
   actualAnnualPrice?: number; // For real data: the actual annual plan price
   annualSizeDiscount?: number; // New field for annual discount percentage
-  planId?: number; // Plan ID for feature lookup
+  planId?: string | number; // Plan ID for feature lookup - can be UUID string or numeric
   realFeatures?: Feature[]; // Real feature objects with full data
   productSlug?: string; // Product slug for linking to product page
   order: number; // Order field for sorting plans

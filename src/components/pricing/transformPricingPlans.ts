@@ -7,7 +7,7 @@ import { Feature, SamplePricingPlan } from './types';
  */
 export function transformPricingPlans(
   plans: PricingPlan[],
-  planFeatures: Record<number, Feature[]>,
+  planFeatures: Record<string, Feature[]>,
   userCurrency: string,
   currencySymbol: string
 ): SamplePricingPlan[] {
@@ -63,9 +63,10 @@ export function transformPricingPlans(
       annualPriceSymbol = monthlyPriceSymbol; // Use same symbol
     }
     
-    // Get features for this plan
+    // Get features for this plan - use String() for consistent key lookup
     const planId = monthly?.id || annual?.id;
-    const realFeatures = planId ? (planFeatures[planId] || []) : [];
+    const planIdKey = planId ? String(planId) : '';
+    const realFeatures = planIdKey ? (planFeatures[planIdKey] || []) : [];
 
     // Handle promotion pricing with currency awareness
     const monthlyIsPromotion = monthly?.is_promotion && (monthly?.promotion_price !== undefined || monthly?.promotion_percent !== undefined);

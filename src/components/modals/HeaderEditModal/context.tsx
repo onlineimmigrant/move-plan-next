@@ -126,12 +126,6 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!orgResponse.ok) throw new Error('Failed to fetch organization');
       const orgData = await orgResponse.json();
       
-      console.log('[HeaderEditContext] Fetched data:', {
-        hasSettings: !!orgData.settings,
-        headerStyle: orgData.settings?.header_style,
-        headerStyleType: typeof orgData.settings?.header_style,
-        logoImage: orgData.settings?.image
-      });
       
       // Store logo image URL from settings
       setLogoImageUrl(orgData.settings?.image || null);
@@ -141,17 +135,14 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       if (typeof headerStyleData === 'object' && headerStyleData !== null) {
         // Store full object and extract type
-        console.log('[HeaderEditContext] Storing full header style object:', headerStyleData);
         setHeaderStyleFull(headerStyleData);
         setHeaderStyle(headerStyleData.type || 'default');
       } else if (typeof headerStyleData === 'string') {
         // Legacy string format
-        console.log('[HeaderEditContext] Legacy string format:', headerStyleData);
         setHeaderStyleFull(null);
         setHeaderStyle(headerStyleData);
       } else {
         // No style data
-        console.log('[HeaderEditContext] No header style data, using default');
         setHeaderStyleFull(null);
         setHeaderStyle('default');
       }
@@ -168,23 +159,11 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!menuResponse.ok) throw new Error('Failed to fetch menu items');
       const menuData = await menuResponse.json();
       
-      console.log('[HeaderEditContext] Raw API response:', {
-        count: menuData.menu_items?.length || 0,
-        firstItem: menuData.menu_items?.[0],
-        hasWebsiteSubmenuitem: !!menuData.menu_items?.[0]?.website_submenuitem
-      });
-      
       // Map website_submenuitem to submenu_items for consistency
       const mappedMenuItems = (menuData.menu_items || []).map((item: any) => ({
         ...item,
         submenu_items: item.website_submenuitem || []
       }));
-      
-      console.log('[HeaderEditContext] Mapped menu items with submenus:', {
-        count: mappedMenuItems.length,
-        withSubmenus: mappedMenuItems.filter((item: any) => item.submenu_items?.length > 0).length,
-        firstItemSubmenus: mappedMenuItems[0]?.submenu_items
-      });
       
       setMenuItems(mappedMenuItems);
     } catch (error) {
@@ -230,12 +209,6 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       const currentData = await fetchResponse.json();
       const currentHeaderStyle = currentData.settings?.header_style;
-      
-      console.log('[HeaderEditContext] Fetched current header_style from DB:', {
-        value: currentHeaderStyle,
-        type: typeof currentHeaderStyle,
-        stringified: JSON.stringify(currentHeaderStyle)
-      });
 
       // Preserve existing header_style values from DB, only update the type
       const headerStyleObject = (currentHeaderStyle && typeof currentHeaderStyle === 'object') ? {
@@ -255,8 +228,6 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           to: 'gray-700'
         }
       };
-
-      console.log('[HeaderEditContext] Final header style object to save:', headerStyleObject);
 
       const response = await fetch(`/api/organizations/${organizationId}`, {
         method: 'PUT',
@@ -445,7 +416,15 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         throw new Error('No active session found. Please log in again.');
       }
 
-      console.log('[HeaderEditContext] Updating full header style:', styleObject);
+      // Prepare settings update - include logo URL in settings.image for backward compatibility
+      const settingsUpdate: any = {
+        header_style: styleObject
+      };
+
+      // If logo.url is being updated, also update settings.image
+      if (styleObject?.logo?.url !== undefined) {
+        settingsUpdate.image = styleObject.logo.url;
+      }
 
       const response = await fetch(`/api/organizations/${organizationId}`, {
         method: 'PUT',
@@ -454,9 +433,7 @@ export const HeaderEditProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          settings: {
-            header_style: styleObject
-          }
+          settings: settingsUpdate
         })
       });
 

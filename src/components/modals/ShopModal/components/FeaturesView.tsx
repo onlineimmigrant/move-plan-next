@@ -348,11 +348,63 @@ function FeaturesView({
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {(isCreating || editingFeature) && (
-          <div className="mb-6 p-6 border border-slate-200 rounded-lg bg-white shadow-sm">
-            <h4 className="text-md font-semibold mb-4">
-              {editingFeature ? 'Edit Feature' : 'Create New Feature'}
-            </h4>
-            <div className="space-y-4">
+          <>
+            {/* Modal Overlay */}
+            <div 
+              className="fixed inset-0 z-[9999]"
+              onClick={() => {
+                setIsCreating(false);
+                setEditingFeature(null);
+                setFormData({
+                  name: '',
+                  content: '',
+                  feature_image: '',
+                  slug: '',
+                  display_content: false,
+                  display_on_product_card: false,
+                  type: '',
+                  package: '',
+                  order: 0,
+                  is_help_center: false,
+                });
+              }}
+            />
+            
+            {/* Modal Content */}
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-[10000]">
+              <div 
+                className="bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 flex items-center justify-between sticky top-0 bg-white z-10">
+                  <h4 className="text-lg font-semibold">
+                    {editingFeature ? 'Edit Feature' : 'Create New Feature'}
+                  </h4>
+                  <button
+                    onClick={() => {
+                      setIsCreating(false);
+                      setEditingFeature(null);
+                      setFormData({
+                        name: '',
+                        content: '',
+                        feature_image: '',
+                        slug: '',
+                        display_content: false,
+                        display_on_product_card: false,
+                        type: '',
+                        package: '',
+                        order: 0,
+                        is_help_center: false,
+                      });
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+                
+                <div className="p-6">
+                  <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input
@@ -505,8 +557,11 @@ function FeaturesView({
                   Cancel
                 </button>
               </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Features Table */}
@@ -674,7 +729,7 @@ function FeaturesView({
                               className="fixed inset-0 z-40"
                               onClick={() => setOpenDropdownFeatureId(null)}
                             />
-                            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                            <div className="absolute right-0 bottom-full mb-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
                               {Object.entries(groupedPricingPlans).map(([productName, plans]) => (
                                 <div key={productName} className="border-b border-gray-100 last:border-b-0">
                                   <div className="px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-700 sticky top-0">

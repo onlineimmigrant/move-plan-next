@@ -1,7 +1,7 @@
 // Pricingplan-related TypeScript interfaces
 
 export interface PricingPlan {
-  id: number;
+  id: string | number; // Support both UUID (string) and numeric IDs
   created_at: string;
   updated_at: string;
   

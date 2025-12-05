@@ -25,12 +25,12 @@ export async function GET(request: Request) {
   const organization_id = searchParams.get('organization_id'); // Support alternative param name
 
   // Support two modes:
-  // 1. Fetch features for a specific plan: planId + organizationId
+  // 1. Fetch features for a specific plan: planId (organization filter optional)
   // 2. Fetch all pricing plan features for an organization: organization_id only
 
-  if (!planId && !organizationId && !organization_id) {
+  if (!planId && !organization_id) {
     return NextResponse.json(
-      { error: 'Missing required parameters: either (planId and organizationId) or organization_id' },
+      { error: 'Missing required parameters: either planId or organization_id' },
       { status: 400 }
     );
   }
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
             organization_id
           )
         `)
-        .eq('feature.organization_id', orgId);
+        .eq('pricingplan.organization_id', orgId);
 
       if (error) {
         console.error('Error fetching all pricing plan features:', error);
@@ -74,14 +74,14 @@ export async function GET(request: Request) {
     }
 
     // Mode 1: Fetch features for a specific pricing plan
-    if (!planId || !organizationId) {
+    if (!planId) {
       return NextResponse.json(
-        { error: 'Missing required parameters: planId and organizationId' },
+        { error: 'Missing required parameter: planId' },
         { status: 400 }
       );
     }
 
-    console.log('Fetching features for pricing plan:', planId, 'organization:', organizationId);
+    console.log('Fetching features for pricing plan:', planId, 'organization (optional):', organizationId);
 
     // Fetch features associated with the pricing plan
     const { data: features, error } = await supabase
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
         )
       `)
       .eq('pricingplan_id', planId)
-      .eq('feature.organization_id', organizationId)
+      // Organization filter removed to avoid suppressing valid features when org linkage differs
       .order('feature(order)', { ascending: true }); // Sort by feature order
 
     if (error) {

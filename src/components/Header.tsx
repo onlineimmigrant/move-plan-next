@@ -34,9 +34,24 @@ const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'),
   loading: () => null 
 });
 
-// Import all available Heroicons dynamically
-import * as HeroIcons from '@heroicons/react/24/outline';
-import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
+// Optimized icon loading (for admin/account menus only)
+import { 
+  ChevronDownIcon, 
+  Bars3Icon, 
+  Bars3BottomLeftIcon,
+  XMarkIcon, 
+  ShoppingCartIcon, 
+  UserIcon, 
+  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
+  ArrowRightIcon,
+  Cog6ToothIcon,
+  VideoCameraIcon,
+  CpuChipIcon,
+  MinusIcon,
+  PlusIcon
+} from '@heroicons/react/24/outline';
+import { MenuItem, SubMenuItem } from '@/types/menu';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 interface HeaderProps {
@@ -61,6 +76,7 @@ const Header: React.FC<HeaderProps> = ({
   const lastScrollYRef = useRef(0);
   const [isDesktop, setIsDesktop] = useState(true); // Default to true for SSR
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
+  const [hoveredSubmenuItem, setHoveredSubmenuItem] = useState<SubMenuItem | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { isAdmin } = useAuth();
   const { basket } = useBasket();
@@ -102,7 +118,6 @@ const Header: React.FC<HeaderProps> = ({
   const headerColor = headerStyle.color || 'gray-700';
   const headerColorHover = headerStyle.color_hover || 'gray-900';
   const menuWidth = headerStyle.menu_width || '7xl';
-  const globalMenuItemsAreText = headerStyle.menu_items_are_text ?? true;
   
   // Logo configuration
   const logoConfig = headerStyle.logo || { url: '/', position: 'left', size: 'md' };
@@ -204,67 +219,7 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
-  // Individual display mode per menu item
-  // Each item can have its own menu_items_are_text setting
-  // If not set, fall back to global header_style.menu_items_are_text
-  const getItemDisplayMode = useCallback((item: MenuItem) => {
-    // If explicitly set on the item, use that value
-    if (item.menu_items_are_text !== undefined && item.menu_items_are_text !== null) {
-      return item.menu_items_are_text;
-    }
-    // Fall back to global setting from header_style
-    return globalMenuItemsAreText;
-  }, [globalMenuItemsAreText]);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      // Debug: Check submenu descriptions and images removed for production
-    }
-  }, [menuItems, fixedBannersHeight, headerStyle, headerType, menuWidth, globalMenuItemsAreText, getItemDisplayMode]);
-
-  // Memoized functions for better performance
-  const getIconName = useCallback((item: MenuItem): string | undefined => {
-    // Processing icon name for item
-    
-    // First check if icon_name is already extracted at top level
-    if (item.icon_name) {
-      return item.icon_name;
-    }
-    
-    // Otherwise extract from react_icons
-    if (!item.react_icons) {
-      return undefined;
-    }
-    
-    if (Array.isArray(item.react_icons)) {
-      const iconName = item.react_icons.length > 0 ? item.react_icons[0].icon_name : undefined;
-      return iconName;
-    }
-    
-    const iconName = item.react_icons.icon_name;
-    return iconName;
-  }, []);
-
-  // Create a dynamic icon component map from all HeroIcons
-  const getIconComponent = useCallback((iconName: string | undefined) => {
-    if (!iconName) {
-      return HeroIcons.MapIcon;
-    }
-    
-    // Try to get the icon from HeroIcons namespace
-    const IconComponent = (HeroIcons as any)[iconName];
-    
-    if (!IconComponent) {
-      return HeroIcons.MapIcon;
-    }
-    
-    return IconComponent;
-  }, []);
-
-  const renderIcon = useCallback((iconName: string | undefined) => {
-    const IconComponent = getIconComponent(iconName);
-    return <IconComponent className="h-6 w-6 text-gray-600" />;
-  }, [getIconComponent]);
+  // Removed debug useEffect - not needed in production
 
   // Memoize callback functions for better performance
   const handleHomeNavigation = useCallback(() => {
@@ -318,6 +273,7 @@ const Header: React.FC<HeaderProps> = ({
     cancelCloseTimeout();
     closeTimeoutRef.current = setTimeout(() => {
       setOpenSubmenu(null);
+      setHoveredSubmenuItem(null);
     }, 300); // 300ms delay before closing
   }, [cancelCloseTimeout]);
 
@@ -346,6 +302,11 @@ const Header: React.FC<HeaderProps> = ({
     menuItems.filter((item) => item.is_displayed && item.display_name !== 'Profile'),
     [menuItems]
   );
+
+  // Determine if we need larger breakpoint for mobile menu (more than 5 items)
+  const hasManyItems = useMemo(() => filteredMenuItems.length > 5, [filteredMenuItems]);
+  const hasTooManyItems = useMemo(() => filteredMenuItems.length > 7, [filteredMenuItems]);
+  const responsiveBreakpoint = hasTooManyItems ? 'xl' : hasManyItems ? 'lg' : 'md';
 
   // Memoize current locale calculation
   const currentLocale = useMemo(() => getLocaleFromPathname(pathname), [pathname]);
@@ -376,12 +337,15 @@ const Header: React.FC<HeaderProps> = ({
             ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
             : item.display_name;
 
+          const translatedMenuItemDescription = item.description
+            ? (currentLocale 
+                ? getTranslatedMenuContent(item.description, item.description_translation, currentLocale)
+                : item.description)
+            : null;
+
             // Check if current menu item is active
             const isActive = pathname.startsWith(`/${item.url_name}`) || 
                             displayedSubItems.some(subItem => pathname.startsWith(`/${subItem.url_name}`));
-
-            // Check individual item's display mode
-            const showAsText = getItemDisplayMode(item);
 
             return (
               <div 
@@ -397,7 +361,8 @@ const Header: React.FC<HeaderProps> = ({
                       className="group cursor-pointer flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200"
                       style={{
                         // Apply color via inline style for both hex and Tailwind colors
-                        color: getColorValue(headerColor),
+                        // Use hover color when submenu is open
+                        color: openSubmenu === item.id ? getColorValue(headerColorHover) : getColorValue(headerColor),
                       }}
                       title={translatedDisplayName}
                       aria-label={t.openMenuFor(translatedDisplayName)}
@@ -406,40 +371,23 @@ const Header: React.FC<HeaderProps> = ({
                         e.currentTarget.style.color = getColorValue(headerColorHover);
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = getColorValue(headerColor);
+                        e.currentTarget.style.color = openSubmenu === item.id ? getColorValue(headerColorHover) : getColorValue(headerColor);
                       }}
                     >
-                      {showAsText ? (
-                        <span 
-                          className={`text-[15px] font-medium transition-colors duration-200 ${
-                            isActive ? 'font-semibold' : ''
-                          }`}
-                          style={{
-                            fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-                          }}
-                        >{translatedDisplayName}</span>
-                      ) : item.image ? (
-                        <Image
-                          src={item.image}
-                          alt={translatedDisplayName}
-                          width={24}
-                          height={24}
-                          className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
-                          loading="lazy"
-                          placeholder="blur"
-                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
-                          onError={() =>
-                            console.error(
-                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="transition-all duration-300 group-hover:scale-105">
-                          {renderIcon(getIconName(item))}
-                        </div>
-                      )}
-                      <svg className="ml-1.5 h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span 
+                        className={`text-[15px] font-medium transition-colors duration-200 ${
+                          isActive ? 'font-semibold' : ''
+                        }`}
+                        style={{
+                          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                        }}
+                      >{translatedDisplayName}</span>
+                      <svg 
+                        className="ml-1.5 h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:rotate-180" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
@@ -465,10 +413,19 @@ const Header: React.FC<HeaderProps> = ({
                         onMouseEnter={cancelCloseTimeout}
                         onMouseLeave={handleMenuLeave}
                       >
-                        <div className="px-6 py-6 max-w-7xl mx-auto">
-                          <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedDisplayName}</h3>
-                          
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        <div className="max-h-[calc(100vh-140px)] overflow-y-auto">
+                          <div className="px-6 py-6 max-w-7xl mx-auto">
+                            {/* Header section - shows menu info */}
+                            <div className="mb-6 p-4">
+                              <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{translatedDisplayName}</h3>
+                              {translatedMenuItemDescription && (
+                                <p className="text-sm text-gray-600 mt-1" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                  {translatedMenuItemDescription}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                             {displayedSubItems.map((subItem) => {
                               const translatedSubItemName = currentLocale 
                                 ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
@@ -481,21 +438,58 @@ const Header: React.FC<HeaderProps> = ({
                                 : null;
 
                               return (
-                                <LocalizedLink
+                                <div 
                                   key={subItem.id}
-                                  href={subItem.url_name}
-                                  onClick={() => setOpenSubmenu(null)}
-                                  className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                                  onMouseEnter={() => setHoveredSubmenuItem(subItem)}
+                                  onMouseLeave={() => setHoveredSubmenuItem(null)}
+                                  className="group/item"
                                 >
-                                  {/* Image on top - full width */}
-                                  <div className="relative w-full h-32">
+                                  <LocalizedLink
+                                    href={subItem.url_name}
+                                    onClick={() => setOpenSubmenu(null)}
+                                    className={`block rounded-lg overflow-hidden transition-all duration-200 ${item.display_as_card ? 'hover:shadow-xl hover:scale-105 border border-gray-200/30' : 'hover:shadow-lg'}`}
+                                  >
+                                    {/* Display logic: card mode (no image) vs image mode (image with hover effect) */}
+                                    <div className="relative w-full h-48">
+                                    {item.display_as_card ? (
+                                      // Card mode: always show white card with title/description (no image) - glassmorphism style like admin menu
+                                      <div className="relative w-full h-full flex flex-col justify-center backdrop-blur-sm p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                                        <h4 className="text-base font-medium text-gray-700 mb-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                          {translatedSubItemName}
+                                        </h4>
+                                        {translatedDescription && (
+                                          <p className="text-sm text-gray-600 line-clamp-3" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                            {translatedDescription}
+                                          </p>
+                                        )}
+                                        {/* Elegant arrow in bottom right - only visible on hover */}
+                                        <ArrowRightIcon 
+                                          className="absolute bottom-4 right-4 h-5 w-5 opacity-0 group-hover/item:opacity-100 transition-all duration-300 transform translate-x-0 group-hover/item:translate-x-1" 
+                                          style={{ color: themeColors.cssVars.primary.base }}
+                                        />
+                                      </div>
+                                    ) : hoveredSubmenuItem?.id === subItem.id ? (
+                                      // Image mode + hovered: show white card
+                                      <div className="w-full h-full flex flex-col items-center justify-center bg-white p-6">
+                                        <h4 className="text-sm font-semibold text-gray-900 mb-2 text-center" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                          {translatedSubItemName}
+                                        </h4>
+                                        {translatedDescription && (
+                                          <p className="text-sm text-gray-600 text-center line-clamp-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                            {translatedDescription}
+                                          </p>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      // Image mode + not hovered: show image with text overlay
+                                      <>
                                     {subItem.image ? (
                                       <Image
                                         src={subItem.image}
                                         alt={translatedSubItemName}
                                         fill
                                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                                        className="object-contain rounded-t-lg p-2"
+                                        className="object-cover"
                                         loading="lazy"
                                         placeholder="blur"
                                         blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjZjNmNGY2Ii8+Cjwvc3ZnPgo="
@@ -506,8 +500,8 @@ const Header: React.FC<HeaderProps> = ({
                                         }
                                       />
                                     ) : settings?.image ? (
-                                      <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg p-4">
-                                        <div className="relative w-full h-full">
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <div className="relative w-2/3 h-2/3">
                                           <Image
                                             src={settings.image}
                                             alt="Logo"
@@ -519,29 +513,36 @@ const Header: React.FC<HeaderProps> = ({
                                         </div>
                                       </div>
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-t-lg">
-                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                       </div>
                                     )}
-                                  </div>
-                                  
-                                  {/* Content below image */}
-                                  <div className="p-3">
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                                      {translatedSubItemName}
-                                    </h4>
-                                    {translatedDescription && (
-                                      <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                                        {translatedDescription}
-                                      </p>
+                                    
+                                    {/* Dark gradient overlay for text readability */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover/item:from-black/80 transition-all duration-200" />
+                                    
+                                    {/* Text overlay at bottom */}
+                                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                                      <h4 className="text-base font-semibold text-white mb-1 drop-shadow-lg" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                        {translatedSubItemName}
+                                      </h4>
+                                      {translatedDescription && (
+                                        <p className="text-xs text-white/90 line-clamp-2 drop-shadow" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                                          {translatedDescription}
+                                        </p>
+                                      )}
+                                    </div>
+                                      </>
                                     )}
                                   </div>
                                 </LocalizedLink>
+                              </div>
                               );
                             })}
                           </div>
+                        </div>
                         </div>
                       </div>
                     ) : (
@@ -631,29 +632,10 @@ const Header: React.FC<HeaderProps> = ({
                       title={translatedDisplayName}
                       aria-label={t.goTo(translatedDisplayName)}
                     >
-                      {showAsText ? (
-                        <span className={`text-[15px] font-medium transition-colors duration-200 ${
-                          // Only apply default classes if using hex colors
-                          headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
-                        }`}>{translatedDisplayName}</span>
-                      ) : item.image ? (
-                        <Image
-                          src={item.image}
-                          alt={translatedDisplayName}
-                          width={24}
-                          height={24}
-                          className="h-6 w-6 text-gray-600 transition-all duration-300 group-hover:scale-105"
-                          onError={() =>
-                            console.error(
-                              `Failed to load image for menu item ${translatedDisplayName}: ${item.image}`
-                            )
-                          }
-                        />
-                      ) : (
-                        <div className="transition-all duration-300 group-hover:scale-105">
-                          {renderIcon(getIconName(item))}
-                        </div>
-                      )}
+                      <span className={`text-[15px] font-medium transition-colors duration-200 ${
+                        // Only apply default classes if using hex colors
+                        headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
+                      }`}>{translatedDisplayName}</span>
                     </LocalizedLink>
                   </div>
                 )}
@@ -662,7 +644,7 @@ const Header: React.FC<HeaderProps> = ({
           })
       )}
     </>
-  ), [filteredMenuItems, currentLocale, getItemDisplayMode, t, pathname, openSubmenu, setOpenSubmenu, renderIcon, getIconName, settings?.image, headerColor, headerColorHover]);
+  ), [filteredMenuItems, currentLocale, t, pathname, openSubmenu, setOpenSubmenu, settings?.image, headerColor, headerColorHover, hoveredSubmenuItem]);
 
   const renderMobileMenuItems = useMemo(() => (
     <div className="space-y-3">
@@ -701,9 +683,9 @@ const Header: React.FC<HeaderProps> = ({
                           </div>
                           <div className="transition-colors duration-200">
                             {open ? (
-                              <HeroIcons.MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                              <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                             ) : (
-                              <HeroIcons.PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                              <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                             )}
                           </div>
                         </Disclosure.Button>
@@ -915,7 +897,7 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Section */}
         <div 
-          className={`hidden md:flex items-center ${
+          className={`hidden ${responsiveBreakpoint}:flex items-center ${
             logoPosition === 'center' ? 'flex-1 justify-center' : 'justify-center flex-1 ml-8 mr-8'
           } ${
             logoPosition === 'right' ? 'order-1 flex-1' : ''
@@ -940,10 +922,15 @@ const Header: React.FC<HeaderProps> = ({
               {isMounted && totalItems > 0 && (
                 <LocalizedLink
                   href="/basket"
-                  className="cursor-pointer relative"
+                  className="cursor-pointer relative group/basket"
                   aria-label={t.viewBasket(totalItems)}
                 >
-                  <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                  <ShoppingCartIcon 
+                    className="w-6 h-6 transition-colors duration-200" 
+                    style={{ color: getColorValue(headerColor) }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+                  />
                   <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                     {totalItems}
                   </span>
@@ -963,7 +950,12 @@ const Header: React.FC<HeaderProps> = ({
                 title={isAdmin ? 'Admin' : t.profile}
                 aria-label={t.openProfileMenu}
               >
-                <HeroIcons.UserIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+                <UserIcon 
+                  className="h-6 w-6 transition-colors duration-200" 
+                  style={{ color: getColorValue(headerColor) }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+                />
               </button>
               
               {/* Mega menu profile dropdown */}
@@ -976,37 +968,32 @@ const Header: React.FC<HeaderProps> = ({
                 onMouseEnter={cancelCloseTimeout}
                 onMouseLeave={handleMenuLeave}
               >
-                <div className="px-6 py-6 max-w-7xl mx-auto">
-                  {/* Header */}
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div>
+                <div className="max-h-[calc(100vh-140px)] overflow-y-auto">
+                  <div className="px-6 py-6 max-w-7xl mx-auto">
+                    {/* Header section - shows menu info */}
+                    <div className="mb-6 p-4">
                       <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{isAdmin ? 'Admin' : t.profile}</h3>
-                    </div>
+                      {isAdmin && (
+                        <p className="text-sm text-gray-600 mt-1" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          Manage your system, content, and settings
+                        </p>
+                    )}
                   </div>
                   
                   {/* Menu items in grid */}
-                  <div className={`grid gap-4 ${isAdmin ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                  <div className={`grid gap-4 ${isAdmin ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3'}`}>
                     {isAdmin ? (
                       <>
                         {/* Dashboard */}
                         <LocalizedLink
                           href="/admin"
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <HeroIcons.Cog6ToothIcon className="h-10 w-10 text-gray-600" />
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <Cog6ToothIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Dashboard
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              Manage your account settings
-                            </p>
                           </div>
                         </LocalizedLink>
 
@@ -1014,92 +1001,70 @@ const Header: React.FC<HeaderProps> = ({
                         <button
                           type="button"
                           onClick={handleContactModal}
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 w-full text-left"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 w-full text-left border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <svg className="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                              </svg>
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <svg className="h-12 w-12 text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Tickets
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              Get help and support
-                            </p>
                           </div>
                         </button>
 
                         {/* Meetings */}
                         <LocalizedLink
                           href="/admin"
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <HeroIcons.VideoCameraIcon className="h-10 w-10 text-gray-600" />
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <VideoCameraIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               Meetings
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              Schedule and manage meetings
-                            </p>
                           </div>
                         </LocalizedLink>
 
                         {/* AI Agents */}
                         <LocalizedLink
                           href="/admin/ai/management"
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <HeroIcons.CpuChipIcon className="h-10 w-10 text-gray-600" />
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <CpuChipIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               AI Agents
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              Manage AI models and agents
-                            </p>
                           </div>
                         </LocalizedLink>
+
+                        {/* Logout - 5th item */}
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 w-full text-left border border-gray-200/30"
+                        >
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <ArrowLeftOnRectangleIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                              {t.logout}
+                            </h4>
+                          </div>
+                        </button>
                       </>
                     ) : (
                       <>
                         {/* Account */}
                         <LocalizedLink
                           href="/account"
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <HeroIcons.UserIcon className="h-10 w-10 text-gray-600" />
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <UserIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.account}
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              {t.accountSettings}
-                            </p>
                           </div>
                         </LocalizedLink>
 
@@ -1107,43 +1072,35 @@ const Header: React.FC<HeaderProps> = ({
                         <button
                           type="button"
                           onClick={handleContactModal}
-                          className="group/item block bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 w-full text-left"
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 w-full text-left border border-gray-200/30"
                         >
-                          {/* Icon container */}
-                          <div className="relative w-full h-32">
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-t-lg">
-                              <svg className="h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                              </svg>
-                            </div>
-                          </div>
-                          {/* Content below */}
-                          <div className="p-3">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1 group-hover/item:text-gray-700 transition-colors duration-200" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <svg className="h-12 w-12 text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                               {t.contact}
                             </h4>
-                            <p className="text-xs text-gray-500 line-clamp-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
-                              {t.getHelpSupport}
-                            </p>
+                          </div>
+                        </button>
+
+                        {/* Logout */}
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="block rounded-lg overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-105 w-full text-left border border-gray-200/30"
+                        >
+                          <div className="relative w-full h-48 flex flex-col items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                            <ArrowLeftOnRectangleIcon className="h-12 w-12 text-gray-500 mb-3" />
+                            <h4 className="text-base font-medium text-gray-700" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+                              {t.logout}
+                            </h4>
                           </div>
                         </button>
                       </>
                     )}
                   </div>
-                  
-                  {/* Logout button - separate at bottom */}
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-150"
-                    >
-                      <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                        <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
-                      </div>
-                      <span className="text-sm font-medium" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>
-                    </button>
-                  </div>
+                </div>
                 </div>
               </div>
             </div>
@@ -1151,16 +1108,21 @@ const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={handleLoginModal}
-              className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 focus:outline-none transition-colors duration-200"
+              className="cursor-pointer flex items-center justify-center p-3 focus:outline-none transition-colors duration-200"
               title={t.login}
               aria-label={t.openLoginModal}
             >
-              <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+              <ArrowLeftOnRectangleIcon 
+                className="h-6 w-6 transition-colors duration-200" 
+                style={{ color: getColorValue(headerColor) }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+              />
             </button>
           ) : null}
-            </div>
-          )}
         </div>
+      )}
+      </div>
 
         {/* Right Section (when logo is on right) */}
         {logoPosition === 'right' && (
@@ -1179,7 +1141,12 @@ const Header: React.FC<HeaderProps> = ({
                 className="cursor-pointer relative"
                 aria-label={t.viewBasket(totalItems)}
               >
-                <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+                <ShoppingCartIcon 
+                  className="w-6 h-6 transition-colors duration-200" 
+                  style={{ color: getColorValue(headerColor) }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+                />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                   {totalItems}
                 </span>
@@ -1194,30 +1161,45 @@ const Header: React.FC<HeaderProps> = ({
                 title={isAdmin ? 'Admin' : t.profile}
                 aria-label={t.openProfileMenu}
               >
-                <HeroIcons.UserIcon className="h-6 w-6 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
+                <UserIcon 
+                  className="h-6 w-6 transition-colors duration-200" 
+                  style={{ color: getColorValue(headerColor) }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+                />
               </button>
             ) : headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
               <button
                 type="button"
                 onClick={handleLoginModal}
-                className="group cursor-pointer flex items-center justify-center p-3 text-gray-700 hover:text-gray-900 focus:outline-none transition-colors duration-200"
+                className="cursor-pointer flex items-center justify-center p-3 focus:outline-none transition-colors duration-200"
                 title={t.login}
                 aria-label={t.openLoginModal}
               >
-                <HeroIcons.ArrowLeftOnRectangleIcon className="h-6 w-6 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
+                <ArrowLeftOnRectangleIcon 
+                  className="h-6 w-6 transition-colors duration-200" 
+                  style={{ color: getColorValue(headerColor) }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+                />
               </button>
             ) : null}
           </div>
         )}
 
-        <div className="flex items-center md:hidden flex-shrink-0">
+        <div className={`flex items-center ${responsiveBreakpoint}:hidden flex-shrink-0`}>
           {isMounted && totalItems > 0 && (
             <LocalizedLink
               href="/basket"
               className="cursor-pointer relative mr-4"
               aria-label={t.viewBasket(totalItems)}
             >
-              <HeroIcons.ShoppingCartIcon className="w-6 h-6 text-gray-700 hover:text-gray-900" />
+              <ShoppingCartIcon 
+                className="w-6 h-6 transition-colors duration-200" 
+                style={{ color: getColorValue(headerColor) }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
+              />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
                 {totalItems}
               </span>
@@ -1226,10 +1208,13 @@ const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={handleMenuToggle}
-            className="p-2.5 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+            className="p-2.5 transition-colors duration-200"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
+            style={{ color: getColorValue(headerColor) }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
           >
-            {isOpen ? <HeroIcons.XMarkIcon className="h-6 w-6" /> : <HeroIcons.Bars3BottomLeftIcon className="h-6 w-6" />}
+            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomLeftIcon className="h-6 w-6" />}
           </button>
         </div>
       </div>
@@ -1240,7 +1225,7 @@ const Header: React.FC<HeaderProps> = ({
         <>
           {/* Background for the area above, left, and right of header */}
           <div 
-            className="md:hidden fixed inset-0 bg-white z-20"
+            className={`${responsiveBreakpoint}:hidden fixed inset-0 bg-white z-20`}
             style={{
               top: `${fixedBannersHeight}px`,
               bottom: 0,
@@ -1248,7 +1233,7 @@ const Header: React.FC<HeaderProps> = ({
           />
           
           {/* Mobile menu content */}
-          <div className="md:hidden fixed inset-0 bg-white overflow-y-auto z-30"
+          <div className={`${responsiveBreakpoint}:hidden fixed inset-0 bg-white overflow-y-auto z-30`}
             style={{
               top: `${fixedBannersHeight + 64}px`, // Position directly below the header (no gap on mobile)
             }}
@@ -1272,9 +1257,9 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <div className="transition-colors duration-200">
                         {open ? (
-                          <HeroIcons.MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                          <MinusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                         ) : (
-                          <HeroIcons.PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
+                          <PlusIcon className="h-5 w-5 text-gray-500" aria-hidden="true" />
                         )}
                       </div>
                     </Disclosure.Button>
@@ -1287,7 +1272,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <HeroIcons.Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+                              <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Dashboard</span>
@@ -1317,7 +1302,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <HeroIcons.VideoCameraIcon className="h-5 w-5 text-gray-600" />
+                              <VideoCameraIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>Meetings</span>
@@ -1331,7 +1316,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <HeroIcons.CpuChipIcon className="h-5 w-5 text-gray-600" />
+                              <CpuChipIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>AI Agents</span>
@@ -1345,7 +1330,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                              <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
+                              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>
@@ -1360,7 +1345,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-gray-800 hover:text-gray-900 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <HeroIcons.UserIcon className="h-5 w-5 text-gray-600" />
+                              <UserIcon className="h-5 w-5 text-gray-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.account}</span>
@@ -1388,7 +1373,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="flex items-center space-x-3 w-full p-4 text-red-600 hover:text-red-700 transition-colors duration-200"
                           >
                             <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                              <HeroIcons.ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
+                              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-600" />
                             </div>
                             <div className="flex-1 text-left">
                               <span className="text-sm font-medium block" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>{t.logout}</span>

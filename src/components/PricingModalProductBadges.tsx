@@ -68,7 +68,7 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
         if (response.ok) {
           const data = await response.json();
           setProducts(data);
-          // console.log('Pricing comparison products fetched successfully:', data);
+          console.log('Successfully fetched pricing comparison products:', data);
           
           // Advanced product selection logic
           if (data.length > 0 && !selectedProductId && onProductSelect) {
@@ -76,6 +76,9 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
             
             // If we have an initial product identifier, try to find a matching product
             if (initialProductIdentifier) {
+              console.log('Looking for product with identifier:', initialProductIdentifier);
+              
+              // Try to find a matching product based on the identifier
               // console.log('PricingModalProductBadges: Looking for product with identifier:', initialProductIdentifier);
               // console.log('PricingModalProductBadges: Available products:', data.map((p: PricingComparisonProduct) => ({
               //   id: p.id,
@@ -112,9 +115,9 @@ const PricingModalProductBadges: React.FC<PricingModalProductBadgesProps> = ({
               if (foundProduct) {
                 productToSelect = foundProduct;
                 const matchType = foundByName ? 'name' : foundById ? 'id' : 'slug';
-                // console.log(`PricingModalProductBadges: Found matching product by ${matchType}:`, foundProduct);
+                console.log(`Found matching product by ${matchType}:`, foundProduct);
               } else {
-                // console.log('PricingModalProductBadges: No matching product found for identifier:', initialProductIdentifier, 'Using first product as fallback');
+                console.log('No matching product found, using first product:', productToSelect);
               }
             }
             

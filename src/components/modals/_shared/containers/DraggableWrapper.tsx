@@ -77,33 +77,35 @@ export const DraggableWrapper: React.FC<DraggableWrapperProps> = ({
   );
 
   return (
-    <Rnd
-      position={position}
-      size={size}
-      onDragStop={handleDragStop}
-      onResizeStop={handleResizeStop}
-      minWidth={minSize.width}
-      minHeight={minSize.height}
-      bounds={getDraggableBounds()}
-      disableDragging={!enableDrag}
-      enableResizing={
-        enableResize
-          ? {
-              top: true,
-              right: true,
-              bottom: true,
-              left: true,
-              topRight: true,
-              bottomRight: true,
-              bottomLeft: true,
-              topLeft: true,
-            }
-          : false
-      }
-      dragHandleClassName={dragHandleClassName}
-      style={{ zIndex }}
-    >
-      {children}
-    </Rnd>
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex }}>
+      <Rnd
+        position={position}
+        size={size}
+        onDragStop={handleDragStop}
+        onResizeStop={handleResizeStop}
+        minWidth={minSize.width}
+        minHeight={minSize.height}
+        bounds="parent"
+        disableDragging={!enableDrag}
+        enableResizing={
+          enableResize
+            ? {
+                top: true,
+                right: true,
+                bottom: true,
+                left: true,
+                topRight: true,
+                bottomRight: true,
+                bottomLeft: true,
+                topLeft: true,
+              }
+            : false
+        }
+        dragHandleClassName={dragHandleClassName}
+        className="pointer-events-auto"
+      >
+        {children}
+      </Rnd>
+    </div>
   );
 };

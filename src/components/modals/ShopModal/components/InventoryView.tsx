@@ -108,10 +108,10 @@ function InventoryView({
   };
 
   // Get available plans (not already in inventory)
-  const getAvailablePlans = () => {
+  const availablePlans = useMemo(() => {
     const usedPlanIds = inventories.map(inv => String(inv.pricing_plan_id));
     return pricingPlans.filter(plan => !usedPlanIds.includes(String(plan.id)));
-  };
+  }, [inventories, pricingPlans]);
 
   // Filter and sort inventories
   const filteredAndSortedInventories = useMemo(() => {
@@ -482,7 +482,7 @@ function InventoryView({
                 {editingInventory ? 'Edit Inventory' : 'Add Inventory'}
               </h3>
 
-              {!editingInventory && getAvailablePlans().length === 0 ? (
+              {!editingInventory && availablePlans.length === 0 ? (
                 /* All plans already added */
                 <div className="text-center py-8">
                   <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
@@ -512,7 +512,7 @@ function InventoryView({
                     disabled={editingInventory ? true : false}
                   >
                     <option value="">Select a pricing plan</option>
-                    {(editingInventory ? pricingPlans : getAvailablePlans()).map((plan) => {
+                    {(editingInventory ? pricingPlans : availablePlans).map((plan) => {
                       const productName = plan.product?.product_name || 'Unknown Product';
                       const planName = plan.package || 'N/A';
                       const measure = plan.measure || '';

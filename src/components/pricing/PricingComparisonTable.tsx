@@ -29,7 +29,7 @@ interface SamplePricingPlan {
   annualRecurringCount: number;
   actualAnnualPrice?: number;
   annualSizeDiscount?: number;
-  planId?: number;
+  planId?: string | number; // Support both UUID string and numeric IDs
   realFeatures?: Feature[];
   productSlug?: string;
   order: number;
@@ -78,23 +78,10 @@ const getAllFeaturesGroupedByType = (plans: SamplePricingPlan[]): { [type: strin
   return featuresMap;
 };
 
-// Helper function to check if a plan has a specific real feature (with inheritance)
+// Helper function to check if a plan has a specific real feature (explicit only, no inheritance)
 const planHasRealFeature = (plan: SamplePricingPlan, feature: Feature, allPlans: SamplePricingPlan[]): boolean => {
-  if (plan.realFeatures?.some(f => f.id === feature.id)) {
-    return true;
-  }
-
-  const sortedPlans = [...allPlans].sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-  const currentPlanIndex = sortedPlans.findIndex(p => p.name === plan.name);
-
-  for (let i = 0; i <= currentPlanIndex; i++) {
-    const lowerPlan = sortedPlans[i];
-    if (lowerPlan.realFeatures?.some(f => f.id === feature.id)) {
-      return true;
-    }
-  }
-
-  return false;
+  // Only check if the feature is explicitly linked to this plan
+  return plan.realFeatures?.some(f => f.id === feature.id) || false;
 };
 
 // Legacy helper for string-based features
@@ -185,7 +172,7 @@ export default function PricingComparisonTable({
                   {translations.features}
                 </th>
                 {plans.map((plan) => (
-                  <th key={plan.name} className="text-center py-4 px-6 min-w-[120px]">
+                  <th key={`${plan.planId}-${plan.name}`} className="text-center py-4 px-6 min-w-[120px]">
                     <div className="text-sm font-semibold text-gray-700 mb-1">
                       {plan.name}
                     </div>
@@ -301,7 +288,7 @@ export default function PricingComparisonTable({
                               </Link>
                             </td>
                             {plans.map((plan) => (
-                              <td key={`${plan.name}-${feature.id}`} className="text-center py-4 px-6">
+                              <td key={`${plan.planId}-${feature.id}`} className="text-center py-4 px-6">
                                 {planHasRealFeature(plan, feature, plans) ? (
                                   <CheckIcon className="h-5 w-5 mx-auto" style={{ color: primaryColor }} />
                                 ) : (

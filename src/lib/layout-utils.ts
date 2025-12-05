@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { headers } from 'next/headers';
 import { getSettings } from './getSettings';
 import { getLocaleFromLanguage } from './language-utils';
-import { MenuItem, SubMenuItem, ReactIcon } from '@/types/menu';
+import { MenuItem, SubMenuItem } from '@/types/menu';
 import { Settings } from '@/types/settings';
 
 export async function fetchMenuItems(organizationId: string | null): Promise<MenuItem[]> {
@@ -19,14 +19,14 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
         id,
         display_name,
         display_name_translation,
+        description,
+        description_translation,
         url_name,
         is_displayed,
         is_displayed_on_footer,
         order,
-        react_icon_id,
-        menu_items_are_text,
+        display_as_card,
         organization_id,
-        react_icons (icon_name),
         website_submenuitem(
           id,
           name,
@@ -53,12 +53,13 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
           id,
           display_name,
           display_name_translation,
+          description,
+          description_translation,
           url_name,
           is_displayed,
           is_displayed_on_footer,
           order,
-          react_icon_id,
-          menu_items_are_text,
+          display_as_card,
           organization_id
         `)
         .eq('organization_id', organizationId)
@@ -96,31 +97,20 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
     
     // Transform data to match expected interface
     const menuItems: MenuItem[] = data?.map((item: any) => {
-      // Handle react_icons as either an array or single object
-      let iconName: string | null = null;
-      if (item.react_icons) {
-        if (Array.isArray(item.react_icons) && item.react_icons.length > 0) {
-          iconName = item.react_icons[0].icon_name;
-        } else if (item.react_icons.icon_name) {
-          iconName = item.react_icons.icon_name;
-        }
-      }
-
       return {
         id: item.id,
         display_name: item.display_name,
         display_name_translation: item.display_name_translation,
+        description: item.description,
+        description_translation: item.description_translation,
         url_name: item.url_name,
         is_displayed: item.is_displayed,
         is_displayed_on_footer: item.is_displayed_on_footer,
         is_new_window: false, // Default value since this field might not exist
         order: item.order,
-        react_icon_id: item.react_icon_id,
-        menu_items_are_text: item.menu_items_are_text,
+        display_as_card: item.display_as_card,
         created_at: undefined, // Field doesn't exist in database
         organization_id: item.organization_id,
-        icon_name: iconName,
-        react_icons: item.react_icons,
         website_submenuitem: item.website_submenuitem?.map((submenu: any) => ({
           id: submenu.id,
           name: submenu.name,

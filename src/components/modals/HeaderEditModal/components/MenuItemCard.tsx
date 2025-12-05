@@ -45,7 +45,7 @@ function SortableSubmenuRow({
   submenu: SubMenuItem;
   menuItemId: string;
   primary: any;
-  onInlineEditOpen: (menuItemId: string, field: 'display_name' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description', currentValue: string, submenuId?: string) => void;
+  onInlineEditOpen: (menuItemId: string, field: 'display_name' | 'description' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description', currentValue: string, submenuId?: string) => void;
   onToggle: (menuItemId: string, submenuId: string) => void;
   onDelete: (menuItemId: string, submenuId: string) => void;
   onImageClick: (menuItemId: string, submenuId: string, currentImage?: string) => void;
@@ -173,13 +173,13 @@ interface MenuItemCardProps {
   item: MenuItem;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onEdit: (id: string, field: 'display_name' | 'description' | 'url_name', value: string) => void;
+  onEdit: (id: string, field: 'display_name' | 'description' | 'url_name' | 'display_as_card', value: string | boolean) => void;
   onSubmenuEdit: (menuItemId: string, submenuId: string, field: 'name' | 'description' | 'url_name' | 'image', value: string) => void;
   onSubmenuToggle: (menuItemId: string, submenuId: string) => void;
   onSubmenuDelete: (menuItemId: string, submenuId: string) => void;
   onAddSubmenu: (menuItemId: string, name: string, urlName: string, description?: string, image?: string) => void;
   onSubmenuReorder: (menuItemId: string, submenuItems: SubMenuItem[]) => void;
-  onInlineEditOpen: (menuItemId: string, field: 'display_name' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description', currentValue: string, submenuId?: string) => void;
+  onInlineEditOpen: (menuItemId: string, field: 'display_name' | 'description' | 'url_name' | 'submenu_name' | 'submenu_url' | 'submenu_description', currentValue: string, submenuId?: string) => void;
   onAddSubmenuOpen: (menuItemId: string) => void;
   onSubmenuImageClick: (menuItemId: string, submenuId: string, currentImage?: string) => void;
 }
@@ -292,6 +292,22 @@ export function MenuItemCard({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
+            {/* Display as Card Toggle - only show if menu has submenu items */}
+            {item.submenu_items && item.submenu_items.length > 0 && (
+              <button
+                onClick={() => onEdit(item.id, 'display_as_card', !item.display_as_card)}
+                className={cn(
+                  "px-2 py-1 rounded text-[10px] font-medium transition-all",
+                  item.display_as_card
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                )}
+                title={item.display_as_card ? "Submenu items display as cards (centered text)" : "Submenu items display with image backgrounds"}
+              >
+                {item.display_as_card ? "Card" : "Image"}
+              </button>
+            )}
+            
             <button
               onClick={() => onToggle(item.id)}
               className={cn(
@@ -365,6 +381,18 @@ export function MenuItemCard({
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
           </button>
+        </div>
+
+        {/* Description */}
+        <div 
+          className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-opacity-80 line-clamp-2"
+          onDoubleClick={(e) => {
+            onInlineEditOpen(item.id, 'description', item.description || '');
+            e.stopPropagation();
+          }}
+          title="Double-click to edit description"
+        >
+          {item.description || 'No description'}
         </div>
 
         {/* Submenu Items */}

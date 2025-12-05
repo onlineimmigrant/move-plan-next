@@ -1,7 +1,3 @@
-export interface ReactIcon {
-  icon_name: string;
-}
-
 export interface SubMenuItem {
   id: number;
   menu_item_id: number; // Updated field name to match database
@@ -26,13 +22,10 @@ export interface MenuItem {
   is_displayed_on_footer?: boolean; // Added missing property
   is_new_window?: boolean;
   order: number; // Updated field name to match database
-  react_icon_id?: number;
-  menu_items_are_text?: boolean; // Whether to display menu items as text only (no icons)
+  display_as_card?: boolean; // Whether submenu items display as text cards instead of image backgrounds
   created_at?: string;
   description?: string;
   description_translation?: Record<string, string>;
-  icon_name?: string | null;
-  react_icons?: ReactIcon | ReactIcon[] | null; // Added missing property for react icons
   website_submenuitem?: SubMenuItem[]; // Updated field name to match database
   organization_id: string | null;
   image?: string | null; // Added image field for menu item icons

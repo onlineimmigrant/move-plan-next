@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       .from('website_menuitem')
       .select(`
         *,
+        display_as_card,
         website_submenuitem (
           id,
           menu_item_id,

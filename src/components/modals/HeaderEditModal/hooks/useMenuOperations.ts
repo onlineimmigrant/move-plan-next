@@ -56,8 +56,10 @@ export function useMenuOperations({
     }
   };
 
-  const handleEdit = async (itemId: string, field: 'display_name' | 'description' | 'url_name', value: string) => {
+  const handleEdit = async (itemId: string, field: 'display_name' | 'description' | 'url_name' | 'display_as_card', value: string | boolean) => {
     try {
+      console.log('[Menu Operations] Updating field:', { itemId, field, value });
+      
       const response = await fetch(`/api/menu-items/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +68,16 @@ export function useMenuOperations({
 
       if (!response.ok) throw new Error(`Failed to update ${field}`);
 
+      const data = await response.json();
+      console.log('[Menu Operations] Update response:', data);
+
       setMenuItems(menuItems.map(item => 
         item.id === itemId ? { ...item, [field]: value } : item
       ));
+      
+      if (field === 'display_as_card') {
+        toast.success(value ? 'Submenu items will display as cards' : 'Submenu items will display with images');
+      }
     } catch (error) {
       console.error('Failed to update menu item:', error);
       toast.error(`Failed to update ${field}`);

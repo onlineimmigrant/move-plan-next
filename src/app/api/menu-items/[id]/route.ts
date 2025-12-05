@@ -76,7 +76,8 @@ export async function PUT(
       description_translation,
       name,
       name_translation,
-      menu_item_id // If this exists, it's a submenu item
+      menu_item_id, // If this exists, it's a submenu item
+      display_as_card
     } = body;
 
     console.log('[API Menu Item] Updating item:', id, 'isSubmenu:', !!menu_item_id || !!name);
@@ -135,6 +136,7 @@ export async function PUT(
       if (order !== undefined) updateData.order = order;
       if (description !== undefined) updateData.description = description;
       if (description_translation !== undefined) updateData.description_translation = description_translation;
+      if (display_as_card !== undefined) updateData.display_as_card = display_as_card;
       updateData.updated_at = new Date().toISOString();
 
       const { data, error } = await supabase

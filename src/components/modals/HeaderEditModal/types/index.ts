@@ -46,6 +46,7 @@ export interface MenuItem {
   is_displayed_on_footer: boolean;
   menu_items_are_text: boolean;
   react_icon_id?: string;
+  display_as_card?: boolean;
   order: number;
   organization_id: string;
   submenu_items?: SubMenuItem[];

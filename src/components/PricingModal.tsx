@@ -272,7 +272,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const [selectedProduct, setSelectedProduct] = useState<PricingComparisonProduct | null>(null);
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
-  const [planFeatures, setPlanFeatures] = useState<Record<number, Feature[]>>({});
+  const [planFeatures, setPlanFeatures] = useState<Record<string, Feature[]>>({});
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
   const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({});
   const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
@@ -322,6 +322,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         const currencyParam = `&currency=${userCurrency}`;
         const url = `/api/pricing-comparison?organizationId=${encodeURIComponent(settings.organization_id)}&type=plans${productParam}${currencyParam}`;
         
+        console.log('[PricingModal] Fetching plans with organization_id:', settings.organization_id, 'URL:', url);
+        
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -332,6 +334,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         
         if (response.ok) {
           const data = await response.json();
+          console.log('[PricingModal] Fetched pricing plans:', data.length, 'plans');
+          console.log('[PricingModal] First plan sample:', data[0]);
           setPricingPlans(data);
         } else {
           const errorData = await response.json().catch(() => ({}));
@@ -355,29 +359,41 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       if (!pricingPlans.length || !settings?.organization_id) return;
       
       setIsLoadingFeatures(true);
-      const featuresMap: Record<number, Feature[]> = {};
+      const featuresMap: Record<string, Feature[]> = {};
       
       try {
-        // Fetch features for each pricing plan
-        for (const plan of pricingPlans) {
-          const url = `/api/pricingplan-features?planId=${plan.id}&organizationId=${encodeURIComponent(settings.organization_id)}`;
-
+        // Fetch ALL features for the organization at once (more efficient than per-plan requests)
+        const url = `/api/pricingplan-features?organization_id=${encodeURIComponent(settings.organization_id)}`;
+        
+        console.log('[PricingModal] Fetching all features for organization:', settings.organization_id);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const allFeatures = await response.json();
+          console.log('[PricingModal] Fetched features:', allFeatures.length, 'total features');
           
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          // Group features by pricingplan_id
+          allFeatures.forEach((pf: any) => {
+            const planId = pf.pricingplan_id;
+            if (!featuresMap[planId]) {
+              featuresMap[planId] = [];
+            }
+            // Extract the actual feature data
+            if (pf.feature) {
+              featuresMap[planId].push(pf.feature);
+            }
           });
           
-          if (response.ok) {
-            const features = await response.json();
-            featuresMap[plan.id] = features;
-
-          } else {
-            console.error(`Error fetching features for plan ${plan.id}:`, await response.json().catch(() => ({})));
-            featuresMap[plan.id] = [];
-          }
+          console.log('[PricingModal] Grouped features by plan:', Object.keys(featuresMap).length, 'plans have features');
+          console.log('[PricingModal] Sample plan IDs with features:', Object.keys(featuresMap).slice(0, 3));
+        } else {
+          console.error('Error fetching features:', await response.json().catch(() => ({})));
         }
         
         setPlanFeatures(featuresMap);
@@ -394,16 +410,32 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
 
   // Transform real pricing plans into display format
   const transformPricingPlans = (plans: PricingPlan[]): SamplePricingPlan[] => {
+    console.log('[transformPricingPlans] Input plans:', plans.length);
     if (!plans || plans.length === 0) return []; // Return empty array when no plans available
     
-    // Group plans by product and create monthly/annual pairs
+    // For one-time plans, each plan should be its own card
+    // For subscription plans, group by product to show monthly/annual options
     const plansByProduct: { [key: string]: { monthly?: PricingPlan; annual?: PricingPlan } } = {};
     
     plans.forEach(plan => {
       // Skip null or undefined plans
       if (!plan) return;
       
-      const productKey = plan.package || `Product ${plan.product_id}`;
+      // Use product name or product_id as the key to properly group plans
+      // This prevents plans with the same package name but different products from overwriting each other
+      const productName = plan.product?.product_name || plan.package || `Product ${plan.product_id}`;
+      
+      // For one-time purchases, create a unique key for each plan using the plan ID
+      // For subscription plans (month/year), group by product
+      let productKey: string;
+      if (plan.recurring_interval === 'month' || plan.recurring_interval === 'year') {
+        // Subscription plans: group by product
+        productKey = `${plan.product_id}_${productName}`;
+      } else {
+        // One-time plans: each plan gets its own card
+        productKey = `${plan.id}_${plan.package || productName}`;
+      }
+      
       if (!plansByProduct[productKey]) {
         plansByProduct[productKey] = {};
       }
@@ -412,17 +444,29 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         plansByProduct[productKey].monthly = plan;
       } else if (plan.recurring_interval === 'year') {
         plansByProduct[productKey].annual = plan;
+      } else {
+        // Handle one-time purchases and plans with null recurring_interval
+        // Each one-time plan gets its own entry
+        plansByProduct[productKey].monthly = plan;
       }
     });
     
-    const transformedPlans = Object.entries(plansByProduct).map(([productName, { monthly, annual }], index) => {
+    const transformedPlans = Object.entries(plansByProduct).map(([productKey, { monthly, annual }], index) => {
+      // Extract the actual product name from the key (format: "product_id_product_name")
+      const productName = monthly?.product?.product_name || annual?.product?.product_name || monthly?.package || annual?.package || 'Unknown Product';
+      
+      console.log('[Transform] Processing:', productKey);
+      console.log('[Transform] Monthly plan:', monthly ? { id: monthly.id, package: monthly.package, price: monthly.price, description: monthly.description } : 'none');
+      console.log('[Transform] Annual plan:', annual ? { id: annual.id, package: annual.package, price: annual.price } : 'none');
+      
       // Get currency-aware prices using our utility function
       const monthlyPriceResult = getPriceForCurrency(monthly, userCurrency);
       const annualPriceResult = getPriceForCurrency(annual, userCurrency);
       
-      // Use currency-aware prices or fallback to raw price (legacy system uses actual currency units)
-      const monthlyPrice = monthlyPriceResult?.price ?? (monthly?.price || 0);
-      const monthlyPriceSymbol = monthlyPriceResult?.symbol || currencySymbol;
+      // Use raw prices directly as they are already in the correct currency units (not cents)
+      // The database stores prices in pence/cents format (35000 = £350.00)
+      const monthlyPrice = (monthly?.price || 0) / 100; // Divide by 100 to convert pence to pounds
+      const monthlyPriceSymbol = monthly?.currency_symbol || currencySymbol;
       
       // Calculate annual price with priority:
       // 1. Use annual plan's monthly_price_calculated if available
@@ -433,9 +477,9 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       let annualPriceSymbol = monthlyPriceSymbol;
       
       if (annual?.monthly_price_calculated) {
-        // Direct annual plan exists - use currency-aware pricing
-        annualPrice = annualPriceResult?.price ?? (annual?.price || monthlyPrice);
-        annualPriceSymbol = annualPriceResult?.symbol || currencySymbol;
+        // Direct annual plan exists - use raw price divided by 100
+        annualPrice = (annual?.price || monthlyPrice * 100) / 100;
+        annualPriceSymbol = annual?.currency_symbol || currencySymbol;
         const commitmentMonths = annual.commitment_months || 12;
         actualAnnualPrice = annualPrice ? parseFloat((annualPrice * commitmentMonths).toFixed(2)) : undefined;
       } else if (monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
@@ -448,7 +492,10 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       
       // Get features for this plan
       const planId = monthly?.id || annual?.id;
-      const realFeatures = planId ? (planFeatures[planId] || []) : [];
+      const planIdNumber = planId ? (typeof planId === 'number' ? planId : parseInt(String(planId), 10)) : undefined;
+      const realFeatures = planIdNumber ? (planFeatures[planIdNumber] || []) : [];
+      
+      console.log('[PricingModal] Plan ID:', planIdNumber, 'Features found:', realFeatures.length);
 
       // Handle promotion pricing with currency awareness
       const monthlyIsPromotion = monthly?.is_promotion && (monthly?.promotion_price !== undefined || monthly?.promotion_percent !== undefined);
@@ -462,8 +509,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           // Calculate promotion price from percentage of the converted price
           monthlyPromotionPrice = parseFloat((monthlyPrice * (1 - monthly.promotion_percent / 100)).toFixed(2));
         } else if (monthly?.promotion_price !== undefined) {
-          // Use promotion_price directly (already in correct currency units)
-          monthlyPromotionPrice = monthly.promotion_price;
+          // Use promotion_price divided by 100 (stored in pence)
+          monthlyPromotionPrice = monthly.promotion_price / 100;
         }
       }
       
@@ -472,14 +519,21 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           // Calculate promotion price from percentage of the converted price
           annualPromotionPrice = parseFloat((annualPrice * (1 - annual.promotion_percent / 100)).toFixed(2));
         } else if (annual?.promotion_price !== undefined) {
-          // Use promotion_price directly (already in correct currency units)
-          annualPromotionPrice = annual.promotion_price;
+          // Use promotion_price divided by 100 (stored in pence)
+          annualPromotionPrice = annual.promotion_price / 100;
         }
       } else if (monthlyIsPromotion && monthlyPromotionPrice !== undefined && monthly?.annual_size_discount && monthly.annual_size_discount > 0) {
         // Calculate annual promotion price from monthly promotion using discount
         const discountMultiplier = (100 - monthly.annual_size_discount) / 100;
         annualPromotionPrice = parseFloat((monthlyPromotionPrice * discountMultiplier).toFixed(2));
       }
+
+      console.log('[Transform] Returning plan data:', {
+        name: productName,
+        monthlyPrice: parseFloat(monthlyPrice.toFixed(2)),
+        description: monthly?.description || annual?.description || '',
+        features: realFeatures.length
+      });
 
       return {
         name: productName,
@@ -500,7 +554,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         // Add discount information for display
         annualSizeDiscount: monthly?.annual_size_discount || annual?.annual_size_discount || 0,
         // Store the actual plan ID and features for feature comparison table
-        planId: planId || 0,
+        planId: planIdNumber,
         realFeatures: realFeatures || [],
         // Add product slug for linking to product page
         productSlug: monthly?.product?.slug || annual?.product?.slug || '',
@@ -544,6 +598,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       };
     });
 
+    console.log('[transformPricingPlans] Output plans:', sortedPlans.length, 'First plan:', sortedPlans[0]);
     return sortedPlans;
   };
 
@@ -726,7 +781,16 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                   </div>
                 ))
               ) : (
-                displayPlans.map((plan) => (
+                displayPlans.map((plan) => {
+                  console.log('[RENDER] Rendering pricing card:', {
+                    name: plan.name,
+                    description: plan.description,
+                    monthlyPrice: plan.monthlyPrice,
+                    features: plan.features.length,
+                    realFeatures: plan.realFeatures?.length
+                  });
+                  
+                  return (
                   <PricingCard
                     key={plan.name}
                     name={plan.name}
@@ -758,7 +822,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                     translations={translations}
                     isLoadingFeatures={isLoadingFeatures}
                   />
-                ))
+                  );
+                })
               )}
             </div>
 
