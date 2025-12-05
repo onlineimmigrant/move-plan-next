@@ -4,6 +4,7 @@ import React from 'react';
 import Button from '@/ui/Button';
 import { useCookieTranslations } from './useCookieTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 interface FooterButtonsProps {
   saveConsentSettings: () => void;
@@ -17,17 +18,23 @@ const FooterButtons: React.FC<FooterButtonsProps> = ({
   const t = useCookieTranslations();
   const themeColors = useThemeColors();
   
+  // Ensure minimum shade of 600-700 for WCAG AA contrast
+  const buttonShade = Math.max(themeColors.raw.primary.shade, 600);
+  const buttonHoverShade = Math.min(buttonShade + 100, 900);
+  const buttonBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonShade}`);
+  const buttonHoverBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonHoverShade}`);
+  
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:items-center font-medium">
-        {/* Apple-style primary action */}
+        {/* Apple-style primary action - WCAG AA contrast */}
         <button
           onClick={saveConsentSettings}
           aria-label={t.saveSettings}
           className="group relative overflow-hidden flex items-center justify-center px-7 py-3 text-[14px] font-semibold text-white rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.28)]"
-          style={{ backgroundColor: themeColors.cssVars.primary.base }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base}
+          style={{ backgroundColor: buttonBgColor }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = buttonHoverBgColor || buttonBgColor || ''}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = buttonBgColor || ''}
         >
           <span className="relative z-20 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.95] antialiased">
             {t.saveSettings}

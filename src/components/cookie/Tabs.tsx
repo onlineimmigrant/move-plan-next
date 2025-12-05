@@ -6,6 +6,7 @@ import Category from './Category';
 import Service from './Service';
 import { useCookieTranslations } from './useCookieTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 interface TabsProps {
   categories: {
@@ -21,6 +22,11 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
   const t = useCookieTranslations();
   const themeColors = useThemeColors();
+  
+  // Ensure minimum shade of 600-700 for WCAG AA contrast
+  const tabShade = Math.max(themeColors.raw.primary.shade, 600);
+  const tabBgColor = getColorValue(`${themeColors.raw.primary.color}-${tabShade}`);
+  
   const isEssentialCategory = (name: string) => {
     return name.toLowerCase() === 'essential';
   };
@@ -36,7 +42,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
                   ? 'text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
                   : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
               }`}
-              style={selected ? { backgroundColor: themeColors.cssVars.primary.base } : {}}
+              style={selected ? { backgroundColor: tabBgColor } : {}}
             >
               {t.categories}
             </div>
@@ -50,7 +56,7 @@ const Tabs: React.FC<TabsProps> = ({ categories, consent, setConsent }) => {
                   ? 'text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] font-semibold'
                   : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
               }`}
-              style={selected ? { backgroundColor: themeColors.cssVars.primary.base } : {}}
+              style={selected ? { backgroundColor: tabBgColor } : {}}
             >
               {t.services}
             </div>

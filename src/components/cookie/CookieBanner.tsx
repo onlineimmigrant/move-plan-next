@@ -9,6 +9,7 @@ import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
 // Dynamic import for CookieSettings - only loads when settings button clicked
 const CookieSettings = dynamic(() => import('./CookieSettings'), {
@@ -41,6 +42,12 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const { showSettings, setShowSettings } = useCookieSettings();
   const themeColors = useThemeColors();
+  
+  // Ensure minimum shade of 600-700 for WCAG AA contrast
+  const buttonShade = Math.max(themeColors.raw.primary.shade, 600);
+  const buttonHoverShade = Math.min(buttonShade + 100, 900);
+  const buttonBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonShade}`);
+  const buttonHoverBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonHoverShade}`);
 
   useEffect(() => {
     const accepted = getCookie('cookies_accepted');
@@ -178,28 +185,22 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                     
-                    {/* Accept Button - High contrast with shadow for better visibility */}
+                    {/* Accept Button - WCAG AA contrast using darker shade (600-700) */}
                     <button
                       onClick={handleAcceptAll}
-                      className="relative px-6 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
+                      className="relative px-6 py-2.5 text-sm font-bold text-white rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
                       style={{ 
-                        backgroundColor: themeColors.cssVars.primary.base,
-                        color: '#ffffff',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                        willChange: 'transform',
-                        // Ensure minimum contrast by darkening if needed
-                        filter: 'brightness(0.9) saturate(1.1)'
+                        backgroundColor: buttonBgColor,
+                        willChange: 'transform'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover;
-                        e.currentTarget.style.filter = 'brightness(0.85) saturate(1.15)';
+                        e.currentTarget.style.backgroundColor = buttonHoverBgColor || buttonBgColor || '';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base;
-                        e.currentTarget.style.filter = 'brightness(0.9) saturate(1.1)';
+                        e.currentTarget.style.backgroundColor = buttonBgColor || '';
                       }}
                     >
-                      <span className="relative z-10 font-bold">{translations.acceptAll}</span>
+                      <span className="relative z-10">{translations.acceptAll}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>

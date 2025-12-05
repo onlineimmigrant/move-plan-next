@@ -461,6 +461,13 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
               crossOrigin="anonymous"
               onPlay={() => setIsVideoPlaying(true)}
               onPause={() => setIsVideoPlaying(false)}
+              onError={(e) => {
+                // Silently handle video load errors - fallback to background image if available
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('[Hero] Video failed to load:', hero.video_url);
+                }
+                e.currentTarget.style.display = 'none';
+              }}
             />
           ) : (
             // ReactPlayer for YouTube and Vimeo (lazy loaded)

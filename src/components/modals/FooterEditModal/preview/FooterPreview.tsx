@@ -254,11 +254,11 @@ export const FooterPreview: React.FC<FooterPreviewProps> = ({
           const submenuItems = item.website_submenuitem || item.submenu_items || [];
           return (
             <div key={item.id} className="col-span-1 min-h-[200px]">
-              <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+              <h2 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                 <FooterLink href={item.url_name || '#'} isHeading={true}>
                   {item.display_name}
                 </FooterLink>
-              </h3>
+              </h2>
               <ul className="space-y-2">
                 {submenuItems
                   .filter((sub: SubMenuItem) => sub.is_displayed !== false)
@@ -277,11 +277,11 @@ export const FooterPreview: React.FC<FooterPreviewProps> = ({
         {/* Items without submenus */}
         {groupedItemsWithoutSubitems.map((group, index) => (
           <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
-            <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+            <h2 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
               <FooterLink href={group[0]?.url_name || '#'} isHeading={true}>
                 {itemsWithSubitems.length ? '' : translations.links}
               </FooterLink>
-            </h3>
+            </h2>
             <ul className="space-y-2">
               {group.map((item) => (
                 <li key={item.id}>
@@ -296,9 +296,9 @@ export const FooterPreview: React.FC<FooterPreviewProps> = ({
 
         {/* Profile Column */}
         <div className="col-span-1 min-h-[200px]">
-          <h3 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
+          <h2 className="text-base font-semibold mb-4" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
             {translations.profile}
-          </h3>
+          </h2>
           <ul className="space-y-2">
             <li><FooterLink href="#" className="text-sm">{translations.dashboard}</FooterLink></li>
             <li><FooterLink href="#" className="text-sm">{translations.settings}</FooterLink></li>
@@ -347,7 +347,7 @@ export const FooterPreview: React.FC<FooterPreviewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         {/* Company Info */}
         <div>
-          <h3 className="text-base font-semibold mb-4">{siteName}</h3>
+          <h2 className="text-base font-semibold mb-4">{siteName}</h2>
           <p className="text-sm opacity-75" style={{ color: textColor }}>
             Your trusted partner for all your needs
           </p>
@@ -358,11 +358,11 @@ export const FooterPreview: React.FC<FooterPreviewProps> = ({
           const submenuItems = item.website_submenuitem || item.submenu_items || [];
           return (
             <div key={item.id}>
-              <h3 className="text-base font-semibold mb-4">
+              <h2 className="text-base font-semibold mb-4">
                 <FooterLink href={item.url_name || '#'} isHeading={true}>
                   {item.display_name}
                 </FooterLink>
-              </h3>
+              </h2>
               <ul className="space-y-2">
                 {submenuItems
                   .filter((sub: SubMenuItem) => sub.is_displayed !== false)

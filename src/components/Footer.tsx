@@ -398,7 +398,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
               return (
                 <div key={item.id} className="col-span-1 min-h-[200px]">
-                  <h3 className="text-base font-semibold mb-4">
+                  <h2 className="text-base font-semibold mb-4">
                     <FooterLink
                       href={item.url_name || '#'}
                       className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -406,7 +406,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     >
                       {translatedDisplayName}
                     </FooterLink>
-                  </h3>
+                  </h2>
                   <ul className="space-y-2">
                     {item.website_submenuitem
                       ?.map((subItem) => {
@@ -432,7 +432,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
 
             {groupedItemsWithoutSubitems.map((group, index) => (
               <div key={`group-${index}`} className="col-span-1 min-h-[200px]">
-                <h3 className="text-base font-semibold mb-4">
+                <h2 className="text-base font-semibold mb-4">
                   <FooterLink
                     href={group[0]?.url_name || '#'}
                     className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
@@ -440,7 +440,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                   >
                     {itemsWithSubitems.length ? '' : translations.links}
                   </FooterLink>
-                </h3>
+                </h2>
                 <ul className="space-y-2">
                   {group.map((item) => {
                     const translatedDisplayName = currentLocale 
@@ -463,7 +463,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             ))}
 
             <div className="col-span-1 min-h-[200px]">
-              <h3 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h3>
+              <h2 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h2>
               <ul className="space-y-2">
                 {isAuthenticated ? (
                   <>
@@ -687,11 +687,11 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             className={`py-6 ${index > 0 ? 'border-t' : ''}`}
             style={{ borderColor: index > 0 ? `${getColorValue(footerStyles.color)}33` : undefined }}
           >
-            <h3 className="text-lg font-semibold mb-4 text-center">
+            <h2 className="text-lg font-semibold mb-4 text-center">
               <FooterLink href={item.url_name || '#'} isHeading={true}>
                 {translatedDisplayName}
               </FooterLink>
-            </h3>
+            </h2>
             <ul className="flex flex-wrap justify-center gap-4">
               {item.website_submenuitem?.map((subItem) => {
                 const translatedSubItemName = currentLocale 

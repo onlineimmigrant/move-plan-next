@@ -7,6 +7,3 @@ Disallow: /admin/
 Disallow: /account/
 Disallow: /api/
 Allow: /api/og-image
-
-# Dynamic sitemap (generated per request)
-Sitemap: /sitemap.xml
