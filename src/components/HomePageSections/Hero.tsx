@@ -576,6 +576,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                     href={hero.button_style?.url || '/products'}
                     onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
+                    aria-label={translatedButton || 'Play video'}
                   >
                     <FaPlayCircle className="h-16 w-16 text-white hover:text-gray-200" />
                   </Link>
@@ -615,6 +616,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                     href={hero.button_style?.url || '/products'}
                     onClick={() => performance?.mark?.('hero-cta-click')}
                     className={`animate-hero-button-get-started ${isVisible ? 'animate' : ''} hover:opacity-80 transition-opacity`}
+                    aria-label={translatedButton || 'Play video'}
                   >
                     <FaPlayCircle className="h-4 w-4 text-white hover:text-gray-200" />
                   </Link>

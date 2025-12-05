@@ -29,6 +29,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       secure: false,
     },
   },
+  global: {
+    headers: {
+      'apikey': supabaseAnonKey,
+      'Prefer': 'return=representation'
+    }
+  },
+  db: {
+    schema: 'public'
+  }
 });
 
 // Optional: Track auth state changes (reduced logging)

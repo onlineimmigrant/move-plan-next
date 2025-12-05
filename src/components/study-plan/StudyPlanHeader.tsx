@@ -99,14 +99,14 @@ const StudyPlanHeader = ({
               >
                 <HiX className="w-8 h-8 bg-gray-100 hover:bg-gray-50 rounded-full p-1" />
               </button>
-              <h2 className="text-lg font-bold text-gray-800 mb-6 text-center">
+              <h1 className="text-lg font-bold text-gray-800 mb-6 text-center">
                 Settings
-              </h2>
+              </h1>
               <form onSubmit={handleSettingsSubmit} className="space-y-16">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-700 mb-4">
+                  <h2 className="text-base font-semibold text-gray-700 mb-4">
                     Learning Style
-                  </h3>
+                  </h2>
                   <RadioGroup
                     options={['intensive', 'flexible', 'linear']}
                     selected={preference.style}
@@ -114,9 +114,9 @@ const StudyPlanHeader = ({
                   />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-gray-700 mb-4">
+                  <h2 className="text-base font-semibold text-gray-700 mb-4">
                     Period
-                  </h3>
+                  </h2>
                   <div className="space-y-4">
                     <DateInput
                       label="Start Date"

@@ -2,12 +2,13 @@
 
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/context/AuthContext'; // Verify this export exists
-import { BasketProvider } from '@/context/BasketContext'; // Verify this export exists
-import { SettingsProvider } from '@/context/SettingsContext'; // Verify this export exists
-import { CookieSettingsProvider, useCookieSettings } from '@/context/CookieSettingsContext'; // Verify this export exists
-import { BannerProvider } from '@/context/BannerContext'; // Verify this export exists
+import { AuthProvider } from '@/context/AuthContext';
+import { BasketProvider } from '@/context/BasketContext';
+import { SettingsProvider } from '@/context/SettingsContext';
+import { CookieSettingsProvider, useCookieSettings } from '@/context/CookieSettingsContext';
+import { BannerProvider } from '@/context/BannerContext';
 import { PostEditModalProvider } from '@/components/modals/PostEditModal/context';
 import { TemplateSectionEditProvider } from '@/components/modals/TemplateSectionModal/context';
 import { TemplateHeadingSectionEditProvider } from '@/components/modals/TemplateHeadingSectionModal/context';
@@ -19,28 +20,10 @@ import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context'
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { ShopModalProvider } from '@/components/modals/ShopModal';
-import ShopModal from '@/components/modals/ShopModal/ShopModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
-import PostEditModal from '@/components/modals/PostEditModal/PostEditModal';
-
-// Lazy load ManagedVideoCall to prevent loading twilio-video (~150KB) on every page
-const ManagedVideoCall = dynamic(() => import('@/components/modals/MeetingsModals/ManagedVideoCall'), {
-  ssr: false,
-  loading: () => null
-});
-import TemplateSectionEditModal from '@/components/modals/TemplateSectionModal/TemplateSectionEditModal';
-import TemplateHeadingSectionEditModal from '@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal';
-import PageCreationModal from '@/components/modals/PageCreationModal/PageCreationModal';
-import SiteMapModal from '@/components/modals/SiteMapModal/SiteMapModal';
-import GlobalSettingsModal from '@/components/modals/GlobalSettingsModal/GlobalSettingsModal';
-import HeroSectionEditModal from '@/components/modals/HeroSectionModal/HeroSectionEditModal';
-import HeaderEditModal from '@/components/modals/HeaderEditModal/HeaderEditModal';
-import FooterEditModal from '@/components/modals/FooterEditModal/FooterEditModal';
-import LayoutManagerModal from '@/components/modals/LayoutManagerModal/LayoutManagerModal';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
-import dynamic from 'next/dynamic';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import UnifiedSections from '@/components/UnifiedSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
@@ -50,12 +33,75 @@ import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import ChatHelpWidget from '@/components/ChatHelpWidget';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
+// Lazy load all modals - they're only needed when user interacts
+const PostEditModal = dynamic(() => import('@/components/modals/PostEditModal/PostEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const TemplateSectionEditModal = dynamic(() => import('@/components/modals/TemplateSectionModal/TemplateSectionEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const TemplateHeadingSectionEditModal = dynamic(() => import('@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const PageCreationModal = dynamic(() => import('@/components/modals/PageCreationModal/PageCreationModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const SiteMapModal = dynamic(() => import('@/components/modals/SiteMapModal/SiteMapModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const GlobalSettingsModal = dynamic(() => import('@/components/modals/GlobalSettingsModal/GlobalSettingsModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSectionModal/HeroSectionEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const ManagedVideoCall = dynamic(() => import('@/components/modals/MeetingsModals/ManagedVideoCall'), {
+  ssr: false,
+  loading: () => null
+});
+const UniversalNewButton = dynamic(() => import('@/components/AdminQuickActions/UniversalNewButton'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const CommandPalette = dynamic(() => import('@/components/AdminQuickActions/CommandPalette'), { 
+  ssr: false, 
+  loading: () => null 
+});
+const UnifiedModalManager = dynamic(() => import('@/components/modals/UnifiedMenu').then(mod => ({ default: mod.UnifiedModalManager })), { 
+  ssr: false, 
+  loading: () => null 
+});
+const MeetingsAccountToggleButton = dynamic(() => import('@/components/modals/MeetingsModals').then(mod => ({ default: mod.MeetingsAccountToggleButton })), { 
+  ssr: false, 
+  loading: () => null 
+});
+
 // Create lazy wrapper components to avoid SSR bailout error
 import CookieBannerComponent from '@/components/cookie/CookieBanner';
 import CookieSettingsComponent from '@/components/cookie/CookieSettings';
-
-import UniversalNewButton from '@/components/AdminQuickActions/UniversalNewButton';
-import CommandPalette from '@/components/AdminQuickActions/CommandPalette';
 import { hideNavbarFooterPrefixes, hideFooterOnlyPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -63,8 +109,6 @@ import { TemplateHeadingSection } from '@/types/template_heading_section';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from '@/components/banners/types';
 import { MenuItem } from '@/types/menu';
-import { MeetingsAccountToggleButton } from '@/components/modals/MeetingsModals';
-import { UnifiedModalManager } from '@/components/modals/UnifiedMenu';
 
 // Wrapper component for standalone CookieSettings modal (opened from Footer)
 function StandaloneCookieSettings({ 

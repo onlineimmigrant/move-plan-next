@@ -1,11 +1,12 @@
+# Allow all crawlers
 User-agent: *
+Allow: /
+
+# Disallow private/internal pages
 Disallow: /admin/
 Disallow: /account/
 Disallow: /api/
 Allow: /api/og-image
 
-# Sitemap reference (update with your actual domain)
-Sitemap: https://yourdomain.com/sitemap.xml
-
-# Crawl delay for polite crawling
-Crawl-delay: 1
+# Dynamic sitemap (generated per request)
+Sitemap: /sitemap.xml

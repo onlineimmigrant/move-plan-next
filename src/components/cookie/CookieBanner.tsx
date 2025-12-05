@@ -178,18 +178,28 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                     
-                    {/* Accept Button - Premium Style */}
+                    {/* Accept Button - High contrast with shadow for better visibility */}
                     <button
                       onClick={handleAcceptAll}
-                      className="relative px-6 py-2.5 text-sm font-semibold text-white rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
+                      className="relative px-6 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] overflow-hidden group"
                       style={{ 
                         backgroundColor: themeColors.cssVars.primary.base,
-                        willChange: 'transform' 
+                        color: '#ffffff',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        willChange: 'transform',
+                        // Ensure minimum contrast by darkening if needed
+                        filter: 'brightness(0.9) saturate(1.1)'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.hover;
+                        e.currentTarget.style.filter = 'brightness(0.85) saturate(1.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = themeColors.cssVars.primary.base;
+                        e.currentTarget.style.filter = 'brightness(0.9) saturate(1.1)';
+                      }}
                     >
-                      <span className="relative z-10">{translations.acceptAll}</span>
+                      <span className="relative z-10 font-bold">{translations.acceptAll}</span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>

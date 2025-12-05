@@ -204,6 +204,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Extract locale from pathname for dynamic language setting
   const currentLocale = extractLocaleFromPathname(pathname);
   
+  // Normalize locale to use hyphens instead of underscores (e.g., en_GB → en-GB)
+  const language = currentLocale?.replace(/_/g, '-') || 'en';
+  
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
   
@@ -218,9 +221,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   
   // Check if user has already accepted cookies (server-side check)
   const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
-  
-  // Use dynamic locale instead of static language from settings
-  const language = currentLocale;
 
   // Server-side fetch of template sections for SSR to avoid SEO/SSR mismatch
   // Determine url_page (map '/' to '/home' to match DB convention)
