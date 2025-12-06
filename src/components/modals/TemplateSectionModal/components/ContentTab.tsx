@@ -2,6 +2,7 @@
  * ContentTab - Metrics and profile data management
  */
 
+
 'use client';
 
 import React from 'react';
