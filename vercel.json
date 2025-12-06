@@ -9,11 +9,5 @@
         }
       ]
     }
-  ],
-  "routes": [
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
-    }
   ]
 }
