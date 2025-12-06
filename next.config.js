@@ -61,6 +61,8 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: false,
+    // Enable optimized package imports for faster initial load
+    optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', '@headlessui/react'],
   },
   // Enable geolocation for Vercel deployments + SEO performance headers
   async headers() {
@@ -196,9 +198,19 @@ const nextConfig = {
     
     // Mark heavy packages for async loading
     if (!isServer) {
+      // Enable faster parsing and smaller output
+      config.optimization.minimize = true;
       config.optimization.concatenateModules = true;
       config.optimization.usedExports = true;
       config.optimization.sideEffects = true;
+      
+      // Reduce chunk overhead for faster parsing
+      config.optimization.runtimeChunk = {
+        name: 'webpack-runtime'
+      };
+      
+      // Split manifest into separate chunk for better caching
+      config.optimization.moduleIds = 'deterministic';
     }
     
     // Optimize chunk splitting for better caching and smaller initial bundles
@@ -210,6 +222,8 @@ const nextConfig = {
           maxInitialRequests: 25,
           minSize: 20000,
           maxAsyncRequests: 30,
+          // Reduce webpack runtime overhead
+          automaticNameDelimiter: '.',
           cacheGroups: {
             // Separate TipTap editor into its own chunk (only loaded when editing)
             tiptap: {
@@ -217,6 +231,14 @@ const nextConfig = {
               name: 'tiptap',
               priority: 40,
               chunks: 'async', // Defer loading
+              reuseExistingChunk: true,
+            },
+            // Twilio Video - large library only for video calls
+            twilioVideo: {
+              test: /[\\/]node_modules[\\/]twilio-video[\\/]/,
+              name: 'vendors.twilio-video',
+              priority: 38,
+              chunks: 'async', // Critical: Only load when video call starts
               reuseExistingChunk: true,
             },
             // Separate AWS SDK into its own chunk
@@ -279,6 +301,21 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
               name: 'react-vendor',
               priority: 12,
+              reuseExistingChunk: true,
+            },
+            // Split Next.js into smaller chunks for better parsing
+            nextCore: {
+              test: /[\\/]node_modules[\\/]next[\\/]dist[\\/]compiled[\\/]/,
+              name: 'vendors.next-compiled',
+              priority: 11,
+              chunks: 'initial',
+              reuseExistingChunk: true,
+            },
+            nextClient: {
+              test: /[\\/]node_modules[\\/]next[\\/]dist[\\/]client[\\/]/,
+              name: 'vendors.next-client',
+              priority: 10,
+              chunks: 'initial',
               reuseExistingChunk: true,
             },
             // Split remaining vendors by size

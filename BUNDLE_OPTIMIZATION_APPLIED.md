@@ -1,10 +1,49 @@
 # Bundle Size Optimization - Applied Changes
 
-## Target: Reduce 576 KiB of unused JavaScript
+## Target: Reduce 474 KiB of unused JavaScript (down from 576 KiB)
 
-### Changes Applied
+### Changes Applied - Session 2
 
-#### 1. **Icon Library Tree-Shaking** (Est. savings: ~300 KiB)
+#### 1. **Twilio Video On-Demand Loading** (Est. savings: ~68 KiB)
+
+**Problem:** Twilio Video SDK (89 KiB, 68 KiB unused) was loading on every page despite only being used in video calls.
+
+**Solution:**
+- Created `VideoCallLoader` component that dynamically imports `ManagedVideoCall` only when `videoCallOpen` state is true
+- Removed eager import from ClientProviders
+- Added webpack chunk config to force async loading
+
+**Code:**
+```typescript
+function VideoCallLoader() {
+  const { videoCallOpen } = useMeetingContext();
+  const [VideoCallComponent, setVideoCallComponent] = useState<any>(null);
+
+  useEffect(() => {
+    if (videoCallOpen && !VideoCallComponent) {
+      import('@/components/modals/MeetingsModals/ManagedVideoCall').then(mod => {
+        setVideoCallComponent(() => mod.default);
+      });
+    }
+  }, [videoCallOpen, VideoCallComponent]);
+
+  if (!videoCallOpen || !VideoCallComponent) return null;
+  return <VideoCallComponent />;
+}
+```
+
+**Webpack config:**
+```javascript
+twilioVideo: {
+  test: /[\\/]node_modules[\\/]twilio-video[\\/]/,
+  name: 'vendors.twilio-video',
+  priority: 38,
+  chunks: 'async', // Only load when video call starts
+  reuseExistingChunk: true,
+},
+```
+
+#### 2. **Icon Library Tree-Shaking** (~300 KiB savings)
 
 **next.config.js - modularizeImports:**
 - `lucide-react`: 134 KiB → ~10 KiB per icon (124 KiB saved)

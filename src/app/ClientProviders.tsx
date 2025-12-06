@@ -21,7 +21,7 @@ import { FooterEditProvider } from '@/components/modals/FooterEditModal/context'
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { ShopModalProvider } from '@/components/modals/ShopModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
-import { MeetingProvider } from '@/context/MeetingContext';
+import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -30,7 +30,6 @@ import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
-import ChatHelpWidget from '@/components/ChatHelpWidget';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 // Lazy load all modals - they're only needed when user interacts
@@ -78,10 +77,6 @@ const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'
   ssr: false, 
   loading: () => null 
 });
-const ManagedVideoCall = dynamic(() => import('@/components/modals/MeetingsModals/ManagedVideoCall'), {
-  ssr: false,
-  loading: () => null
-});
 const UniversalNewButton = dynamic(() => import('@/components/AdminQuickActions/UniversalNewButton'), { 
   ssr: false, 
   loading: () => null 
@@ -98,6 +93,30 @@ const MeetingsAccountToggleButton = dynamic(() => import('@/components/modals/Me
   ssr: false, 
   loading: () => null 
 });
+
+// Lazy load chat widget - only when enabled
+const ChatHelpWidgetLazy = dynamic(() => import('@/components/ChatHelpWidget'), {
+  ssr: false,
+  loading: () => null
+});
+
+// Conditionally load VideoCall only when meeting is active
+function VideoCallLoader() {
+  const { videoCallOpen } = useMeetingContext();
+  const [VideoCallComponent, setVideoCallComponent] = useState<any>(null);
+
+  useEffect(() => {
+    if (videoCallOpen && !VideoCallComponent) {
+      // Dynamically import only when needed
+      import('@/components/modals/MeetingsModals/ManagedVideoCall').then(mod => {
+        setVideoCallComponent(() => mod.default);
+      });
+    }
+  }, [videoCallOpen, VideoCallComponent]);
+
+  if (!videoCallOpen || !VideoCallComponent) return null;
+  return <VideoCallComponent />;
+}
 
 // Create lazy wrapper components to avoid SSR bailout error
 import CookieBannerComponent from '@/components/cookie/CookieBanner';
@@ -202,12 +221,17 @@ export default function ClientProviders({
     }
   }, [cookieAccepted]);
 
-  // Create QueryClient instance
+  // Create QueryClient instance with optimized settings
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: false,
+        retry: 1, // Reduce retries for faster failures
+        retryDelay: 1000, // Faster retry timing
+      },
+      mutations: {
+        retry: 0, // No retries for mutations
       },
     },
   }));
@@ -215,7 +239,7 @@ export default function ClientProviders({
   useEffect(() => {
     const fetchTemplateData = async () => {
       const maxRetries = 1; // Only try once - fail fast
-      const timeout = 10000; // 10 seconds - reasonable timeout
+      const timeout = 5000; // Reduced from 10s to 5s for faster failures
       let attempt = 0;
 
       while (attempt < maxRetries) {
@@ -227,7 +251,6 @@ export default function ClientProviders({
             const cachedData = cache.get(cacheKey)!;
             setSections(cachedData.sections);
             setHeadings(cachedData.headings);
-            console.log('[ClientProviders] Using cached template data for:', cacheKey);
             setLoading(false);
             return;
           }
@@ -246,13 +269,16 @@ export default function ClientProviders({
             Promise.race([
               fetch(`${clientBaseUrl}/api/template-sections?url_page=${encodeURIComponent(urlPage)}`, {
                 cache: 'no-store',
-              }),
+                // Add priority hint for faster loading
+                priority: 'low', // Template sections are not critical for initial render
+              } as any),
               timeoutPromise,
             ]),
             Promise.race([
               fetch(`${clientBaseUrl}/api/template-heading-sections?url_page=${encodeURIComponent(urlPage)}`, {
                 cache: 'no-store',
-              }),
+                priority: 'low',
+              } as any),
               timeoutPromise,
             ]),
           ]);
@@ -337,8 +363,8 @@ export default function ClientProviders({
                                     <DynamicLanguageUpdater />
                                     <DefaultLocaleCookieManager />
                                     <CookieSettingsProvider>
-                                {/* VideoCall Modal - Renders at root level (z-2000) */}
-                                <ManagedVideoCall />
+                                {/* VideoCall Modal - Only load when meeting is active */}
+                                <VideoCallLoader />
                                 <BannerAwareContent
                                   key={`${pathname}-${showNavbarFooter}`}
                                   showNavbarFooter={showNavbarFooter}
