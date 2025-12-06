@@ -6,7 +6,13 @@ import { useEffect } from 'react';
 import Button from '@/ui/Button';
 import CloseButton from '@/ui/CloseButton';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
-import { BannerTimer } from './BannerTimer';
+import dynamic from 'next/dynamic';
+
+// Lazy load BannerTimer (uses framer-motion)
+const BannerTimer = dynamic(() => import('./BannerTimer').then(mod => ({ default: mod.BannerTimer })), {
+  ssr: false,
+  loading: () => null
+});
 
 interface BannerProps {
   banner: BannerType;

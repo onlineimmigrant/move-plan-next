@@ -344,6 +344,19 @@ export default function ClientProviders({
     [pathname]
   );
 
+  // Defer non-critical provider initialization
+  const [providersReady, setProvidersReady] = useState(false);
+  useEffect(() => {
+    // Use requestIdleCallback to defer non-critical setup
+    if (typeof requestIdleCallback !== 'undefined') {
+      const id = requestIdleCallback(() => setProvidersReady(true));
+      return () => cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(() => setProvidersReady(true), 0);
+      return () => clearTimeout(id);
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -357,7 +370,8 @@ export default function ClientProviders({
                     initialTemplateHeadingSections={templateHeadingSections}
                   >
                     <ToastProvider>
-                    <HeaderEditProvider>
+                    {providersReady ? (
+                      <HeaderEditProvider>
                       <FooterEditProvider>
                         <LayoutManagerProvider>
                           <PostEditModalProvider>
@@ -427,6 +441,45 @@ export default function ClientProviders({
               </LayoutManagerProvider>
             </FooterEditProvider>
           </HeaderEditProvider>
+                    ) : (
+                      // Render content immediately without edit providers
+                      <>
+                        <DynamicLanguageUpdater />
+                        <DefaultLocaleCookieManager />
+                        <CookieSettingsProvider>
+                          <VideoCallLoader />
+                          <BannerAwareContent
+                            key={`${pathname}-${showNavbarFooter}`}
+                            showNavbarFooter={showNavbarFooter}
+                            menuItems={menuItems}
+                            loading={loading}
+                            headerData={headerData}
+                            activeLanguages={activeLanguages}
+                            cookieCategories={cookieCategories}
+                            cookieAccepted={cookieAccepted}
+                            pathname={pathname}
+                          >
+                            {children}
+                          </BannerAwareContent>
+                          {showCookieBanner && (
+                            <Suspense fallback={null}>
+                              <CookieBannerComponent 
+                                headerData={headerData} 
+                                activeLanguages={activeLanguages}
+                                categories={cookieCategories}
+                              />
+                            </Suspense>
+                          )}
+                          <Suspense fallback={null}>
+                            <StandaloneCookieSettings 
+                              headerData={headerData}
+                              activeLanguages={activeLanguages}
+                              cookieCategories={cookieCategories}
+                            />
+                          </Suspense>
+                        </CookieSettingsProvider>
+                      </>
+                    )}
         </ToastProvider>
                   </PageSectionsProvider>
               </MeetingProvider>

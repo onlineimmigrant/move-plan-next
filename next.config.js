@@ -12,10 +12,18 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
-    // Target ES2020+ to avoid unnecessary polyfills (saves ~12KB)
-    target: 'ES2020',
   },
-  // Modularize imports for better tree-shaking (reduces bundle size by ~500KB)
+  experimental: {
+    optimizeCss: false,
+    // Enable optimized package imports for faster initial load
+    optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', '@headlessui/react'],
+  },
+  // Exclude polyfills - target modern browsers only
+  transpilePackages: [],
+  // Override SWC to exclude polyfills
+  env: {
+    NEXT_PUBLIC_BROWSERSLIST_CONFIG: '>0.3%, not dead, not op_mini all'
+  },
   modularizeImports: {
     'react-icons/fa': {
       transform: 'react-icons/fa/{{member}}',

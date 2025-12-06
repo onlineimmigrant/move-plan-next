@@ -351,7 +351,17 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
       };
     }
     // Use single color with inline style
-    const colorValue = getColorValue(btnStyle.color || 'gray-700');
+    let colorValue = getColorValue(btnStyle.color || 'gray-700');
+    
+    // WCAG AA compliance: Ensure dark enough background for white text (4.5:1 contrast)
+    // If using blue shades, enforce minimum blue-600 for white text contrast
+    const colorInput = btnStyle.color || 'gray-700';
+    if (typeof colorInput === 'string' && colorInput.match(/^blue-[1-5]00$/)) {
+      // blue-100 through blue-500 don't have enough contrast with white
+      // Force to blue-600 minimum for WCAG AA compliance
+      colorValue = getColorValue('blue-600');
+    }
+    
     return { backgroundColor: colorValue };
   }, [hero.button_style]);
 
