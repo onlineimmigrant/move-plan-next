@@ -1,5 +1,5 @@
 // src/app/forms/[id]/page.tsx
-import FormRenderer from "@/components/tally/FormRenderer";
+import FormRendererClient from "@/components/tally/FormRendererClient";
 import { createSupabaseAIServerClient } from "@/lib/supabaseAI";
 import { notFound } from "next/navigation";
 import { getCurrentTenant } from "@/lib/tenant";
@@ -60,7 +60,7 @@ export default async function PublicFormPage({ params }: { params: { id: string 
   };
 
   return (
-    <FormRenderer
+    <FormRendererClient
       form={formData}
       settings={settings}
     />

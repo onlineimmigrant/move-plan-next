@@ -2,9 +2,15 @@
 'use client';
 
 import React, { useEffect, useState, useRef, memo } from 'react';
-import FormRenderer from '@/components/tally/FormRenderer';
+import dynamic from 'next/dynamic';
 import { CompanyLogo } from '@/components/modals/TemplateSectionModal/components/forms/components/CompanyLogo';
 import { useSettings } from '@/context/SettingsContext';
+
+// Lazy load FormRenderer to avoid loading framer-motion initially
+const FormRenderer = dynamic(() => import('@/components/tally/FormRenderer'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded-lg" />
+});
 
 interface FormHarmonySectionProps {
   formId: string;
