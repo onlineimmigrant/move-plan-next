@@ -144,6 +144,7 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false); // Track video load errors
 
   // Helper to construct video URL based on player type
   const getVideoUrl = useCallback((video_url?: string, video_player?: string) => {
@@ -462,7 +463,8 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
               onPlay={() => setIsVideoPlaying(true)}
               onPause={() => setIsVideoPlaying(false)}
               onError={(e) => {
-                // Silently handle video load errors - fallback to background image if available
+                // Handle video load errors gracefully
+                setVideoError(true);
                 if (process.env.NODE_ENV === 'development') {
                   console.warn('[Hero] Video failed to load:', hero.video_url);
                 }

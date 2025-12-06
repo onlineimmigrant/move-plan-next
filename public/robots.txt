@@ -1,9 +1,0 @@
-# Allow all crawlers
-User-agent: *
-Allow: /
-
-# Disallow private/internal pages
-Disallow: /admin/
-Disallow: /account/
-Disallow: /api/
-Allow: /api/og-image

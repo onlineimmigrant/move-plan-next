@@ -207,7 +207,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Normalize locale to use only 2-letter language code (strip region variants)
   // en_GB, en-GB, en-US → en
   // es_MX, es-MX → es
-  const language = currentLocale?.split(/[_-]/)[0] || 'en';
+  // Defensive: ensure we only use the first 2 letters even if extractLocaleFromPathname fails
+  const language = (currentLocale?.split(/[_-]/)[0] || 'en').substring(0, 2).toLowerCase();
   
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
@@ -306,11 +307,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* DNS Prefetch & Preconnect for performance */}
         <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
         <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        
+        {/* Google Fonts - both preconnects required */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        {/* eslint-disable-next-line @next/next/google-font-preconnect */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://pub.r2.wvservices.exchange" />

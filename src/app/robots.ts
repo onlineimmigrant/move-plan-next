@@ -1,18 +1,15 @@
 import { MetadataRoute } from 'next'
-import { headers } from 'next/headers'
+import { getDomain } from '@/lib/layout-utils'
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const headersList = await headers()
-  const host = headersList.get('host') || 'moveplan.com'
-  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
-  const baseUrl = `${protocol}://${host}`
-
+  const currentDomain = await getDomain()
+  
   return {
     rules: {
       userAgent: '*',
       allow: '/',
       disallow: ['/admin/', '/account/', '/api/'],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${currentDomain}/sitemap.xml`,
   }
 }
