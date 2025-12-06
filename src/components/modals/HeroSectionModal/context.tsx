@@ -64,7 +64,17 @@ const HeroSectionEditContext = createContext<HeroSectionEditContextType | undefi
 export function useHeroSectionEdit() {
   const context = useContext(HeroSectionEditContext);
   if (!context) {
-    throw new Error('useHeroSectionEdit must be used within HeroSectionEditProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      editingSection: null,
+      mode: 'create' as const,
+      organizationId: null,
+      openModal: () => {},
+      closeModal: () => {},
+      updateSection: async () => {},
+      deleteSection: async () => {},
+    };
   }
   return context;
 }

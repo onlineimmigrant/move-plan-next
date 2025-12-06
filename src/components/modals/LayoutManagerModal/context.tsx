@@ -29,7 +29,19 @@ const LayoutManagerContext = createContext<LayoutManagerContextType | undefined>
 export const useLayoutManager = () => {
   const context = useContext(LayoutManagerContext);
   if (!context) {
-    throw new Error('useLayoutManager must be used within a LayoutManagerProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      isLoading: false,
+      isSaving: false,
+      organizationId: null,
+      sections: [],
+      openModal: () => {},
+      closeModal: () => {},
+      fetchPageLayout: async () => {},
+      updateSectionOrder: async () => {},
+      reorderSections: () => {},
+    };
   }
   return context;
 };

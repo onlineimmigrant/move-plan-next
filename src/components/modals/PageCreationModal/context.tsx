@@ -13,7 +13,12 @@ const PageCreationContext = createContext<PageCreationContextType | undefined>(u
 export const usePageCreation = () => {
   const context = useContext(PageCreationContext);
   if (!context) {
-    throw new Error('usePageCreation must be used within PageCreationProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      openModal: () => {},
+      closeModal: () => {},
+    };
   }
   return context;
 };

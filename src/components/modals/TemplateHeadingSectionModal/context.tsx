@@ -22,7 +22,18 @@ const TemplateHeadingSectionEditContext = createContext<TemplateHeadingSectionEd
 export const useTemplateHeadingSectionEdit = () => {
   const context = useContext(TemplateHeadingSectionEditContext);
   if (!context) {
-    throw new Error('useTemplateHeadingSectionEdit must be used within TemplateHeadingSectionEditProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      editingSection: null,
+      mode: 'create' as const,
+      refreshKey: 0,
+      openModal: () => {},
+      closeModal: () => {},
+      updateSection: async () => {},
+      deleteSection: async () => {},
+      refreshSections: () => {},
+    };
   }
   return context;
 };

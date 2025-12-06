@@ -209,7 +209,7 @@ const nextConfig = {
       // Enable faster parsing and smaller output
       config.optimization.minimize = true;
       config.optimization.concatenateModules = true;
-      config.optimization.usedExports = true;
+      // Note: usedExports removed - conflicts with cacheUnaffected
       config.optimization.sideEffects = true;
       
       // Reduce chunk overhead for faster parsing

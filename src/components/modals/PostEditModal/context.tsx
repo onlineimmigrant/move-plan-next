@@ -127,7 +127,20 @@ export function PostEditModalProvider({ children }: { children: React.ReactNode 
 export function usePostEditModal() {
   const context = useContext(PostEditModalContext);
   if (!context) {
-    throw new Error('usePostEditModal must be used within PostEditModalProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      editingPost: null,
+      mode: 'create' as const,
+      isFullScreen: false,
+      returnUrl: undefined,
+      lastOpenTime: 0,
+      openCreateModal: () => {},
+      openEditModal: () => {},
+      closeModal: () => {},
+      toggleFullScreen: () => {},
+      updatePost: () => {},
+    };
   }
   return context;
 }

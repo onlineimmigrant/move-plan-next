@@ -41,7 +41,14 @@ export function SiteMapModalProvider({ children }: { children: React.ReactNode }
 export function useSiteMapModal() {
   const context = useContext(SiteMapModalContext);
   if (!context) {
-    throw new Error('useSiteMapModal must be used within SiteMapModalProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      siteMapData: null,
+      openModal: () => {},
+      closeModal: () => {},
+      saveSiteMap: async () => {},
+    };
   }
   return context;
 }

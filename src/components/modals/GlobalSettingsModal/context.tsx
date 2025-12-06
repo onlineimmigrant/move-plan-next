@@ -46,7 +46,13 @@ export function GlobalSettingsModalProvider({ children }: { children: React.Reac
 export function useGlobalSettingsModal() {
   const context = useContext(GlobalSettingsModalContext);
   if (!context) {
-    throw new Error('useGlobalSettingsModal must be used within GlobalSettingsModalProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      initialSection: undefined,
+      openModal: () => {},
+      closeModal: () => {},
+    };
   }
   return context;
 }

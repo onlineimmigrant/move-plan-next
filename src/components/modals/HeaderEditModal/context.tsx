@@ -60,7 +60,26 @@ const HeaderEditContext = createContext<HeaderEditContextType | undefined>(undef
 export const useHeaderEdit = () => {
   const context = useContext(HeaderEditContext);
   if (!context) {
-    throw new Error('useHeaderEdit must be used within a HeaderEditProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      isLoading: false,
+      isSaving: false,
+      organizationId: null,
+      headerStyle: 'default',
+      headerStyleFull: null,
+      logoImageUrl: null,
+      menuItems: [],
+      openModal: () => {},
+      closeModal: () => {},
+      fetchHeaderData: async () => {},
+      saveHeaderStyle: async () => {},
+      updateHeaderStyleFull: async () => {},
+      updateMenuItems: async () => {},
+      addMenuItem: async () => {},
+      updateMenuItem: async () => {},
+      deleteMenuItem: async () => {},
+    };
   }
   return context;
 };

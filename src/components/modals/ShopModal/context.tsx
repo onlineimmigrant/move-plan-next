@@ -82,7 +82,18 @@ export function useShopModal() {
   const context = useContext(ShopModalContext);
   
   if (!context) {
-    throw new Error('useShopModal must be used within ShopModalProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      selectedProduct: null,
+      quantity: 1,
+      selectedVariant: null,
+      openModal: () => {},
+      closeModal: () => {},
+      setQuantity: () => {},
+      setSelectedVariant: () => {},
+      addToBasket: async () => {},
+    };
   }
   
   return context;

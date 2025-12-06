@@ -64,7 +64,19 @@ const TemplateSectionEditContext = createContext<TemplateSectionEditContextType 
 export const useTemplateSectionEdit = () => {
   const context = useContext(TemplateSectionEditContext);
   if (!context) {
-    throw new Error('useTemplateSectionEdit must be used within TemplateSectionEditProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      editingSection: null,
+      mode: 'create' as const,
+      refreshKey: 0,
+      openModal: () => {},
+      closeModal: () => {},
+      updateSection: async () => {},
+      deleteSection: async () => {},
+      refreshSections: () => {},
+      refetchEditingSection: async () => {},
+    };
   }
   return context;
 };

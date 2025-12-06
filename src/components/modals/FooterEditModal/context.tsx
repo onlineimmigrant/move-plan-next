@@ -59,7 +59,26 @@ const FooterEditContext = createContext<FooterEditContextType | undefined>(undef
 export const useFooterEdit = () => {
   const context = useContext(FooterEditContext);
   if (!context) {
-    throw new Error('useFooterEdit must be used within a FooterEditProvider');
+    // Return safe defaults when provider not loaded yet (during deferred initialization)
+    return {
+      isOpen: false,
+      isLoading: false,
+      isSaving: false,
+      organizationId: null,
+      footerType: 'default',
+      footerStyle: 'default',
+      footerStyleFull: null,
+      menuItems: [],
+      openModal: () => {},
+      closeModal: () => {},
+      fetchFooterData: async () => {},
+      saveFooterStyle: async () => {},
+      updateFooterStyleFull: async () => {},
+      updateMenuItems: async () => {},
+      addMenuItem: async () => {},
+      updateMenuItem: async () => {},
+      deleteMenuItem: async () => {},
+    };
   }
   return context;
 };
