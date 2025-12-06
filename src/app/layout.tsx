@@ -317,46 +317,66 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
         
-        {/* Suppress external resource errors in production */}
+        {/* Intercept Pexels video loading to prevent network errors */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Suppress console errors
-                const originalError = window.console.error;
-                window.console.error = function() {
-                  const args = Array.from(arguments);
-                  const errorStr = args.join(' ');
-                  
-                  const suppressPatterns = [
-                    'ERR_CONNECTION_FAILED',
-                    'videos.pexels.com',
-                    'images.pexels.com',
-                    'Failed to load resource',
-                    'net::ERR_',
-                    'pexels.com',
-                  ];
-                  
-                  const shouldSuppress = suppressPatterns.some(pattern => 
-                    errorStr.includes(pattern)
-                  );
-                  
-                  if (!shouldSuppress) {
-                    originalError.apply(console, arguments);
-                  }
-                };
+                // Monitor DOM for video elements being added
+                const observer = new MutationObserver(function(mutations) {
+                  mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                      if (node.tagName === 'VIDEO') {
+                        const src = node.src || node.getAttribute('src');
+                        if (src && src.includes('pexels.com')) {
+                          // Prevent loading by removing src immediately
+                          node.removeAttribute('src');
+                          node.load();
+                          console.warn('[Blocked] Pexels video prevented from loading:', src);
+                        }
+                      }
+                      // Check for source elements inside video
+                      if (node.tagName === 'SOURCE' && node.parentElement?.tagName === 'VIDEO') {
+                        const src = node.src || node.getAttribute('src');
+                        if (src && src.includes('pexels.com')) {
+                          node.remove();
+                          console.warn('[Blocked] Pexels source prevented from loading:', src);
+                        }
+                      }
+                      // Recursively check children
+                      if (node.querySelectorAll) {
+                        const videos = node.querySelectorAll('video[src*="pexels.com"]');
+                        videos.forEach(function(video) {
+                          video.removeAttribute('src');
+                          video.load();
+                          console.warn('[Blocked] Pexels video prevented from loading');
+                        });
+                        const sources = node.querySelectorAll('video source[src*="pexels.com"]');
+                        sources.forEach(function(source) {
+                          source.remove();
+                        });
+                      }
+                    });
+                  });
+                });
                 
-                // Suppress resource loading errors from appearing in console
-                window.addEventListener('error', function(e) {
-                  if (e.target && (e.target.tagName === 'VIDEO' || e.target.tagName === 'IMG')) {
-                    const src = e.target.src || e.target.currentSrc;
-                    if (src && (src.includes('pexels.com') || src.includes('ERR_'))) {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      return false;
-                    }
-                  }
-                }, true);
+                observer.observe(document.documentElement, {
+                  childList: true,
+                  subtree: true
+                });
+                
+                // Also check existing elements on load
+                window.addEventListener('DOMContentLoaded', function() {
+                  const videos = document.querySelectorAll('video[src*="pexels.com"]');
+                  videos.forEach(function(video) {
+                    video.removeAttribute('src');
+                    video.load();
+                  });
+                  const sources = document.querySelectorAll('video source[src*="pexels.com"]');
+                  sources.forEach(function(source) {
+                    source.remove();
+                  });
+                });
               })();
             `
           }}
