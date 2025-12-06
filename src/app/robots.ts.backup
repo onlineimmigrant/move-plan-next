@@ -1,0 +1,40 @@
+import { MetadataRoute } from 'next'
+import { getDomain } from '@/lib/layout-utils'
+
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const currentDomain = await getDomain()
+  
+  // List of AI crawler bots to block
+  const aiCrawlers = [
+    'GPTBot',           // OpenAI
+    'ChatGPT-User',     // OpenAI
+    'Google-Extended',  // Google AI
+    'CCBot',            // Common Crawl (used by many AI trainers)
+    'anthropic-ai',     // Anthropic
+    'Claude-Web',       // Anthropic Claude
+    'ClaudeBot',        // Anthropic Claude
+    'Omgilibot',        // Omgili
+    'FacebookBot',      // Meta AI
+    'Diffbot',          // Diffbot
+    'Bytespider',       // ByteDance
+    'ImagesiftBot',     // ImageSift
+    'cohere-ai',        // Cohere
+  ]
+  
+  return {
+    rules: [
+      // Allow standard search engines
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin/', '/account/', '/api/'],
+      },
+      // Block AI training crawlers
+      ...aiCrawlers.map(bot => ({
+        userAgent: bot,
+        disallow: '/',
+      })),
+    ],
+    sitemap: `${currentDomain}/sitemap.xml`,
+  }
+}

@@ -1,3 +1,5 @@
+const path = require('path');
+
 const withNextIntl = require('next-intl/plugin')(
   // This is the default location for the i18n config
   './i18n.ts'
@@ -6,7 +8,6 @@ const withNextIntl = require('next-intl/plugin')(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Target modern browsers - exclude polyfills for ES2020+ features
-  swcMinify: true,
   compiler: {
     // Remove console.log in production
     removeConsole: process.env.NODE_ENV === 'production' ? {
@@ -16,7 +17,17 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
     // Enable optimized package imports for faster initial load
-    optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', '@headlessui/react'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@heroicons/react', 
+      '@headlessui/react',
+      '@tanstack/react-query',
+      'date-fns',
+      'clsx',
+      'react-hook-form',
+    ],
+    // Reduce memory usage and improve performance
+    webpackMemoryOptimizations: true,
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],
@@ -24,6 +35,10 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BROWSERSLIST_CONFIG: '>0.3%, not dead, not op_mini all'
   },
+  // Minimize output for production
+  output: 'standalone',
+  // Enable experimental turbo mode for faster builds (if available)
+  // turbo: {},
   modularizeImports: {
     'react-icons/fa': {
       transform: 'react-icons/fa/{{member}}',
@@ -66,11 +81,6 @@ const nextConfig = {
     '@heroicons/react/20/solid': {
       transform: '@heroicons/react/20/solid/{{member}}',
     },
-  },
-  experimental: {
-    optimizeCss: false,
-    // Enable optimized package imports for faster initial load
-    optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', '@headlessui/react'],
   },
   // Enable geolocation for Vercel deployments + SEO performance headers
   async headers() {
@@ -227,9 +237,10 @@ const nextConfig = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
-          maxInitialRequests: 20, // Reduced from 25 to limit initial chunks
-          minSize: 30000, // Increased from 20000 to create fewer, larger async chunks
+          maxInitialRequests: 25,
+          minSize: 20000,
           maxAsyncRequests: 30,
+          maxSize: 244000, // Split chunks larger than 244KB (from Lighthouse report)
           // Reduce webpack runtime overhead
           automaticNameDelimiter: '.',
           cacheGroups: {
@@ -269,14 +280,15 @@ const nextConfig = {
               enforce: true,
               reuseExistingChunk: true,
             },
-            // Heroicons - defer until needed
+            // Heroicons - split but keep initial since used in Header
             heroicons: {
               test: /[\\/]node_modules[\\/]@heroicons[\\/]/,
               name: 'vendors.heroicons',
               priority: 32,
-              chunks: 'async',
+              chunks: 'initial', // Keep in initial - used in Header
               enforce: true,
               reuseExistingChunk: true,
+              maxSize: 40000, // Split if larger than 40KB
             },
             // Separate react-icons to enable tree-shaking
             reactIcons: {
@@ -308,7 +320,9 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/]@headlessui[\\/]/,
               name: 'headlessui',
               priority: 15,
+              chunks: 'initial',
               minSize: 10000,
+              maxSize: 50000, // Split if larger than 50KB
               reuseExistingChunk: true,
             },
             // React core libraries (shared across all pages)
@@ -324,6 +338,7 @@ const nextConfig = {
               name: 'vendors.next-compiled',
               priority: 11,
               chunks: 'initial',
+              maxSize: 100000, // Split into max 100KB chunks
               reuseExistingChunk: true,
             },
             nextClient: {
@@ -335,14 +350,38 @@ const nextConfig = {
             },
             // Split remaining vendors by size
             defaultVendors: {
-              test: /[\\/]node_modules[\\/]/,
+              test(module) {
+                // Only match node_modules
+                if (!/[\\/]node_modules[\\/]/.test(module.context || '')) return false;
+                
+                // Exclude packages that have explicit cache groups
+                const excludePatterns = [
+                  'lucide-react',
+                  '@heroicons',
+                  'react-icons',
+                  'framer-motion',
+                  '@supabase',
+                  '@headlessui',
+                  '@tiptap',
+                  'twilio-video',
+                  '@aws-sdk',
+                  'next/dist',
+                  'react',
+                  'react-dom',
+                  'scheduler'
+                ];
+                
+                return !excludePatterns.some(pattern => 
+                  (module.context || '').includes(`node_modules${path.sep}${pattern}`)
+                );
+              },
               name(module) {
                 // Get package name
                 const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
                 // Create chunk based on package name, sanitized for filename
                 return `vendors.${packageName?.replace('@', '')}`;
               },
-              priority: 10,
+              priority: 5, // Lower priority than explicit cache groups
               minChunks: 1,
               reuseExistingChunk: true,
             },

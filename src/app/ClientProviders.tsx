@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext';
@@ -27,7 +27,6 @@ import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 // Lazy load non-critical components
@@ -108,6 +107,23 @@ const ChatHelpWidgetLazy = dynamic(() => import('@/components/ChatHelpWidget'), 
   loading: () => null
 });
 
+// Lazy load cookie components (not critical for initial paint)
+const CookieBannerComponent = dynamic(() => import('@/components/cookie/CookieBanner'), {
+  ssr: false,
+  loading: () => null
+});
+
+const CookieSettingsComponent = dynamic(() => import('@/components/cookie/CookieSettings'), {
+  ssr: false,
+  loading: () => null
+});
+
+// Lazy load language updater (not critical for initial paint)
+const DynamicLanguageUpdater = dynamic(() => import('@/components/DynamicLanguageUpdater'), {
+  ssr: false,
+  loading: () => null
+});
+
 // Conditionally load VideoCall only when meeting is active
 function VideoCallLoader() {
   const { videoCallOpen } = useMeetingContext();
@@ -126,9 +142,7 @@ function VideoCallLoader() {
   return <VideoCallComponent />;
 }
 
-// Create lazy wrapper components to avoid SSR bailout error
-import CookieBannerComponent from '@/components/cookie/CookieBanner';
-import CookieSettingsComponent from '@/components/cookie/CookieSettings';
+// Remove direct imports - now lazy loaded above
 import { hideNavbarFooterPrefixes, hideFooterOnlyPrefixes } from '@/lib/hiddenRoutes';
 import { getBaseUrl } from '@/lib/utils';
 import { TemplateSection } from '@/types/template_section';
@@ -344,19 +358,6 @@ export default function ClientProviders({
     [pathname]
   );
 
-  // Defer non-critical provider initialization
-  const [providersReady, setProvidersReady] = useState(false);
-  useEffect(() => {
-    // Use requestIdleCallback to defer non-critical setup
-    if (typeof requestIdleCallback !== 'undefined') {
-      const id = requestIdleCallback(() => setProvidersReady(true));
-      return () => cancelIdleCallback(id);
-    } else {
-      const id = setTimeout(() => setProvidersReady(true), 0);
-      return () => clearTimeout(id);
-    }
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -370,7 +371,6 @@ export default function ClientProviders({
                     initialTemplateHeadingSections={templateHeadingSections}
                   >
                     <ToastProvider>
-                    {providersReady ? (
                       <HeaderEditProvider>
                       <FooterEditProvider>
                         <LayoutManagerProvider>
@@ -402,22 +402,18 @@ export default function ClientProviders({
                                 </BannerAwareContent>
                               {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
                               {showCookieBanner && (
-                                <Suspense fallback={null}>
-                                  <CookieBannerComponent 
-                                    headerData={headerData} 
-                                    activeLanguages={activeLanguages}
-                                    categories={cookieCategories}
-                                  />
-                                </Suspense>
+                                <CookieBannerComponent 
+                                  headerData={headerData} 
+                                  activeLanguages={activeLanguages}
+                                  categories={cookieCategories}
+                                />
                               )}
                               {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
-                              <Suspense fallback={null}>
-                                <StandaloneCookieSettings 
-                                  headerData={headerData}
-                                  activeLanguages={activeLanguages}
-                                  cookieCategories={cookieCategories}
-                                />
-                              </Suspense>
+                              <StandaloneCookieSettings 
+                                headerData={headerData}
+                                activeLanguages={activeLanguages}
+                                cookieCategories={cookieCategories}
+                              />
                             </CookieSettingsProvider>
                             <PostEditModal />
                             <TemplateSectionEditModal />
@@ -441,45 +437,6 @@ export default function ClientProviders({
               </LayoutManagerProvider>
             </FooterEditProvider>
           </HeaderEditProvider>
-                    ) : (
-                      // Render content immediately without edit providers
-                      <>
-                        <DynamicLanguageUpdater />
-                        <DefaultLocaleCookieManager />
-                        <CookieSettingsProvider>
-                          <VideoCallLoader />
-                          <BannerAwareContent
-                            key={`${pathname}-${showNavbarFooter}`}
-                            showNavbarFooter={showNavbarFooter}
-                            menuItems={menuItems}
-                            loading={loading}
-                            headerData={headerData}
-                            activeLanguages={activeLanguages}
-                            cookieCategories={cookieCategories}
-                            cookieAccepted={cookieAccepted}
-                            pathname={pathname}
-                          >
-                            {children}
-                          </BannerAwareContent>
-                          {showCookieBanner && (
-                            <Suspense fallback={null}>
-                              <CookieBannerComponent 
-                                headerData={headerData} 
-                                activeLanguages={activeLanguages}
-                                categories={cookieCategories}
-                              />
-                            </Suspense>
-                          )}
-                          <Suspense fallback={null}>
-                            <StandaloneCookieSettings 
-                              headerData={headerData}
-                              activeLanguages={activeLanguages}
-                              cookieCategories={cookieCategories}
-                            />
-                          </Suspense>
-                        </CookieSettingsProvider>
-                      </>
-                    )}
         </ToastProvider>
                   </PageSectionsProvider>
               </MeetingProvider>

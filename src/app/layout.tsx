@@ -317,6 +317,40 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         <SimpleLayoutSEO />
         
+        {/* Suppress external resource errors in production */}
+        {process.env.NODE_ENV === 'production' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  const originalError = window.console.error;
+                  window.console.error = function() {
+                    const args = Array.from(arguments);
+                    const errorStr = args.join(' ');
+                    
+                    // Suppress common external resource errors
+                    const suppressPatterns = [
+                      'ERR_CONNECTION_FAILED',
+                      'videos.pexels.com',
+                      'images.pexels.com',
+                      'Failed to load resource',
+                      'net::ERR_',
+                    ];
+                    
+                    const shouldSuppress = suppressPatterns.some(pattern => 
+                      errorStr.includes(pattern)
+                    );
+                    
+                    if (!shouldSuppress) {
+                      originalError.apply(console, arguments);
+                    }
+                  };
+                })();
+              `
+            }}
+          />
+        )}
+        
         {/* Mobile Status Bar Styling - Match header background */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)" />
