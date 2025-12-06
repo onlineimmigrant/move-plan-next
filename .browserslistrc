@@ -1,9 +1,6 @@
-# Modern browsers only - excludes polyfills
->0.3%
+# Modern browsers only - ES2020+ support
+Chrome >= 92
+Firefox >= 90
+Safari >= 15.4
+Edge >= 92
 not dead
-not op_mini all
-defaults and supports es6-module
-Chrome >= 90
-Firefox >= 88
-Safari >= 14
-Edge >= 90

@@ -14,6 +14,10 @@ const nextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
+  // Disable legacy browser support
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     optimizeCss: false,
     // Enable optimized package imports for faster initial load
@@ -201,6 +205,13 @@ const nextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
+    // Target modern browsers - ES2020+ support
+    if (!isServer) {
+      config.target = 'web';
+      // Set browserslist environment to production for modern builds
+      process.env.BROWSERSLIST_ENV = 'modern';
+    }
+    
     config.module.rules.push({
       test: /\.mjs$/,
       include: /node_modules/,

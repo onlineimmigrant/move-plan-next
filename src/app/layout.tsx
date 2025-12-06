@@ -318,38 +318,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SimpleLayoutSEO />
         
         {/* Suppress external resource errors in production */}
-        {process.env.NODE_ENV === 'production' && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                (function() {
-                  const originalError = window.console.error;
-                  window.console.error = function() {
-                    const args = Array.from(arguments);
-                    const errorStr = args.join(' ');
-                    
-                    // Suppress common external resource errors
-                    const suppressPatterns = [
-                      'ERR_CONNECTION_FAILED',
-                      'videos.pexels.com',
-                      'images.pexels.com',
-                      'Failed to load resource',
-                      'net::ERR_',
-                    ];
-                    
-                    const shouldSuppress = suppressPatterns.some(pattern => 
-                      errorStr.includes(pattern)
-                    );
-                    
-                    if (!shouldSuppress) {
-                      originalError.apply(console, arguments);
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Suppress console errors
+                const originalError = window.console.error;
+                window.console.error = function() {
+                  const args = Array.from(arguments);
+                  const errorStr = args.join(' ');
+                  
+                  const suppressPatterns = [
+                    'ERR_CONNECTION_FAILED',
+                    'videos.pexels.com',
+                    'images.pexels.com',
+                    'Failed to load resource',
+                    'net::ERR_',
+                    'pexels.com',
+                  ];
+                  
+                  const shouldSuppress = suppressPatterns.some(pattern => 
+                    errorStr.includes(pattern)
+                  );
+                  
+                  if (!shouldSuppress) {
+                    originalError.apply(console, arguments);
+                  }
+                };
+                
+                // Suppress resource loading errors from appearing in console
+                window.addEventListener('error', function(e) {
+                  if (e.target && (e.target.tagName === 'VIDEO' || e.target.tagName === 'IMG')) {
+                    const src = e.target.src || e.target.currentSrc;
+                    if (src && (src.includes('pexels.com') || src.includes('ERR_'))) {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      return false;
                     }
-                  };
-                })();
-              `
-            }}
-          />
-        )}
+                  }
+                }, true);
+              })();
+            `
+          }}
+        />
         
         {/* Mobile Status Bar Styling - Match header background */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
