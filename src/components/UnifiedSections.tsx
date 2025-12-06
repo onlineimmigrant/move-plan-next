@@ -6,17 +6,12 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import TemplateSection from '@/components/TemplateSection';
 import TemplateHeadingSection from '@/components/TemplateHeadingSection';
 import { getBasePathFromLocale, singleFlight } from '@/lib/pathUtils';
 import { TemplateSectionSkeleton } from '@/components/skeletons/TemplateSectionSkeletons';
 import { usePageSections } from '@/context/PageSectionsContext';
 import { useSettings } from '@/context/SettingsContext';
-
-// Lazy load TemplateSection to defer framer-motion
-const TemplateSection = dynamic(() => import('@/components/TemplateSection'), {
-  loading: () => <TemplateSectionSkeleton />
-});
 
 const CACHE_DURATION = 60000; // 1 minute cache
 
