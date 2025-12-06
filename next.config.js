@@ -182,6 +182,8 @@ const nextConfig = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
+          maxInitialRequests: 25,
+          minSize: 20000,
           cacheGroups: {
             // Separate TipTap editor into its own chunk (only loaded when editing)
             tiptap: {
@@ -225,11 +227,24 @@ const nextConfig = {
               priority: 15,
               reuseExistingChunk: true,
             },
-            // Default vendor chunk for other node_modules
+            // React core libraries (shared across all pages)
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              name: 'react-vendor',
+              priority: 12,
+              reuseExistingChunk: true,
+            },
+            // Split remaining vendors by size
             defaultVendors: {
               test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
+              name(module) {
+                // Get package name
+                const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
+                // Create chunk based on package name, sanitized for filename
+                return `vendors.${packageName?.replace('@', '')}`;
+              },
               priority: 10,
+              minChunks: 1,
               reuseExistingChunk: true,
             },
           },
