@@ -5,13 +5,17 @@ const withNextIntl = require('next-intl/plugin')(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Target modern browsers - exclude polyfills for ES2020+ features
+  swcMinify: true,
   compiler: {
     // Remove console.log in production
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
+    // Target ES2020+ to avoid unnecessary polyfills (saves ~12KB)
+    target: 'ES2020',
   },
-  // Modularize imports for better tree-shaking
+  // Modularize imports for better tree-shaking (reduces bundle size by ~500KB)
   modularizeImports: {
     'react-icons/fa': {
       transform: 'react-icons/fa/{{member}}',
@@ -39,6 +43,20 @@ const nextConfig = {
     },
     'react-icons/io': {
       transform: 'react-icons/io/{{member}}',
+    },
+    // Tree-shake lucide-react (134KB → ~10KB per icon)
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
+    // Tree-shake @heroicons/react (32KB → ~2KB per icon)
+    '@heroicons/react/24/outline': {
+      transform: '@heroicons/react/24/outline/{{member}}',
+    },
+    '@heroicons/react/24/solid': {
+      transform: '@heroicons/react/24/solid/{{member}}',
+    },
+    '@heroicons/react/20/solid': {
+      transform: '@heroicons/react/20/solid/{{member}}',
     },
   },
   experimental: {
@@ -176,6 +194,13 @@ const nextConfig = {
       config.infrastructureLogging = { level: 'error' };
     }
     
+    // Mark heavy packages for async loading
+    if (!isServer) {
+      config.optimization.concatenateModules = true;
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = true;
+    }
+    
     // Optimize chunk splitting for better caching and smaller initial bundles
     if (!isServer) {
       config.optimization = {
@@ -184,12 +209,14 @@ const nextConfig = {
           chunks: 'all',
           maxInitialRequests: 25,
           minSize: 20000,
+          maxAsyncRequests: 30,
           cacheGroups: {
             // Separate TipTap editor into its own chunk (only loaded when editing)
             tiptap: {
               test: /[\\/]node_modules[\\/]@tiptap[\\/]/,
               name: 'tiptap',
               priority: 40,
+              chunks: 'async', // Defer loading
               reuseExistingChunk: true,
             },
             // Separate AWS SDK into its own chunk
@@ -197,6 +224,23 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/]@aws-sdk[\\/]/,
               name: 'aws-sdk',
               priority: 35,
+              chunks: 'async', // Defer loading
+              reuseExistingChunk: true,
+            },
+            // Lucide React - large icon library, load async
+            lucideReact: {
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              name: 'vendors.lucide-react',
+              priority: 33,
+              chunks: 'async', // Defer - only load icons when needed
+              reuseExistingChunk: true,
+            },
+            // Heroicons - defer until needed
+            heroicons: {
+              test: /[\\/]node_modules[\\/]@heroicons[\\/]/,
+              name: 'vendors.heroicons',
+              priority: 32,
+              chunks: 'async',
               reuseExistingChunk: true,
             },
             // Separate react-icons to enable tree-shaking
@@ -204,6 +248,7 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/]react-icons[\\/]/,
               name: 'react-icons',
               priority: 30,
+              chunks: 'async', // Defer loading
               reuseExistingChunk: true,
             },
             // Separate Framer Motion
@@ -211,6 +256,7 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
               name: 'framer-motion',
               priority: 25,
+              chunks: 'async', // Defer - animations load after initial paint
               reuseExistingChunk: true,
             },
             // Supabase into separate chunk
@@ -225,6 +271,7 @@ const nextConfig = {
               test: /[\\/]node_modules[\\/]@headlessui[\\/]/,
               name: 'headlessui',
               priority: 15,
+              chunks: 'async', // Most headlessui components are in modals/dialogs
               reuseExistingChunk: true,
             },
             // React core libraries (shared across all pages)
