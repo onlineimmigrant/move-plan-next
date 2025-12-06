@@ -219,8 +219,8 @@ const nextConfig = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
-          maxInitialRequests: 25,
-          minSize: 20000,
+          maxInitialRequests: 20, // Reduced from 25 to limit initial chunks
+          minSize: 30000, // Increased from 20000 to create fewer, larger async chunks
           maxAsyncRequests: 30,
           // Reduce webpack runtime overhead
           automaticNameDelimiter: '.',
@@ -231,6 +231,7 @@ const nextConfig = {
               name: 'tiptap',
               priority: 40,
               chunks: 'async', // Defer loading
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Twilio Video - large library only for video calls
@@ -239,6 +240,7 @@ const nextConfig = {
               name: 'vendors.twilio-video',
               priority: 38,
               chunks: 'async', // Critical: Only load when video call starts
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Separate AWS SDK into its own chunk
@@ -247,6 +249,7 @@ const nextConfig = {
               name: 'aws-sdk',
               priority: 35,
               chunks: 'async', // Defer loading
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Lucide React - large icon library, load async
@@ -255,6 +258,7 @@ const nextConfig = {
               name: 'vendors.lucide-react',
               priority: 33,
               chunks: 'async', // Defer - only load icons when needed
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Heroicons - defer until needed
@@ -263,6 +267,7 @@ const nextConfig = {
               name: 'vendors.heroicons',
               priority: 32,
               chunks: 'async',
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Separate react-icons to enable tree-shaking
@@ -271,14 +276,16 @@ const nextConfig = {
               name: 'react-icons',
               priority: 30,
               chunks: 'async', // Defer loading
+              enforce: true,
               reuseExistingChunk: true,
             },
-            // Separate Framer Motion
+            // Separate Framer Motion - only load when animations needed
             framerMotion: {
               test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
               name: 'framer-motion',
               priority: 25,
               chunks: 'async', // Defer - animations load after initial paint
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Supabase into separate chunk
@@ -288,12 +295,12 @@ const nextConfig = {
               priority: 20,
               reuseExistingChunk: true,
             },
-            // Common UI libraries
+            // Common UI libraries - headlessui used in Header (can't defer)
             headlessui: {
               test: /[\\/]node_modules[\\/]@headlessui[\\/]/,
               name: 'headlessui',
               priority: 15,
-              chunks: 'async', // Most headlessui components are in modals/dialogs
+              minSize: 10000,
               reuseExistingChunk: true,
             },
             // React core libraries (shared across all pages)

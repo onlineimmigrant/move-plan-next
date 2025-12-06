@@ -3,7 +3,7 @@
  * Maps language codes to their main country locales
  */
 export const LANGUAGE_LOCALE_MAP: Record<string, string> = {
-  'en': 'en_GB',  // English -> United Kingdom
+  'en': 'en',  // English
   'es': 'es_ES',  // Spanish -> Spain
   'fr': 'fr_FR',  // French -> France
   'de': 'de_DE',  // German -> Germany
@@ -61,12 +61,12 @@ export function getSupportedLocales(settings?: { supported_locales?: string[] | 
 export const DEFAULT_LOCALE: Locale = 'en';
 
 /**
- * Get locale from language code
+ * Get locale string from language code
  * @param language - Language code (e.g., 'en', 'es', 'fr')
- * @returns Locale string (e.g., 'en_GB', 'es_ES', 'fr_FR')
+ * @returns Locale string (e.g., 'en', 'es_ES', 'fr_FR')
  */
 export function getLocaleFromLanguage(language: string): string {
-  return LANGUAGE_LOCALE_MAP[language.toLowerCase()] || 'en_GB';
+  return LANGUAGE_LOCALE_MAP[language.toLowerCase()] || 'en';
 }
 
 /**

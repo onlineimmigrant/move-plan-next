@@ -24,13 +24,21 @@ import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
 import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
-import Breadcrumbs from '@/components/Breadcrumbs';
-import UnifiedSections from '@/components/UnifiedSections';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DynamicLanguageUpdater from '@/components/DynamicLanguageUpdater';
 import { ThemeProvider } from '@/components/ThemeProvider';
+
+// Lazy load non-critical components
+const Breadcrumbs = dynamic(() => import('@/components/Breadcrumbs'), {
+  ssr: false,
+  loading: () => null
+});
+const UnifiedSections = dynamic(() => import('@/components/UnifiedSections'), {
+  ssr: false,
+  loading: () => null
+});
 
 // Lazy load all modals - they're only needed when user interacts
 const PostEditModal = dynamic(() => import('@/components/modals/PostEditModal/PostEditModal'), { 

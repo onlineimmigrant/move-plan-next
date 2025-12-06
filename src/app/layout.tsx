@@ -204,11 +204,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Extract locale from pathname for dynamic language setting
   const currentLocale = extractLocaleFromPathname(pathname);
   
-  // Normalize locale to use only 2-letter language code (strip region variants)
-  // en_GB, en-GB, en-US → en
-  // es_MX, es-MX → es
-  // Defensive: ensure we only use the first 2 letters even if extractLocaleFromPathname fails
-  const language = (currentLocale?.split(/[_-]/)[0] || 'en').substring(0, 2).toLowerCase();
+  // Simple: replace underscore with hyphen, take first 2 chars
+  const language = (currentLocale || 'en').replace('_', '-').substring(0, 2).toLowerCase();
   
   const organization = await getOrganization(currentDomain);
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
