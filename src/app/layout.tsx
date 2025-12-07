@@ -86,7 +86,8 @@ async function _getCookieCategoriesInternal() {
 // Cached wrapper - deduplicates cookie category requests
 const getCookieCategories = cache(_getCookieCategoriesInternal);
 
-export async function generateMetadata(): Promise<Metadata> {
+// TEMPORARILY COMMENTED OUT TO TEST SSG - uses headers() which prevents static generation
+/* export async function generateMetadata(): Promise<Metadata> {
   const currentDomain = await getDomain();
   const headersList = await headers();
   
@@ -219,12 +220,15 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   };
 }
+*/
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers();
-  const pathname = getPathnameFromHeaders(headersList);
-  const currentLocale = extractLocaleFromPathname(pathname);
-  const language = (currentLocale || 'en').replace('_', '-').substring(0, 2).toLowerCase();
+  // TEMPORARILY COMMENTED OUT TO TEST SSG - headers() prevents static generation
+  // const headersList = await headers();
+  // const pathname = getPathnameFromHeaders(headersList);
+  // const currentLocale = extractLocaleFromPathname(pathname);
+  const currentLocale = 'en'; // Hardcoded for SSG test
+  const language = 'en'; // Hardcoded for SSG test
   
   // Get domain with localhost handling for build
   let currentDomain = await getDomain();
@@ -281,8 +285,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const templateSections: any[] = [];
   const templateHeadingSections: any[] = [];
   
-  // Quick cookie check (no async)
-  const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
+  // Quick cookie check (no async) - COMMENTED OUT FOR SSG TEST
+  // const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
+  const cookieAccepted = false; // Hardcoded for SSG test
 
   const headerData = {
     image_for_privacy_settings: settings.image,
@@ -368,7 +373,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           cookieAccepted={cookieAccepted}
           templateSections={templateSections}
           templateHeadingSections={templateHeadingSections}
-          pathnameFromServer={pathname}
+          pathnameFromServer={'/'}
         >
           <LanguageSuggestionBanner currentLocale={currentLocale} />
           <SimpleLayoutSEO />
