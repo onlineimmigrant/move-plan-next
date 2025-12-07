@@ -20,6 +20,7 @@ import localFont from 'next/font/local';
 import { JetBrains_Mono } from 'next/font/google';
 
 import { cache } from 'react';
+import { layoutCache } from '@/lib/layoutCache';
 
 // Self-hosted Inter font for maximum performance - no external requests!
 const inter = localFont({
@@ -236,18 +237,42 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
   
-  // Fetch critical data in parallel - optimized order
-  const [organization, cookieCategories] = await Promise.all([
-    getOrganization(currentDomain),
-    getCookieCategories(),
-  ]);
+  // Try memory cache first (1-hour TTL) - instant response!
+  const cacheKey = `layout-data-${currentDomain}`;
+  const cachedData = layoutCache.get<{
+    organization: any;
+    settings: any;
+    menuItems: any[];
+    cookieCategories: any[];
+  }>(cacheKey);
   
-  const settings = organization 
-    ? await getSettings(currentDomain)
-    : await getSettingsWithFallback(currentDomain);
+  let organization, settings, menuItems, cookieCategories;
   
-  const organizationId = organization?.id || null;
-  const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
+  if (cachedData) {
+    // Cache hit - zero latency!
+    ({ organization, settings, menuItems, cookieCategories } = cachedData);
+  } else {
+    // Cache miss - fetch from database and cache for next request
+    [organization, cookieCategories] = await Promise.all([
+      getOrganization(currentDomain),
+      getCookieCategories(),
+    ]);
+    
+    settings = organization 
+      ? await getSettings(currentDomain)
+      : await getSettingsWithFallback(currentDomain);
+    
+    const organizationId = organization?.id || null;
+    menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
+    
+    // Cache for subsequent requests
+    layoutCache.set(cacheKey, {
+      organization,
+      settings,
+      menuItems,
+      cookieCategories,
+    });
+  }
   
   // Template sections: Client-side only
   const templateSections: any[] = [];
