@@ -45,10 +45,12 @@ export async function generateStaticParams() {
     
     if (!products) return [];
     
-    // Generate params for English locale only
+    // Generate params for English locale
+    // Pages will be generated at /en/products/id
+    // Middleware with localePrefix:'as-needed' will redirect /en/* -> /* for default locale
     const params = products.map(product => ({
       id: product.slug,
-      locale: 'en' // Only English for now to keep build fast
+      locale: 'en'
     }));
     
     console.log(`[SSG] Generating ${params.length} product pages`);
