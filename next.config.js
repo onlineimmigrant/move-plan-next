@@ -147,8 +147,8 @@ const nextConfig = {
     ];
   },
   images: {
-    // Added 85 to support components using quality={85}
-    qualities: [75, 85, 90, 100],
+    // Support adaptive image quality from 60-100 for mobile optimization
+    qualities: [60, 70, 75, 85, 90, 100],
     remotePatterns: [
 
       {

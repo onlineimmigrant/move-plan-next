@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { TemplateHeadingSection as TemplateHeadingSectionType } from '@/types/template_heading_section';
+import { useOptimizedImage } from '@/hooks/useOptimizedImage';
 
 interface TemplateHeadingSectionProps {
   templateSectionHeadings: TemplateHeadingSectionType[];
@@ -109,6 +110,9 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
   // Admin state and edit context
   const { isAdmin } = useAuth();
   const { openModal } = useTemplateHeadingSectionEdit();
+  
+  // Optimized image settings - first section is priority for LCP
+  const imageOptimization = useOptimizedImage(isPriority);
 
   const pathname = usePathname();
   
@@ -261,10 +265,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                           height={512}
                           className="w-full h-auto object-cover rounded-2xl"
                           priority={isPriority}
-                          loading={isPriority ? 'eager' : 'lazy'}
-                          fetchPriority={isPriority ? 'high' : 'auto'}
-                          quality={isPriority ? 85 : 75}
-                          sizes="(max-width: 768px) 100vw, 512px"
+                          loading={imageOptimization.loading}
+                          fetchPriority={imageOptimization.fetchPriority}
+                          quality={imageOptimization.quality}
+                          sizes={imageOptimization.sizes}
                           placeholder="blur"
                           blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                         />
@@ -279,10 +283,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                           height={600}
                           className="w-full h-auto object-cover"
                           priority={isPriority}
-                          loading={isPriority ? 'eager' : 'lazy'}
-                          fetchPriority={isPriority ? 'high' : 'auto'}
-                          quality={isPriority ? 85 : 75}
-                          sizes="100vw"
+                          loading={imageOptimization.loading}
+                          fetchPriority={imageOptimization.fetchPriority}
+                          quality={imageOptimization.quality}
+                          sizes={imageOptimization.sizes}
                           placeholder="blur"
                           blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                         />
@@ -298,10 +302,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                               fill
                               className="object-cover"
                               priority={isPriority}
-                              loading={isPriority ? 'eager' : 'lazy'}
-                              fetchPriority={isPriority ? 'high' : 'auto'}
-                              quality={isPriority ? 85 : 75}
-                              sizes="(max-width: 768px) 100vw, 512px"
+                              loading={imageOptimization.loading}
+                              fetchPriority={imageOptimization.fetchPriority}
+                              quality={imageOptimization.quality}
+                              sizes={imageOptimization.sizes}
                               placeholder="blur"
                               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                             />
@@ -321,10 +325,10 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
                               height={384}
                               className="w-full h-full object-cover"
                               priority={isPriority}
-                              loading={isPriority ? 'eager' : 'lazy'}
-                              fetchPriority={isPriority ? 'high' : 'auto'}
-                              quality={isPriority ? 85 : 75}
-                              sizes="(max-width: 768px) 100vw, 512px"
+                              loading={imageOptimization.loading}
+                              fetchPriority={imageOptimization.fetchPriority}
+                              quality={imageOptimization.quality}
+                              sizes={imageOptimization.sizes}
                               placeholder="blur"
                               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                             />

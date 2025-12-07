@@ -35,6 +35,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getOrganizationId } from '@/lib/supabase';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { cn } from '@/lib/utils';
+import { useOptimizedImage } from '@/hooks/useOptimizedImage';
 
 interface HeroProps {
   hero: {
@@ -139,6 +140,9 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
   const pathname = usePathname();
   const { openModal } = useHeroSectionEdit();
   const router = useRouter();
+  
+  // Optimized image settings for mobile performance
+  const imageOptimization = useOptimizedImage(true); // true = priority/LCP image
   
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -540,8 +544,10 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
           fill
           className="-z-10 object-cover"
           priority
-          sizes="100vw"
-          quality={90}
+          sizes={imageOptimization.sizes}
+          quality={imageOptimization.quality}
+          loading={imageOptimization.loading}
+          fetchPriority={imageOptimization.fetchPriority}
         />
       ) : null}
 
@@ -670,9 +676,11 @@ const Hero: React.FC<HeroProps> = ({ hero: initialHero }) => {
                   alt={`Image of ${translatedH1Title}`}
                   fill
                   className="object-contain"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 50vw"
+                  sizes={imageOptimization.sizes}
                   priority={true}
-                  quality={85}
+                  quality={imageOptimization.quality}
+                  loading={imageOptimization.loading}
+                  fetchPriority={imageOptimization.fetchPriority}
                 />
               </div>
             </div>
