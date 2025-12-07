@@ -243,21 +243,21 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
     let pricingPlans: PricingPlan[] = [];
     if (!plansResult.error && plansResult.data) {
       pricingPlans = plansResult.data.map((plan) => {
-        // In production, prioritize geolocation-detected currency over plan's base currency
-        // In development, fallback to plan's base currency
-        const isProduction = process.env.NODE_ENV === 'production';
-        const planBaseCurrency = plan.base_currency || 'USD';
+        // Check if multi-currency pricing exists for user's detected currency
+        const hasMultiCurrencyForUser = plan.prices_multi_currency && 
+                                        plan.prices_multi_currency[userCurrency];
         
-        const finalCurrency = isProduction ? userCurrency : planBaseCurrency;
-        
-        // console.log(`[ProductDetail] Plan ${plan.id}: userCurrency=${userCurrency}, planBaseCurrency=${planBaseCurrency}, isProduction=${isProduction}, finalCurrency=${finalCurrency}`);
+        // Priority: 
+        // 1) If prices_multi_currency exists for userCurrency, use it
+        // 2) Otherwise, use plan's base_currency with actual prices
+        const finalCurrency = hasMultiCurrencyForUser ? userCurrency : (plan.base_currency || 'USD');
         
         const priceData = getPriceForCurrency(plan, finalCurrency);
         
-        // Get Stripe price ID for the user's currency
+        // Get Stripe price ID for the final currency
         let stripePriceId: string | undefined;
-        if (plan.stripe_price_ids && plan.stripe_price_ids[userCurrency]) {
-          stripePriceId = plan.stripe_price_ids[userCurrency];
+        if (plan.stripe_price_ids && plan.stripe_price_ids[finalCurrency]) {
+          stripePriceId = plan.stripe_price_ids[finalCurrency];
         } else if (plan.stripe_price_ids && plan.base_currency && plan.stripe_price_ids[plan.base_currency]) {
           stripePriceId = plan.stripe_price_ids[plan.base_currency];
         } else {

@@ -20,9 +20,11 @@ import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 // Lazy load PerformanceBudget (admin-only, heavy component)
 const PerformanceBudget = lazy(() => import('@/components/PostPage/PerformanceBudget').then(mod => ({ default: mod.PerformanceBudget })));
 
-// Lazy load heavy components with proper fallbacks to prevent CLS
-const PostHeader = lazy(() => import('@/components/PostPage/PostHeader'));
-const LandingPostContent = lazy(() => import('@/components/PostPage/LandingPostContent'));
+// Import critical above-the-fold components directly (no lazy loading for LCP)
+import PostHeader from '@/components/PostPage/PostHeader';
+import LandingPostContent from '@/components/PostPage/LandingPostContent';
+
+// Lazy load below-the-fold components only
 const TOC = lazy(() => import('@/components/PostPage/TOC'));
 const CodeBlockCopy = lazy(() => import('@/components/CodeBlockCopy'));
 const DocumentSetNavigation = lazy(() => import('@/components/PostPage/DocumentSetNavigation'));
@@ -247,14 +249,12 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                     <div
                       className="relative px-4 sm:px-6 lg:px-0 group"
                     >
-                      <Suspense fallback={<div className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg mb-8" />}>
-                        <PostHeader
-                          post={translatedPost}
-                          isAdmin={isAdmin}
-                          showAdminButtons={isAdmin}
-                          minimal={visibility.isMinimalPost}
-                        />
-                      </Suspense>
+                      <PostHeader
+                        post={translatedPost}
+                        isAdmin={isAdmin}
+                        showAdminButtons={isAdmin}
+                        minimal={visibility.isMinimalPost}
+                      />
                     </div>
                   )}
                   
