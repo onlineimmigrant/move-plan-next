@@ -231,10 +231,17 @@ export default async function Page() {
 }
 
 // ============================================================================
-// INCREMENTAL STATIC REGENERATION (ISR) CONFIGURATION
+// STATIC SITE GENERATION (SSG) - Marketing pages only
 // ============================================================================
-// Changed from 0 (no caching) to 3600 (1 hour cache) for better performance
-// Use /api/revalidate to update cache immediately when admin saves changes
-// This provides both fast page loads AND instant updates on-demand
-export const revalidate = 3600; // Cache for 1 hour, revalidate on-demand
+// Generate static pages for homepage in all locales at build time
+// This eliminates database queries for the homepage = instant PageSpeed Insights
+export const dynamic = 'force-static';
+export const revalidate = false; // Fully static, no revalidation
+
+// Pre-generate homepage for all supported locales
+export async function generateStaticParams() {
+  return [
+    { locale: 'en' },
+  ];
+}
 // ============================================================================

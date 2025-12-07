@@ -6,7 +6,54 @@ import PostPageClient from './PostPageClient';
 import { PostPageErrorBoundary } from '@/components/PostPage/PostPageErrorBoundary';
 import PerfPostMount from '../../../components/perf/PerfPostMount';
 
-export const revalidate = 60;
+// SSG for blog posts - pre-build at deploy time, fallback to ISR if needed
+export const dynamic = 'force-static';
+export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
+export const revalidate = false; // Fully static for pre-built pages
+
+// Generate static params for all blog posts
+export async function generateStaticParams() {
+  try {
+    // Only generate static params if we have Supabase credentials
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.log('[SSG] Skipping blog post static generation - missing Supabase credentials');
+      return [];
+    }
+    
+    // Get the production organization ID
+    const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID || 'e534f121-e396-462c-9aab-acd2e66d8837';
+    
+    // Fetch all published blog posts
+    const { data: posts, error } = await supabase
+      .from('blog_post')
+      .select('slug, display_config')
+      .eq('organization_id', organizationId);
+    
+    if (error) {
+      console.error('[SSG] Error fetching blog posts:', error.message);
+      return [];
+    }
+    
+    if (!posts) return [];
+    
+    // Filter for displayable posts and generate params for English locale only
+    const params = posts
+      .filter(post => {
+        const displayConfig = post.display_config as any;
+        return displayConfig?.display_this_post !== false;
+      })
+      .map(post => ({
+        slug: post.slug,
+        locale: 'en' // Only English for now to keep build fast
+      }));
+    
+    console.log(`[SSG] Generating ${params.length} blog post pages`);
+    return params;
+  } catch (error) {
+    console.error('[SSG] Error generating blog post params:', error);
+    return [];
+  }
+}
 
 interface Post {
   id: string;

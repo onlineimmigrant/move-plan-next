@@ -14,6 +14,51 @@ import ProductDetailMediaDisplay from '@/components/product/ProductDetailMediaDi
 import ClientProductDetail from '@/components/product/ClientProductDetail';
 import { headers } from 'next/headers';
 
+// SSG for product pages - pre-build at deploy time, fallback to ISR if needed
+export const dynamic = 'force-static';
+export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
+export const revalidate = false; // Fully static for pre-built pages
+
+// Generate static params for all products
+export async function generateStaticParams() {
+  try {
+    // Only generate static params if we have Supabase credentials
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.log('[SSG] Skipping product static generation - missing Supabase credentials');
+      return [];
+    }
+    
+    // Get the production organization ID
+    const organizationId = process.env.NEXT_PUBLIC_ORGANIZATION_ID || 'e534f121-e396-462c-9aab-acd2e66d8837';
+    
+    // Fetch all products
+    const { data: products, error } = await supabase
+      .from('product')
+      .select('slug')
+      .eq('organization_id', organizationId)
+      .not('slug', 'is', null);
+    
+    if (error) {
+      console.error('[SSG] Error fetching products:', error.message);
+      return [];
+    }
+    
+    if (!products) return [];
+    
+    // Generate params for English locale only
+    const params = products.map(product => ({
+      id: product.slug,
+      locale: 'en' // Only English for now to keep build fast
+    }));
+    
+    console.log(`[SSG] Generating ${params.length} product pages`);
+    return params;
+  } catch (error) {
+    console.error('[SSG] Error generating product params:', error);
+    return [];
+  }
+}
+
 
 interface MediaItem {
   id: number;

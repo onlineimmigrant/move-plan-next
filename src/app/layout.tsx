@@ -58,7 +58,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Use dynamic rendering with aggressive timeouts for fast TTFB
-// ISR regeneration keeps responses fast after first build
+// ISR caching with aggressive edge caching for best performance
 export const revalidate = 3600; // Regenerate hourly
 
 // Fetch cookie categories at build time with ISR (24h cache) - internal implementation
