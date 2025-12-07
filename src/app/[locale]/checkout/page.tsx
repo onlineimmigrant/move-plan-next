@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, memo, lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useBasket, BasketItem } from '../../../context/BasketContext';
 import BasketItemComponent from '@/components/product/BasketItem';
 import { HiShoppingBag } from 'react-icons/hi';
@@ -15,7 +16,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useProductTranslations } from '../../../components/product/useProductTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useConfetti } from '@/hooks/useConfetti';
-import AnimatedCounter from '@/components/AnimatedCounter';
 import { useKeyboardShortcuts, SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import { useRouter } from 'next/navigation';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -24,8 +24,12 @@ import { getCurrencySymbol } from '@/utils/pricingUtils';
 import { useSettings } from '@/context/SettingsContext';
 import LocalizedLink from '@/components/LocalizedLink';
 
-// Lazy load PaymentForm for code splitting
+// Lazy load PaymentForm and AnimatedCounter for code splitting
 const PaymentForm = lazy(() => import('../../../components/product/PaymentForm'));
+const AnimatedCounter = dynamic(() => import('@/components/AnimatedCounter'), {
+  ssr: false,
+  loading: () => <span>0.00</span>
+});
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

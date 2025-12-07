@@ -45,10 +45,14 @@ interface BasketContextType {
 const BasketContext = createContext<BasketContextType | undefined>(undefined);
 
 export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [basket, setBasket] = useState<BasketItem[]>(() => {
-    if (typeof window === 'undefined') {
-      return [];
-    }
+  // Defer localStorage read to avoid blocking initial render
+  const [basket, setBasket] = useState<BasketItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load basket from localStorage after initial render (non-blocking)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
       const savedBasket = localStorage.getItem('basket');
       if (savedBasket) {
@@ -56,16 +60,15 @@ export const BasketProvider = ({ children }: { children: React.ReactNode }) => {
         if (Array.isArray(parsedBasket) && parsedBasket.every(item => 
           item && typeof item === 'object' && 'plan' in item && 'quantity' in item
         )) {
-          return parsedBasket as BasketItem[];
+          setBasket(parsedBasket as BasketItem[]);
         }
       }
     } catch (error) {
       console.error('Error parsing basket from localStorage:', error);
-      // Clear corrupted data
       localStorage.removeItem('basket');
     }
-    return [];
-  });
+    setIsHydrated(true);
+  }, []);
 
   // Memoized basket calculations for better performance
   const basketStats = useMemo(() => {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useBasket, BasketItem } from '../../../context/BasketContext';
 import BasketItemComponent from '@/components/product/BasketItem';
 import { HiTrash, HiShoppingBag, HiArrowRight } from 'react-icons/hi';
@@ -10,11 +11,16 @@ import { supabase } from '../../../lib/supabaseClient';
 import Button from '@/ui/Button';
 import { useProductTranslations } from '../../../components/product/useProductTranslations';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import AnimatedCounter from '@/components/AnimatedCounter';
 import { useKeyboardShortcuts, SHORTCUTS } from '@/hooks/useKeyboardShortcuts';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import LocalizedLink from '@/components/LocalizedLink';
+
+// Lazy load AnimatedCounter to avoid loading animation libraries in initial bundle
+const AnimatedCounter = dynamic(() => import('@/components/AnimatedCounter'), {
+  ssr: false,
+  loading: () => <span>0.00</span>
+});
 
 // Interface for a feature (aligned with BasketItemComponent)
 interface Feature {

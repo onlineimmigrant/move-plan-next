@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [canonicalProfileId, setCanonicalProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [profileFetched, setProfileFetched] = useState<string | null>(null); // Track which user's profile was fetched
+  const [profileFetched, setProfileFetched] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -255,7 +255,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('getSession error:', error.message);
-          // Don't set error for "Auth session missing" - it's normal for logged out users
           if (!error.message.includes('Auth session missing')) {
             setError(error.message);
           }
@@ -265,7 +264,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(data.session);
         if (data.session?.user?.id) {
           await fetchProfile(data.session.user.id);
-          // Let layouts handle their own redirects
         }
       } catch (err: unknown) {
         console.error('Session fetch failed:', (err as Error).message);
@@ -275,23 +273,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initializeSession();
+    // Defer auth check by 50ms to avoid blocking initial render (reduces Script Evaluation time)
+    const timer = setTimeout(initializeSession, 50);
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
-      // Skip INITIAL_SESSION since we handle that in initializeSession
       if (event === 'INITIAL_SESSION') {
         return;
       }
       
       setSession(newSession);
-      // console.log('Auth state changed:', event, newSession?.user?.email);
       if (newSession?.user?.id) {
         fetchProfile(newSession.user.id);
-        // Let layouts handle their own redirects
       } else {
-        // Clear profile data on logout
         setIsAdmin(false);
         setIsSuperadmin(false);
         setOrganizationId(null);
@@ -301,8 +296,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []); // Remove router dependency to prevent infinite loops
+    return () => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
+  }, []);
 
   async function login(email: string, password: string) {
     setIsLoading(true);

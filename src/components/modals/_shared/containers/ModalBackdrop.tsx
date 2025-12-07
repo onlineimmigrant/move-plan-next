@@ -7,19 +7,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-
-// Lazy load framer-motion pieces with correct exports
-const MotionDiv = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.div),
-  { ssr: false }
-) as any;
-const AnimatePresence = dynamic(
-  () => import('framer-motion').then((mod) => mod.AnimatePresence),
-  { ssr: false }
-) as any;
 import { BACKDROP_STYLES, MODAL_Z_INDEX } from '../utils/modalConstants';
-import { backdropVariants } from '../utils/modalAnimations';
 
 interface ModalBackdropProps {
   /** Whether the backdrop is visible */
@@ -49,18 +37,13 @@ export const ModalBackdrop: React.FC<ModalBackdropProps> = ({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted || !isOpen) return null;
+  
   return (
-    <AnimatePresence>
-      <MotionDiv
-        className={`fixed inset-0 ${BACKDROP_STYLES.base} ${BACKDROP_STYLES.animation} ${className}`}
-        style={{ zIndex }}
-        variants={backdropVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        onClick={onClick}
-        aria-hidden="true"
-      />
-    </AnimatePresence>
+    <div
+      className={`fixed inset-0 ${BACKDROP_STYLES.base} ${BACKDROP_STYLES.animation} ${className} transition-opacity duration-200`}
+      style={{ zIndex }}
+      onClick={onClick}
+      aria-hidden="true"
+    />
   );
 };
