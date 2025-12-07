@@ -114,23 +114,13 @@ const nextConfig = {
           },
         ],
       },
-      // SEO Performance: Cache blog posts
+      // SEO Performance: Cache static pages aggressively
       {
-        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/blog/:slug*',
+        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/:path(about|contact|privacy-policy|terms-of-service|cookie-policy)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=900, stale-while-revalidate=3600',
-          },
-        ],
-      },
-      // SEO Performance: Cache product pages
-      {
-        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/products/:slug*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=600, stale-while-revalidate=1800',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
         ],
       },

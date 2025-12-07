@@ -11,6 +11,13 @@ export const dynamic = 'force-static';
 export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
 export const revalidate = false; // Fully static for pre-built pages
 
+// Set proper cache headers for CDN
+export const metadata = {
+  other: {
+    'Cache-Control': 'public, max-age=31536000, immutable',
+  },
+};
+
 // Generate static params for all blog posts
 export async function generateStaticParams() {
   try {

@@ -57,9 +57,12 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono'
 });
 
-// Use dynamic rendering with aggressive timeouts for fast TTFB
-// ISR caching with aggressive edge caching for best performance
-export const revalidate = 3600; // Regenerate hourly
+// Allow child pages to control their own caching strategy
+// Blog posts & products: force-static (full SSG)
+// Admin pages: dynamic (real-time updates)
+// Layout stays flexible to support both
+export const dynamic = 'auto'; // Let child pages decide
+export const revalidate = 3600; // ISR for pages that don't specify
 
 // Fetch cookie categories at build time with ISR (24h cache) - internal implementation
 async function _getCookieCategoriesInternal() {
