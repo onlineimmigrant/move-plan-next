@@ -222,17 +222,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Simple: replace underscore with hyphen, take first 2 chars
   const language = (currentLocale || 'en').replace('_', '-').substring(0, 2).toLowerCase();
   
-  const organization = await getOrganization(currentDomain);
+  // PARALLELIZED: Fetch organization, settings, and cookie categories in parallel
+  const [organization, cookieCategories] = await Promise.all([
+    getOrganization(currentDomain),
+    getCookieCategories(),
+  ]);
+  
   const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
   
   // Settings loaded
-
   const organizationId = organization?.id || null;
 
   const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
-  
-  // Fetch cookie categories at build time (cached)
-  const cookieCategories = await getCookieCategories();
   
   // Check if user has already accepted cookies (server-side check)
   const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
@@ -333,7 +334,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://pub.r2.wvservices.exchange" crossOrigin="anonymous" />
         
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
-        <SimpleLayoutSEO />
         
         {/* Mobile Status Bar Styling - Match header background */}
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
@@ -366,6 +366,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           pathnameFromServer={pathname}
         >
           <LanguageSuggestionBanner currentLocale={currentLocale} />
+          <SimpleLayoutSEO />
           {children}
         </ClientProviders>
         
