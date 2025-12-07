@@ -135,8 +135,18 @@ const nextConfig = {
         ],
       },
       // SSG: Cache blog posts immutably (pre-rendered at build time)
+      // Match both /slug (default en) and /locale/slug (other languages)
       {
-        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/:slug([a-z0-9-]+)',
+        source: '/:slug([a-z0-9-]+)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:locale(es|fr|de|ru|it|pt|zh|ja|pl|nl)/:slug([a-z0-9-]+)',
         headers: [
           {
             key: 'Cache-Control',
@@ -145,8 +155,18 @@ const nextConfig = {
         ],
       },
       // SSG: Cache product pages immutably (pre-rendered at build time)
+      // Match both /products/id (default en) and /locale/products/id (other languages)
       {
-        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/products/:id([a-z0-9-]+)',
+        source: '/products/:id([a-z0-9-]+)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:locale(es|fr|de|ru|it|pt|zh|ja|pl|nl)/products/:id([a-z0-9-]+)',
         headers: [
           {
             key: 'Cache-Control',
@@ -155,8 +175,18 @@ const nextConfig = {
         ],
       },
       // SSG: Cache homepage immutably
+      // Match both / (default en) and /locale (other languages)
       {
-        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)',
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:locale(es|fr|de|ru|it|pt|zh|ja|pl|nl)',
         headers: [
           {
             key: 'Cache-Control',
