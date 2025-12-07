@@ -84,7 +84,7 @@ export default async function middleware(request: NextRequest) {
   // Fetch database settings including supported locales
   let defaultLocale = cookieLocale || 'en'; // Use cookie first, then fallback
   let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl']; // fallback
-  const baseCurrency = 'GBP'; // Use GBP as fallback to match your test data
+  const baseCurrency = 'USD'; // Use USD as fallback for local development
   let settings: any = null; // Initialize settings variable outside try block
   
   try {
@@ -117,8 +117,8 @@ export default async function middleware(request: NextRequest) {
   // Use the database default language as the default locale (no prefix)
   const intlMiddleware = createMiddleware({
     locales: supportedLocales,
-    defaultLocale: defaultLocale, // Use database default language (no prefix)
-    localePrefix: 'as-needed', // Default language has no prefix, others have prefixes
+    defaultLocale: defaultLocale,
+    localePrefix: 'as-needed', // Default language has no prefix
     localeDetection: false // Disable automatic browser language detection
   });
 

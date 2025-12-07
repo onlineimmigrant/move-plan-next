@@ -49,6 +49,15 @@ const CookieBanner: React.FC<CookieBannerProps> = ({
   const { showSettings, setShowSettings } = useCookieSettings();
   const themeColors = useThemeColors();
   
+  // Sync visibility state with client-side cookie to prevent re-appearing after acceptance
+  // Only hide if explicitly accepted (true), not rejected (false)
+  useEffect(() => {
+    const clientCookie = getCookie('cookies_accepted');
+    if (clientCookie === 'true') {
+      setIsVisible(false);
+    }
+  }, []);
+  
   // Ensure minimum shade of 600-700 for WCAG AA contrast
   const buttonShade = Math.max(themeColors.raw.primary.shade, 600);
   const buttonHoverShade = Math.min(buttonShade + 100, 900);

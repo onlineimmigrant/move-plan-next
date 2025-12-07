@@ -85,8 +85,23 @@ async function _getCookieCategoriesInternal() {
 // Cached wrapper - deduplicates cookie category requests
 const getCookieCategories = cache(_getCookieCategoriesInternal);
 
-// TEMPORARILY COMMENTED OUT TO TEST SSG - uses headers() which prevents static generation
-/* export async function generateMetadata(): Promise<Metadata> {
+// Layout uses ISR (dynamic) to support headers() and metadata
+// Child pages can still use SSG with force-static
+
+// Separate viewport export to avoid Next.js warnings
+export function generateViewport() {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+      { media: '(prefers-color-scheme: dark)', color: '#1f2937' },
+    ],
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
   const currentDomain = await getDomain();
   const headersList = await headers();
   
@@ -132,19 +147,6 @@ const getCookieCategories = cache(_getCookieCategoriesInternal);
     title: seoData.title || siteName,
     description: seoData.description || 'Welcome to our platform',
     keywords: Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords,
-    
-    // Mobile optimization
-    viewport: {
-      width: 'device-width',
-      initialScale: 1,
-      maximumScale: 5,
-    },
-    
-    // PWA theme color - responsive
-    themeColor: [
-      { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-      { media: '(prefers-color-scheme: dark)', color: '#1f2937' },
-    ],
     
     // Web App Manifest
     manifest: '/manifest.json',
@@ -219,15 +221,13 @@ const getCookieCategories = cache(_getCookieCategoriesInternal);
     }
   };
 }
-*/
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // TEMPORARILY COMMENTED OUT TO TEST SSG - headers() prevents static generation
-  // const headersList = await headers();
-  // const pathname = getPathnameFromHeaders(headersList);
-  // const currentLocale = extractLocaleFromPathname(pathname);
-  const currentLocale = 'en'; // Hardcoded for SSG test
-  const language = 'en'; // Hardcoded for SSG test
+  const headersList = await headers();
+  const pathname = getPathnameFromHeaders(headersList);
+  const currentLocale = extractLocaleFromPathname(pathname);
+  const language = currentLocale;
   
   // Get domain with localhost handling for build
   let currentDomain = await getDomain();
@@ -285,8 +285,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const templateHeadingSections: any[] = [];
   
   // Quick cookie check (no async) - COMMENTED OUT FOR SSG TEST
-  // const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
-  const cookieAccepted = false; // Hardcoded for SSG test
+  const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
 
   const headerData = {
     image_for_privacy_settings: settings.image,
@@ -372,7 +371,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           cookieAccepted={cookieAccepted}
           templateSections={templateSections}
           templateHeadingSections={templateHeadingSections}
-          pathnameFromServer={'/'}
+          pathnameFromServer={pathname}
         >
           <LanguageSuggestionBanner currentLocale={currentLocale} />
           <SimpleLayoutSEO />
