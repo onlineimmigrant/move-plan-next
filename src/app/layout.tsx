@@ -54,7 +54,9 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono'
 });
 
-export const revalidate = 0;
+// Use dynamic rendering with aggressive timeouts for fast TTFB
+// ISR regeneration keeps responses fast after first build
+export const revalidate = 3600; // Regenerate hourly
 
 // Fetch cookie categories at build time with ISR (24h cache)
 async function getCookieCategories() {
@@ -210,74 +212,44 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const currentDomain = await getDomain();
-  
-  // Get current pathname to extract locale
   const headersList = await headers();
   const pathname = getPathnameFromHeaders(headersList);
-  
-  // Extract locale from pathname for dynamic language setting
   const currentLocale = extractLocaleFromPathname(pathname);
-  
-  // Simple: replace underscore with hyphen, take first 2 chars
   const language = (currentLocale || 'en').replace('_', '-').substring(0, 2).toLowerCase();
   
-  // PARALLELIZED: Fetch organization, settings, and cookie categories in parallel
+  // Get domain with localhost handling for build
+  let currentDomain = await getDomain();
+  
+  // During build, use production domain or env variable with proper protocol
+  if (currentDomain.includes('localhost')) {
+    if (process.env.NEXT_PUBLIC_BASE_URL) {
+      currentDomain = process.env.NEXT_PUBLIC_BASE_URL;
+    } else if (process.env.VERCEL_URL) {
+      currentDomain = `https://${process.env.VERCEL_URL}`;
+    } else {
+      currentDomain = 'https://www.moveplannext.com'; // Fallback to production domain
+    }
+  }
+  
+  // Fetch critical data in parallel - ISR caching will make this fast after first load
   const [organization, cookieCategories] = await Promise.all([
     getOrganization(currentDomain),
     getCookieCategories(),
   ]);
   
-  const settings = organization ? await getSettings(currentDomain) : await getSettingsWithFallback(currentDomain);
+  const settings = organization 
+    ? await getSettings(currentDomain)
+    : await getSettingsWithFallback(currentDomain);
   
-  // Settings loaded
   const organizationId = organization?.id || null;
-
   const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
   
-  // Check if user has already accepted cookies (server-side check)
+  // Template sections: Client-side only
+  const templateSections: any[] = [];
+  const templateHeadingSections: any[] = [];
+  
+  // Quick cookie check (no async)
   const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
-
-  // Server-side fetch of template sections for SSR to avoid SEO/SSR mismatch
-  // Determine url_page (map '/' to '/home' to match DB convention)
-  // IMPORTANT: Strip locale prefix before DB lookup (DB stores paths without locale)
-  const pathWithoutLocale = stripLocaleFromPathname(pathname);
-  const urlPage = pathWithoutLocale === '/' || pathWithoutLocale === '' ? '/home' : pathWithoutLocale;
-
-  let templateSections: any[] = [];
-  let templateHeadingSections: any[] = [];
-  try {
-    if (organizationId) {
-      const orgParam = encodeURIComponent(String(organizationId));
-      const urlParam = encodeURIComponent(urlPage);
-      const baseUrl = currentDomain.startsWith('http') ? currentDomain : `https://${currentDomain}`;
-      const [tsRes, thsRes] = await Promise.all([
-        fetch(`${baseUrl}/api/template-sections?url_page=${urlParam}&organizationId=${orgParam}`, {
-          // Let route handler ISR caching work
-          next: { revalidate: 60 },
-        }),
-        fetch(`${baseUrl}/api/template-heading-sections?url_page=${urlParam}&organizationId=${orgParam}`, {
-          next: { revalidate: 60 },
-        })
-      ]);
-
-      if (!tsRes.ok) {
-        console.error('[RootLayout] Error fetching template sections via API:', await tsRes.text());
-      } else {
-        templateSections = await tsRes.json();
-      }
-
-      if (!thsRes.ok) {
-        console.error('[RootLayout] Error fetching template heading sections via API:', await thsRes.text());
-      } else {
-        templateHeadingSections = await thsRes.json();
-      }
-    }
-  } catch (e) {
-    console.error('[RootLayout] Unexpected error fetching template sections:', e);
-    templateSections = [];
-    templateHeadingSections = [];
-  }
 
   const headerData = {
     image_for_privacy_settings: settings.image,
