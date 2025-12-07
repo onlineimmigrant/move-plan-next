@@ -1,18 +1,23 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-/* Load Google Fonts - placed after Tailwind to avoid blocking critical CSS */
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap');
+/* Self-hosted critical fonts - Inter & Poppins for instant loading */
+@import url('/fonts/fonts.css');
+
+/* Remaining Google Fonts - loaded lazily (non-critical) */
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Ubuntu:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap');
 
 :root {
-  /* Core fonts loaded via Next.js (Inter, JetBrains Mono) */
+  /* Core self-hosted fonts - Inter loaded via Next.js localFont */
   --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
   --font-jetbrains-mono: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   
-  /* Additional Google Fonts loaded via @import above */
+  /* Poppins - self-hosted for performance */
+  --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
+  
+  /* Additional Google Fonts (loaded lazily above) */
   --font-mulish: 'Mulish', system-ui, -apple-system, sans-serif;
   --font-roboto: 'Roboto', system-ui, -apple-system, sans-serif;
-  --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-lato: 'Lato', system-ui, -apple-system, sans-serif;
   --font-opensans: 'Open Sans', system-ui, -apple-system, sans-serif;
   --font-montserrat: 'Montserrat', system-ui, -apple-system, sans-serif;

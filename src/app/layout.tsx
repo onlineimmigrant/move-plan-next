@@ -16,24 +16,39 @@ import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerSafe';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
+import { JetBrains_Mono } from 'next/font/google';
 
-// Load only essential fonts upfront - others loaded via CSS dynamically
-// This reduces initial bundle size from ~800KB to ~100KB
-const inter = Inter({
-  subsets: ['latin'],
+// Self-hosted Inter font for maximum performance - no external requests!
+const inter = localFont({
+  src: [
+    {
+      path: '../../public/fonts/inter-400.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/inter-600.woff2',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/inter-700.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-inter',
   display: 'swap',
   preload: true,
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
-  adjustFontFallback: true,
-  variable: '--font-inter'
 });
 
-// JetBrains Mono for code blocks in chat - essential for code display
+// JetBrains Mono for code blocks - keeping from Google for now (rarely used)
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
-  preload: false, // Not critical, load async
+  preload: false,
   fallback: ['Consolas', 'Monaco', 'Courier New', 'monospace'],
   adjustFontFallback: true,
   variable: '--font-jetbrains-mono'
@@ -301,12 +316,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="icon" href={faviconUrl} />
         
+        {/* Preload critical self-hosted fonts for instant render */}
+        <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/inter-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        
         {/* DNS Prefetch & Preconnect for performance */}
         <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
         <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" crossOrigin="anonymous" />
         
-        {/* Google Fonts - both preconnects required */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* Keep Google Fonts preconnect for JetBrains Mono only */}
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         <link rel="dns-prefetch" href="https://js.stripe.com" />
