@@ -118,7 +118,7 @@ export default async function middleware(request: NextRequest) {
   const intlMiddleware = createMiddleware({
     locales: supportedLocales,
     defaultLocale: defaultLocale, // Use database default language (no prefix)
-    localePrefix: 'as-needed', // Default language has no prefix, others have prefixes
+    localePrefix: 'always', // Always include locale prefix for consistent SSG cache headers
     localeDetection: false // Disable automatic browser language detection
   });
 

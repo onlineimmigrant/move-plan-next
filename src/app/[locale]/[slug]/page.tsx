@@ -43,7 +43,9 @@ export async function generateStaticParams() {
     
     if (!posts) return [];
     
-    // Filter for displayable posts and generate params for English locale only
+    // Filter for displayable posts and generate params for English locale
+    // Note: With next-intl's localePrefix:'as-needed', en pages redirect /en/slug -> /slug
+    // But we still need to generate them at /en/slug first
     const params = posts
       .filter(post => {
         const displayConfig = post.display_config as any;
@@ -51,10 +53,10 @@ export async function generateStaticParams() {
       })
       .map(post => ({
         slug: post.slug,
-        locale: 'en' // Only English for now to keep build fast
+        locale: 'en' // Generate English pages
       }));
     
-    console.log(`[SSG] Generating ${params.length} blog post pages`);
+    console.log(`[SSG] Generating ${params.length} blog post pages for English`);
     return params;
   } catch (error) {
     console.error('[SSG] Error generating blog post params:', error);
