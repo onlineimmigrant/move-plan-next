@@ -134,6 +134,36 @@ const nextConfig = {
           },
         ],
       },
+      // SSG: Cache blog posts immutably (pre-rendered at build time)
+      {
+        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/:slug([a-z0-9-]+)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // SSG: Cache product pages immutably (pre-rendered at build time)
+      {
+        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)/products/:id([a-z0-9-]+)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // SSG: Cache homepage immutably
+      {
+        source: '/:locale(en|es|fr|de|ru|it|pt|zh|ja|pl|nl)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
   images: {
