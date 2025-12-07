@@ -9,7 +9,8 @@ interface OptimizedPostImageProps {
   alt?: string;
   className?: string;
   style?: React.CSSProperties;
-  priority?: boolean; // Load immediately without lazy loading (for LCP images)
+  priority?: boolean; // Load immediately for LCP optimization
+  loading?: 'lazy' | 'eager'; // HTML loading attribute
 }
 
 /**
@@ -38,8 +39,9 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
   className = 'max-w-full h-auto',
   style = { maxWidth: '100%', height: 'auto' },
   priority = false,
+  loading = 'lazy',
 }) => {
-  const [isInView, setIsInView] = useState(priority); // If priority, load immediately
+  const [isInView, setIsInView] = useState(priority); // Load immediately if priority
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const imgRef = useRef<HTMLDivElement>(null);
   const network = useNetworkStatus();
@@ -48,9 +50,9 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
   const imageQuality = getImageQuality(network.quality);
   const sizeMultiplier = getImageSizeMultiplier(network.quality);
 
-  // IntersectionObserver for lazy loading
+  // IntersectionObserver for lazy loading (skip if priority or eager)
   useEffect(() => {
-    if (priority || !imgRef.current) return; // Skip lazy loading if priority
+    if (priority || loading === 'eager' || !imgRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -169,7 +171,8 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
             alt={alt}
             className={className}
             style={style}
-            loading="lazy"
+            loading={priority ? 'eager' : loading}
+            fetchPriority={priority ? 'high' : 'auto'}
             srcSet={srcSet || undefined}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
           />

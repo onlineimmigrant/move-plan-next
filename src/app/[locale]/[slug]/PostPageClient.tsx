@@ -146,8 +146,11 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   const { shouldShowMainContent, shouldShowNoContentMessage } = usePostPageEffects(translatedPost, slug);
   const docSet = useDocumentSetLogic(translatedPost);
   
-  // Track first image for LCP optimization
+  // Track first image for LCP optimization - reset on content change
   const imageCountRef = useRef(0);
+  useEffect(() => {
+    imageCountRef.current = 0; // Reset counter when content changes
+  }, [translatedPost.content]);
   
   // Reading progress tracking (only for default and doc_set posts)
   const showProgress = visibility.postType === 'default' || visibility.postType === 'doc_set';
@@ -277,7 +280,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                           content={translatedPost.content}
                           components={{
                             img: ({node, ...props}) => {
-                              // Prioritize first image for LCP
+                              // First image gets priority for LCP optimization
                               const isFirstImage = imageCountRef.current === 0;
                               imageCountRef.current += 1;
                               
@@ -288,6 +291,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                                   className="max-w-full h-auto rounded-lg shadow-sm"
                                   style={{maxWidth: '100%', height: 'auto'}}
                                   priority={isFirstImage}
+                                  loading={isFirstImage ? 'eager' : 'lazy'}
                                 />
                               );
                             },

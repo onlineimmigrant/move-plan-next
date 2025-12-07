@@ -4,9 +4,9 @@
 /* Self-hosted critical fonts - Inter & Poppins for instant loading */
 @import url('/fonts/fonts.css');
 
-/* REMOVED: Remaining Google Fonts - they were blocking render for 1,650ms
- * Users will see Inter/Poppins (self-hosted) or system fonts instead
- * This improves LCP from 4.5s to ~1.5s by eliminating render-blocking CSS
+/* Google Fonts removed - using self-hosted Inter/Poppins only for optimal performance
+ * All font selections will fallback to Inter (sans-serif) or system fonts
+ * This eliminates 750ms+ render-blocking requests and improves LCP
  */
 
 :root {
@@ -17,16 +17,16 @@
   /* Poppins - self-hosted for performance */
   --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
   
-  /* Additional Google Fonts (loaded lazily above) */
-  --font-mulish: 'Mulish', system-ui, -apple-system, sans-serif;
-  --font-roboto: 'Roboto', system-ui, -apple-system, sans-serif;
-  --font-lato: 'Lato', system-ui, -apple-system, sans-serif;
-  --font-opensans: 'Open Sans', system-ui, -apple-system, sans-serif;
-  --font-montserrat: 'Montserrat', system-ui, -apple-system, sans-serif;
-  --font-nunito: 'Nunito', system-ui, -apple-system, sans-serif;
-  --font-raleway: 'Raleway', system-ui, -apple-system, sans-serif;
-  --font-ubuntu: 'Ubuntu', system-ui, -apple-system, sans-serif;
-  --font-merriweather: 'Merriweather', 'Georgia', serif;
+  /* Google Fonts replaced with self-hosted fallbacks for performance */
+  --font-mulish: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-roboto: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-lato: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-opensans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-montserrat: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-nunito: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-raleway: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ubuntu: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-merriweather: 'Georgia', 'Times New Roman', serif;
 }
 
 /* Premium fade-in-up animation for staggered grid items */

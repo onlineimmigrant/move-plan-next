@@ -19,7 +19,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    optimizeCss: false,
+    optimizeCss: false, // Disabled - requires critters package
     // Enable optimized package imports for faster initial load
     optimizePackageImports: [
       'lucide-react', 
