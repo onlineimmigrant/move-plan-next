@@ -144,6 +144,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.0",
+    "@parcel/css": "^1.14.0",
     "@swc/jest": "^0.2.39",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -163,6 +164,7 @@
     "@types/sanitize-html": "^2.16.0",
     "@types/three": "^0.178.1",
     "autoprefixer": "^10.4.20",
+    "critters": "^0.0.23",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.3.4",
     "eta": "^2.2.0",

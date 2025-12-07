@@ -14,12 +14,15 @@ const nextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
+  // Production optimizations
+  compress: true, // Enable gzip compression
+  productionBrowserSourceMaps: false, // Disable source maps in production
   // Disable legacy browser support
   eslint: {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    optimizeCss: false, // Disabled - requires critters package
+      optimizeCss: true, // Enable Critters for inlining critical CSS and deferring the rest
     // Enable optimized package imports for faster initial load
     optimizePackageImports: [
       'lucide-react', 
@@ -29,6 +32,11 @@ const nextConfig = {
       'date-fns',
       'clsx',
       'react-hook-form',
+      'react-markdown',
+      'remark-gfm',
+      'rehype-raw',
+      'rehype-sanitize',
+      'framer-motion',
     ],
     // Reduce memory usage and improve performance
     webpackMemoryOptimizations: true,

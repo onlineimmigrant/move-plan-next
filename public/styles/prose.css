@@ -1,0 +1,58 @@
+/* Non-critical blog typography (loaded async via preload) */
+.prose {
+  color: #111827;
+  max-width: 65ch;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 1.2em 0 0.6em;
+}
+
+.prose p {
+  line-height: 1.8;
+  margin: 1em 0;
+}
+
+.prose a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.25rem;
+  margin: 1em 0;
+}
+
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.prose blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  color: #374151;
+  font-style: italic;
+}
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  background: #f9fafb;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.prose pre code {
+  display: block;
+  padding: 1rem;
+  overflow-x: auto;
+}

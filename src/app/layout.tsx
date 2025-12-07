@@ -339,6 +339,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Preload critical self-hosted fonts for instant render */}
         <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/inter-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         
         {/* DNS Prefetch & Preconnect for performance */}
         <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
@@ -371,6 +372,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           fontFamily: `var(${selectedFontVar}), system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`
         }}
       >
+        {/* Async non-critical stylesheet (blog typography) */}
+        <link rel="preload" as="style" href="/styles/prose.css" />
+        <noscript>
+          <link rel="stylesheet" href="/styles/prose.css" />
+        </noscript>
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
         <ClientProviders
           settings={settings}
@@ -414,6 +420,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     }
                   }
                 }, true);
+              })();
+            `
+          }}
+        />
+        <Script
+          id="async-prose-css"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                var href = '/styles/prose.css';
+                // Avoid duplicate insertion
+                if (document.querySelector('link[rel=stylesheet][href="'+href+'"]')) return;
+                var l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = href;
+                l.media = 'all';
+                document.head.appendChild(l);
               })();
             `
           }}
