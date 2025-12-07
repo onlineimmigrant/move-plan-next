@@ -57,12 +57,11 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono'
 });
 
-// Allow child pages to control their own caching strategy
-// Blog posts & products: force-static (full SSG)
-// Admin pages: dynamic (real-time updates)
-// Layout stays flexible to support both
-export const dynamic = 'auto'; // Let child pages decide
-export const revalidate = 3600; // ISR for pages that don't specify
+// REMOVED: export const dynamic and revalidate from layout
+// This allows child pages to control their own caching strategy
+// Blog posts & products: force-static (full SSG with immutable cache)
+// Admin pages: dynamic rendering (real-time updates)
+// Without these exports, each page can set its own behavior
 
 // Fetch cookie categories at build time with ISR (24h cache) - internal implementation
 async function _getCookieCategoriesInternal() {
