@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Settings } from '@/types/settings';
 import { Organization } from './types';
+import { cache } from 'react';
 
 type UUID = string;
 
@@ -130,7 +131,8 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   return data.id as UUID;
 }
 
-export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<Organization | null> {
+// Internal implementation
+async function _getOrganizationInternal(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<Organization | null> {
   let currentUrl: string | undefined;
 
   if (typeof reqOrBaseUrl === 'string') {
@@ -241,6 +243,9 @@ export async function getOrganization(reqOrBaseUrl?: { headers: { host?: string 
   return data as Organization;
 }
 
+// Cached wrapper - deduplicates requests during SSR
+export const getOrganization = cache(_getOrganizationInternal);
+
 /**
  * Get default settings object
  * @returns Default Settings object with sensible defaults
@@ -296,7 +301,8 @@ export function getSiteName(settings?: Settings): string {
   return settings?.site || 'App';
 }
 
-export async function getSettings(baseUrl?: string): Promise<Settings> {
+// Internal implementation
+async function _getSettingsInternal(baseUrl?: string): Promise<Settings> {
   const defaultSettings = getDefaultSettings();
 
   // Skip Supabase query during Vercel build
@@ -396,3 +402,6 @@ export async function getSettings(baseUrl?: string): Promise<Settings> {
     return defaultSettings;
   }
 }
+
+// Cached wrapper - deduplicates settings requests
+export const getSettings = cache(_getSettingsInternal);

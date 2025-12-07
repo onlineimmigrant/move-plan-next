@@ -4,8 +4,9 @@ import { getSettings } from './getSettings';
 import { getLocaleFromLanguage } from './language-utils';
 import { MenuItem, SubMenuItem } from '@/types/menu';
 import { Settings } from '@/types/settings';
+import { cache } from 'react';
 
-export async function fetchMenuItems(organizationId: string | null): Promise<MenuItem[]> {
+async function _fetchMenuItemsInternal(organizationId: string | null): Promise<MenuItem[]> {
   if (!organizationId) {
     return [];
   }
@@ -152,6 +153,9 @@ export async function fetchMenuItems(organizationId: string | null): Promise<Men
     return [];
   }
 }
+
+// Cached wrapper - deduplicates menu items requests
+export const fetchMenuItems = cache(_fetchMenuItemsInternal);
 
 export async function getDomain(): Promise<string> {
   const headersList = await headers();

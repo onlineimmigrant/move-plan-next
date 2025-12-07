@@ -19,6 +19,8 @@ import { supabaseServer } from '@/lib/supabaseServerSafe';
 import localFont from 'next/font/local';
 import { JetBrains_Mono } from 'next/font/google';
 
+import { cache } from 'react';
+
 // Self-hosted Inter font for maximum performance - no external requests!
 const inter = localFont({
   src: [
@@ -58,8 +60,8 @@ const jetbrainsMono = JetBrains_Mono({
 // ISR regeneration keeps responses fast after first build
 export const revalidate = 3600; // Regenerate hourly
 
-// Fetch cookie categories at build time with ISR (24h cache)
-async function getCookieCategories() {
+// Fetch cookie categories at build time with ISR (24h cache) - internal implementation
+async function _getCookieCategoriesInternal() {
   try {
     const { data, error } = await supabaseServer
       .from('cookie_category')
@@ -76,6 +78,9 @@ async function getCookieCategories() {
     return [];
   }
 }
+
+// Cached wrapper - deduplicates cookie category requests
+const getCookieCategories = cache(_getCookieCategoriesInternal);
 
 export async function generateMetadata(): Promise<Metadata> {
   const currentDomain = await getDomain();
