@@ -26,6 +26,7 @@ interface CookieBannerProps {
   };
   activeLanguages: string[];
   categories?: any[]; // Use any[] to accept server-side data format
+  cookieAccepted?: boolean; // Server-side cookie check result
 }
 
 interface Category {
@@ -35,11 +36,16 @@ interface Category {
   services: { id: number; name: string; description: string }[];
 }
 
-const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages, categories: initialCategories = [] }) => {
+const CookieBanner: React.FC<CookieBannerProps> = ({ 
+  headerData, 
+  activeLanguages, 
+  categories: initialCategories = [],
+  cookieAccepted = false 
+}) => {
   const { session } = useAuth(); // Get session
   const translations = useCookieTranslations();
-  const [isVisible, setIsVisible] = useState(false);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  // Initialize visibility based on server-side cookie check - no client-side delay!
+  const [isVisible, setIsVisible] = useState(!cookieAccepted);
   const { showSettings, setShowSettings } = useCookieSettings();
   const themeColors = useThemeColors();
   
@@ -49,45 +55,16 @@ const CookieBanner: React.FC<CookieBannerProps> = ({ headerData, activeLanguages
   const buttonBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonShade}`);
   const buttonHoverBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonHoverShade}`);
 
-  useEffect(() => {
-    const accepted = getCookie('cookies_accepted');
-    setIsVisible(accepted !== 'true');
-
-    // Only fetch categories if not provided from props
-    if (initialCategories.length === 0) {
-      const fetchCategories = async () => {
-        try {
-          const response = await fetch('/api/cookies/categories');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          const validData = Array.isArray(data)
-            ? data.map((category) => ({
-                id: category.id,
-                name: category.name,
-                description: category.description_en || '',
-                services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
-              }))
-            : [];
-          setCategories(validData);
-        } catch (error) {
-          console.error('Error fetching categories:', error);
-          setCategories([]);
-        }
-      };
-      fetchCategories();
-    } else {
-      // Use categories from props and map cookie_service to services
-      const mappedCategories = initialCategories.map((category: any) => ({
-        id: category.id,
-        name: category.name,
-        description: category.description || '',
-        services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
-      }));
-      setCategories(mappedCategories);
-    }
-  }, [initialCategories]);
+  // Map categories once - no fetching needed since we get them from props
+  const categories = React.useMemo(() => 
+    initialCategories.map((category: any) => ({
+      id: category.id,
+      name: category.name,
+      description: category.description || '',
+      services: Array.isArray(category.cookie_service) ? category.cookie_service : [],
+    })),
+    [initialCategories]
+  );
 
   const handleAcceptAll = async () => {
     setIsVisible(false);

@@ -76,9 +76,9 @@ const ChatHelpWidgetLazy = dynamic(() => import('@/components/ChatHelpWidget'), 
   loading: () => null
 });
 
-// Lazy load cookie components (not critical for initial paint)
+// Cookie banner with SSR enabled - renders immediately with server-side cookie check
 const CookieBannerComponent = dynamic(() => import('@/components/cookie/CookieBanner'), {
-  ssr: false,
+  ssr: true, // Enable SSR for instant render, no hydration delay
   loading: () => null
 });
 
@@ -214,32 +214,8 @@ export default function ClientProviders({
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
   
-  // Phase 2: Lazy load cookie banner - delay until page is idle for better LCP/FCP
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
-
-  useEffect(() => {
-    // Only show banner if user hasn't accepted cookies
-    if (!cookieAccepted) {
-      // Use requestIdleCallback for optimal timing, fallback to setTimeout
-      const showBanner = () => {
-        // Double-check cookie on client side (in case it changed)
-        const hasCookie = typeof document !== 'undefined' && document.cookie.includes('cookies_accepted=true');
-        if (!hasCookie) {
-          setShowCookieBanner(true);
-        }
-      };
-
-      if ('requestIdleCallback' in window) {
-        // Wait until browser is idle (better than fixed delay)
-        const idleId = requestIdleCallback(showBanner, { timeout: 5000 });
-        return () => cancelIdleCallback(idleId);
-      } else {
-        // Fallback for browsers without requestIdleCallback (Safari)
-        const timer = setTimeout(showBanner, 5000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [cookieAccepted]);
+  // Cookie banner renders immediately based on server-side check - no delay needed!
+  // This eliminates CLS and improves LCP by not blocking/delaying content
 
   // Create QueryClient instance with optimized settings
   const [queryClient] = useState(() => new QueryClient({
@@ -404,14 +380,13 @@ export default function ClientProviders({
                                 >
                                   {children}
                                 </BannerAwareContent>
-                              {/* Phase 2: Lazy-loaded CookieBanner with 1.5s delay for better LCP */}
-                              {showCookieBanner && (
-                                <CookieBannerComponent 
-                                  headerData={headerData} 
-                                  activeLanguages={activeLanguages}
-                                  categories={cookieCategories}
-                                />
-                              )}
+                              {/* Cookie banner renders immediately if not accepted - no delay, no CLS */}
+                              <CookieBannerComponent 
+                                headerData={headerData} 
+                                activeLanguages={activeLanguages}
+                                categories={cookieCategories}
+                                cookieAccepted={cookieAccepted}
+                              />
                               {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
                               <StandaloneCookieSettings 
                                 headerData={headerData}
