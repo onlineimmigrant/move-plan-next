@@ -231,17 +231,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
   }
   
-  // MINIMAL SERVER FETCH: Only get absolute essentials for initial HTML
-  // Everything else loads client-side to avoid blocking HTML delivery
-  const organization = await getOrganization(currentDomain).catch(() => null);
+  // Fetch critical data in parallel - optimized order
+  const [organization, cookieCategories] = await Promise.all([
+    getOrganization(currentDomain),
+    getCookieCategories(),
+  ]);
+  
+  const settings = organization 
+    ? await getSettings(currentDomain)
+    : await getSettingsWithFallback(currentDomain);
+  
   const organizationId = organization?.id || null;
-  
-  // Use default settings initially - client will fetch real settings
-  const settings = await getDefaultSettings();
-  
-  // Empty arrays - client will fetch these
-  const menuItems: any[] = [];
-  const cookieCategories: any[] = [];
+  const menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
   
   // Template sections: Client-side only
   const templateSections: any[] = [];

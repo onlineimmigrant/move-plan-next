@@ -214,39 +214,6 @@ export default function ClientProviders({
   const [loading, setLoading] = useState(false); // Start with false to avoid blocking initial render
   const cache = useMemo(() => new Map<string, { sections: TemplateSection[]; headings: TemplateHeadingSection[] }>(), []);
   
-  // CLIENT-SIDE DATA FETCH: Fetch real menu items and cookie categories
-  // This prevents blocking HTML delivery on the server
-  const [clientMenuItems, setClientMenuItems] = useState(menuItems);
-  const [clientCookieCategories, setClientCookieCategories] = useState(cookieCategories);
-  
-  useEffect(() => {
-    // Fetch real data client-side to avoid blocking HTML on server
-    const fetchData = async () => {
-      try {
-        // Get organization ID from settings context if available
-        const orgId = settings?.organization_id;
-        if (!orgId) return;
-        
-        const [itemsRes, categoriesRes] = await Promise.all([
-          fetch(`/api/menu-items?organization_id=${orgId}&is_displayed=true`),
-          fetch('/api/cookie-categories')
-        ]);
-        
-        const [items, categories] = await Promise.all([
-          itemsRes.ok ? itemsRes.json() : [],
-          categoriesRes.ok ? categoriesRes.json() : []
-        ]);
-        
-        if (items?.data?.length > 0) setClientMenuItems(items.data);
-        if (categories?.length > 0) setClientCookieCategories(categories);
-      } catch (error) {
-        console.error('Error fetching client data:', error);
-      }
-    };
-    
-    fetchData();
-  }, [settings?.organization_id]); // Re-fetch if org changes
-  
   // Cookie banner renders immediately based on server-side check - no delay needed!
   // This eliminates CLS and improves LCP by not blocking/delaying content
 
@@ -403,11 +370,11 @@ export default function ClientProviders({
                                 <BannerAwareContent
                                   key={`${pathname}-${showNavbarFooter}`}
                                   showNavbarFooter={showNavbarFooter}
-                                  menuItems={clientMenuItems}
+                                  menuItems={menuItems}
                                   loading={loading}
                                   headerData={headerData}
                                   activeLanguages={activeLanguages}
-                                  cookieCategories={clientCookieCategories}
+                                  cookieCategories={cookieCategories}
                                   cookieAccepted={cookieAccepted}
                                   pathname={pathname}
                                 >
@@ -417,14 +384,14 @@ export default function ClientProviders({
                               <CookieBannerComponent 
                                 headerData={headerData} 
                                 activeLanguages={activeLanguages}
-                                categories={clientCookieCategories}
+                                categories={cookieCategories}
                                 cookieAccepted={cookieAccepted}
                               />
                               {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
                               <StandaloneCookieSettings 
                                 headerData={headerData}
                                 activeLanguages={activeLanguages}
-                                cookieCategories={clientCookieCategories}
+                                cookieCategories={cookieCategories}
                               />
                             </CookieSettingsProvider>
                             {/* Admin modal components - only rendered for admin users */}
