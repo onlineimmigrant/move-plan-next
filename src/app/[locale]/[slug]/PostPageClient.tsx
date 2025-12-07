@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, memo, lazy, Suspense, useEffect } from 'react';
+import React, { useMemo, memo, lazy, Suspense, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostPageSkeleton } from '@/components/PostPage/PostPageSkeleton';
 import { OptimizedPostImage } from '@/components/PostPage/OptimizedPostImage';
@@ -146,6 +146,9 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   const { shouldShowMainContent, shouldShowNoContentMessage } = usePostPageEffects(translatedPost, slug);
   const docSet = useDocumentSetLogic(translatedPost);
   
+  // Track first image for LCP optimization
+  const imageCountRef = useRef(0);
+  
   // Reading progress tracking (only for default and doc_set posts)
   const showProgress = visibility.postType === 'default' || visibility.postType === 'doc_set';
   const { progress, readingTime, isComplete } = useReadingProgress(
@@ -273,14 +276,21 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                         <LazyMarkdownRenderer
                           content={translatedPost.content}
                           components={{
-                            img: ({node, ...props}) => (
-                              <OptimizedPostImage
-                                src={props.src}
-                                alt={props.alt}
-                                className="max-w-full h-auto rounded-lg shadow-sm"
-                                style={{maxWidth: '100%', height: 'auto'}}
-                              />
-                            ),
+                            img: ({node, ...props}) => {
+                              // Prioritize first image for LCP
+                              const isFirstImage = imageCountRef.current === 0;
+                              imageCountRef.current += 1;
+                              
+                              return (
+                                <OptimizedPostImage
+                                  src={props.src}
+                                  alt={props.alt}
+                                  className="max-w-full h-auto rounded-lg shadow-sm"
+                                  style={{maxWidth: '100%', height: 'auto'}}
+                                  priority={isFirstImage}
+                                />
+                              );
+                            },
                             table: ({node, ...props}) => (
                               <div className="overflow-x-auto -mx-4 sm:mx-0">
                                 <table {...props} />

@@ -327,7 +327,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   }, []);
 
   const getDisplayPrice = useCallback((plan: PricingPlan) => {
-    const currency = plan.user_currency || plan.currency || 'USD';
+    // Always use plan.currency which is set to base_currency on the server
+    const currency = plan.currency || 'GBP';
     const base = plan.computed_price ?? (plan.price ?? 0) / 100;
     if (
       billingCycle === 'annual' &&
@@ -359,7 +360,8 @@ const ProductDetailPricingPlans = memo(function ProductDetailPricingPlans({
   }, [formatAmount, billingCycle]);
 
   const getOriginalPrice = useCallback((plan: PricingPlan) => {
-    const currency = plan.user_currency || plan.currency || 'USD';
+    // Always use plan.currency which is set to base_currency on the server
+    const currency = plan.currency || 'GBP';
     const base = plan.computed_price ?? (plan.price ?? 0) / 100;
     if (
       billingCycle === 'annual' &&

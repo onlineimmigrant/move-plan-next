@@ -42,7 +42,7 @@ const inter = localFont({
     },
   ],
   variable: '--font-inter',
-  display: 'swap',
+  display: 'optional',
   preload: true,
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
@@ -50,7 +50,7 @@ const inter = localFont({
 // JetBrains Mono for code blocks - keeping from Google for now (rarely used)
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  display: 'swap',
+  display: 'optional',
   preload: false,
   fallback: ['Consolas', 'Monaco', 'Courier New', 'monospace'],
   adjustFontFallback: true,
@@ -324,6 +324,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={language} data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} />
+        
+        {/* Inline critical CSS for instant render - no blocking */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          html{scroll-behavior:smooth;scroll-padding-top:5rem}
+          body{margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+          *{font-family:var(--font-inter,system-ui,-apple-system,sans-serif)}
+          .scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}
+          .scrollbar-none::-webkit-scrollbar{display:none}
+          @keyframes fade-in-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+          .animate-fade-in-up{animation:fade-in-up .6s cubic-bezier(.4,0,.2,1)}
+        `}} />
         
         {/* Preload critical self-hosted fonts for instant render */}
         <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

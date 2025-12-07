@@ -243,14 +243,9 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
     let pricingPlans: PricingPlan[] = [];
     if (!plansResult.error && plansResult.data) {
       pricingPlans = plansResult.data.map((plan) => {
-        // Check if multi-currency pricing exists for user's detected currency
-        const hasMultiCurrencyForUser = plan.prices_multi_currency && 
-                                        plan.prices_multi_currency[userCurrency];
-        
-        // Priority: 
-        // 1) If prices_multi_currency exists for userCurrency, use it
-        // 2) Otherwise, use plan's base_currency with actual prices
-        const finalCurrency = hasMultiCurrencyForUser ? userCurrency : (plan.base_currency || 'USD');
+        // Always use base_currency from the pricing plan (ignore geolocation)
+        // This ensures consistency between server and client rendering
+        const finalCurrency = plan.base_currency || plan.currency || 'GBP';
         
         const priceData = getPriceForCurrency(plan, finalCurrency);
         
@@ -268,13 +263,14 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
           ...plan,
           product_name: productData.product_name,
           links_to_image: productData.links_to_image,
-          currency: plan.currency || productData.currency_manual || 'GBP',
-          currency_symbol: plan.currency_symbol || '£',
+          // Use finalCurrency and computed symbol from priceData
+          currency: finalCurrency,
+          currency_symbol: priceData?.symbol || (finalCurrency === 'GBP' ? '£' : finalCurrency === 'USD' ? '$' : '€'),
           // Add computed currency-aware fields
           computed_price: priceData?.price,
           computed_currency_symbol: priceData?.symbol,
           computed_stripe_price_id: stripePriceId,
-          user_currency: userCurrency,
+          // Remove user_currency to avoid hydration mismatch - always use base_currency
           features: plan.pricingplan_features
             ? plan.pricingplan_features
               .map((pf: any) => pf.feature)
