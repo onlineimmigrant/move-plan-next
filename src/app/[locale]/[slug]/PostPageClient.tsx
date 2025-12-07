@@ -20,7 +20,7 @@ import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 // Lazy load PerformanceBudget (admin-only, heavy component)
 const PerformanceBudget = lazy(() => import('@/components/PostPage/PerformanceBudget').then(mod => ({ default: mod.PerformanceBudget })));
 
-// Lazy load heavy components for better performance
+// Lazy load heavy components with proper fallbacks to prevent CLS
 const PostHeader = lazy(() => import('@/components/PostPage/PostHeader'));
 const LandingPostContent = lazy(() => import('@/components/PostPage/LandingPostContent'));
 const TOC = lazy(() => import('@/components/PostPage/TOC'));
@@ -183,9 +183,17 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   if (!translatedPost) {
     // For landing pages, show clean loading instead of skeleton
     if (post?.type === 'landing') {
-      return <Loading />;
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <Loading />
+        </div>
+      );
     }
-    return <PostPageSkeleton />;
+    return (
+      <div className="min-h-screen">
+        <PostPageSkeleton />
+      </div>
+    );
   }
 
   // For minimal posts with no header and no content, return empty fragment
@@ -194,11 +202,11 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   }
 
   return (
-    <main className={visibility.mainPaddingClass}>
+    <main className={visibility.mainPaddingClass} style={{ minHeight: '100vh' }}>
       {!visibility.isLandingPost ? (
         // Only render the grid if we have content or need to show the empty message
         (shouldShowMainContent || shouldShowNoContentMessage) ? (
-          <div className="grid lg:grid-cols-8 gap-x-4 w-full max-w-full">
+          <div className="grid lg:grid-cols-8 gap-x-4 w-full max-w-full" style={{ minHeight: '80vh' }}>
             {/* TOC Sidebar - Show Master TOC for document sets, regular TOC otherwise */}
             <aside className={visibility.asidePaddingClass}>
               {visibility.isMounted && visibility.showTOC && (
