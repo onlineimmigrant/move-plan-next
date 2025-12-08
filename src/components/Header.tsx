@@ -851,7 +851,8 @@ const Header: React.FC<HeaderProps> = ({
           }
         `}
         style={{ 
-          top: `${fixedBannersHeight}px`,
+          top: 0,
+          marginTop: `${fixedBannersHeight}px`,
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
           transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',

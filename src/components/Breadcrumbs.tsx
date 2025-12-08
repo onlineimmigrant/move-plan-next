@@ -261,7 +261,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   return (
     <div className=''>
       <nav 
-        className="w-full py-3 px-6" 
+        className="w-full py-3 px-6 relative z-30" 
         style={{
           ...getBackgroundStyle(
             footerStyles.is_gradient,

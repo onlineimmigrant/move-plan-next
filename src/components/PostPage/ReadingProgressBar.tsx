@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -15,6 +15,7 @@ interface ReadingProgressBarProps {
  * 
  * Displays reading progress indicator at bottom of viewport.
  * Shows estimated reading time and completion status.
+ * Only visible when scrolling up for cleaner UX.
  * 
  * @component
  * @param {ReadingProgressBarProps} props - Component props
@@ -25,7 +26,7 @@ interface ReadingProgressBarProps {
  * @example
  * <ReadingProgressBar progress={45} readingTime={5} isComplete={false} />
  * 
- * @performance Fixed position, GPU-accelerated transform
+ * @performance Fixed position, GPU-accelerated transform, smart visibility
  */
 export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
   progress,
@@ -33,17 +34,52 @@ export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
   isComplete,
 }) => {
   const themeColors = useThemeColors();
+  const [showProgress, setShowProgress] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Show progress bar only when scrolling up or near bottom
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const documentHeight = document.documentElement.scrollHeight;
+          const windowHeight = window.innerHeight;
+          const scrollPercent = (currentScrollY / (documentHeight - windowHeight)) * 100;
+
+          // Show when scrolling up OR in last 20% of page
+          const isScrollingUp = currentScrollY < lastScrollY && currentScrollY > 100;
+          const isNearBottom = scrollPercent > 80;
+
+          setShowProgress(isScrollingUp || isNearBottom);
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   return (
     <>
-      {/* Progress bar - Bottom positioned */}
+      {/* Progress bar - Bottom positioned, visible on scroll up */}
       <div 
-        className="fixed bottom-0 left-0 right-0 h-0.5 bg-gray-100 dark:bg-gray-300 z-50"
+        className="fixed bottom-0 left-0 right-0 h-0.5 bg-gray-100 dark:bg-gray-300 z-50 transition-opacity duration-300"
         role="progressbar"
         aria-valuenow={progress}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Reading progress"
+        style={{
+          opacity: showProgress ? 1 : 0,
+          pointerEvents: showProgress ? 'auto' : 'none',
+        }}
       >
         <div
           className="h-full transition-all duration-300 ease-out"
