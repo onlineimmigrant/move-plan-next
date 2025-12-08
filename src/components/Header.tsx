@@ -827,7 +827,7 @@ const Header: React.FC<HeaderProps> = ({
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
             headerType === 'ring_card_mini' || headerType === 'mini'
-              ? 'px-4 pt-6' // Container padding for ring_card_mini and mini - generous top spacing for floating effect
+              ? 'px-4' // Container padding for ring_card_mini and mini
               : ''
           }
           ${
@@ -852,6 +852,8 @@ const Header: React.FC<HeaderProps> = ({
         `}
         style={{ 
           top: `${fixedBannersHeight}px`,
+          // Extend header background into status bar area (safe area inset)
+          paddingTop: 'max(env(safe-area-inset-top), ' + (headerType === 'ring_card_mini' || headerType === 'mini' ? '24px' : '0px') + ')',
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
           transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: 'auto',

@@ -363,6 +363,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={language} data-scroll-behavior="smooth">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <link rel="icon" href={faviconUrl} />
         
         {/* Preconnect to image CDNs for faster loading */}
