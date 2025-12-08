@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { MagnifyingGlassIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getPostUrl } from '@/lib/postUtils';
 import { getOrganizationId } from '@/lib/supabase';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
@@ -74,6 +74,14 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
   const [total, setTotal] = useState(initialTotal || (initialPosts ? initialPosts.length : 0));
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+  // Listen for search modal open event from Header
+  useEffect(() => {
+    const handleOpenSearch = () => setIsSearchModalOpen(true);
+    window.addEventListener('openBlogSearch', handleOpenSearch);
+    return () => window.removeEventListener('openBlogSearch', handleOpenSearch);
+  }, []);
 
   // Read search parameter from URL on mount
   useEffect(() => {
@@ -237,15 +245,19 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
   return (
     <div className="bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12">
+        <div className="flex items-center justify-between mb-12">
           <div className="relative group">
-            <h1 className="text-center text-xl font-bold text-gray-900 tracking-wide mb-6 sm:mb-0">
-              {getPageTitle(organizationType)}
-              <span className="absolute bottom-4 sm:-bottom-2 left-1/2 sm:left-1/3 -translate-x-1/2 w-16 h-1 bg-sky-600 rounded-full" />
+            <h1 className="text-xl font-extrabold text-gray-900 tracking-wide mb-1">
+              NEWS
             </h1>
+            <p className="text-sm font-bold bg-gradient-to-r from-gray-600 via-gray-400 to-gray-500 bg-clip-text text-transparent">
+              {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' }).toUpperCase()}
+            </p>
           </div>
-          <div className="relative w-full sm:w-80 px-4 sm:px-0">
-            <span className="absolute inset-y-0 left-4 sm:left-0 flex items-center pl-3">
+          
+          {/* Desktop: Search Input */}
+          <div className="hidden sm:block relative w-80">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
             </span>
             <input
@@ -257,6 +269,42 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
             />
           </div>
         </div>
+        
+        {/* Mobile Search Modal */}
+        {isSearchModalOpen && (
+          <div className="sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setIsSearchModalOpen(false)}>
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Search</h2>
+                <button
+                  onClick={() => setIsSearchModalOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close search"
+                >
+                  <XMarkIcon className="h-6 w-6 text-gray-700" />
+                </button>
+              </div>
+              <div className="p-4">
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search posts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    className="w-full pl-10 pr-3 py-4 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {posts.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
@@ -267,7 +315,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
             No posts found matching "{searchQuery}"
           </div>
         ) : (
-          <div className="px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredPosts.map((post) => {
               // Determine which image to use: main_photo or organization logo
               const imageUrl = post.main_photo && post.main_photo.trim() !== '' ? post.main_photo : settings?.image;
@@ -296,7 +344,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
               <div key={post.id} className="group">
                 <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                   {imageUrl ? (
-                    <div className="relative w-full h-48 flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
+                    <div className="relative w-full aspect-square flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
                       <Link href={getPostUrl(post)} prefetch={false} className="absolute inset-0 z-0"
                         onMouseEnter={() => router.prefetch(getPostUrl(post))}
                       >
@@ -307,7 +355,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                         alt={post.title ?? 'Blog post image'}
                         fill
                         priority={posts.indexOf(post) < 2}
-                        className={isSvg ? 'max-w-[60%] max-h-[60%] object-contain' : 'object-cover'}
+                        className={isSvg ? 'object-contain max-h-60' : 'object-cover'}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         onError={(e) => {
                           // Silently handle image load failure with fallback UI
@@ -373,7 +421,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                       )}
                     </div>
                   ) : (
-                    <Link href={getPostUrl(post)} className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
+                    <Link href={getPostUrl(post)} className="w-full aspect-square flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center">
                       <span className="text-6xl">📄</span>
                     </Link>
                   )}

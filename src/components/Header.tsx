@@ -54,7 +54,8 @@ import {
   VideoCameraIcon,
   CpuChipIcon,
   MinusIcon,
-  PlusIcon
+  PlusIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { MenuItem, SubMenuItem } from '@/types/menu';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
@@ -288,8 +289,13 @@ const Header: React.FC<HeaderProps> = ({
   }, [logout]);
 
   const handleMenuToggle = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen]);
+    // If on blog page, dispatch event to open search modal instead
+    if (pathname.includes('/blog') && !isOpen) {
+      window.dispatchEvent(new Event('openBlogSearch'));
+    } else {
+      setIsOpen(!isOpen);
+    }
+  }, [isOpen, pathname]);
 
   // Helper functions for delayed menu closing
   const cancelCloseTimeout = useCallback(() => {
@@ -823,7 +829,7 @@ const Header: React.FC<HeaderProps> = ({
     <>      
       <nav
         className={`
-          ${headerType === 'fixed' ? 'fixed' : 'sticky'}
+          fixed
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
             headerType === 'ring_card_mini' || headerType === 'mini'
@@ -851,11 +857,12 @@ const Header: React.FC<HeaderProps> = ({
           }
         `}
         style={{ 
-          top: headerType === 'fixed' ? 0 : `${fixedBannersHeight}px`,
-          marginTop: headerType === 'fixed' ? `${fixedBannersHeight}px` : 0,
-          // Apply transform hide/show for all header types
-          transform: (isVisible || isOpen) ? 'translateY(0)' : `translateY(calc(-100% - ${fixedBannersHeight}px))`,
-          pointerEvents: (isVisible || isOpen) ? 'auto' : 'none',
+          top: 0,
+          marginTop: `${fixedBannersHeight}px`,
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
+          transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
+          pointerEvents: (headerType === 'fixed' || isVisible || isOpen) ? 'auto' : 'none',
           // Apply glassmorphism background when scrolling up (70% opacity like breadcrumbs)
           ...(isScrollingUp 
             ? { 
@@ -1249,13 +1256,21 @@ const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={handleMenuToggle}
-            className="p-2.5 transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-gray-100/80 active:bg-gray-200/80 transition-all duration-200 backdrop-blur-sm"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
-            style={{ color: getColorValue(headerColor) }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = getColorValue(headerColorHover); }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
           >
-            {isOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3BottomLeftIcon className="h-6 w-6" />}
+            {isOpen ? (
+              <XMarkIcon className="h-6 w-6" style={{ color: getColorValue(headerColor) }} />
+            ) : pathname.includes('/blog') ? (
+              <div className="relative">
+                <MagnifyingGlassIcon 
+                  className="h-6 w-6 transition-transform duration-200 hover:scale-110" 
+                  style={{ color: getColorValue(headerColor), strokeWidth: 2.5 }} 
+                />
+              </div>
+            ) : (
+              <Bars3BottomLeftIcon className="h-6 w-6" style={{ color: getColorValue(headerColor) }} />
+            )}
           </button>
         </div>
       </div>
