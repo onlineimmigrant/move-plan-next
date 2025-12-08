@@ -823,7 +823,7 @@ const Header: React.FC<HeaderProps> = ({
     <>      
       <nav
         className={`
-          fixed
+          ${headerType === 'fixed' ? 'fixed' : 'sticky'}
           left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${
             headerType === 'ring_card_mini' || headerType === 'mini'
@@ -851,12 +851,11 @@ const Header: React.FC<HeaderProps> = ({
           }
         `}
         style={{ 
-          top: 0,
-          marginTop: `${fixedBannersHeight}px`,
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-          // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
-          transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(calc(-100% - env(safe-area-inset-top, 0px)))',
-          pointerEvents: (headerType === 'fixed' || isVisible || isOpen) ? 'auto' : 'none',
+          top: headerType === 'fixed' ? 0 : `${fixedBannersHeight}px`,
+          marginTop: headerType === 'fixed' ? `${fixedBannersHeight}px` : 0,
+          // Apply transform hide/show for all header types
+          transform: (isVisible || isOpen) ? 'translateY(0)' : `translateY(calc(-100% - ${fixedBannersHeight}px))`,
+          pointerEvents: (isVisible || isOpen) ? 'auto' : 'none',
           // Apply glassmorphism background when scrolling up (70% opacity like breadcrumbs)
           ...(isScrollingUp 
             ? { 
