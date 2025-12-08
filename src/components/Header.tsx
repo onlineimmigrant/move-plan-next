@@ -853,9 +853,10 @@ const Header: React.FC<HeaderProps> = ({
         style={{ 
           top: 0,
           marginTop: `${fixedBannersHeight}px`,
+          paddingTop: 'env(safe-area-inset-top, 0px)',
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
-          transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
-          pointerEvents: 'auto',
+          transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(calc(-100% - env(safe-area-inset-top, 0px)))',
+          pointerEvents: (headerType === 'fixed' || isVisible || isOpen) ? 'auto' : 'none',
           // Apply glassmorphism background when scrolling up (70% opacity like breadcrumbs)
           ...(isScrollingUp 
             ? { 
