@@ -13,7 +13,7 @@ interface ReadingProgressBarProps {
 /**
  * Reading Progress Bar Component
  * 
- * Displays reading progress indicator at top of viewport.
+ * Displays reading progress indicator at bottom of viewport.
  * Shows estimated reading time and completion status.
  * 
  * @component
@@ -36,9 +36,9 @@ export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
 
   return (
     <>
-      {/* Progress bar */}
+      {/* Progress bar - Bottom positioned */}
       <div 
-        className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50"
+        className="fixed bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 z-50"
         role="progressbar"
         aria-valuenow={progress}
         aria-valuemin={0}
@@ -57,9 +57,9 @@ export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
         />
       </div>
 
-      {/* Reading time indicator - Glassmorphism badge */}
+      {/* Reading time indicator - Bottom right positioned */}
       <div 
-        className="fixed top-4 right-4 z-40 hidden lg:flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300"
+        className="fixed bottom-6 right-4 z-40 hidden lg:flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300"
         style={{
           background: isComplete
             ? `linear-gradient(135deg, ${themeColors.cssVars.primary.active}15, ${themeColors.cssVars.primary.base}10)`

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import LocalizedLink from '@/components/LocalizedLink';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation'; // Add usePathname
 import { useBasket } from '../context/BasketContext';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
@@ -22,8 +23,11 @@ import {
   UserIcon,
 } from '@heroicons/react/24/outline';
 
-// Headless UI
-import { Disclosure } from '@headlessui/react';
+// Lazy load Disclosure from headlessui to prevent webpack bundling issues
+const Disclosure = dynamic(
+  () => import('@headlessui/react').then(mod => ({ default: mod.Disclosure })),
+  { ssr: false, loading: () => <div /> }
+) as typeof import('@headlessui/react').Disclosure;
 
 // Use the useAuth hook from your AuthContext
 import { useAuth } from '../context/AuthContext';

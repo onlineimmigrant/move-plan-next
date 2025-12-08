@@ -1,12 +1,21 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { XMarkIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import LoginForm from './LoginForm';
-import Privacy from './Privacy';
-import Terms from './Terms';
 import { useSettings } from '@/context/SettingsContext';
+
+// Dynamically import Privacy and Terms to prevent headlessui bundling issues
+const Privacy = dynamic(() => import('./Privacy'), {
+  ssr: false,
+  loading: () => null
+});
+const Terms = dynamic(() => import('./Terms'), {
+  ssr: false,
+  loading: () => null
+});
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 import { LoginModalProps } from './types';
 import { useThemeColors } from '@/hooks/useThemeColors';

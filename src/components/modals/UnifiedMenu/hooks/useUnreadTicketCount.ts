@@ -15,14 +15,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { BADGE_REFRESH_EVENT } from './useBadgeRefresh';
 
-export function useUnreadTicketCount() {
+export function useUnreadTicketCount(enabled: boolean = true) {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const { session, isAdmin, isSuperadmin } = useAuth();
   const { settings } = useSettings();
   const pathname = usePathname();
 
   const fetchUnreadCount = useCallback(async () => {
-    if (!session?.user) {
+    if (!enabled || !session?.user) {
       setUnreadCount(0);
       return;
     }
@@ -117,10 +117,10 @@ export function useUnreadTicketCount() {
     } catch (err) {
       console.error('Error in fetchUnreadCount:', err);
     }
-  }, [session, isAdmin, isSuperadmin, settings.organization_id, pathname]);
+  }, [enabled, session, isAdmin, isSuperadmin, settings.organization_id, pathname]);
 
   useEffect(() => {
-    if (!session?.user) {
+    if (!enabled || !session?.user) {
       setUnreadCount(0);
       return;
     }
@@ -177,7 +177,7 @@ export function useUnreadTicketCount() {
         supabase.removeChannel(channel);
       }
     };
-  }, [session, fetchUnreadCount]);
+  }, [enabled, session, fetchUnreadCount]);
 
   return unreadCount;
 }

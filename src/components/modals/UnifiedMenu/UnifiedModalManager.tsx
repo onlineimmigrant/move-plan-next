@@ -87,14 +87,12 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
   const isAuthenticated = !!session;
   const isAdminUser = isAdmin || isSuperadmin;
 
-  // Get unread counts for badges
-  const unreadTicketCount = useUnreadTicketCount();
-  const unreadMeetingsCount = useUnreadMeetingsCount();
+  // Get unread counts for badges - only when authenticated
+  const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
+  const unreadMeetingsCount = useUnreadMeetingsCount(isAuthenticated);
 
-  // Don't show on admin or account pages (they have their own navigation)
-  const shouldHide = !forceShow && (pathname?.startsWith('/admin') || pathname?.startsWith('/account'));
-  
-  if (shouldHide) {
+  // Only show for authenticated users
+  if (!isAuthenticated && !forceShow) {
     return null;
   }
 

@@ -52,9 +52,9 @@ export function UnifiedMenu({
   const { session, isAdmin, isSuperadmin } = useAuth();
   const isAuthenticated = !!session;
 
-  // Get unread counts for badges
-  const unreadTicketCount = useUnreadTicketCount();
-  const unreadMeetingsCount = useUnreadMeetingsCount();
+  // Get unread counts for badges - only when authenticated
+  const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
+  const unreadMeetingsCount = useUnreadMeetingsCount(isAuthenticated);
 
   // Get appropriate menu items based on user role
   const baseMenuItems = useMemo(() => {

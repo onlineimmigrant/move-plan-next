@@ -7,7 +7,6 @@ import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useBasket } from '@/context/BasketContext';
 import { useAuth } from '@/context/AuthContext';
-import { Disclosure } from '@headlessui/react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
@@ -33,6 +32,12 @@ const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'),
   ssr: false,
   loading: () => null 
 });
+
+// Lazy load Disclosure from headlessui to prevent webpack bundling issues
+const Disclosure = dynamic(
+  () => import('@headlessui/react').then(mod => ({ default: mod.Disclosure })),
+  { ssr: false, loading: () => <div /> }
+) as typeof import('@headlessui/react').Disclosure;
 
 // Optimized icon loading (for admin/account menus only)
 import { 

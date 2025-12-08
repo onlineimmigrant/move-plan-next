@@ -339,42 +339,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                   </Suspense>
                 )}
                 
-                {/* Mobile TOC - Below Content */}
-                {visibility.isMounted && visibility.showTOC && (
-                  <div className="lg:hidden mt-12 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <svg 
-                        className="w-5 h-5 mr-2" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                        style={{ color: themeColors.cssVars.primary.base }}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                      </svg>
-                      Table of Contents
-                    </h3>
-                    {docSet.showMasterTOC ? (
-                      <Suspense fallback={<div className="h-96 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />}>
-                        <MasterTOC
-                          currentSlug={post.slug}
-                          docSet={docSet.docSetSlug}
-                          organizationId={post.organization_id!}
-                          handleScrollTo={handleScrollTo}
-                          currentArticleTOC={toc.map(item => ({
-                            level: parseInt(item.tag_name.substring(1)),
-                            text: item.tag_text,
-                            id: item.tag_id
-                          }))}
-                        />
-                      </Suspense>
-                    ) : (
-                      <Suspense fallback={<div className="h-64 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />}>
-                        <TOC toc={toc} handleScrollTo={handleScrollTo} />
-                      </Suspense>
-                    )}
-                  </div>
-                )}
+                {/* Mobile TOC removed - use BottomSheetTOC (bottom-left button) instead */}
               </>
             ) : shouldShowNoContentMessage ? (
               <div className="flex items-center justify-center py-16">

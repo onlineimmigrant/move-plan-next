@@ -9,6 +9,8 @@ import { useSettings } from '@/context/SettingsContext';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
 import { getOrganizationWithType } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
+import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
+import { getBackgroundStyle } from '@/utils/gradientHelper';
 
 // Types
 interface Breadcrumb {
@@ -28,6 +30,25 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   const { settings } = useSettings();
   const { t } = useProductTranslations();
   const [organizationType, setOrganizationType] = useState<string>('services');
+
+  // Extract footer styles for consistent breadcrumb styling
+  const footerStyles = useMemo(() => {
+    if (!settings?.footer_style) {
+      return null;
+    }
+
+    if (typeof settings.footer_style === 'object' && settings.footer_style !== null) {
+      return {
+        background: settings.footer_style.background,
+        color: settings.footer_style.color,
+        colorHover: settings.footer_style.color_hover,
+        is_gradient: settings.footer_style.is_gradient,
+        gradient: settings.footer_style.gradient
+      };
+    }
+
+    return null;
+  }, [settings?.footer_style]);
 
   // Fetch organization type
   useEffect(() => {
@@ -225,10 +246,23 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
     return null;
   }
 
+  if (!footerStyles) {
+    return null;
+  }
+
   return (
     <div className=''>
       <nav 
-        className="backdrop-blur-md bg-white/50 dark:bg-gray-900/50 w-full py-3 px-4 sm:px-6" 
+        className="w-full py-3 px-6" 
+        style={{
+          ...getBackgroundStyle(
+            footerStyles.is_gradient,
+            footerStyles.gradient,
+            footerStyles.background
+          ),
+          ['--breadcrumb-color' as string]: getColorValue(footerStyles.color),
+          ['--breadcrumb-hover-color' as string]: getColorValue(footerStyles.colorHover)
+        }}
         aria-label="Breadcrumb"
       >
         <ol className="flex flex-wrap justify-start gap-1.5 items-center text-sm max-w-7xl mx-auto">
@@ -237,7 +271,10 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
               {crumb.label === 'Home' ? (
                 <a
                   href={crumb.url}
-                  className="text-gray-500 hover:text-blue-600 transition-colors duration-200 p-1.5 hover:bg-blue-500/10 rounded-lg backdrop-blur-sm"
+                  className="p-1.5 rounded-lg transition-colors duration-200"
+                  style={{ color: 'var(--breadcrumb-color)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--breadcrumb-hover-color)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--breadcrumb-color)'}
                   title="Navigate to Main Page"
                 >
                   <RiHomeFill className="w-4 h-4" />
@@ -246,18 +283,37 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
                 <>
                   <a
                     href={crumb.url}
-                    className={`px-3 py-1.5 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                    className={`px-3 py-1.5 rounded-lg transition-all duration-200 ${
                       index === breadcrumbs.length - 1
-                        ? 'text-gray-800 dark:text-white font-semibold bg-white/60 dark:bg-gray-800/60 cursor-default'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 font-medium'
+                        ? 'font-semibold cursor-default'
+                        : 'font-medium'
                     }`}
+                    style={{
+                      color: index === breadcrumbs.length - 1
+                        ? 'var(--breadcrumb-hover-color)'
+                        : 'var(--breadcrumb-color)',
+                      textDecoration: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (index !== breadcrumbs.length - 1) {
+                        e.currentTarget.style.color = 'var(--breadcrumb-hover-color)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (index !== breadcrumbs.length - 1) {
+                        e.currentTarget.style.color = 'var(--breadcrumb-color)';
+                      }
+                    }}
                   >
                     {crumb.label && ( // Check if the label exists
                       crumb.label.length > 25 ? `${crumb.label.substring(0, 25)}...` : crumb.label
                     )}
                   </a>
                   {index < breadcrumbs.length - 1 && (
-                    <IoIosArrowForward className="text-gray-400 dark:text-gray-500 mx-1 flex-shrink-0" />
+                    <IoIosArrowForward 
+                      className="mx-1 flex-shrink-0" 
+                      style={{ color: 'var(--breadcrumb-color)', opacity: 0.5 }}
+                    />
                   )}
                 </>
               )}

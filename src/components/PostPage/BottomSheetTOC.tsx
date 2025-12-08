@@ -29,7 +29,7 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [showButton, setShowButton] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const themeColors = useThemeColors();
 
@@ -38,7 +38,7 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
     setIsMounted(true);
   }, []);
 
-  // Show floating button after scrolling past header and track scroll direction
+  // Show button only when scrolling up or near bottom
   useEffect(() => {
     if (!isMounted) return;
 
@@ -48,15 +48,20 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
+          const documentHeight = document.documentElement.scrollHeight;
+          const windowHeight = window.innerHeight;
+          const scrollPercent = (currentScrollY / (documentHeight - windowHeight)) * 100;
+          
+          // Show button after scrolling past header (300px)
           setIsVisible(currentScrollY > 300);
           
-          // Check if scrolling up and not at the top
-          if (currentScrollY < lastScrollY && currentScrollY > 100) {
-            setIsScrollingUp(true);
-          } else {
-            setIsScrollingUp(false);
-          }
+          // Show button when:
+          // 1. Scrolling up (and not at very top)
+          // 2. Near bottom of article (last 20%)
+          const isScrollingUp = currentScrollY < lastScrollY && currentScrollY > 100;
+          const isNearBottom = scrollPercent > 80;
           
+          setShowButton(isScrollingUp || isNearBottom);
           setLastScrollY(currentScrollY);
           ticking = false;
         });
@@ -110,12 +115,12 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Shows on scroll up or near bottom */}
       <button
         onClick={() => setIsOpen(true)}
         className={`lg:hidden fixed bottom-4 left-6 sm:bottom-6 sm:left-8 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 flex items-center justify-center backdrop-blur-xl bg-white/50 dark:bg-gray-900/50 shadow-md hover:shadow-lg border-0 focus:outline-none focus:ring-0 transform hover:scale-110 active:scale-95 group ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
-        } ${isScrollingUp ? 'scale-75' : 'scale-100'}`}
+          isVisible && showButton ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
+        }`}
         aria-label="Open table of contents"
       >
         <Bars3Icon 

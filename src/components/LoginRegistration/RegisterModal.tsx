@@ -1,17 +1,26 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { XMarkIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import RegisterForm from './RegisterForm';
-import Privacy from './Privacy';
-import Terms from './Terms';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 import { RegisterModalProps } from './types';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+// Dynamically import Privacy and Terms to prevent headlessui bundling issues
+const Privacy = dynamic(() => import('./Privacy'), {
+  ssr: false,
+  loading: () => null
+});
+const Terms = dynamic(() => import('./Terms'), {
+  ssr: false,
+  loading: () => null
+});
 
 export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) {
   const { settings } = useSettings();

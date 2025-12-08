@@ -50,21 +50,56 @@ const CommandPalette = dynamic(() => import('@/components/AdminQuickActions/Comm
 });
 
 // Lazy load admin modal components - only rendered for authenticated admins
-const PostEditModal = dynamic(() => import('@/components/modals/PostEditModal/PostEditModal'));
-const TemplateSectionEditModal = dynamic(() => import('@/components/modals/TemplateSectionModal/TemplateSectionEditModal'));
-const TemplateHeadingSectionEditModal = dynamic(() => import('@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal'));
-const PageCreationModal = dynamic(() => import('@/components/modals/PageCreationModal/PageCreationModal'));
-const SiteMapModal = dynamic(() => import('@/components/modals/SiteMapModal/SiteMapModal'));
-const GlobalSettingsModal = dynamic(() => import('@/components/modals/GlobalSettingsModal/GlobalSettingsModal'));
-const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSectionModal/HeroSectionEditModal'));
-const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'));
-const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'));
-const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'));
+// All admin modals must have ssr: false to prevent webpack runtime errors in production
+// VERSION: 2024-12-08-SSR-FIX
+const PostEditModal = dynamic(() => import('@/components/modals/PostEditModal/PostEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const TemplateSectionEditModal = dynamic(() => import('@/components/modals/TemplateSectionModal/TemplateSectionEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const TemplateHeadingSectionEditModal = dynamic(() => import('@/components/modals/TemplateHeadingSectionModal/TemplateHeadingSectionEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const PageCreationModal = dynamic(() => import('@/components/modals/PageCreationModal/PageCreationModal'), {
+  ssr: false,
+  loading: () => null
+});
+const SiteMapModal = dynamic(() => import('@/components/modals/SiteMapModal/SiteMapModal'), {
+  ssr: false,
+  loading: () => null
+});
+const GlobalSettingsModal = dynamic(() => import('@/components/modals/GlobalSettingsModal/GlobalSettingsModal'), {
+  ssr: false,
+  loading: () => null
+});
+const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSectionModal/HeroSectionEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'), {
+  ssr: false,
+  loading: () => null
+});
+const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'), {
+  ssr: false,
+  loading: () => null
+});
 const SettingsModal = dynamic(() => import('@/components/modals/SettingsModal').then(mod => ({ default: mod.SettingsModal })), {
   ssr: false,
   loading: () => null
 });
-const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'));
+const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'), {
+  ssr: false,
+  loading: () => null
+});
 
 const UnifiedModalManager = dynamic(() => import('@/components/modals/UnifiedMenu').then(mod => ({ default: mod.UnifiedModalManager })), { 
   ssr: false, 
