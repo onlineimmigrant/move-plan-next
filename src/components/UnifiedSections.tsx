@@ -48,6 +48,10 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   // Initialize with SSR data when available (eliminates initial fetch)
   const initialData = useMemo(() => {
     if ((initialSections && initialSections.length > 0) || (initialHeadingSections && initialHeadingSections.length > 0)) {
+      console.log('[UnifiedSections] Initializing with SSR data:', { 
+        sectionsCount: initialSections?.length || 0, 
+        headingsCount: initialHeadingSections?.length || 0 
+      });
       const combined: UnifiedSection[] = [
         ...(initialSections || []).map((section: any) => ({
           id: section.id,
@@ -63,14 +67,35 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
         })),
       ];
       combined.sort((a, b) => a.order - b.order);
+      console.log('[UnifiedSections] Combined sections count:', combined.length);
       return combined;
     }
+    console.log('[UnifiedSections] No SSR data provided, will fetch on client');
     return [];
   }, [initialSections, initialHeadingSections]);
   
   const [sections, setSections] = useState<UnifiedSection[]>(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasInitialData] = useState(initialData.length > 0); // Track if we started with data
+  
+  // Performance optimization: Adaptive priority based on network speed
+  const [priorityCount, setPriorityCount] = useState(3);
+  
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+      const connection = (navigator as any).connection;
+      const effectiveType = connection?.effectiveType;
+      
+      if (effectiveType === 'slow-2g' || effectiveType === '2g') {
+        setPriorityCount(1); // Slow network: only hero
+      } else if (effectiveType === '3g') {
+        setPriorityCount(2); // Medium network: hero + 1 section
+      } else {
+        setPriorityCount(3); // Fast network: hero + 2 sections
+      }
+    }
+  }, []);
 
   // Client-side cache for sections
   const cachedSections = useRef<Map<string, {
@@ -92,9 +117,10 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   }, [effectivePathname, initialPathname, livePathname]);
 
   useEffect(() => {
-    // Skip fetch if SSR data is already present
-    if (initialData.length > 0) {
-      console.log('[UnifiedSections] Using SSR data, skipping initial fetch');
+    // Skip fetch if we started with SSR data AND basePath hasn't changed significantly
+    // (livePathname hydration doesn't count as a navigation)
+    if (hasInitialData && sections.length > 0) {
+      console.log('[UnifiedSections] Using SSR data, skipping fetch');
       return;
     }
     
@@ -175,7 +201,7 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
     };
 
     fetchSections();
-  }, [basePath, organizationId, initialData.length]);
+  }, [basePath, organizationId, hasInitialData, sections.length]);
 
   // Re-fetch when layout manager updates
   useEffect(() => {
@@ -254,11 +280,22 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   return (
     <>
       {sections.map((section, index) => {
+        // Adaptive performance strategy:
+        // - Slow network (2g): Only first section priority
+        // - Medium network (3g): First 2 sections priority  
+        // - Fast network (4g/5g): First 3 sections priority
+        // 
+        // Benefits:
+        // - Faster initial load on slow connections
+        // - Optimized LCP for all network conditions
+        // - Browser lazy loading handles remaining images
+        // - Zero layout shifts (all sections render, only images lazy load)
+        const isPriority = index < priorityCount;
+        
         if (section.type === 'template_section') {
-          return <TemplateSection key={section.id} section={section.data} />;
+          return <TemplateSection key={section.id} section={section.data} isPriority={isPriority} />;
         } else {
-          // Pass index to determine if this is the first heading section (for LCP optimization)
-          return <TemplateHeadingSection key={section.id} templateSectionHeadings={[section.data]} isPriority={index === 0} />;
+          return <TemplateHeadingSection key={section.id} templateSectionHeadings={[section.data]} isPriority={isPriority} />;
         }
       })}
     </>

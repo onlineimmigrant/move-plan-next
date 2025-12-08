@@ -37,6 +37,9 @@ export function StyleSection({
   const [gradientFrom, setGradientFrom] = useState(headerStyleFull?.gradient?.from || 'white');
   const [gradientTo, setGradientTo] = useState(headerStyleFull?.gradient?.to || 'neutral-50');
   const [menuWidth, setMenuWidth] = useState(headerStyleFull?.menu_width || '7xl');
+  const [menuFontSize, setMenuFontSize] = useState(headerStyleFull?.menu_font_size || 'base');
+  const [menuFontWeight, setMenuFontWeight] = useState(headerStyleFull?.menu_font_weight || 'normal');
+  const [profileItemVisible, setProfileItemVisible] = useState(headerStyleFull?.profile_item_visible !== false);
 
   const handleColorUpdate = (field: string, value: string) => {
     const updatedStyle = { ...headerStyleFull };
@@ -123,6 +126,61 @@ export function StyleSection({
       .catch((error) => {
         console.error('Failed to update menu width:', error);
         toast.error('Failed to update menu width');
+      });
+  };
+
+  const handleMenuFontSizeChange = (newSize: string) => {
+    setMenuFontSize(newSize);
+    
+    const updatedStyle = {
+      ...headerStyleFull,
+      menu_font_size: newSize
+    };
+
+    onStyleFullChange(organizationId, updatedStyle)
+      .then(() => {
+        toast.success('Menu font size updated');
+      })
+      .catch((error) => {
+        console.error('Failed to update menu font size:', error);
+        toast.error('Failed to update menu font size');
+      });
+  };
+
+  const handleMenuFontWeightChange = (newWeight: string) => {
+    setMenuFontWeight(newWeight);
+    
+    const updatedStyle = {
+      ...headerStyleFull,
+      menu_font_weight: newWeight
+    };
+
+    onStyleFullChange(organizationId, updatedStyle)
+      .then(() => {
+        toast.success('Menu font weight updated');
+      })
+      .catch((error) => {
+        console.error('Failed to update menu font weight:', error);
+        toast.error('Failed to update menu font weight');
+      });
+  };
+
+  const handleProfileItemVisibleToggle = () => {
+    const newValue = !profileItemVisible;
+    setProfileItemVisible(newValue);
+    
+    const updatedStyle = {
+      ...headerStyleFull,
+      profile_item_visible: newValue
+    };
+
+    onStyleFullChange(organizationId, updatedStyle)
+      .then(() => {
+        toast.success('Profile menu visibility updated');
+      })
+      .catch((error) => {
+        console.error('Failed to update profile menu visibility:', error);
+        toast.error('Failed to update profile menu visibility');
       });
   };
 
@@ -216,6 +274,119 @@ export function StyleSection({
               {width.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Menu Font Size Selector */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Menu Font Size</h3>
+        
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {[
+            { value: 'xs', label: 'XS' },
+            { value: 'sm', label: 'SM' },
+            { value: 'base', label: 'Base' },
+            { value: 'lg', label: 'LG' },
+            { value: 'xl', label: 'XL' },
+            { value: '2xl', label: '2XL' }
+          ].map((size) => (
+            <button
+              key={size.value}
+              onClick={() => handleMenuFontSizeChange(size.value)}
+              className={cn(
+                'px-3 py-2.5 border-2 rounded-lg text-center transition-all duration-200 font-medium text-sm',
+                menuFontSize === size.value
+                  ? 'shadow-md'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+              )}
+              style={
+                menuFontSize === size.value
+                  ? {
+                      borderColor: primary.base,
+                      backgroundColor: `${primary.base}10`,
+                      color: primary.base
+                    }
+                  : {}
+              }
+              title={`Font size: ${size.label}`}
+              aria-label={`Select ${size.label} font size`}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Menu Font Weight Selector */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Menu Font Weight</h3>
+        
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          {[
+            { value: 'thin', label: 'Thin' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'semibold', label: 'Semi Bold' },
+            { value: 'bold', label: 'Bold' }
+          ].map((weight) => (
+            <button
+              key={weight.value}
+              onClick={() => handleMenuFontWeightChange(weight.value)}
+              className={cn(
+                'px-3 py-2.5 border-2 rounded-lg text-center transition-all duration-200 text-sm',
+                menuFontWeight === weight.value
+                  ? 'shadow-md font-semibold'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+              )}
+              style={
+                menuFontWeight === weight.value
+                  ? {
+                      borderColor: primary.base,
+                      backgroundColor: `${primary.base}10`,
+                      color: primary.base,
+                      fontWeight: weight.value === 'thin' ? '100' : weight.value === 'normal' ? '400' : weight.value === 'medium' ? '500' : weight.value === 'semibold' ? '600' : '700'
+                    }
+                  : {
+                      fontWeight: weight.value === 'thin' ? '100' : weight.value === 'normal' ? '400' : weight.value === 'medium' ? '500' : weight.value === 'semibold' ? '600' : '700'
+                    }
+              }
+              title={`Font weight: ${weight.label}`}
+              aria-label={`Select ${weight.label} font weight`}
+            >
+              {weight.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Profile Menu Visibility Toggle */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Profile Menu</h3>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Show Profile Menu on Desktop
+            </label>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Always visible on mobile devices
+            </p>
+          </div>
+          <button
+            onClick={handleProfileItemVisibleToggle}
+            className={cn(
+              'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+              profileItemVisible ? 'bg-sky-600' : 'bg-gray-200 dark:bg-gray-700'
+            )}
+            style={profileItemVisible ? { backgroundColor: primary.base } : {}}
+            aria-label={profileItemVisible ? 'Hide profile menu on desktop' : 'Show profile menu on desktop'}
+          >
+            <span
+              className={cn(
+                'inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform',
+                profileItemVisible ? 'translate-x-5' : 'translate-x-0.5'
+              )}
+            />
+          </button>
         </div>
       </div>
 

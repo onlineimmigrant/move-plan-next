@@ -19,6 +19,7 @@ import { HeroSectionEditProvider } from '@/components/modals/HeroSectionModal/co
 import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context';
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
+import { SettingsModalProvider } from '@/components/modals/SettingsModal/context';
 import { ShopModalProvider } from '@/components/modals/ShopModal';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
@@ -59,6 +60,7 @@ const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSecti
 const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'));
 const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'));
 const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'));
+const SettingsModal = dynamic(() => import('@/components/modals/SettingsModal').then(mod => ({ default: mod.SettingsModal })));
 const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'));
 
 const UnifiedModalManager = dynamic(() => import('@/components/modals/UnifiedMenu').then(mod => ({ default: mod.UnifiedModalManager })), { 
@@ -169,6 +171,7 @@ function AdminModalsGate() {
       <HeaderEditModal />
       <FooterEditModal />
       <LayoutManagerModal />
+      <SettingsModal />
     </>
   );
 }
@@ -354,6 +357,7 @@ export default function ClientProviders({
                       <HeaderEditProvider>
                       <FooterEditProvider>
                         <LayoutManagerProvider>
+                          <SettingsModalProvider>
                           <PostEditModalProvider>
                             <TemplateSectionEditProvider>
                               <TemplateHeadingSectionEditProvider>
@@ -377,6 +381,8 @@ export default function ClientProviders({
                                   cookieCategories={cookieCategories}
                                   cookieAccepted={cookieAccepted}
                                   pathname={pathname}
+                                  templateSections={templateSections}
+                                  templateHeadingSections={templateHeadingSections}
                                 >
                                   {children}
                                 </BannerAwareContent>
@@ -396,18 +402,19 @@ export default function ClientProviders({
                             </CookieSettingsProvider>
                             {/* Admin modal components - only rendered for admin users */}
                             <AdminModalsGate />
-                          </ShopModalProvider>
-                          </GlobalSettingsModalProvider>
-                        </SiteMapModalProvider>
-                      </PageCreationProvider>
-                    </HeroSectionEditProvider>
-                  </TemplateHeadingSectionEditProvider>
-                  </TemplateSectionEditProvider>
-                </PostEditModalProvider>
-              </LayoutManagerProvider>
-            </FooterEditProvider>
-          </HeaderEditProvider>
-        </ToastProvider>
+                                      </ShopModalProvider>
+                                    </GlobalSettingsModalProvider>
+                                  </SiteMapModalProvider>
+                                </PageCreationProvider>
+                              </HeroSectionEditProvider>
+                              </TemplateHeadingSectionEditProvider>
+                            </TemplateSectionEditProvider>
+                          </PostEditModalProvider>
+                          </SettingsModalProvider>
+                        </LayoutManagerProvider>
+                      </FooterEditProvider>
+                      </HeaderEditProvider>
+                    </ToastProvider>
                   </PageSectionsProvider>
               </MeetingProvider>
             </ThemeProvider>
@@ -429,6 +436,8 @@ function BannerAwareContent({
   cookieCategories,
   cookieAccepted,
   pathname,
+  templateSections,
+  templateHeadingSections,
 }: {
   children: React.ReactNode;
   showNavbarFooter: boolean;
@@ -439,6 +448,8 @@ function BannerAwareContent({
   cookieCategories: any[];
   cookieAccepted: boolean;
   pathname: string;
+  templateSections?: TemplateSection[];
+  templateHeadingSections?: TemplateHeadingSection[];
 }) {
   const { banners, getFixedBannersHeight } = useBanner() || { banners: [], getFixedBannersHeight: () => 0 }; // Fallback for null context
   const fixedBanners = useMemo(
@@ -465,7 +476,11 @@ function BannerAwareContent({
           <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
             <main className="w-full">
               {children}
-              <UnifiedSections initialPathname={pathname} />
+              <UnifiedSections 
+                initialPathname={pathname}
+                initialSections={templateSections}
+                initialHeadingSections={templateHeadingSections}
+              />
               <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>
@@ -473,7 +488,11 @@ function BannerAwareContent({
         ) : (
           <main className="w-full">
             {children}
-            <UnifiedSections initialPathname={pathname} />
+            <UnifiedSections 
+              initialPathname={pathname}
+              initialSections={templateSections}
+              initialHeadingSections={templateHeadingSections}
+            />
             <Breadcrumbs />
             <BannerContainer banners={nonFixedBanners} />
           </main>

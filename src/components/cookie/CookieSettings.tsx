@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCookieTranslations } from './useCookieTranslations';
 import Link from 'next/link';
 import Button from '@/ui/Button';
-import CloseButton from '@/ui/CloseButton';
+import CloseIcon from '@/ui/CloseIcon';
 
 interface CookieSettingsProps {
   activeLanguages: string[];
@@ -438,7 +438,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({
             className="group flex items-center justify-center p-2.5 rounded-full hover:bg-black/5 active:bg-black/10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none focus:ring-2 focus:ring-black/8 focus:ring-offset-2 focus:ring-offset-transparent"
           > 
             <div className="w-4 h-4 flex items-center justify-center text-gray-600 group-hover:text-gray-800 transition-colors duration-300">
-              <CloseButton/>
+              <CloseIcon/>
             </div>
           </button>
         </div>

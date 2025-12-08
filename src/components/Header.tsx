@@ -106,6 +106,9 @@ const Header: React.FC<HeaderProps> = ({
       color_hover: 'gray-900',
       menu_width: '7xl' as const,
       menu_items_are_text: true,
+      menu_font_size: 'base',
+      menu_font_weight: 'normal',
+      profile_item_visible: true,
       is_gradient: false,
       gradient: undefined,
       logo: { url: '/', position: 'left', size: 'md' }
@@ -118,6 +121,9 @@ const Header: React.FC<HeaderProps> = ({
   const headerColor = headerStyle.color || 'gray-700';
   const headerColorHover = headerStyle.color_hover || 'gray-900';
   const menuWidth = headerStyle.menu_width || '7xl';
+  const menuFontSize = headerStyle.menu_font_size || 'base';
+  const menuFontWeight = headerStyle.menu_font_weight || 'normal';
+  const profileItemVisible = headerStyle.profile_item_visible !== false; // Default to true
   
   // Logo configuration
   const logoConfig = headerStyle.logo || { url: '/', position: 'left', size: 'md' };
@@ -127,6 +133,25 @@ const Header: React.FC<HeaderProps> = ({
   
   // Map logo size to Tailwind height classes
   const logoHeightClass = logoSize === 'sm' ? 'h-8' : logoSize === 'lg' ? 'h-12' : 'h-10'; // sm=h-8, md=h-10, lg=h-12
+  
+  // Map menu font size to Tailwind classes
+  const menuFontSizeClass = {
+    'xs': 'text-xs',
+    'sm': 'text-sm',
+    'base': 'text-base',
+    'lg': 'text-lg',
+    'xl': 'text-xl',
+    '2xl': 'text-2xl'
+  }[menuFontSize] || 'text-base';
+  
+  // Map menu font weight to Tailwind classes
+  const menuFontWeightClass = {
+    'thin': 'font-thin',
+    'normal': 'font-normal',
+    'medium': 'font-medium',
+    'semibold': 'font-semibold',
+    'bold': 'font-bold'
+  }[menuFontWeight] || 'font-normal';
 
   // Calculate header background style (gradient or solid color)
   const headerBackgroundStyle = useMemo(() => {
@@ -375,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({
                       }}
                     >
                       <span 
-                        className={`text-[15px] font-medium transition-colors duration-200 ${
+                        className={`${menuFontSizeClass} ${menuFontWeightClass} transition-colors duration-200 ${
                           isActive ? 'font-semibold' : ''
                         }`}
                         style={{
@@ -632,7 +657,7 @@ const Header: React.FC<HeaderProps> = ({
                       title={translatedDisplayName}
                       aria-label={t.goTo(translatedDisplayName)}
                     >
-                      <span className={`text-[15px] font-medium transition-colors duration-200 ${
+                      <span className={`${menuFontSizeClass} ${menuFontWeightClass} transition-colors duration-200 ${
                         // Only apply default classes if using hex colors
                         headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
                       }`}>{translatedDisplayName}</span>
@@ -807,15 +832,15 @@ const Header: React.FC<HeaderProps> = ({
               // For transparent type: start transparent, become solid on scroll
               : headerType === 'transparent' 
               ? (isScrolled 
-                  ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
-                  : 'bg-transparent border-b border-transparent'
+                  ? 'backdrop-blur-3xl shadow-[0_1px_20px_rgba(0,0,0,0.08)]'
+                  : 'bg-transparent'
                 )
               // For ring_card_mini and mini: no backdrop blur, border handled on inner container
               : (headerType === 'ring_card_mini' || headerType === 'mini')
               ? ''
               // For other types: always have backdrop blur
               : (isScrolled 
-                  ? 'backdrop-blur-3xl border-b border-black/8 shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
+                  ? 'backdrop-blur-3xl shadow-[0_1px_20px_rgba(0,0,0,0.08)]' 
                   : 'md:backdrop-blur-2xl'
                 )
           }
@@ -911,13 +936,6 @@ const Header: React.FC<HeaderProps> = ({
           {/* Action Items - Right Side Group */}
           {logoPosition !== 'right' && (
             <div className="absolute right-0 flex items-center space-x-3">
-              {/* Language Switcher - Hidden for ring_card_mini and mini */}
-              {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
-                <div className="hidden lg:block">
-                  <ModernLanguageSwitcher />
-                </div>
-              )}
-              
               {/* Basket */}
               {isMounted && totalItems > 0 && (
                 <LocalizedLink
@@ -938,7 +956,7 @@ const Header: React.FC<HeaderProps> = ({
               )}
               
               {/* Profile/Login */}
-              {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+              {(profileItemVisible || !isDesktop) && isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
             <div 
               className="relative group"
               onMouseEnter={cancelCloseTimeout}
@@ -1104,7 +1122,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             </div>
-          ) : headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+          ) : (profileItemVisible || !isDesktop) && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
             <button
               type="button"
               onClick={handleLoginModal}
@@ -1120,6 +1138,18 @@ const Header: React.FC<HeaderProps> = ({
               />
             </button>
           ) : null}
+          
+          {/* Language Switcher - Positioned after profile/login */}
+          {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
+            <div className="hidden lg:block">
+              <ModernLanguageSwitcher 
+                menuColor={headerColor}
+                menuHoverColor={headerColorHover}
+                menuFontSize={menuFontSize}
+                menuFontWeight={menuFontWeight}
+              />
+            </div>
+          )}
         </div>
       )}
       </div>
@@ -1130,7 +1160,12 @@ const Header: React.FC<HeaderProps> = ({
             {/* Language Switcher */}
             {settings?.with_language_switch && headerType !== 'ring_card_mini' && headerType !== 'mini' && (
               <div className="hidden lg:block">
-                <ModernLanguageSwitcher />
+                <ModernLanguageSwitcher 
+                  menuColor={headerColor}
+                  menuHoverColor={headerColorHover}
+                  menuFontSize={menuFontSize}
+                  menuFontWeight={menuFontWeight}
+                />
               </div>
             )}
             
@@ -1154,7 +1189,7 @@ const Header: React.FC<HeaderProps> = ({
             )}
             
             {/* Profile/Login - same logic as above */}
-            {isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+            {(profileItemVisible || !isDesktop) && isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
               <button
                 type="button"
                 className="p-3"
@@ -1168,7 +1203,7 @@ const Header: React.FC<HeaderProps> = ({
                   onMouseLeave={(e) => { e.currentTarget.style.color = getColorValue(headerColor); }}
                 />
               </button>
-            ) : headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
+            ) : (profileItemVisible || !isDesktop) && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
               <button
                 type="button"
                 onClick={handleLoginModal}

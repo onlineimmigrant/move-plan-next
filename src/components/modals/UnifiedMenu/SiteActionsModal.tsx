@@ -32,6 +32,7 @@ import { useGlobalSettingsModal } from '@/components/modals/GlobalSettingsModal/
 import { useLayoutManager } from '@/components/modals/LayoutManagerModal/context';
 import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
 import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
+import { useSettingsModal } from '@/components/modals/SettingsModal/context';
 import { useShopModal } from '@/components/modals/ShopModal';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
@@ -73,6 +74,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const { openModal: openLayoutManagerModal } = useLayoutManager();
   const { openModal: openHeaderEditModal } = useHeaderEdit();
   const { openModal: openFooterEditModal } = useFooterEdit();
+  const { openModal: openSettingsModal } = useSettingsModal();
   const { openModal: openShopModal } = useShopModal();
 
   const quickActions: QuickAction[] = [
@@ -194,6 +196,16 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
         }
       },
     },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Cog6ToothIcon,
+      shortcut: `${modifierKey}9`,
+      action: () => {
+        onClose();
+        openSettingsModal();
+      },
+    },
     // Fixed Bottom - Global Settings and Map (no shortcuts)
     {
       id: 'site_map',
@@ -226,8 +238,8 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
         return;
       }
 
-      // Command/Ctrl + Number keys 1-8 for shortcuts
-      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '8') {
+      // Command/Ctrl + Number keys 1-9 for shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '9') {
         const action = quickActions.find(a => a.shortcut?.includes(e.key));
         if (action) {
           e.preventDefault();

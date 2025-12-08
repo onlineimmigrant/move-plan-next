@@ -2,7 +2,7 @@
 import { Dialog, Transition, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Fragment, useEffect, useRef } from 'react';
 import Button from '@/ui/Button';
-import CloseButton from '@/ui/CloseButton';
+import CloseIcon from '@/ui/CloseIcon';
 import tutorialMaterials from '@/components/ai/AiModelsTutorialMaterials.json';
 
 interface DialogModalProps {
@@ -82,7 +82,7 @@ const DialogModal = ({ dialogKey, title, description, openDialog, setOpenDialog 
                 className="absolute top-2 right-2 p-1"
                 aria-label="Close modal"
               >
-                <CloseButton />
+                <CloseIcon />
               </Button>
               <DialogTitle className="text-lg font-medium text-gray-800">{title}</DialogTitle>
               <Dialog.Description className="mt-2 text-sm text-gray-600">

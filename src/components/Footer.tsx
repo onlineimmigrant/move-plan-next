@@ -13,8 +13,14 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { 
+  ssr: false,
+  loading: () => null
+});
+
+const LegalNoticeModal = dynamic(() => import('./legal/LegalNoticeModal'), {
   ssr: false,
   loading: () => null
 });
@@ -24,8 +30,9 @@ const ContactModal = dynamic(() => import('./contact/ContactModal'), {
 const FOOTER_TRANSLATIONS = {
   en: { 
     allRightsReserved: 'All rights reserved', 
-    language: 'Language:', 
+    language: 'Language', 
     privacySettings: 'Privacy Settings',
+    legalNotice: 'Legal Notice',
     profile: 'Profile',
     admin: 'Admin',
     dashboard: 'Dashboard',
@@ -35,12 +42,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Logout',
     login: 'Login',
     register: 'Register',
-    links: 'Links'
+    links: 'Links',
+    quickLinks: 'Quick Links'
   },
   es: { 
     allRightsReserved: 'Todos los derechos reservados', 
-    language: 'Idioma:', 
+    language: 'Idioma', 
     privacySettings: 'Configuración de privacidad',
+    legalNotice: 'Aviso Legal',
     profile: 'Perfil',
     admin: 'Admin',
     dashboard: 'Panel de control',
@@ -50,12 +59,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Cerrar sesión',
     login: 'Iniciar sesión',
     register: 'Registrarse',
-    links: 'Enlaces'
+    links: 'Enlaces',
+    quickLinks: 'Enlaces Rápidos'
   },
   fr: { 
     allRightsReserved: 'Tous droits réservés', 
-    language: 'Langue :', 
+    language: 'Langue', 
     privacySettings: 'Paramètres de confidentialité',
+    legalNotice: 'Mentions Légales',
     profile: 'Profil',
     admin: 'Admin',
     dashboard: 'Tableau de bord',
@@ -65,12 +76,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Se déconnecter',
     login: 'Se connecter',
     register: 'S\'inscrire',
-    links: 'Liens'
+    links: 'Liens',
+    quickLinks: 'Liens Rapides'
   },
   de: { 
     allRightsReserved: 'Alle Rechte vorbehalten', 
-    language: 'Sprache:', 
+    language: 'Sprache', 
     privacySettings: 'Datenschutz-Einstellungen',
+    legalNotice: 'Impressum',
     profile: 'Profil',
     admin: 'Admin',
     dashboard: 'Dashboard',
@@ -80,12 +93,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Abmelden',
     login: 'Anmelden',
     register: 'Registrieren',
-    links: 'Links'
+    links: 'Links',
+    quickLinks: 'Schnellzugriff'
   },
   ru: { 
     allRightsReserved: 'Все права защищены', 
-    language: 'Язык:', 
+    language: 'Язык', 
     privacySettings: 'Настройки конфиденциальности',
+    legalNotice: 'Правовая Информация',
     profile: 'Профиль',
     admin: 'Админ',
     dashboard: 'Панель управления',
@@ -95,12 +110,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Выйти',
     login: 'Войти',
     register: 'Зарегистрироваться',
-    links: 'Ссылки'
+    links: 'Ссылки',
+    quickLinks: 'Быстрые Ссылки'
   },
   it: { 
     allRightsReserved: 'Tutti i diritti riservati', 
-    language: 'Lingua:', 
+    language: 'Lingua', 
     privacySettings: 'Impostazioni privacy',
+    legalNotice: 'Note Legali',
     profile: 'Profilo',
     admin: 'Admin',
     dashboard: 'Cruscotto',
@@ -110,12 +127,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Esci',
     login: 'Accedi',
     register: 'Registrati',
-    links: 'Collegamenti'
+    links: 'Collegamenti',
+    quickLinks: 'Collegamenti Rapidi'
   },
   pt: { 
     allRightsReserved: 'Todos os direitos reservados', 
-    language: 'Idioma:', 
+    language: 'Idioma', 
     privacySettings: 'Configurações de privacidade',
+    legalNotice: 'Aviso Legal',
     profile: 'Perfil',
     admin: 'Admin',
     dashboard: 'Painel',
@@ -125,12 +144,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Sair',
     login: 'Entrar',
     register: 'Registrar',
-    links: 'Links'
+    links: 'Links',
+    quickLinks: 'Links Rápidos'
   },
   pl: { 
     allRightsReserved: 'Wszelkie prawa zastrzeżone', 
-    language: 'Język:', 
+    language: 'Język', 
     privacySettings: 'Ustawienia prywatności',
+    legalNotice: 'Informacje Prawne',
     profile: 'Profil',
     admin: 'Admin',
     dashboard: 'Panel',
@@ -140,12 +161,14 @@ const FOOTER_TRANSLATIONS = {
     logout: 'Wyloguj',
     login: 'Zaloguj',
     register: 'Zarejestruj',
-    links: 'Linki'
+    links: 'Linki',
+    quickLinks: 'Szybkie Linki'
   },
   zh: { 
     allRightsReserved: '版权所有', 
-    language: '语言：', 
+    language: '语言', 
     privacySettings: '隐私设置',
+    legalNotice: '法律声明',
     profile: '个人资料',
     admin: '管理员',
     dashboard: '仪表板',
@@ -155,12 +178,14 @@ const FOOTER_TRANSLATIONS = {
     logout: '登出',
     login: '登录',
     register: '注册',
-    links: '链接'
+    links: '链接',
+    quickLinks: '快速链接'
   },
   ja: { 
     allRightsReserved: '全著作権所有', 
     language: '言语：', 
     privacySettings: 'プライバシー設定',
+    legalNotice: '法的通知',
     profile: 'プロフィール',
     admin: '管理者',
     dashboard: 'ダッシュボード',
@@ -170,7 +195,8 @@ const FOOTER_TRANSLATIONS = {
     logout: 'ログアウト',
     login: 'ログイン',
     register: '登録',
-    links: 'リンク'
+    links: 'リンク',
+    quickLinks: 'クイックリンク'
   }
 };
 
@@ -195,6 +221,7 @@ function useFooterTranslations() {
     allRightsReserved: translations.allRightsReserved,
     language: translations.language,
     privacySettings: translations.privacySettings,
+    legalNotice: translations.legalNotice,
     profile: translations.profile,
     admin: translations.admin,
     dashboard: translations.dashboard,
@@ -205,6 +232,7 @@ function useFooterTranslations() {
     login: translations.login,
     register: translations.register,
     links: translations.links,
+    quickLinks: translations.quickLinks,
     hasTranslations: true
   };
 }
@@ -221,6 +249,22 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { setShowSettings } = useCookieSettings();
   const { isAdmin } = useAuth();
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [showLegalNotice, setShowLegalNotice] = useState(false);
+  
+  // Accordion state for mobile footer sections (CLS optimization)
+  const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set());
+  
+  const toggleAccordion = (id: string) => {
+    setOpenAccordions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   // Use translations with fallback
   const translations = useFooterTranslations();
@@ -232,7 +276,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const maxItemsPerColumn = 8;
 
   // Memoize menu grouping logic
-  const { itemsWithSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
+  const { itemsWithSubitems, itemsWithoutSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
     const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
     const itemsWithSubitems = safeMenuItems.filter(
       (item) =>
@@ -252,6 +296,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
     }
     return {
       itemsWithSubitems,
+      itemsWithoutSubitems, // Add ungrouped items for mobile accordion
       groupedItemsWithoutSubitems: groupedItems,
     };
   }, [menuItems]);
@@ -303,6 +348,17 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       gradient: undefined
     };
   }, [settings?.footer_style]);
+
+  // Debug: Log legal notice settings
+  useEffect(() => {
+    console.log('👣 [Footer] Legal Notice settings:', {
+      has_legal_notice: !!settings.legal_notice,
+      enabled: settings.legal_notice?.enabled,
+      enabled_type: typeof settings.legal_notice?.enabled,
+      full_legal_notice: settings.legal_notice,
+      footer_type: footerStyles.type
+    });
+  }, [settings.legal_notice, footerStyles.type]);
 
   // Helper to get link color classes - removed dynamic Tailwind classes
   const getLinkColorClasses = useCallback((isHeading = false) => {
@@ -388,26 +444,239 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   // DEFAULT FOOTER - Current multi-column grid
   const renderDefaultFooter = () => (
     <>
-      <div className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => setShowSettings(true)}
-          className="text-sm font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-          style={{
-            color: getColorValue(footerStyles.color)
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = getColorValue(footerStyles.color);
-          }}
-          aria-label={translations.privacySettings}
-        >
-          {translations.privacySettings}
-        </button>
+      <div className="flex justify-between items-center mb-2 md:mb-8 pb-4 border-b border-gray-200/50 md:border-0 md:pb-0">
+        <div className="flex items-center gap-4 md:gap-6">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-base font-semibold pl-6 md:pl-0 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            style={{
+              color: getColorValue(footerStyles.color)
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.color);
+            }}
+            aria-label={translations.privacySettings}
+          >
+            {translations.privacySettings}
+          </button>
+        </div>
       </div>
 
-      <nav className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5" aria-label="Footer navigation">
+      {/* Mobile: Single column accordion | Desktop: Grid layout */}
+      <nav className="md:hidden space-y-2" aria-label="Footer navigation (mobile)">
+        {menuItems.length === 0 ? (
+          <span className="text-neutral-500 text-sm">No menu items available</span>
+        ) : (
+          <>
+            {/* Menu items with subitems */}
+            {itemsWithSubitems.map((item) => {
+              const translatedDisplayName = currentLocale 
+                ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                : item.display_name;
+              const isOpen = openAccordions.has(`menu-${item.id}`);
+
+              return (
+                <div key={item.id} className="border-b border-gray-200/50">
+                  <button
+                    onClick={() => toggleAccordion(`menu-${item.id}`)}
+                    className="w-full flex items-center justify-between pl-6 pr-4 py-4 transition-colors duration-200"
+                    style={{ color: getColorValue(footerStyles.color) }}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="text-base font-semibold">{translatedDisplayName}</span>
+                    {isOpen ? (
+                      <ChevronDown 
+                        className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                        style={{ color: getColorValue(footerStyles.color) }}
+                      />
+                    ) : (
+                      <ChevronRight 
+                        className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                        style={{ color: getColorValue(footerStyles.color) }}
+                      />
+                    )}
+                  </button>
+                  {isOpen && (
+                    <ul className="pb-3 space-y-2 pl-6">
+                      {item.website_submenuitem
+                        ?.map((subItem) => {
+                          const translatedSubItemName = currentLocale 
+                            ? getTranslatedMenuContent(subItem.name, subItem.name_translation, currentLocale)
+                            : subItem.name;
+                          return (
+                            <li key={subItem.id}>
+                              <FooterLink href={subItem.url_name || '#'} className="text-sm">
+                                {translatedSubItemName}
+                              </FooterLink>
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Items without subitems (grouped) */}
+            {itemsWithoutSubitems.length > 0 && (
+              <div className="border-b border-gray-200/50">
+                <button
+                  onClick={() => toggleAccordion('menu-other')}
+                  className="w-full flex items-center justify-between pl-6 pr-4 py-4 transition-colors duration-200"
+                  style={{ color: getColorValue(footerStyles.color) }}
+                  aria-expanded={openAccordions.has('menu-other')}
+                >
+                  <span className="text-base font-semibold">{translations.quickLinks || 'Quick Links'}</span>
+                  {openAccordions.has('menu-other') ? (
+                    <ChevronDown 
+                      className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                      style={{ color: getColorValue(footerStyles.color) }}
+                    />
+                  ) : (
+                    <ChevronRight 
+                      className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                      style={{ color: getColorValue(footerStyles.color) }}
+                    />
+                  )}
+                </button>
+                {openAccordions.has('menu-other') && (
+                  <ul className="pb-3 space-y-2 pl-6">
+                    {itemsWithoutSubitems.map((item) => {
+                      const translatedDisplayName = currentLocale 
+                        ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
+                        : item.display_name;
+                      return (
+                        <li key={item.id}>
+                          <FooterLink href={item.url_name || '#'} className="text-sm">
+                            {translatedDisplayName}
+                          </FooterLink>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Admin/Profile section */}
+            <div className="border-b border-gray-200/50">
+              <button
+                onClick={() => toggleAccordion('menu-profile')}
+                className="w-full flex items-center justify-between pl-6 pr-4 py-4 transition-colors duration-200"
+                style={{ color: getColorValue(footerStyles.color) }}
+                aria-expanded={openAccordions.has('menu-profile')}
+              >
+                <span className="text-base font-semibold">{isAdmin ? translations.admin : translations.profile}</span>
+                {openAccordions.has('menu-profile') ? (
+                  <ChevronDown 
+                    className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                    style={{ color: getColorValue(footerStyles.color) }}
+                  />
+                ) : (
+                  <ChevronRight 
+                    className="w-5 h-5 transition-transform duration-200 flex-shrink-0"
+                    style={{ color: getColorValue(footerStyles.color) }}
+                  />
+                )}
+              </button>
+              {openAccordions.has('menu-profile') && (
+                <ul className="pb-3 space-y-2 pl-6">
+                  {isAuthenticated ? (
+                    <>
+                      {isAdmin && (
+                        <>
+                          <li><FooterLink href="/admin" className="text-sm">{translations.dashboard}</FooterLink></li>
+                          <li>
+                            <button
+                              type="button"
+                              onClick={handleContactModal}
+                              className="text-sm transition-colors duration-200"
+                              style={{ color: getColorValue(footerStyles.color) }}
+                            >
+                              {translations.tickets}
+                            </button>
+                          </li>
+                          <li><FooterLink href="/admin" className="text-sm">{translations.meetings}</FooterLink></li>
+                          <li><FooterLink href="/admin/ai/management" className="text-sm">{translations.aiAgents}</FooterLink></li>
+                        </>
+                      )}
+                      <li>
+                        <button
+                          onClick={handleLogout}
+                          type="button"
+                          className="text-sm transition-colors duration-200"
+                          style={{ color: getColorValue(footerStyles.color) }}
+                        >
+                          {translations.logout}
+                        </button>
+                      </li>
+                    </>
+                  ) : (
+                    <li>
+                      <button
+                        onClick={() => router.push('/auth/login')}
+                        type="button"
+                        className="text-sm transition-colors duration-200"
+                        style={{ color: getColorValue(footerStyles.color) }}
+                      >
+                        {translations.login}
+                      </button>
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+
+            {/* Legal Notice - Mobile only */}
+            {settings.legal_notice?.enabled && (
+              <div className="md:hidden border-b border-gray-200/50 -mx-0">
+                <button
+                  onClick={() => setShowLegalNotice(true)}
+                  className="w-full text-left pl-6 pr-4 py-4 text-base font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 flex items-center justify-between"
+                  style={{
+                    color: getColorValue(footerStyles.color)
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = getColorValue(footerStyles.color);
+                  }}
+                  aria-label={translations.legalNotice}
+                >
+                  <span>{translations.legalNotice}</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Language Switcher - Mobile only */}
+            {settings?.with_language_switch && (
+              <div className="border-b border-gray-200/50 -mx-0 md:mx-0">
+                <div className="w-full flex items-center justify-between pl-6 pr-4 py-4">
+                  <span className="text-base font-semibold" style={{ color: getColorValue(footerStyles.color) }}>
+                    {translations.language || 'Language'}
+                  </span>
+                  <div className="md:hidden absolute left-0 right-0 flex justify-end pr-4">
+                    <ModernLanguageSwitcher openUpward={true} variant="footer" fullWidthMobile={true} />
+                  </div>
+                  <div className="hidden md:flex items-center">
+                    <ModernLanguageSwitcher openUpward={true} variant="footer" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </nav>
+
+      {/* Desktop: Grid layout (hidden on mobile) */}
+      <nav className="hidden md:grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-5" aria-label="Footer navigation">
         {menuItems.length === 0 ? (
           <span className="text-neutral-500 text-sm">No menu items available</span>
         ) : (
@@ -484,7 +753,14 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             ))}
 
             <div className="col-span-1 min-h-[200px]">
-              <h2 className="text-base font-semibold mb-4">{isAdmin ? translations.admin : translations.profile}</h2>
+              <h2 className="text-base font-semibold mb-4">
+                <span 
+                  className="transition-colors duration-200"
+                  style={{ color: getColorValue(footerStyles.color) }}
+                >
+                  {isAdmin ? translations.admin : translations.profile}
+                </span>
+              </h2>
               <ul className="space-y-2">
                 {isAuthenticated ? (
                   <>
@@ -588,19 +864,51 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     </li>
                   </>
                 )}
+                {settings.legal_notice?.enabled && (
+                  <li>
+                    <button
+                      onClick={() => setShowLegalNotice(true)}
+                      type="button"
+                      className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                      style={{
+                        color: getColorValue(footerStyles.color)
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = getColorValue(footerStyles.color);
+                      }}
+                      aria-label={translations.legalNotice}
+                    >
+                      {translations.legalNotice}
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
           </>
         )}
       </nav>
 
-      <div className="mt-12 border-t pt-6" style={{ borderColor: `${getColorValue(footerStyles.color)}66` }}>
+      {/* Footer Disclaimer (if enabled) */}
+      {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
+        <div className="mt-8 md:mt-10 text-center">
+          <p className="text-xs md:text-sm opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
+            {settings.legal_notice.footer_disclaimer}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-12 md:border-t border-gray-200/50 md:pt-6">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <small className="text-xs" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
+          <small className="text-sm" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
           </small>
           {settings?.with_language_switch && (
-            <ModernLanguageSwitcher openUpward={true} variant="footer" />
+            <div className="hidden md:block">
+              <ModernLanguageSwitcher openUpward={true} variant="footer" />
+            </div>
           )}
         </div>
       </div>
@@ -628,20 +936,43 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       </nav>
       
       <div className="border-t border-opacity-20 pt-6 space-y-4" style={{ borderColor: getColorValue(footerStyles.color) }}>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="text-sm hover:underline transition-colors duration-200"
-          style={{ color: getColorValue(footerStyles.color) }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = getColorValue(footerStyles.color);
-          }}
-          aria-label={translations.privacySettings}
-        >
-          {translations.privacySettings}
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-sm hover:underline transition-colors duration-200"
+            style={{ color: getColorValue(footerStyles.color) }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = getColorValue(footerStyles.color);
+            }}
+            aria-label={translations.privacySettings}
+          >
+            {translations.privacySettings}
+          </button>
+          {settings.legal_notice?.enabled && (
+            <button
+              onClick={() => setShowLegalNotice(true)}
+              className="text-sm hover:underline transition-colors duration-200"
+              style={{ color: getColorValue(footerStyles.color) }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.color);
+              }}
+              aria-label={translations.legalNotice}
+            >
+              {translations.legalNotice}
+            </button>
+          )}
+        </div>
+        {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
+          <p className="text-xs opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
+            {settings.legal_notice.footer_disclaimer}
+          </p>
+        )}
         <p className="text-xs opacity-60" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
@@ -681,6 +1012,22 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           >
             {translations.privacySettings}
           </button>
+          {settings.legal_notice?.enabled && (
+            <button
+              onClick={() => setShowLegalNotice(true)}
+              className="text-sm transition-colors duration-200"
+              style={{ color: getColorValue(footerStyles.color) }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.color);
+              }}
+              aria-label={translations.legalNotice}
+            >
+              {translations.legalNotice}
+            </button>
+          )}
         </nav>
         
         <div className="flex items-center gap-6">
@@ -747,10 +1094,31 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           >
             {translations.privacySettings}
           </button>
+          {settings.legal_notice?.enabled && (
+            <button
+              onClick={() => setShowLegalNotice(true)}
+              className="text-sm transition-colors duration-200"
+              style={{ color: getColorValue(footerStyles.color) }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.colorHover);
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = getColorValue(footerStyles.color);
+              }}
+              aria-label={translations.legalNotice}
+            >
+              {translations.legalNotice}
+            </button>
+          )}
           {settings?.with_language_switch && (
             <ModernLanguageSwitcher openUpward={true} variant="footer" />
           )}
         </div>
+        {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
+          <p className="text-xs opacity-70 mb-4" style={{ color: getColorValue(footerStyles.color) }}>
+            {settings.legal_notice.footer_disclaimer}
+          </p>
+        )}
         <p className="text-xs" style={{ color: getColorValue(footerStyles.color) }}>
           © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
         </p>
@@ -882,6 +1250,9 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         </div>
       </footer>
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      {settings.legal_notice?.enabled && (
+        <LegalNoticeModal isOpen={showLegalNotice} onClose={() => setShowLegalNotice(false)} />
+      )}
     </>
   );
 };

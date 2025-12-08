@@ -52,6 +52,9 @@ export interface HeaderStyle {
   background?: string;
   menu_width?: MenuWidth;
   menu_items_are_text?: boolean;
+  menu_font_size?: string;
+  menu_font_weight?: string;
+  profile_item_visible?: boolean;
   logo_height?: LogoHeight;      // 🆕 Logo height support (deprecated - use logo.size)
   is_gradient?: boolean;        // 🆕 Gradient support
   gradient?: GradientStyle;      // 🆕 Gradient colors
@@ -88,4 +91,20 @@ export interface Settings {
   secondary_color?: string | null; // Secondary color family (e.g., 'gray', 'slate', 'zinc')
   secondary_shade?: number | null; // Secondary color base shade (400, 500, 600, 700, 800)
   company_name?: string | null; // Company name for display purposes
+  legal_notice?: {
+    enabled: boolean;
+    company_name?: string;
+    legal_form?: string;
+    registered_address?: string;
+    registration_number?: string;
+    vat_number?: string;
+    managing_directors?: string[];
+    contact_email?: string;
+    contact_phone?: string;
+    trade_registry?: string;
+    professional_licenses?: string[];
+    regulatory_bodies?: string[];
+    show_footer_disclaimer?: boolean;
+    footer_disclaimer?: string;
+  } | null;
 }

@@ -53,7 +53,10 @@ export const HeaderPreview: React.FC<HeaderPreviewProps> = ({
     is_gradient: headerStyleFull?.is_gradient || false,
     gradient: headerStyleFull?.gradient || undefined,
     logo: headerStyleFull?.logo || { url: '/', position: 'left', size: 'md' },
-    menuWidth: headerStyleFull?.menu_width || '7xl'
+    menuWidth: headerStyleFull?.menu_width || '7xl',
+    menuFontSize: headerStyleFull?.menu_font_size || 'base',
+    menuFontWeight: headerStyleFull?.menu_font_weight || 'normal',
+    profileItemVisible: headerStyleFull?.profile_item_visible !== false
   };
 
   // Get actual color values
@@ -66,6 +69,27 @@ export const HeaderPreview: React.FC<HeaderPreviewProps> = ({
   const logoPosition = headerStyles.logo.position || 'left';
   const logoSize = headerStyles.logo.size || 'md';
   const logoHeightClass = logoSize === 'sm' ? 'h-8' : logoSize === 'lg' ? 'h-12' : 'h-10';
+  
+  // Map menu font size to Tailwind classes (matching Header.tsx)
+  const menuFontSizeMap: Record<string, string> = {
+    'xs': 'text-xs',
+    'sm': 'text-sm',
+    'base': 'text-base',
+    'lg': 'text-lg',
+    'xl': 'text-xl',
+    '2xl': 'text-2xl'
+  };
+  const menuFontSizeClass = menuFontSizeMap[headerStyles.menuFontSize] || 'text-base';
+  
+  // Map menu font weight to Tailwind classes (matching Header.tsx)
+  const menuFontWeightMap: Record<string, string> = {
+    'thin': 'font-thin',
+    'normal': 'font-normal',
+    'medium': 'font-medium',
+    'semibold': 'font-semibold',
+    'bold': 'font-bold'
+  };
+  const menuFontWeightClass = menuFontWeightMap[headerStyles.menuFontWeight] || 'font-normal';
   
   // Filter visible menu items
   const visibleMenuItems = menuItems.filter(item => item.is_displayed !== false);
@@ -158,7 +182,7 @@ export const HeaderPreview: React.FC<HeaderPreviewProps> = ({
                       className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                       style={{ color: textColor }}
                     >
-                      <span className="font-medium">{item.display_name}</span>
+                      <span className={`${menuFontWeightClass}`}>{item.display_name}</span>
                       {hasSubmenu && (
                         <svg 
                           className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
@@ -289,7 +313,7 @@ export const HeaderPreview: React.FC<HeaderPreviewProps> = ({
                     }}
                   >
                     <span 
-                      className="text-sm lg:text-[15px] font-medium transition-colors duration-200"
+                      className={`${menuFontSizeClass} ${menuFontWeightClass} transition-colors duration-200`}
                       style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
                     >
                       {item.display_name}
@@ -414,12 +438,17 @@ export const HeaderPreview: React.FC<HeaderPreviewProps> = ({
               {/* Language Switcher - Using ModernLanguageSwitcher like Footer */}
               {headerStyles.type !== 'ring_card_mini' && headerStyles.type !== 'mini' && (
                 <div className="hidden lg:block">
-                  <ModernLanguageSwitcher />
+                  <ModernLanguageSwitcher 
+                    menuColor={headerStyles.color}
+                    menuHoverColor={headerStyles.colorHover}
+                    menuFontSize={headerStyles.menuFontSize}
+                    menuFontWeight={headerStyles.menuFontWeight}
+                  />
                 </div>
               )}
               
               {/* Profile/Login Icon */}
-              {headerStyles.type !== 'ring_card_mini' && headerStyles.type !== 'mini' && (
+              {headerStyles.profileItemVisible && headerStyles.type !== 'ring_card_mini' && headerStyles.type !== 'mini' && (
                 <button
                   type="button"
                   className="p-2 lg:p-3"

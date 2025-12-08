@@ -280,9 +280,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     });
   }
   
-  // Template sections: Client-side only
-  const templateSections: any[] = [];
-  const templateHeadingSections: any[] = [];
+  // Fetch template sections server-side to prevent CLS
+  let templateSections: any[] = [];
+  let templateHeadingSections: any[] = [];
+  
+  try {
+    const organizationId = organization?.id || settings?.organization_id;
+    if (organizationId) {
+      // Strip locale from pathname for database lookup
+      const pathnameWithoutLocale = stripLocaleFromPathname(pathname);
+      // Use pathname as-is for database query (sections are stored with actual path, not /home)
+      const urlPage = pathnameWithoutLocale;
+      
+      console.log('[Layout] Fetching template sections:', { pathname, pathnameWithoutLocale, urlPage, organizationId });
+      
+      const [sectionsData, headingsData] = await Promise.all([
+        supabaseServer
+          .from('template_section')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('url_page', urlPage)
+          .order('order', { ascending: true }),
+        supabaseServer
+          .from('template_heading_section')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('url_page', urlPage)
+          .order('order', { ascending: true }),
+      ]);
+      
+      templateSections = sectionsData.data || [];
+      templateHeadingSections = headingsData.data || [];
+      
+      console.log('[Layout] Fetched sections:', { 
+        sectionsCount: templateSections.length, 
+        headingsCount: templateHeadingSections.length 
+      });
+    } else {
+      console.log('[Layout] No organizationId, skipping sections fetch');
+    }
+  } catch (error) {
+    console.error('[Layout] Error fetching template sections:', error);
+    // Continue with empty arrays - non-critical data
+  }
   
   // Quick cookie check (no async) - COMMENTED OUT FOR SSG TEST
   const cookieAccepted = headersList.get('cookie')?.includes('cookies_accepted=true') || false;
@@ -325,11 +365,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="icon" href={faviconUrl} />
         
+        {/* Preconnect to image CDNs for faster loading */}
+        <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
+        <link rel="preconnect" href="https://pub-6891bafd3bd54c36b02da71be2099135.r2.dev" />
+        <link rel="dns-prefetch" href="https://images.pexels.com" />
+        
+        {/* Prefetch common API routes (browser cache warm-up) */}
+        <link rel="prefetch" href="/api/products-summary" as="fetch" crossOrigin="anonymous" />
+        <link rel="prefetch" href="/api/brands" as="fetch" crossOrigin="anonymous" />
+        
         {/* Inline critical CSS for instant render - no blocking */}
         <style dangerouslySetInnerHTML={{ __html: `
           html{scroll-behavior:smooth;scroll-padding-top:5rem}
           body{margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-          *{font-family:var(--font-inter,system-ui,-apple-system,sans-serif)}
+          *{font-family:var(${selectedFontVar},system-ui,-apple-system,sans-serif)}
           .scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}
           .scrollbar-none::-webkit-scrollbar{display:none}
           @keyframes fade-in-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -337,9 +386,31 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         `}} />
         
         {/* Preload critical self-hosted fonts for instant render */}
-        <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/inter-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {selectedFont === 'Poppins' ? (
+          <>
+            <link rel="preload" href="/fonts/poppins-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="preload" href="/fonts/poppins-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="preload" href="/fonts/poppins-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+          </>
+        ) : (
+          <>
+            <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="preload" href="/fonts/inter-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+          </>
+        )}
+        
+        {/* Conditionally load Google Fonts ONLY when selected (zero performance impact when not used) */}
+        {selectedFont !== 'Inter' && selectedFont !== 'Poppins' && (
+          <>
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+            <link
+              rel="stylesheet"
+              href={`https://fonts.googleapis.com/css2?family=${selectedFont.replace(' ', '+')}:wght@300;400;500;600;700&display=swap`}
+            />
+          </>
+        )}
         
         {/* DNS Prefetch & Preconnect for performance */}
         <link rel="dns-prefetch" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />

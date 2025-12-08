@@ -356,7 +356,8 @@ async function _getSettingsInternal(baseUrl?: string): Promise<Settings> {
         primary_color,
         primary_shade,
         secondary_color,
-        secondary_shade
+        secondary_shade,
+        legal_notice
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -393,6 +394,7 @@ async function _getSettingsInternal(baseUrl?: string): Promise<Settings> {
       primary_shade: data.primary_shade ?? 600,
       secondary_color: data.secondary_color ?? 'gray',
       secondary_shade: data.secondary_shade ?? 500,
+      legal_notice: data.legal_notice ?? null,
     };
 
     // console.log('Settings fetched successfully:', settings);

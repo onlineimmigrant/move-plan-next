@@ -17,16 +17,16 @@
   /* Poppins - self-hosted for performance */
   --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
   
-  /* Google Fonts replaced with self-hosted fallbacks for performance */
-  --font-mulish: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-roboto: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-lato: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-opensans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-montserrat: 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-nunito: 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-raleway: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-ubuntu: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-merriweather: 'Georgia', 'Times New Roman', serif;
+  /* Google Fonts - loaded conditionally when selected (zero performance impact if not used) */
+  --font-mulish: 'Mulish', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-roboto: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-lato: 'Lato', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-opensans: 'Open Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-montserrat: 'Montserrat', 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-nunito: 'Nunito', 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-raleway: 'Raleway', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ubuntu: 'Ubuntu', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-merriweather: 'Merriweather', 'Georgia', 'Times New Roman', serif;
 }
 
 /* Premium fade-in-up animation for staggered grid items */

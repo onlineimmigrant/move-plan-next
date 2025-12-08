@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Legal Notice Button Test</title>
+    <script>
+        // Run this script in browser console on your app page
+        
+        function testLegalNoticeButton() {
+            console.log('🔍 Legal Notice Button Visibility Test\n');
+            console.log('=' .repeat(60));
+            
+            // 1. Check viewport size
+            const width = window.innerWidth;
+            const isMobile = width < 768; // md breakpoint
+            console.log(`\n1️⃣ Viewport: ${width}px ${isMobile ? '(MOBILE)' : '(DESKTOP)'}`);
+            console.log(`   - Should look for: ${isMobile ? 'md:hidden button' : 'hidden md:block button'}`);
+            
+            // 2. Find all Legal Notice buttons in footer
+            const allButtons = Array.from(document.querySelectorAll('footer button'));
+            console.log(`\n2️⃣ All footer buttons (${allButtons.length} total):`);
+            allButtons.forEach((btn, i) => {
+                console.log(`   ${i + 1}. "${btn.textContent?.trim()}" - classes: ${btn.className}`);
+            });
+            
+            // 3. Look for Legal Notice specifically
+            const legalNoticeButtons = allButtons.filter(btn => 
+                btn.textContent?.toLowerCase().includes('legal') || 
+                btn.textContent?.toLowerCase().includes('impressum')
+            );
+            
+            console.log(`\n3️⃣ Legal Notice buttons found: ${legalNoticeButtons.length}`);
+            legalNoticeButtons.forEach((btn, i) => {
+                const styles = window.getComputedStyle(btn);
+                const isVisible = styles.display !== 'none';
+                console.log(`   ${i + 1}. Text: "${btn.textContent?.trim()}"`);
+                console.log(`      Classes: ${btn.className}`);
+                console.log(`      Display: ${styles.display}`);
+                console.log(`      Visible: ${isVisible ? '✅ YES' : '❌ NO'}`);
+            });
+            
+            // 4. Check if conditional rendered properly
+            const footerElement = document.querySelector('footer');
+            if (footerElement) {
+                const footerHTML = footerElement.innerHTML;
+                const hasLegalNoticeInHTML = footerHTML.toLowerCase().includes('legal notice') || 
+                                             footerHTML.toLowerCase().includes('impressum');
+                console.log(`\n4️⃣ Footer HTML contains "Legal Notice": ${hasLegalNoticeInHTML ? '✅ YES' : '❌ NO'}`);
+            }
+            
+            // 5. Check React props (if accessible)
+            console.log('\n5️⃣ Checking Settings Context...');
+            console.log('   Try running in console: window.__NEXT_DATA__?.props?.pageProps?.initialSettings?.legal_notice');
+            
+            // 6. Manual check instructions
+            console.log('\n' + '='.repeat(60));
+            console.log('📋 MANUAL CHECK:');
+            console.log('   1. Open React DevTools');
+            console.log('   2. Find <Footer> component');
+            console.log('   3. Check props.settings.legal_notice.enabled');
+            console.log('   4. Verify it\'s boolean true, not string "true"');
+            console.log('='.repeat(60));
+        }
+        
+        // Auto-run after page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testLegalNoticeButton);
+        } else {
+            testLegalNoticeButton();
+        }
+    </script>
+</head>
+<body>
+    <h1>Paste the script in browser console</h1>
+    <p>Or open this HTML file directly in your app's page context</p>
+</body>
+</html>

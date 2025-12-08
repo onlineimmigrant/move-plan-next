@@ -256,14 +256,28 @@ function useCarousel(totalItems: number, itemsPerSlide: number, isEnabled: boole
 
 /**
  * Custom hook for lazy loading sections with IntersectionObserver
+ * ULTRA-aggressive prefetch: loads when section is 4-5 viewports away (user at section 4-5)
+ * This ensures ALL remaining sections load before user needs them
+ * 
+ * @param isPriority - If true, skip lazy loading entirely and render immediately
  */
-function useLazySection() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
+function useLazySection(isPriority: boolean = false) {
+  const [isVisible, setIsVisible] = useState(isPriority); // Priority sections are immediately "visible"
+  const [hasLoaded, setHasLoaded] = useState(isPriority); // Priority sections are immediately "loaded"
   const sectionRef = useRef<HTMLElement>(null);
 
+  // Critical: Update state when isPriority changes (e.g., when userHasScrolled becomes true)
   useEffect(() => {
-    if (hasLoaded) return;
+    if (isPriority && !hasLoaded) {
+      console.log('[useLazySection] Priority flag changed to true - loading section immediately');
+      setIsVisible(true);
+      setHasLoaded(true);
+    }
+  }, [isPriority, hasLoaded]);
+
+  useEffect(() => {
+    // Skip IntersectionObserver for priority sections
+    if (isPriority || hasLoaded) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -276,7 +290,11 @@ function useLazySection() {
         });
       },
       {
-        rootMargin: '200px', // Start loading 200px before visible
+        // ULTRA-aggressive: 500% = 5 viewports away
+        // When user reaches section 4-5, section 9+ starts loading
+        // All remaining sections load while user scrolls through 6-8
+        // Result: Zero jumps, everything loaded before user needs it
+        rootMargin: '500%',
         threshold: 0.01,
       }
     );
@@ -286,7 +304,7 @@ function useLazySection() {
     }
 
     return () => observer.disconnect();
-  }, [hasLoaded]);
+  }, [isPriority, hasLoaded]);
 
   return { isVisible, sectionRef, hasLoaded };
 }
@@ -502,7 +520,7 @@ interface TemplateSectionData {
   form_id?: string | null;
 }
 
-const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo(({ section }) => {
+const TemplateSection: React.FC<{ section: TemplateSectionData; isPriority?: boolean }> = React.memo(({ section, isPriority = false }) => {
   // Early return to avoid null/undefined issues
   if (!section) {
     return null;
@@ -517,8 +535,10 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
 
   const pathname = usePathname();
   
-  // Lazy loading with IntersectionObserver
-  const { isVisible, sectionRef, hasLoaded } = useLazySection();
+  // Note: Lazy loading REMOVED - all sections render immediately to prevent CLS
+  // Only images use lazy loading (via loading="lazy" prop)
+  // This ensures zero layout shifts during scrolling
+  const sectionRef = useRef<HTMLElement>(null);
   
   // Extract locale from pathname (similar to TemplateHeadingSection logic)
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -632,32 +652,9 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
     );
   }, [section.is_gradient, section.gradient, section.background_color]);
 
-  // Early return for lazy loading - show placeholder
-  if (!hasLoaded && !isVisible) {
-    return (
-      <section
-        ref={sectionRef}
-        className={`${
-          ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'form_harmony'].includes(section.section_type || '')
-            ? 'px-0 py-0 min-h-0'
-            : section.is_slider 
-            ? 'px-0 py-8 min-h-[600px]' 
-            : 'px-4 py-8 min-h-[600px]'
-        } text-xl relative`}
-        style={sectionBackgroundStyle}
-        aria-busy="true"
-        aria-label="Loading section content"
-      >
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-pulse flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-full" />
-            <div className="h-4 w-48 bg-gray-200 rounded" />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
+  // Lazy loading placeholder removed - all sections render immediately
+  // This eliminates layout shifts completely
+  
   return (
     <section
       ref={sectionRef}
@@ -881,7 +878,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                                       )}
                                       width={800}
                                       height={600}
-                                      loading="lazy"
+                                      loading={isPriority ? 'eager' : 'lazy'}
+                                      priority={isPriority}
                                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -1033,7 +1031,8 @@ const TemplateSection: React.FC<{ section: TemplateSectionData }> = React.memo((
                               )}
                               width={800}
                               height={600}
-                              priority={false}
+                              loading={isPriority ? 'eager' : 'lazy'}
+                              priority={isPriority}
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

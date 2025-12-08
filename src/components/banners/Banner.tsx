@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { TbChevronCompactDown, TbChevronCompactUp, TbChevronCompactLeft, TbChevronCompactRight } from 'react-icons/tb';
 import { useEffect } from 'react';
 import Button from '@/ui/Button';
-import CloseButton from '@/ui/CloseButton';
+import CloseIcon from '@/ui/CloseIcon';
 import RightArrowDynamic from '@/ui/RightArrowDynamic';
 import dynamic from 'next/dynamic';
 
@@ -258,7 +258,7 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
           onClick={() => dismissBanner(bannerId)}
           aria-label="Close banner"
         >
-          <CloseButton />
+          <CloseIcon />
         </Button>
       )}
 
@@ -268,7 +268,7 @@ export const Banner = ({ banner, index = 0 }: BannerProps) => {
           onClick={() => closeBanner(bannerId)}
           aria-label="Close expanded banner"
         >
-          <CloseButton />
+          <CloseIcon />
         </Button>
       )}
     </div>
