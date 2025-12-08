@@ -21,7 +21,7 @@ export function useUnreadMeetingsCount(enabled: boolean = true) {
   const pathname = usePathname();
 
   const fetchUnreadCount = useCallback(async () => {
-    if (!enabled || !session?.user) {
+    if (!enabled || !session?.user || !settings?.organization_id) {
       setUnreadCount(0);
       return;
     }
@@ -112,10 +112,10 @@ export function useUnreadMeetingsCount(enabled: boolean = true) {
     } catch (err) {
       console.error('❌ Error in fetchUnreadCount:', err);
     }
-  }, [enabled, session, isAdmin, isSuperadmin, settings.organization_id, pathname]);
+  }, [enabled, session, isAdmin, isSuperadmin, settings?.organization_id, pathname]);
 
   useEffect(() => {
-    if (!enabled || !session?.user) {
+    if (!enabled || !session?.user || !settings?.organization_id) {
       setUnreadCount(0);
       return;
     }

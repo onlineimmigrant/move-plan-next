@@ -208,7 +208,11 @@ const nextConfig = {
     // Support adaptive image quality from 60-100 for mobile optimization
     qualities: [60, 70, 75, 85, 90, 100],
     remotePatterns: [
-
+      {
+        protocol: 'https',
+        hostname: 'cdn.codedharmony.app',
+        pathname: '/**',
+      },
       {
         protocol: 'http',
         hostname: 'localhost',
