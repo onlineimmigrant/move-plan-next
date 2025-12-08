@@ -86,7 +86,7 @@ const QuizzesListPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
+      <div className="max-w-7xl mx-auto px-4 pb-16 sm:py-24">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
         <h1 className="px-4 sm:px-0 text-2xl font-bold text-gray-700 tracking-wide my-4 sm:mb-0">Quizzes</h1>
         <div className="relative w-full sm:w-80 px-4 sm:px-0">

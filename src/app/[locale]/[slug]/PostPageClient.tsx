@@ -267,7 +267,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                   {translatedPost.content && (
                     <article
                       ref={contentRef}
-                      className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container px-4 sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
+                      className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl font-light text-gray-600 table-scroll-container sm:px-6 lg:px-0 w-full max-w-full overflow-x-hidden break-words"
                       onDoubleClick={(e) => makeEditable(e, contentRef.current)}
                       style={{
                         wordWrap: 'break-word',

@@ -227,7 +227,7 @@ async function fetchProductSubTypes(baseUrl: string): Promise<ProductSubType[]> 
 function ProductsLoading() {
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 py-24">
+      <div className="max-w-7xl mx-auto px-4 pb-24 lg:py-24">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-32 mx-auto mb-12"></div>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">

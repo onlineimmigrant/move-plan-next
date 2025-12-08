@@ -98,7 +98,7 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
+      <div className="max-w-7xl mx-auto px-4 pb-16 sm:py-24">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12">
           <h1 className="text-2xl font-bold text-gray-700 tracking-wide mb-6 sm:mb-0">Support</h1>
           <div className="relative w-full sm:w-80 px-4 sm:px-0">

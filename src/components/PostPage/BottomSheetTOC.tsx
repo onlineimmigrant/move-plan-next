@@ -38,7 +38,7 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
     setIsMounted(true);
   }, []);
 
-  // Show button only when scrolling up or near bottom
+  // Show button only in last 20% of page for efficiency
   useEffect(() => {
     if (!isMounted) return;
 
@@ -52,17 +52,12 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
           const windowHeight = window.innerHeight;
           const scrollPercent = (currentScrollY / (documentHeight - windowHeight)) * 100;
           
-          // Show button after scrolling past header (300px)
-          setIsVisible(currentScrollY > 300);
+          // Show button only in last 20% of article (scrollPercent > 80)
+          const isInLastSection = scrollPercent > 80;
           
-          // Show button when:
-          // 1. Scrolling up (and not at very top)
-          // 2. Near bottom of article (last 20%)
-          const isScrollingUp = currentScrollY < lastScrollY && currentScrollY > 100;
-          const isNearBottom = scrollPercent > 80;
+          setIsVisible(isInLastSection);
+          setShowButton(isInLastSection);
           
-          setShowButton(isScrollingUp || isNearBottom);
-          setLastScrollY(currentScrollY);
           ticking = false;
         });
         ticking = true;
@@ -72,7 +67,7 @@ const BottomSheetTOCComponent: React.FC<BottomSheetTOCProps> = ({
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isMounted, lastScrollY]);
+  }, [isMounted]);
 
   // Prevent body scroll when sheet is open
   useEffect(() => {

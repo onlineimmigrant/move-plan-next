@@ -325,7 +325,7 @@ export default function FeaturesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 pb-12 lg:py-12">
           {/* Header Skeleton */}
           <div className="text-center mb-16">
             <div className="animate-pulse">
