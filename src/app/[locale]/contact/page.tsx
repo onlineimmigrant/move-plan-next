@@ -9,7 +9,7 @@ export default function ContactPage() {
   const { t } = useContactTranslations();
   
   return (
-    <div className=" container mx-auto px-4 pb-16 lg:py-16">
+    <div className=" container mx-auto px-4 py-16">
       <h1 className="text-3xl font-bold mt-24 mb-8">{t.contactUs}</h1>
       <Suspense fallback={<div>{t.loading}</div>}>
         <ContactForm />

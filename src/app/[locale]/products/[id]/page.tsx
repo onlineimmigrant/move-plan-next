@@ -304,7 +304,7 @@ async function fetchProduct(slug: string, baseUrl: string, userCurrency: string 
 function ProductDetailLoading() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
-      <div className="px-4 mx-auto max-w-7xl pb-16 md:py-10">
+      <div className="px-4 mx-auto max-w-7xl py-16 md:py-10">
         <div className="animate-pulse">
           <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
             {/* Enhanced product info skeleton */}
@@ -437,7 +437,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="md:hidden">
           {totalItems > 0 && <ProgressBar stage={1} />}
         </div>
-        <div className="mx-auto max-w-7xl pb-16 md:py-10 md:px-4">
+        <div className="mx-auto max-w-7xl py-16 md:py-10 md:px-4">
           <div className="max-w-7xl md:-mx-4 md:px-4 md:py-4 sm:px-6 sm:py-4 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:px-8 lg:items-start flex flex-col md:flex-row">
             <div className="order-2 md:order-2 lg:col-span-6 text-gray-900 text-sm md:text-base md:mt-2 sm:mt-0 mb-1 md:mb-2 px-4 md:px-0">
               <a
