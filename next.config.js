@@ -466,6 +466,12 @@ const nextConfig = {
     
     return config;
   },
+  
+  // Force new build ID on every deployment to prevent chunk mismatches
+  generateBuildId: async () => {
+    // Use timestamp to ensure unique build ID
+    return `build-${Date.now()}`;
+  },
 };
 
 module.exports = withNextIntl(nextConfig);
