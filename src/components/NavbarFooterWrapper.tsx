@@ -16,7 +16,9 @@ export default function NavbarFooterWrapper({
   return (
     <>
       <Header menuItems={menuItems} fixedBannersHeight={fixedBannersHeight} />
-      {children}
+      <div style={{ paddingTop: `${fixedBannersHeight + 80}px` }}>
+        {children}
+      </div>
       <Footer menuItems={menuItems} />
     </>
   );
