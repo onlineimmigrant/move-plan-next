@@ -34,20 +34,32 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   // Extract footer styles for consistent breadcrumb styling
   const footerStyles = useMemo(() => {
     if (!settings?.footer_style) {
-      return null;
+      return {
+        background: 'neutral-900',
+        color: 'neutral-400',
+        colorHover: 'white',
+        is_gradient: false,
+        gradient: undefined
+      };
     }
 
     if (typeof settings.footer_style === 'object' && settings.footer_style !== null) {
       return {
-        background: settings.footer_style.background,
-        color: settings.footer_style.color,
-        colorHover: settings.footer_style.color_hover,
-        is_gradient: settings.footer_style.is_gradient,
-        gradient: settings.footer_style.gradient
+        background: settings.footer_style.background || 'neutral-900',
+        color: settings.footer_style.color || 'neutral-400',
+        colorHover: settings.footer_style.color_hover || 'white',
+        is_gradient: settings.footer_style.is_gradient || false,
+        gradient: settings.footer_style.gradient || undefined
       };
     }
 
-    return null;
+    return {
+      background: 'neutral-900',
+      color: 'neutral-400',
+      colorHover: 'white',
+      is_gradient: false,
+      gradient: undefined
+    };
   }, [settings?.footer_style]);
 
   // Fetch organization type
@@ -243,10 +255,6 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
   }
 
   if (!breadcrumbs || breadcrumbs.length === 0) {
-    return null;
-  }
-
-  if (!footerStyles) {
     return null;
   }
 
