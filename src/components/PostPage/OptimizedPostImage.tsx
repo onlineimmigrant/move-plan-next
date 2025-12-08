@@ -11,6 +11,7 @@ interface OptimizedPostImageProps {
   style?: React.CSSProperties;
   priority?: boolean; // Load immediately for LCP optimization
   loading?: 'lazy' | 'eager'; // HTML loading attribute
+  sizes?: string; // Responsive sizes attribute for mobile optimization
 }
 
 /**
@@ -40,6 +41,7 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
   style = { maxWidth: '100%', height: 'auto' },
   priority = false,
   loading = 'lazy',
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px',
 }) => {
   const [isInView, setIsInView] = useState(priority); // Load immediately if priority
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -174,7 +176,7 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
             loading={priority ? 'eager' : loading}
             fetchPriority={priority ? 'high' : 'auto'}
             srcSet={srcSet || undefined}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
+            sizes={sizes}
           />
         ) : (
           // Shimmer placeholder while not in view
@@ -201,7 +203,7 @@ export const OptimizedPostImage: React.FC<OptimizedPostImageProps> = ({
           placeholder="blur"
           blurDataURL={`data:image/svg+xml;base64,${toBase64(shimmer(imageDimensions.width, imageDimensions.height))}`}
           quality={imageQuality}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
+          sizes={sizes}
           priority={false}
         />
       ) : (

@@ -678,10 +678,13 @@ const PostEditor: React.FC<PostEditorProps> = ({
               onEditorChange={onEditorChange}
             />
           ) : (
-            <EditorContent
-              editor={editor}
-              className="prose prose-lg max-w-none p-6 min-h-[500px] focus:outline-none"
-            />
+            <div style={{ position: 'relative', overflow: 'hidden' }}>
+              <EditorContent
+                editor={editor}
+                className="prose prose-lg max-w-none p-6 min-h-[500px] focus:outline-none"
+                style={{ overflowAnchor: 'none' }}
+              />
+            </div>
           )}
         </div>
 

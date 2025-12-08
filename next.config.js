@@ -307,9 +307,10 @@ const nextConfig = {
         splitChunks: {
           chunks: 'all',
           maxInitialRequests: 25,
-          minSize: 20000,
+          minSize: 15000, // Lower threshold to split more aggressively
           maxAsyncRequests: 30,
-          maxSize: 244000, // Split chunks larger than 244KB (from Lighthouse report)
+          maxSize: 50000, // Split chunks larger than 50KB to reduce main thread blocking
+          minChunks: 1,
           // Reduce webpack runtime overhead
           automaticNameDelimiter: '.',
           cacheGroups: {
@@ -357,7 +358,7 @@ const nextConfig = {
               chunks: 'initial', // Keep in initial - used in Header
               enforce: true,
               reuseExistingChunk: true,
-              maxSize: 40000, // Split if larger than 40KB
+              maxSize: 20000, // Split more aggressively to reduce main thread blocking
             },
             // Separate react-icons to enable tree-shaking
             reactIcons: {
@@ -386,12 +387,12 @@ const nextConfig = {
             },
             // Common UI libraries - headlessui used in Header (can't defer)
             headlessui: {
-              test: /[\\/]node_modules[\\/]@headlessui[\\/]/,
+              test: /[\/]node_modules[\/]@headlessui[\/]/,
               name: 'headlessui',
               priority: 15,
               chunks: 'initial',
               minSize: 10000,
-              maxSize: 50000, // Split if larger than 50KB
+              maxSize: 30000, // Split more aggressively to keep chunks under 50ms parse time
               reuseExistingChunk: true,
             },
             // React core libraries (shared across all pages)
@@ -403,11 +404,11 @@ const nextConfig = {
             },
             // Split Next.js into smaller chunks for better parsing
             nextCore: {
-              test: /[\\/]node_modules[\\/]next[\\/]dist[\\/]compiled[\\/]/,
+              test: /[\/]node_modules[\/]next[\/]dist[\/]compiled[\/]/,
               name: 'vendors.next-compiled',
               priority: 11,
               chunks: 'initial',
-              maxSize: 100000, // Split into max 100KB chunks
+              maxSize: 40000, // Split into max 40KB chunks to keep parse time under 50ms
               reuseExistingChunk: true,
             },
             nextClient: {

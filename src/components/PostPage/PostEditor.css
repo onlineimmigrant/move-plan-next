@@ -148,6 +148,13 @@
 .ProseMirror {
   outline: none !important;
   line-height: 1.7;
+  overflow-anchor: none;
+}
+
+/* Prevent automatic scrolling in modals */
+.ProseMirror * {
+  scroll-margin: 0 !important;
+  scroll-padding: 0 !important;
 }
 
 .ProseMirror h1 {

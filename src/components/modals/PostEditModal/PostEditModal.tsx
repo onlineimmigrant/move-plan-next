@@ -136,10 +136,47 @@ export default function PostEditModal() {
 
   // Ref for post media carousel
   const carouselRef = useRef<PostMediaCarouselHandle>(null);
+  
+  // Ref for editor container to prevent auto-scroll
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Prevent ProseMirror from scrolling the container
+  useEffect(() => {
+    if (!isOpen || !editorContainerRef.current) return;
+
+    const container = editorContainerRef.current;
+    const scrollTop = container.scrollTop;
+
+    // Intercept all scroll attempts
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      container.scrollTop = scrollTop;
+    };
+
+    // Store original scrollIntoView
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    
+    // Override scrollIntoView globally while modal is open
+    Element.prototype.scrollIntoView = function() {
+      // Check if this element is inside our modal
+      if (container.contains(this)) {
+        // Do nothing - prevent the scroll
+        return;
+      }
+      // Allow scrollIntoView for elements outside modal
+      originalScrollIntoView.apply(this, arguments as any);
+    };
+
+    return () => {
+      // Restore original scrollIntoView
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+    };
+  }, [isOpen]);
 
   // Computed values
   const isLandingPage = formData.section === 'Landing';
@@ -341,7 +378,7 @@ export default function PostEditModal() {
     >
       {/* Backdrop - More transparent with blur */}
       <div 
-        className="absolute inset-0 bg-black/15 backdrop-blur-md"
+        className="absolute inset-0 bg-black/15 backdrop-blur-md -z-10 pointer-events-auto"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -355,7 +392,7 @@ export default function PostEditModal() {
             }
           }}
           className="relative w-full h-[90vh] flex flex-col bg-white/40 dark:bg-gray-900/40 backdrop-blur-2xl 
-                   rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+                   rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {renderModalContent()}
@@ -373,7 +410,7 @@ export default function PostEditModal() {
           bounds="window"
           dragHandleClassName="modal-drag-handle"
           enableResizing={true}
-          className="pointer-events-auto"
+          className="pointer-events-auto z-10"
         >
           <div 
             ref={(el) => {
@@ -551,7 +588,7 @@ export default function PostEditModal() {
         )}
 
         {/* Main Content - Editor */}
-        <div className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20 p-0 relative">
+        <div ref={editorContainerRef} className="flex-1 overflow-y-auto bg-white/20 dark:bg-gray-900/20 p-0 relative" style={{ scrollBehavior: 'auto' }}>
           {isFullScreen ? (
             <div className="grid lg:grid-cols-6 gap-x-4 px-4 h-full">
               {/* TOC Sidebar */}

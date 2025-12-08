@@ -353,6 +353,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://pub.r2.wvservices.exchange" />
         <link rel="preconnect" href="https://pub.r2.wvservices.exchange" crossOrigin="anonymous" />
         
+        {/* Async non-critical stylesheet (blog typography) - preload with low priority */}
+        <link rel="preload" as="style" href="/styles/prose.css" />
+        <noscript>
+          <link rel="stylesheet" href="/styles/prose.css" />
+        </noscript>
+        
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         
         {/* Mobile Status Bar Styling - Match header background */}
@@ -372,11 +378,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           fontFamily: `var(${selectedFontVar}), system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`
         }}
       >
-        {/* Async non-critical stylesheet (blog typography) */}
-        <link rel="preload" as="style" href="/styles/prose.css" />
-        <noscript>
-          <link rel="stylesheet" href="/styles/prose.css" />
-        </noscript>
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
         <ClientProviders
           settings={settings}

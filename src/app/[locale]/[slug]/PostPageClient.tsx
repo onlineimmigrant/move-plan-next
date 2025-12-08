@@ -292,6 +292,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                                   style={{maxWidth: '100%', height: 'auto'}}
                                   priority={isFirstImage}
                                   loading={isFirstImage ? 'eager' : 'lazy'}
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
                                 />
                               );
                             },
