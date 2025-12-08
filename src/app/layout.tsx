@@ -378,7 +378,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Inline critical CSS for instant render - no blocking */}
         <style dangerouslySetInnerHTML={{ __html: `
           html{scroll-behavior:smooth;scroll-padding-top:0}
-          body{margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+          body{margin:0;padding:0;padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
           *{font-family:var(${selectedFontVar},system-ui,-apple-system,sans-serif)}
           .scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}
           .scrollbar-none::-webkit-scrollbar{display:none}

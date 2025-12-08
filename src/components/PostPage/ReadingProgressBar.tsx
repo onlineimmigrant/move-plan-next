@@ -38,7 +38,7 @@ export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
     <>
       {/* Progress bar - Bottom positioned */}
       <div 
-        className="fixed bottom-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-200 z-50"
+        className="fixed bottom-0 left-0 right-0 h-0.5 bg-gray-100 dark:bg-gray-300 z-50"
         role="progressbar"
         aria-valuenow={progress}
         aria-valuemin={0}

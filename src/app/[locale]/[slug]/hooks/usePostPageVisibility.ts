@@ -91,8 +91,8 @@ export function usePostPageVisibility(post: Post | null, tocLength: number) {
     if (isMinimalPost && !hasHeaderContent && !post?.content) {
       return 'lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden';
     }
-    // Default padding
-    return 'py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden';
+    // Reduced top padding on mobile (pt-6 = 24px), desktop keeps py-16
+    return 'pt-6 pb-16 lg:py-16 lg:col-span-4 text-base leading-7 text-gray-900 bg-white overflow-hidden';
   }, [isMinimalPost, hasHeaderContent, post?.content]);
 
   // Determine main padding based on content presence

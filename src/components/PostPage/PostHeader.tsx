@@ -113,14 +113,14 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
 
       {/* Title - Only show if exists */}
       {post.title && (
-        <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito">
+        <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl font-nunito sm:px-6 lg:px-0">
           {post.title}
         </h1>
       )}
 
       {/* Date and Author Info - Hide for minimal type */}
       {!minimal && (
-        <div className="flex items-center gap-3 text-sm text-gray-500 mb-1">
+        <div className="flex items-center gap-3 text-sm text-gray-500 mb-1 sm:px-6 lg:px-0">
           {/* Date */}
           <time dateTime={post.created_on} className="font-medium">
             {formattedDate}
@@ -138,7 +138,7 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
 
       {/* Description - Hide for minimal or if empty */}
       {!minimal && post.description && (
-        <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mt-6 mb-12">{post.description}</p>
+        <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mt-6 mb-12 sm:px-6 lg:px-0">{post.description}</p>
       )}
       
       {/* Admin Buttons - Debug: Always show */}

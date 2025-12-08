@@ -253,7 +253,7 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
                 <>
                   {visibility.showPostHeader && visibility.hasHeaderContent && (
                     <div
-                      className="relative px-4 sm:px-6 lg:px-0 group"
+                      className="relative group"
                     >
                       <PostHeader
                         post={translatedPost}
