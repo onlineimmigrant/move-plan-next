@@ -177,7 +177,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = ({ templat
           return (
           <section
             key={section.id}
-            className={`relative isolate group px-6 lg:px-8 py-28 sm:py-36 overflow-hidden`}
+            className={`relative isolate group px-6 py-28 overflow-hidden`}
             style={{
               ...headingBackgroundStyle,
               minHeight: hasImage ? '600px' : '400px'

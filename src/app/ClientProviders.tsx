@@ -60,7 +60,10 @@ const HeroSectionEditModal = dynamic(() => import('@/components/modals/HeroSecti
 const HeaderEditModal = dynamic(() => import('@/components/modals/HeaderEditModal/HeaderEditModal'));
 const FooterEditModal = dynamic(() => import('@/components/modals/FooterEditModal/FooterEditModal'));
 const LayoutManagerModal = dynamic(() => import('@/components/modals/LayoutManagerModal/LayoutManagerModal'));
-const SettingsModal = dynamic(() => import('@/components/modals/SettingsModal').then(mod => ({ default: mod.SettingsModal })));
+const SettingsModal = dynamic(() => import('@/components/modals/SettingsModal').then(mod => ({ default: mod.SettingsModal })), {
+  ssr: false,
+  loading: () => null
+});
 const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'));
 
 const UnifiedModalManager = dynamic(() => import('@/components/modals/UnifiedMenu').then(mod => ({ default: mod.UnifiedModalManager })), { 

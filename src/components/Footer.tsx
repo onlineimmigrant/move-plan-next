@@ -894,7 +894,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       {/* Footer Disclaimer (if enabled) */}
       {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
         <div className="mt-8 md:mt-10 text-center">
-          <p className="text-xs md:text-sm opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
+          <p className="text-sm opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
             {settings.legal_notice.footer_disclaimer}
           </p>
         </div>
@@ -1234,7 +1234,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   return (
     <>
       <footer 
-        className={`text-white px-6 md:px-8 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
+        className={`px-6 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
         role="contentinfo"
         style={{
           ...getBackgroundStyle(
@@ -1242,7 +1242,8 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             footerStyles.gradient,
             footerStyles.background
           ),
-          minHeight: footerStyles.type === 'compact' ? '200px' : '400px'
+          minHeight: footerStyles.type === 'compact' ? '200px' : '400px',
+          color: getColorValue(footerStyles.color)
         }}
       >
         <div className="max-w-7xl mx-auto">
