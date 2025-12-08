@@ -77,9 +77,11 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
   const [sourceLanguage, setSourceLanguage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('');
 
-  // Check for banner display cookies with 2-second delay
+  // Check for banner display cookies with 12-second delay
   useEffect(() => {
-    const checkBannerCookies = () => {
+    // 12-second delay before executing ANY banner logic (performance + UX improvement)
+    // Defers cookie parsing, localStorage reads, and state updates until actually needed
+    const timer = setTimeout(() => {
       const shouldShow = document.cookie.includes('showLanguageBanner=true');
       const source = document.cookie.split(';')
         .find(c => c.trim().startsWith('bannerSourceLanguage='))
@@ -95,10 +97,8 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
         setSourceLanguage(source);
         setTargetLanguage(target);
       }
-    };
-
-    // 2-second delay before showing banner
-    const timer = setTimeout(checkBannerCookies, 2000);
+    }, 12000);
+    
     return () => clearTimeout(timer);
   }, []);
 
