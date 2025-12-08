@@ -200,10 +200,8 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
         
         showToast('success', 'Hero section created successfully!');
         
-        // Revalidate cache to show changes immediately
-        revalidateHomepage(organizationId).catch(err => 
-          console.warn('Cache revalidation failed (non-critical):', err)
-        );
+        // Revalidate cache to show changes immediately on next page load
+        await revalidateHomepage(organizationId);
         
         // Update local state
         setEditingSection(result.website_hero);
@@ -273,10 +271,8 @@ export function HeroSectionEditProvider({ children }: { children: ReactNode }) {
 
         showToast('success', 'Hero section updated successfully!');
         
-        // Revalidate cache to show changes immediately
-        revalidateHomepage(organizationId).catch(err => 
-          console.warn('Cache revalidation failed (non-critical):', err)
-        );
+        // Revalidate cache to show changes immediately on next page load
+        await revalidateHomepage(organizationId);
         
         // Update local state
         setEditingSection({ ...editingSection, ...data });

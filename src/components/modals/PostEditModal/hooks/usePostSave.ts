@@ -124,11 +124,9 @@ export function usePostSave(
       // Dispatch event for instant updates
       window.dispatchEvent(new CustomEvent('post-updated', { detail: savedPost }));
 
-      // Revalidate cache
+      // Revalidate cache - this makes changes appear immediately on next page load
       const postSlug = savedPost.slug || formData.slug;
-      revalidatePage(postSlug).catch(err => {
-        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
-      });
+      await revalidatePage(postSlug);
 
       if (closeAfterSave) {
         closeModal();

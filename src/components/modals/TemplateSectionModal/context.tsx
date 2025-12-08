@@ -199,10 +199,8 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         detail: savedSection 
       }));
       
-      // Trigger cache revalidation for instant updates in production
-      revalidateHomepage(savedSection.organization_id || undefined).catch(err => {
-        console.warn('⚠️ Cache revalidation failed (non-critical):', err);
-      });
+      // Trigger cache revalidation for instant updates on next page load
+      await revalidateHomepage(savedSection.organization_id || undefined);
       
       return savedSection;
     } catch (error) {

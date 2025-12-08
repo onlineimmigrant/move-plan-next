@@ -14,10 +14,9 @@ import ProductDetailMediaDisplay from '@/components/product/ProductDetailMediaDi
 import ClientProductDetail from '@/components/product/ClientProductDetail';
 import { headers } from 'next/headers';
 
-// SSG for product pages - pre-build at deploy time, fallback to ISR if needed
-export const dynamic = 'force-static';
+// ISR for product pages - pre-build at deploy time, allow admin edits to appear within 60s
+export const revalidate = 60; // Revalidate every 60 seconds for admin changes
 export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
-export const revalidate = false; // Fully static for pre-built pages
 
 // Generate static params for all products
 export async function generateStaticParams() {

@@ -231,12 +231,11 @@ export default async function Page() {
 }
 
 // ============================================================================
-// STATIC SITE GENERATION (SSG) - Marketing pages only
+// INCREMENTAL STATIC REGENERATION (ISR)
 // ============================================================================
-// Generate static pages for homepage in all locales at build time
-// This eliminates database queries for the homepage = instant PageSpeed Insights
-export const dynamic = 'force-static';
-export const revalidate = false; // Fully static, no revalidation
+// Generate static pages at build time, but allow admin edits to appear
+// within 60 seconds without requiring rebuild
+export const revalidate = 60; // Revalidate every 60 seconds
 
 // Pre-generate homepage for all supported locales
 export async function generateStaticParams() {

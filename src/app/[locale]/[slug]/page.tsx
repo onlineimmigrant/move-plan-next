@@ -6,10 +6,9 @@ import PostPageClient from './PostPageClient';
 import { PostPageErrorBoundary } from '@/components/PostPage/PostPageErrorBoundary';
 import PerfPostMount from '../../../components/perf/PerfPostMount';
 
-// SSG for blog posts - pre-build at deploy time, fallback to ISR if needed
-export const dynamic = 'force-static';
+// ISR for blog posts - pre-build at deploy time, allow admin edits to appear within 60s
 export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
-export const revalidate = false; // Fully static for pre-built pages
+export const revalidate = 60; // Revalidate every 60 seconds for admin changes
 
 // Set proper cache headers for CDN
 export const metadata = {
