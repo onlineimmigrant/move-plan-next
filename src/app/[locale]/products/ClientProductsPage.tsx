@@ -313,76 +313,72 @@ const ClientProductsPage = memo(function ClientProductsPage({
               
               return (
                 <div key={product.id} className="group w-full relative">
-                  <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full min-h-[320px] sm:min-h-[380px]">
-                    {product.links_to_image && product.links_to_image.trim() !== '' && (
-                      <div className="relative w-full h-48 sm:h-52 flex-shrink-0 overflow-hidden group/img">
-                        {/* Background Link for image - accessibility */}
-                        <Link
-                          href={productUrl}
-                          className="absolute inset-0 z-0"
-                          aria-label={`View ${product.product_name ?? t.unnamedProduct}`}
-                        >
-                          <span className="sr-only">View product</span>
-                        </Link>
-                        
-                        <Image
-                          src={product.links_to_image}
-                          alt={product.product_name ?? t.productImage}
-                          fill
-                          priority={isFirst}
-                          loading={isFirst ? 'eager' : 'lazy'}
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                          onError={(e) => handleImageError(e, product.links_to_image || undefined)}
-                        />
-                        
-                        {/* Unsplash Attribution */}
-                        {unsplashAttr && (
+                  <Link href={productUrl} prefetch className="block"
+                    onClick={() => {
+                      try {
+                        performance.mark('PerfProdDetail-click');
+                        const ts = performance.now().toFixed(0);
+                        console.log(`[PerfProdDetail] click at ${ts}ms product ${product.id}`);
+                      } catch {}
+                    }}
+                  >
+                    <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full">
+                      {product.links_to_image && product.links_to_image.trim() !== '' && (
+                        <div className="relative w-full aspect-square flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
+                          <Image
+                            src={product.links_to_image}
+                            alt={product.product_name ?? t.productImage}
+                            fill
+                            priority={isFirst}
+                            loading={isFirst ? 'eager' : 'lazy'}
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                            onError={(e) => handleImageError(e, product.links_to_image || undefined)}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Content */}
+                      <div className="p-4 sm:p-6 flex flex-col flex-grow">
+                        <h2 className={`text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-${themeColors.primary.textHover} transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]`}>
+                          {product.product_name ?? t.unnamedProduct}
+                        </h2>
+                        <div className="mt-auto">
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
+                            <div className="font-bold text-base sm:text-lg text-gray-700">
+                              <span>
+                                {(product.computed_currency_symbol ?? product.currency_manual_symbol) ?? ''}
+                              </span>
+                              <span>
+                                {product.computed_min_price ?? product.price_manual ?? ''}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
+                            <span className={`text-${themeColors.primary.text} transition-all duration-300 group-hover:translate-x-1`}>
+                              <ArrowRightIcon className="h-5 w-5" />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                  
+                  {/* Unsplash Attribution - Outside Link to avoid nested <a> tags */}
+                  {unsplashAttr && product.links_to_image && (
+                    <div className="absolute top-0 left-0 w-full aspect-square pointer-events-none">
+                      <div className="relative w-full h-full">
+                        <div className="pointer-events-auto">
                           <UnsplashAttribution
                             attribution={unsplashAttr}
                             variant="overlay"
                             position="bottom-right"
                           />
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Content Link with perf instrumentation */}
-                    <Link
-                      href={productUrl}
-                      className="p-4 sm:p-6 flex flex-col flex-grow"
-                      prefetch
-                      onClick={() => {
-                        try {
-                          performance.mark('PerfProdDetail-click');
-                          const ts = performance.now().toFixed(0);
-                          console.log(`[PerfProdDetail] click at ${ts}ms product ${product.id}`);
-                        } catch {}
-                      }}
-                    >
-                      <h2 className={`text-base sm:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-${themeColors.primary.textHover} transition-colors duration-200 min-h-[3rem] sm:min-h-[3.5rem]`}>
-                        {product.product_name ?? t.unnamedProduct}
-                      </h2>
-                      <div className="mt-auto">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-gray-500 text-sm sm:text-base">{t.from}</span>
-                          <div className="font-bold text-base sm:text-lg text-gray-700">
-                            <span>
-                              {(product.computed_currency_symbol ?? product.currency_manual_symbol) ?? ''}
-                            </span>
-                            <span>
-                              {product.computed_min_price ?? product.price_manual ?? ''}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <span className={`text-${themeColors.primary.text} transition-all duration-300 group-hover:translate-x-1`}>
-                            <ArrowRightIcon className="h-5 w-5" />
-                          </span>
                         </div>
                       </div>
-                    </Link>
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

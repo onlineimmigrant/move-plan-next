@@ -24,19 +24,23 @@ import { ShopModalProvider } from '@/components/modals/ShopModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
-import NavbarFooterWrapper from '@/components/NavbarFooterWrapper';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
-// Lazy load non-critical components
-// Use .then(mod => mod.default || mod) to handle memo() wrapped exports
-const Breadcrumbs = dynamic(() => import('@/components/Breadcrumbs').then(mod => mod.default || mod), {
+// Dynamic import for NavbarFooterWrapper to avoid circular dependencies
+const NavbarFooterWrapper = dynamic(() => import('@/components/NavbarFooterWrapper'), {
   ssr: false,
   loading: () => null
 });
-const UnifiedSections = dynamic(() => import('@/components/UnifiedSections').then(mod => mod.default || mod), {
+
+// Lazy load non-critical components
+const Breadcrumbs = dynamic(() => import('@/components/Breadcrumbs'), {
+  ssr: false,
+  loading: () => null
+});
+const UnifiedSections = dynamic(() => import('@/components/UnifiedSections'), {
   ssr: false,
   loading: () => null
 });

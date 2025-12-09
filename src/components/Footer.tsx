@@ -250,6 +250,21 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { isAdmin } = useAuth();
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [showLegalNotice, setShowLegalNotice] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Defer footer rendering to prevent CLS on pages with minimal content
+  useEffect(() => {
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        const handle = requestIdleCallback(() => setIsReady(true), { timeout: 100 });
+        return () => cancelIdleCallback(handle);
+      } else {
+        const timer = setTimeout(() => setIsReady(true), 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
   
   // Accordion state for mobile footer sections (CLS optimization)
   const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set());
@@ -1242,12 +1257,14 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             footerStyles.gradient,
             footerStyles.background
           ),
+          color: getColorValue(footerStyles.color),
           minHeight: footerStyles.type === 'compact' ? '200px' : '400px',
-          color: getColorValue(footerStyles.color)
+          contentVisibility: 'auto',
+          containIntrinsicSize: footerStyles.type === 'compact' ? '0 200px' : '0 400px'
         }}
       >
-        <div className="max-w-7xl mx-auto">
-          {renderFooterContent()}
+        <div className="max-w-7xl mx-auto" style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.15s ease-in' }}>
+          {isReady && renderFooterContent()}
         </div>
       </footer>
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />

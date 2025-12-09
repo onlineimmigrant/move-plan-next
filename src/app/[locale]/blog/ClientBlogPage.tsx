@@ -918,100 +918,45 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
               // }
               
               return (
-              <div key={`${category}-${post.id}`} className="group">
-                <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  {imageUrl ? (
-                    <div className="relative w-full aspect-square flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
-                      <Link href={getPostUrl(post)} prefetch={false} className="absolute inset-0 z-0"
-                        onMouseEnter={() => router.prefetch(getPostUrl(post))}
-                      >
-                        <span className="sr-only">View post: {post.title}</span>
-                      </Link>
-                      <Image
-                        src={imageUrl}
-                        alt={post.title ?? 'Blog post image'}
-                        fill
-                        priority={posts.indexOf(post) < 2}
-                        className={isSvg ? 'object-contain max-h-60 max-w-[60%]' : 'object-cover'}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        onError={(e) => {
-                          // Silently handle image load failure with fallback UI
-                          e.currentTarget.style.display = 'none';
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            parent.classList.add('bg-gradient-to-br', 'from-sky-50', 'to-blue-100');
-                            const fallbackIcon = document.createElement('div');
-                            fallbackIcon.className = 'absolute inset-0 flex items-center justify-center text-6xl';
-                            fallbackIcon.textContent = '📄';
-                            parent.appendChild(fallbackIcon);
-                          }
-                        }}
-                      />
-                      
-                      {/* Unsplash Attribution - Two-tier design */}
-                      {unsplashAttr && (
-                        <>
-                          {/* Always visible: Small Unsplash badge */}
-                          <a
-                            href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute bottom-1.5 right-1.5 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover/img:opacity-0 z-10"
-                            onClick={(e) => e.stopPropagation()}
-                            title="Photo from Unsplash"
-                          >
-                            <svg className="w-3 h-3 text-black/80" fill="currentColor" viewBox="0 0 32 32">
-                              <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                            </svg>
-                          </a>
-                          
-                          {/* On hover: Full attribution */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover/img:opacity-100 transition-all duration-300 pointer-events-none">
-                            <div className="flex items-center gap-1 pointer-events-auto">
-                              <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
-                                <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-                              </svg>
-                              <span className="text-white/90">Photo by{' '}
-                                <a
-                                  href={`${unsplashAttr.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white font-medium hover:text-blue-300 transition-colors"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {unsplashAttr.photographer}
-                                </a>
-                                {' '}on{' '}
-                                <a
-                                  href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white font-medium hover:text-blue-300 transition-colors"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Unsplash
-                                </a>
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <Link href={getPostUrl(post)} className="w-full aspect-square flex-shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light})` }}>
+              <div key={`${category}-${post.id}`} className="group relative">
+                <Link href={getPostUrl(post)} prefetch={false} className="block"
+                  onMouseEnter={() => router.prefetch(getPostUrl(post))}>
+                  <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    {imageUrl ? (
+                      <div className="relative w-full aspect-square flex-shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center group/img">
+                        <Image
+                          src={imageUrl}
+                          alt={post.title ?? 'Blog post image'}
+                          fill
+                          priority={posts.indexOf(post) < 2}
+                          className={isSvg ? 'object-contain max-h-60 max-w-[60%]' : 'object-cover'}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          onError={(e) => {
+                            // Silently handle image load failure with fallback UI
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.classList.add('bg-gradient-to-br', 'from-sky-50', 'to-blue-100');
+                              const fallbackIcon = document.createElement('div');
+                              fallbackIcon.className = 'absolute inset-0 flex items-center justify-center text-6xl';
+                              fallbackIcon.textContent = '📄';
+                              parent.appendChild(fallbackIcon);
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                    <div className="w-full aspect-square flex-shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${themeColors.cssVars.primary.lighter}, ${themeColors.cssVars.primary.light})` }}>
                       <span className="text-6xl">📄</span>
-                    </Link>
+                    </div>
                   )}
                   <div className="flex flex-col p-6 flex-grow">
-                    <Link href={getPostUrl(post)} prefetch={false}
-                      onMouseEnter={() => router.prefetch(getPostUrl(post))}>
-                      <h2 
-                        className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 transition-colors"
-                        dangerouslySetInnerHTML={{ __html: highlightText(post.title ?? 'Untitled', debouncedQuery) }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
-                        onMouseLeave={(e) => e.currentTarget.style.color = ''}
-                      />
-                    </Link>
+                    <h2 
+                      className="tracking-tight text-lg line-clamp-2 font-semibold text-gray-900 transition-colors"
+                      dangerouslySetInnerHTML={{ __html: highlightText(post.title ?? 'Untitled', debouncedQuery) }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = themeColors.cssVars.primary.base}
+                      onMouseLeave={(e) => e.currentTarget.style.color = ''}
+                    />
                   </div>
                   <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-transparent flex-shrink-0 flex justify-between items-center relative">
                     {/* Time ago and author */}
@@ -1127,8 +1072,60 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                         </div>
                       </>
                     )}
-                  </div>
                 </div>
+              </div>
+            </Link>
+              
+              {/* Unsplash Attribution - Outside Link to avoid nested <a> tags */}
+              {unsplashAttr && imageUrl && (
+                  <div className="absolute top-0 left-0 w-full aspect-square pointer-events-none overflow-hidden rounded-t-xl">
+                    <div className="relative w-full h-full">
+                      {/* Always visible: Small Unsplash badge */}
+                      <a
+                        href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute bottom-1.5 right-1.5 bg-white/70 hover:bg-white/90 backdrop-blur-sm rounded p-1 shadow-md hover:shadow-lg transition-all group-hover:opacity-0 z-10 pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Photo from Unsplash"
+                      >
+                        <svg className="w-3 h-3 text-black/80" fill="currentColor" viewBox="0 0 32 32">
+                          <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                        </svg>
+                      </a>
+                      
+                      {/* On hover: Full attribution */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-md text-white text-xs px-3 py-2.5 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="flex items-center gap-1 pointer-events-auto">
+                          <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32">
+                            <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                          </svg>
+                          <span className="text-white/90">Photo by{' '}
+                            <a
+                              href={`${unsplashAttr.photographer_url}?utm_source=codedharmony&utm_medium=referral`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-white font-medium hover:text-blue-300 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {unsplashAttr.photographer}
+                            </a>
+                            {' '}on{' '}
+                            <a
+                              href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-white font-medium hover:text-blue-300 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Unsplash
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               );
             })}
