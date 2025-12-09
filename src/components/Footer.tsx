@@ -14,6 +14,8 @@ import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+//import SRAValidationBadge from "./SRAValidationBadge";
+
 
 const ContactModal = dynamic(() => import('./contact/ContactModal'), { 
   ssr: false,
@@ -906,16 +908,16 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         )}
       </nav>
 
-      {/* Footer Disclaimer (if enabled) */}
-      {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
-        <div className="mt-8 md:mt-10 text-center">
-          <p className="text-sm opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
-            {settings.legal_notice.footer_disclaimer}
-          </p>
-        </div>
-      )}
-
       <div className="mt-12 md:border-t border-gray-200/50 md:pt-6">
+        {/* Footer Disclaimer (if enabled) */}
+        {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
+          <div className="mb-6">
+            <p className="text-sm opacity-70 text-left" style={{ color: getColorValue(footerStyles.color) }}>
+              {settings.legal_notice.footer_disclaimer}
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <small className="text-sm" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
@@ -984,7 +986,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           )}
         </div>
         {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
-          <p className="text-xs opacity-70" style={{ color: getColorValue(footerStyles.color) }}>
+          <p className="text-xs opacity-70 text-left mb-4" style={{ color: getColorValue(footerStyles.color) }}>
             {settings.legal_notice.footer_disclaimer}
           </p>
         )}
@@ -1130,7 +1132,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           )}
         </div>
         {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
-          <p className="text-xs opacity-70 mb-4" style={{ color: getColorValue(footerStyles.color) }}>
+          <p className="text-xs opacity-70 text-left mb-4" style={{ color: getColorValue(footerStyles.color) }}>
             {settings.legal_notice.footer_disclaimer}
           </p>
         )}
@@ -1264,12 +1266,25 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         }}
       >
         <div className="max-w-7xl mx-auto" style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.15s ease-in' }}>
-          {isReady && renderFooterContent()}
+          {isReady && (
+            <>
+              {renderFooterContent()}
+              
+              {/* SRA Validation Badge - Temporarily disabled */}
+              {/* <div 
+                className="mt-8 pt-8 border-t text-center"
+                style={{ borderColor: `${getColorValue(footerStyles.color)}33` }}
+              >
+                <SRAValidationBadge />
+              </div> */}
+            </>
+          )}
         </div>
       </footer>
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
       {settings.legal_notice?.enabled && (
         <LegalNoticeModal isOpen={showLegalNotice} onClose={() => setShowLegalNotice(false)} />
+
       )}
     </>
   );

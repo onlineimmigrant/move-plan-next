@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ArrowRightIcon, PlusIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import CategoriesBar from '@/components/product/CategoriesBar';
 import IconButton from '@/ui/IconButton';
 import FeedbackAccordion from '@/components/TemplateSections/FeedbackAccordion';
@@ -113,6 +113,12 @@ const ClientProductsPage = memo(function ClientProductsPage({
   const [searchHeight, setSearchHeight] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const productsRef = useRef<HTMLDivElement>(null);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [isSearching, setIsSearching] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
 
   // Initialize activeSubType based on query parameter
   useEffect(() => {
@@ -125,12 +131,79 @@ const ClientProductsPage = memo(function ClientProductsPage({
     }
   }, [searchParams, initialSubTypes]);
 
+  // Debounce search query
+  useEffect(() => {
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setIsSearching(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('recentProductSearches');
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+  }, []);
+
+  // Generate autocomplete suggestions
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const suggestions = initialProducts
+        .filter(p => p.product_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+        .slice(0, 5)
+        .map(p => p.product_name || '')
+        .filter(name => name.toLowerCase() !== searchQuery.toLowerCase());
+      setAutocompleteSuggestions(suggestions);
+    } else {
+      setAutocompleteSuggestions([]);
+    }
+  }, [searchQuery, initialProducts]);
+
+  // Save to recent searches
+  const saveRecentSearch = useCallback((query: string) => {
+    if (query.trim()) {
+      const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
+      setRecentSearches(updated);
+      localStorage.setItem('recentProductSearches', JSON.stringify(updated));
+    }
+  }, [recentSearches]);
+
+  // Keyboard navigation for autocomplete
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    const suggestions = searchQuery ? autocompleteSuggestions : recentSearches;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex(prev => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0 && activeIndex < suggestions.length) {
+        e.preventDefault();
+        setSearchQuery(suggestions[activeIndex]);
+        saveRecentSearch(suggestions[activeIndex]);
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+      } else if (searchQuery) {
+        saveRecentSearch(searchQuery);
+      }
+    } else if (e.key === 'Escape') {
+      setShowAutocomplete(false);
+      setActiveIndex(-1);
+    }
+  }, [activeIndex, autocompleteSuggestions, recentSearches, searchQuery, saveRecentSearch]);
+
   // Memoized filtered products calculation
   const filteredProducts = useMemo(() => {
     let result = initialProducts;
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedQuery) {
+      const query = debouncedQuery.toLowerCase();
       result = result.filter((product) => {
         const product_name = product.product_name ?? '';
         return product_name.toLowerCase().includes(query);
@@ -146,7 +219,7 @@ const ClientProductsPage = memo(function ClientProductsPage({
     }
 
     return result.sort((a, b) => a.order - b.order);
-  }, [searchQuery, activeSubType, initialProducts]);
+  }, [debouncedQuery, activeSubType, initialProducts]);
 
   // Update visible count when filtered products change
   useEffect(() => {
@@ -272,16 +345,134 @@ const ClientProductsPage = memo(function ClientProductsPage({
                   : 'relative w-full sm:w-80 px-4 sm:px-0'
               } transition-all duration-200`}
             >
-              <span className="absolute inset-y-0 left-2 sm:left-0 flex items-center pl-6 sm:pl-3">
+              {/* Search Icon */}
+              <span className="absolute inset-y-0 left-2 sm:left-0 flex items-center pl-6 sm:pl-3 pointer-events-none">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </span>
+              
+              {/* Search Input */}
               <input
                 type="text"
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-10 pr-3 py-2 text-base font-light border bg-white border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-${themeColors.primary.ring} focus:border-transparent transition-all duration-200`}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowAutocomplete(true);
+                  setActiveIndex(-1);
+                }}
+                onFocus={(e) => {
+                  setShowAutocomplete(true);
+                  setActiveIndex(-1);
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${themeColors.cssVars.primary.base}20`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = '';
+                  setTimeout(() => {
+                    setShowAutocomplete(false);
+                    setActiveIndex(-1);
+                  }, 200);
+                }}
+                onKeyDown={handleKeyDown}
+                className="w-full pl-10 pr-24 py-3.5 text-base border bg-white border-gray-100 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200"
+                style={{
+                  '--tw-ring-color': themeColors.cssVars.primary.base,
+                } as React.CSSProperties}
               />
+              
+              {/* Right Side Icons */}
+              <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-4">
+                {/* Loading Spinner */}
+                {isSearching && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600" />
+                )}
+                
+                {/* Clear Button */}
+                {searchQuery && !isSearching && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <XMarkIcon className="h-4 w-4 text-gray-500" />
+                  </button>
+                )}
+                
+                {/* Keyboard Shortcut Hint */}
+                <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 font-medium bg-gray-100 rounded-md">
+                  <kbd>⌘</kbd><kbd>K</kbd>
+                </span>
+              </div>
+              
+              {/* Autocomplete Dropdown */}
+              {showAutocomplete && (autocompleteSuggestions.length > 0 || recentSearches.length > 0) && (
+                <div 
+                  id="search-autocomplete"
+                  role="listbox"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-80 overflow-y-auto"
+                >
+                  {/* Recent Searches */}
+                  {!searchQuery && recentSearches.length > 0 && (
+                    <div className="p-2">
+                      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-2">Recent</div>
+                      {recentSearches.map((search, idx) => (
+                        <button
+                          key={idx}
+                          id={`search-suggestion-${idx}`}
+                          role="option"
+                          aria-selected={activeIndex === idx}
+                          onClick={() => {
+                            setSearchQuery(search);
+                            setShowAutocomplete(false);
+                            setActiveIndex(-1);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 flex items-center gap-2 transition-colors ${
+                            activeIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          }`}
+                          style={activeIndex === idx ? { backgroundColor: `${themeColors.cssVars.primary.base}15` } : {}}
+                        >
+                          <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                          {search}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Autocomplete Suggestions */}
+                  {searchQuery && autocompleteSuggestions.length > 0 && (
+                    <div className="p-2">
+                      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-2">Suggestions</div>
+                      {autocompleteSuggestions.map((name, idx) => (
+                        <button
+                          key={idx}
+                          id={`search-suggestion-${idx}`}
+                          role="option"
+                          aria-selected={activeIndex === idx}
+                          onClick={() => {
+                            setSearchQuery(name);
+                            saveRecentSearch(name);
+                            setShowAutocomplete(false);
+                            setActiveIndex(-1);
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 transition-colors ${
+                            activeIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          }`}
+                          style={activeIndex === idx ? { backgroundColor: `${themeColors.cssVars.primary.base}15` } : {}}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Search Tips */}
+                  {!searchQuery && recentSearches.length === 0 && (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      <p className="font-medium mb-1">Search tips:</p>
+                      <p className="text-xs">Try searching by product name or category</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
