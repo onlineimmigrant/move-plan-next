@@ -90,6 +90,11 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
         }
       }
 
+      // Display any message from the API
+      if (data.message) {
+        setError(data.message);
+      }
+
       setHasMore(!!data.next_page);
       setPage(pageNum);
     } catch (err) {
@@ -103,6 +108,11 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
+    // Enforce minimum length for videos to avoid empty/invalid API results
+    if (mediaType === 'videos' && query.trim().length < 2) {
+      setError('Please enter at least 2 characters to search videos');
+      return;
+    }
     setPhotos([]);
     setVideos([]);
     setPage(1);
@@ -112,6 +122,10 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
   // Search on input with debounce
   useEffect(() => {
     if (!query.trim()) return;
+    // Skip short queries for videos
+    if (mediaType === 'videos' && query.trim().length < 2) {
+      return;
+    }
     
     const timeoutId = setTimeout(() => {
       setPhotos([]);

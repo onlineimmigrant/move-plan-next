@@ -483,7 +483,7 @@ const Header: React.FC<HeaderProps> = ({
                                   <LocalizedLink
                                     href={subItem.url_name}
                                     onClick={() => setOpenSubmenu(null)}
-                                    className={`block rounded-lg overflow-hidden transition-all duration-200 ${item.display_as_card ? 'hover:shadow-xl hover:scale-105 border border-gray-200/30' : 'hover:shadow-lg'}`}
+                                    className={`block rounded-lg overflow-hidden transition-all duration-200 ${item.display_as_card ? 'hover:shadow-xl hover:scale-105' : 'hover:shadow-lg border border-gray-200/30'}`}
                                   >
                                     {/* Display logic: card mode (no image) vs image mode (image with hover effect) */}
                                     <div className="relative w-full h-48">

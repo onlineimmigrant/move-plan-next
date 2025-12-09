@@ -76,10 +76,15 @@ async function _fetchMenuItemsInternal(organizationId: string | null): Promise<M
       const menuItems: MenuItem[] = basicData?.map((item: any) => ({
         id: item.id,
         display_name: item.display_name,
+        display_name_translation: item.display_name_translation,
+        description: item.description,
+        description_translation: item.description_translation,
         url_name: item.url_name,
         is_displayed: item.is_displayed,
+        is_displayed_on_footer: item.is_displayed_on_footer,
         is_new_window: false, // Default value since this field might not exist
         order: item.order,
+        display_as_card: item.display_as_card,
         created_at: undefined, // Field doesn't exist in database
         organization_id: item.organization_id,
         icon_name: null,

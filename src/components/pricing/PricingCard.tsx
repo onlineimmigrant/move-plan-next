@@ -131,14 +131,16 @@ const PricingCard = memo<PricingCardProps>(({
 
   return (
     <div
-      className={`relative bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-3xl border transition-all hover:shadow-2xl group ${
+      className={`relative rounded-2xl border border-gray-200/30 backdrop-blur-sm transition-all hover:shadow-2xl group ${
         highlighted
-          ? 'border-white/40 dark:border-gray-600/40 shadow-xl ring-2 ring-white/30 dark:ring-gray-600/30'
-          : 'border-white/30 dark:border-gray-700/30 shadow-lg hover:border-white/50 dark:hover:border-gray-600/50'
+          ? 'shadow-xl ring-2 ring-white/30'
+          : 'shadow-lg hover:border-gray-200/50'
       }`}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none overflow-hidden"></div>
       {highlighted && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
           <span 
             className="text-white px-4 py-1.5 rounded-full text-sm font-semibold backdrop-blur-sm"
             style={{

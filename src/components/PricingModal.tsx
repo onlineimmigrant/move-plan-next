@@ -213,7 +213,7 @@ interface SamplePricingPlan {
   annualRecurringCount: number;
   actualAnnualPrice?: number; // For real data: the actual annual plan price
   annualSizeDiscount?: number; // New field for annual discount percentage
-  planId?: number; // Plan ID for feature lookup
+  planId?: string | number; // Plan ID for feature lookup
   realFeatures?: Feature[]; // Real feature objects with full data
   productSlug?: string; // Product slug for linking to product page
   order: number; // Order field for sorting plans
@@ -492,10 +492,10 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       
       // Get features for this plan
       const planId = monthly?.id || annual?.id;
-      const planIdNumber = planId ? (typeof planId === 'number' ? planId : parseInt(String(planId), 10)) : undefined;
-      const realFeatures = planIdNumber ? (planFeatures[planIdNumber] || []) : [];
+      const planIdString = planId ? String(planId) : undefined;
+      const realFeatures = planIdString ? (planFeatures[planIdString] || []) : [];
       
-      console.log('[PricingModal] Plan ID:', planIdNumber, 'Features found:', realFeatures.length);
+      console.log('[PricingModal] Plan ID:', planIdString, 'Features found:', realFeatures.length);
 
       // Handle promotion pricing with currency awareness
       const monthlyIsPromotion = monthly?.is_promotion && (monthly?.promotion_price !== undefined || monthly?.promotion_percent !== undefined);
@@ -554,7 +554,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         // Add discount information for display
         annualSizeDiscount: monthly?.annual_size_discount || annual?.annual_size_discount || 0,
         // Store the actual plan ID and features for feature comparison table
-        planId: planIdNumber,
+        planId: planIdString,
         realFeatures: realFeatures || [],
         // Add product slug for linking to product page
         productSlug: monthly?.product?.slug || annual?.product?.slug || '',

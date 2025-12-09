@@ -144,6 +144,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   // Enhanced metadata with SEO system data
   return {
+    metadataBase: new URL(currentDomain),
     title: seoData.title || siteName,
     description: seoData.description || 'Welcome to our platform',
     keywords: Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords,
