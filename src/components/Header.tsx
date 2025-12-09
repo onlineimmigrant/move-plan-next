@@ -904,7 +904,7 @@ const Header: React.FC<HeaderProps> = ({
         >
           <LocalizedLink
             href="/"
-            className="cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0 hover:opacity-80"
+            className={`cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0 hover:opacity-80 ${pathname.includes('/blog') ? 'hidden sm:flex' : 'flex'}`}
             aria-label={t.goToHomepage}
           >
             {settings?.image ? (
@@ -1258,6 +1258,7 @@ const Header: React.FC<HeaderProps> = ({
             onClick={handleMenuToggle}
             className="p-2 rounded-lg hover:bg-gray-100/80 active:bg-gray-200/80 transition-all duration-200 backdrop-blur-sm"
             aria-label={isOpen ? t.closeMenu : t.openMenu}
+            {...(pathname.includes('/blog') && !isOpen ? { 'data-blog-search-trigger': true } : {})}
           >
             {isOpen ? (
               <XMarkIcon className="h-6 w-6" style={{ color: getColorValue(headerColor) }} />

@@ -25,15 +25,16 @@ import PostHeader from '@/components/PostPage/PostHeader';
 import LandingPostContent from '@/components/PostPage/LandingPostContent';
 
 // Lazy load below-the-fold components only
-const TOC = lazy(() => import('@/components/PostPage/TOC'));
-const CodeBlockCopy = lazy(() => import('@/components/CodeBlockCopy'));
-const DocumentSetNavigation = lazy(() => import('@/components/PostPage/DocumentSetNavigation'));
+// Use .then(mod => mod.default || mod) to handle memo() wrapped exports
+const TOC = lazy(() => import('@/components/PostPage/TOC').then(mod => ({ default: mod.default || mod })));
+const CodeBlockCopy = lazy(() => import('@/components/CodeBlockCopy').then(mod => ({ default: mod.default || mod })));
+const DocumentSetNavigation = lazy(() => import('@/components/PostPage/DocumentSetNavigation').then(mod => ({ default: mod.default || mod })));
 const BottomSheetTOC = lazy(() => import('@/components/PostPage/BottomSheetTOC').then(mod => ({ default: mod.BottomSheetTOC })));
 const ReadingProgressBar = lazy(() => import('@/components/PostPage/ReadingProgressBar').then(mod => ({ default: mod.ReadingProgressBar })));
-const MasterTOC = lazy(() => import('@/components/PostPage/MasterTOC'));
+const MasterTOC = lazy(() => import('@/components/PostPage/MasterTOC').then(mod => ({ default: mod.default || mod })));
 
 // Lazy load admin-only components (only loads for admins)
-const AdminButtons = lazy(() => import('@/components/PostPage/AdminButtons'));
+const AdminButtons = lazy(() => import('@/components/PostPage/AdminButtons').then(mod => ({ default: mod.default || mod })));
 
 /**
  * Utility function to get translated content
@@ -96,6 +97,7 @@ interface Post {
   section?: string;
   subsection?: string;
   created_on: string;
+  author_name?: string;
   is_with_author: boolean;
   is_company_author: boolean;
   author?: { first_name: string; last_name: string };

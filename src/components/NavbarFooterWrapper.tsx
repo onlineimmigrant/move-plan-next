@@ -1,3 +1,5 @@
+'use client';
+
 import { MenuItem } from '@/types/menu'; // Shared type
 import Header from './Header';
 import Footer from './Footer';

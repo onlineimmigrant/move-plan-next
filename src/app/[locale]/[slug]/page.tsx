@@ -77,6 +77,7 @@ interface Post {
   keywords?: string;
   section_id?: string | null;
   last_modified: string;
+  author_name?: string;
   display_this_post: boolean;
   reviews?: { rating: number; author: string; comment: string }[];
   faqs?: { question: string; answer: string }[];
@@ -111,6 +112,7 @@ function flattenPost(raw: any): Post | null {
     keywords: raw.keywords,
     section_id: raw.organization_config?.section_id ?? raw.section_id ?? null,
     last_modified: raw.last_modified,
+    author_name: raw.author_name ?? null,
     display_this_post: raw.display_config?.display_this_post ?? raw.display_this_post ?? true,
     organization_id: raw.organization_id,
     main_photo: raw.media_config?.main_photo ?? raw.main_photo,
@@ -136,7 +138,7 @@ async function fetchPostData(slug: string): Promise<Post | null> {
     console.log('🔍 [ServerSide] Fetching post (direct) slug:', slug, 'org:', organizationId);
     const { data, error } = await supabase
       .from('blog_post')
-      .select('id, slug, title, description, content, content_type, created_on, last_modified, organization_id, display_config, organization_config, media_config, translations')
+      .select('id, slug, title, description, content, content_type, created_on, last_modified, author_name, organization_id, display_config, organization_config, media_config, translations')
       .eq('slug', slug)
       .eq('organization_id', organizationId)
       .maybeSingle();

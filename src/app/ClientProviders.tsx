@@ -20,7 +20,7 @@ import { HeaderEditProvider } from '@/components/modals/HeaderEditModal/context'
 import { FooterEditProvider } from '@/components/modals/FooterEditModal/context';
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { SettingsModalProvider } from '@/components/modals/SettingsModal/context';
-import { ShopModalProvider } from '@/components/modals/ShopModal';
+import { ShopModalProvider } from '@/components/modals/ShopModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
@@ -31,11 +31,12 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 // Lazy load non-critical components
-const Breadcrumbs = dynamic(() => import('@/components/Breadcrumbs'), {
+// Use .then(mod => mod.default || mod) to handle memo() wrapped exports
+const Breadcrumbs = dynamic(() => import('@/components/Breadcrumbs').then(mod => mod.default || mod), {
   ssr: false,
   loading: () => null
 });
-const UnifiedSections = dynamic(() => import('@/components/UnifiedSections'), {
+const UnifiedSections = dynamic(() => import('@/components/UnifiedSections').then(mod => mod.default || mod), {
   ssr: false,
   loading: () => null
 });
@@ -232,7 +233,7 @@ interface ClientProvidersProps {
   pathnameFromServer?: string;
 }
 
-export default function ClientProviders({
+function ClientProviders({
   children,
   settings,
   headerData,
@@ -545,3 +546,4 @@ function BannerAwareContent({
     </>
   );
 }
+export default ClientProviders;

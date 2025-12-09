@@ -1,4 +1,6 @@
 // src/components/banners/BannerContainer.tsx
+'use client';
+
 import { usePathname } from 'next/navigation';
 import { useBanner } from '@/context/BannerContext';
 import { Banner } from './Banner';

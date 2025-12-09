@@ -38,6 +38,8 @@ interface PostHeaderProps {
     subsection?: string;
     title?: string;
     created_on: string;
+    last_modified?: string;
+    author_name?: string;
     is_with_author: boolean;
     is_company_author: boolean;
     author?: { first_name: string; last_name: string };
@@ -76,6 +78,11 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
 
   // Memoize author display
   const authorDisplay = useMemo(() => {
+    // Priority: author_name field (new simple approach)
+    if (post.author_name && post.author_name.trim()) {
+      return post.author_name.trim();
+    }
+    // Fallback to old logic for backwards compatibility
     if (post.is_with_author && post.author) {
       return `${post.author.first_name} ${post.author.last_name || brandName}`;
     }
@@ -83,7 +90,7 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
       return brandName;
     }
     return null;
-  }, [post.is_with_author, post.author, post.is_company_author, brandName]);
+  }, [post.author_name, post.is_with_author, post.author, post.is_company_author, brandName]);
 
   return (
     <div className="post-header relative group">

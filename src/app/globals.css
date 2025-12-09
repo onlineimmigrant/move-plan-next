@@ -1058,14 +1058,28 @@ div:has(> .auth-input:not(:placeholder-shown)) > .absolute.inset-y-0.left-0 svg 
 .auth-field-5 { animation: fadeInUp 0.4s ease-out 0.25s both; }
 
 /* iOS Safari input text visibility fix - CRITICAL */
-/* Force dark text color on all inputs to prevent invisible text */
+/* Force readable text color on all inputs */
 input[type="email"],
 input[type="password"],
 input[type="text"],
 input[type="tel"],
 .auth-input {
-  color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+/* Placeholder styles - light gray for better UX */
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="tel"]::placeholder,
+input::placeholder,
+.auth-input::placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #9ca3af !important;
+  font-weight: 400 !important;
 }
 
 /* iOS Safari autofill text visibility - CRITICAL */
@@ -1075,6 +1089,25 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-text-fill-color: #111827 !important;
   color: #111827 !important;
+}
+
+/* Safari placeholder webkit fix */
+input::-webkit-input-placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input::-moz-placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
+}
+
+input:-ms-input-placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+  font-weight: 400 !important;
 }
 
 /* Loading spinner */

@@ -1,4 +1,6 @@
 // /components/SkeletonLoader.tsx
+'use client';
+
 import { FC } from 'react';
 
 const SkeletonLoader: FC = () => {

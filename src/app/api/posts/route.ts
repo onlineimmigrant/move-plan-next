@@ -121,29 +121,44 @@ function buildCacheKey(org: string, limit: string | null, offset: string | null)
 }
 
 async function fetchPostsFromDB(organizationId: string, limit: string | null, offset: string | null) {
-  let query = supabase
+  // Get all posts first, then filter in code since JSONB boolean filtering is tricky
+  const { data: allPosts, error } = await supabase
     .from('blog_post')
     .select(
-      `id, slug, title, description, display_config, organization_config, media_config`,
-      { count: 'exact' }
+      `id, slug, title, description, display_config, organization_config, media_config, last_modified, author_name`
     )
     .eq('organization_id', organizationId)
-    .order('organization_config->order', { ascending: true, nullsFirst: false });
+    .order('last_modified', { ascending: false });
+
+  if (error) throw error;
+
+  // Filter posts that should be displayed as blog posts
+  // Only include posts where both flags are true or undefined/null (default to true)
+  const blogPosts = (allPosts || []).filter((p: any) => {
+    const displayThis = p.display_config?.display_this_post;
+    const asBlogPost = p.display_config?.display_as_blog_post;
+    
+    // If explicitly false, exclude
+    if (displayThis === false || asBlogPost === false) {
+      return false;
+    }
+    
+    // Otherwise include (true, null, or undefined)
+    return true;
+  });
 
   const parsedLimit = parseInt(limit || '8');
   const parsedOffset = parseInt(offset || '0');
 
-  if (parsedLimit > 0) {
-    query = query.range(parsedOffset, parsedOffset + (parsedLimit - 1));
-  }
-
-  const { data: posts, error, count } = await query;
-  if (error) throw error;
+  // Apply pagination
+  const paginatedPosts = parsedLimit > 0 
+    ? blogPosts.slice(parsedOffset, parsedOffset + parsedLimit)
+    : blogPosts;
 
   return {
-    posts: (posts || []).map(flattenBlogPost),
-    total: count || 0,
-    hasMore: count ? (parsedOffset + (posts?.length || 0)) < count : false
+    posts: paginatedPosts.map(flattenBlogPost),
+    total: blogPosts.length,
+    hasMore: parsedOffset + paginatedPosts.length < blogPosts.length
   };
 }
 
