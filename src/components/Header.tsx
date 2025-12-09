@@ -33,11 +33,8 @@ const ModernLanguageSwitcher = dynamic(() => import('./ModernLanguageSwitcher'),
   loading: () => null 
 });
 
-// Lazy load Disclosure from headlessui to prevent webpack bundling issues
-const Disclosure = dynamic(
-  () => import('@headlessui/react').then(mod => ({ default: mod.Disclosure })),
-  { ssr: false, loading: () => <div /> }
-) as typeof import('@headlessui/react').Disclosure;
+// Import Disclosure components normally instead of dynamically
+import { Disclosure } from '@headlessui/react';
 
 // Optimized icon loading (for admin/account menus only)
 import { 
