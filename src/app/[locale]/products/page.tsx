@@ -10,6 +10,9 @@ import { headers } from 'next/headers';
 // Enable ISR for this page (improves repeat navigation time)
 export const revalidate = 30;
 
+// Force dynamic rendering since we use searchParams
+export const dynamic = 'force-dynamic';
+
 // Simple in-memory cache (ephemeral) for server-side fetches to speed hot navigations
 type CacheEntry<T> = { timestamp: number; data: T };
 const SERVER_CACHE_TTL = 30_000; // 30s

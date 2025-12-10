@@ -11,6 +11,7 @@ import { SiteActionsModal } from './SiteActionsModal';
 import { useUnreadTicketCount } from './hooks/useUnreadTicketCount';
 import { useUnreadMeetingsCount } from './hooks/useUnreadMeetingsCount';
 import { triggerBadgeRefresh } from './hooks/useBadgeRefresh';
+import { useCrmModal } from '../CrmModal/context';
 
 // Lazy load modals for better performance
 const MeetingsBookingModal = dynamic(
@@ -87,6 +88,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
   const isAuthenticated = !!session;
   const isAdminUser = isAdmin || isSuperadmin;
 
+  // CRM modal context
+  const crmModal = useCrmModal();
+
   // Get unread counts for badges - only when authenticated
   const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
   const unreadMeetingsCount = useUnreadMeetingsCount(isAuthenticated);
@@ -146,6 +150,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
           break;
         case 'help-center':
           setOpenModal('help');
+          break;
+        case 'crm':
+          crmModal.openModal();
           break;
         case 'sign-in':
           setOpenModal('login');

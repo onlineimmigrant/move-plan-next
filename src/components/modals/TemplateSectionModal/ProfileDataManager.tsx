@@ -78,13 +78,28 @@ export default function ProfileDataManager({ sectionId, type }: ProfileDataManag
   const fetchProfiles = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, team, customer')
-        .order('full_name', { ascending: true });
+      // Get the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('No active session');
+        setIsLoading(false);
+        return;
+      }
 
-      if (error) throw error;
-      setProfiles(data || []);
+      // Fetch team members through the API route (server-side organization filtering)
+      const response = await fetch('/api/team-members', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch team members: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setProfiles(data);
     } catch (error) {
       console.error('Error fetching profiles:', error);
     } finally {
@@ -243,11 +258,11 @@ export default function ProfileDataManager({ sectionId, type }: ProfileDataManag
   const assignedProfiles = profiles.filter(p => {
     const data = type === 'team' ? p.team : p.customer;
     if (!data) return false;
-    const isActive = type === 'team' ? data.is_team_member : data.is_customer;
-    if (!isActive) return false;
     
     const sections = data.assigned_sections || [];
-    return sections.length === 0 || sections.includes(sectionId);
+    // O(1) lookup using Set for section membership check
+    const sectionSet = new Set(sections);
+    return sections.length === 0 || sectionSet.has(sectionId);
   });
 
   return (

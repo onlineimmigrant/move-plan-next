@@ -107,7 +107,7 @@ export function MenuSection({
 
   /**
    * Saves inline edit changes for menu items or submenu items
-   * Handles URL slug sanitization (lowercase, hyphens, alphanumeric only)
+   * Handles URL slug sanitization (preserves anchor links starting with #)
    */
   const handleInlineEditSave = () => {
     if (!inlineEdit.menuItemId || !inlineEdit.field) {
@@ -132,14 +132,18 @@ export function MenuSection({
         const field = fieldMap[inlineEdit.field];
         
         const value = inlineEdit.field === 'submenu_url' 
-          ? inlineEdit.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          ? inlineEdit.value.startsWith('#') 
+            ? inlineEdit.value // Preserve anchor links with # and underscores
+            : inlineEdit.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
           : inlineEdit.value.trim();
         
         onSubmenuEdit(inlineEdit.menuItemId, inlineEdit.submenuId, field, value);
       } else if (inlineEdit.field === 'display_name' || inlineEdit.field === 'url_name' || inlineEdit.field === 'description') {
         // Handle menu item edit
         if (inlineEdit.field === 'url_name') {
-          const cleanSlug = inlineEdit.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const cleanSlug = inlineEdit.value.startsWith('#') 
+            ? inlineEdit.value // Preserve anchor links with # and underscores
+            : inlineEdit.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
           onEdit(inlineEdit.menuItemId, 'url_name', cleanSlug);
         } else {
           onEdit(inlineEdit.menuItemId, inlineEdit.field, inlineEdit.value.trim());
@@ -175,7 +179,9 @@ export function MenuSection({
     
     try {
       const cleanUrl = addSubmenuState.url.trim()
-        ? addSubmenuState.url.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        ? addSubmenuState.url.startsWith('#') 
+          ? addSubmenuState.url // Preserve anchor links with # and underscores
+          : addSubmenuState.url.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
         : '';
       
       await onAddSubmenu(

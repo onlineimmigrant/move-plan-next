@@ -21,6 +21,8 @@ import { FooterEditProvider } from '@/components/modals/FooterEditModal/context'
 import { LayoutManagerProvider } from '@/components/modals/LayoutManagerModal/context';
 import { SettingsModalProvider } from '@/components/modals/SettingsModal/context';
 import { ShopModalProvider } from '@/components/modals/ShopModal/context';
+import { ProfileDataManagerModalProvider } from '@/components/modals/ProfileDataManagerModal/context';
+import { CrmModalProvider } from '@/components/modals/CrmModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
@@ -102,6 +104,14 @@ const SettingsModal = dynamic(() => import('@/components/modals/SettingsModal').
   loading: () => null
 });
 const ShopModal = dynamic(() => import('@/components/modals/ShopModal/ShopModal'), {
+  ssr: false,
+  loading: () => null
+});
+const ProfileDataManagerModal = dynamic(() => import('@/components/modals/ProfileDataManagerModal').then(mod => ({ default: mod.ProfileDataManagerModal })), {
+  ssr: false,
+  loading: () => null
+});
+const CrmModalManager = dynamic(() => import('@/components/modals/CrmModal/CrmModalManager').then(mod => ({ default: mod.CrmModalManager })), {
   ssr: false,
   loading: () => null
 });
@@ -211,6 +221,8 @@ function AdminModalsGate() {
       <SiteMapModal />
       <GlobalSettingsModal />
       <ShopModal />
+      <ProfileDataManagerModal />
+      <CrmModalManager />
       <HeaderEditModal />
       <FooterEditModal />
       <LayoutManagerModal />
@@ -409,6 +421,8 @@ function ClientProviders({
                                   <SiteMapModalProvider>
                                     <GlobalSettingsModalProvider>
                                       <ShopModalProvider>
+                                        <ProfileDataManagerModalProvider>
+                                          <CrmModalProvider>
                                     <DynamicLanguageUpdater />
                                     <DefaultLocaleCookieManager />
                                     <CookieSettingsProvider>
@@ -442,31 +456,33 @@ function ClientProviders({
                                 activeLanguages={activeLanguages}
                                 cookieCategories={cookieCategories}
                               />
+                              {/* Admin modal components - only rendered for admin users */}
+                              <AdminModalsGate />
                             </CookieSettingsProvider>
-                            {/* Admin modal components - only rendered for admin users */}
-                            <AdminModalsGate />
-                                      </ShopModalProvider>
-                                    </GlobalSettingsModalProvider>
-                                  </SiteMapModalProvider>
-                                </PageCreationProvider>
-                              </HeroSectionEditProvider>
-                              </TemplateHeadingSectionEditProvider>
-                            </TemplateSectionEditProvider>
-                          </PostEditModalProvider>
-                          </SettingsModalProvider>
-                        </LayoutManagerProvider>
-                      </FooterEditProvider>
-                      </HeaderEditProvider>
-                    </ToastProvider>
-                  </PageSectionsProvider>
-              </MeetingProvider>
-            </ThemeProvider>
-            </SettingsProvider>
-          </BasketProvider>
-        </BannerProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
+</CrmModalProvider>
+</ProfileDataManagerModalProvider>
+</ShopModalProvider>
+</GlobalSettingsModalProvider>
+</SiteMapModalProvider>
+</PageCreationProvider>
+</HeroSectionEditProvider>
+</TemplateHeadingSectionEditProvider>
+</TemplateSectionEditProvider>
+</PostEditModalProvider>
+</SettingsModalProvider>
+</LayoutManagerProvider>
+</FooterEditProvider>
+</HeaderEditProvider>
+</ToastProvider>
+</PageSectionsProvider>
+</MeetingProvider>
+</ThemeProvider>
+</SettingsProvider>
+</BasketProvider>
+</BannerProvider>
+</AuthProvider>
+</QueryClientProvider>
+);
 }
 
 function BannerAwareContent({

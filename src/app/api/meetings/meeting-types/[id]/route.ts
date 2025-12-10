@@ -20,13 +20,14 @@ const updateMeetingTypeSchema = z.object({
 // GET /api/meetings/meeting-types/[id] - Get single meeting type
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { data: meetingType, error } = await supabase
       .from('meeting_types')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -48,9 +49,10 @@ export async function GET(
 // PUT /api/meetings/meeting-types/[id] - Update meeting type
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validatedData = updateMeetingTypeSchema.parse(body);
 
@@ -60,7 +62,7 @@ export async function PUT(
         ...validatedData,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -87,9 +89,10 @@ export async function PUT(
 // DELETE /api/meetings/meeting-types/[id] - Deactivate meeting type
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Soft delete by setting is_active to false
     const { data: meetingType, error } = await supabase
       .from('meeting_types')
@@ -97,7 +100,7 @@ export async function DELETE(
         is_active: false,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 

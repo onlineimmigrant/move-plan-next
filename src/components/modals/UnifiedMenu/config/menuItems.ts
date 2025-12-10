@@ -14,6 +14,7 @@ import {
   Cog6ToothIcon,
   GlobeAltIcon,
   ArrowLeftOnRectangleIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { MenuItemConfig } from '../types';
 
@@ -25,8 +26,8 @@ export type BadgeGetter = () => number | string | null;
 
 /**
  * Menu items for ADMIN and SUPERADMIN users
- * Visual order (top to bottom): Admin → Site → Appointments → (AI Agent + Support in one row)
- * Array order: Admin, Site, Appointments, AI Agent, Support (last 2 = bottom row)
+ * Visual order (top to bottom): Admin → Site → CRM → Appointments → (AI Agent + Support in one row)
+ * Array order: Admin, Site, CRM, Appointments, AI Agent, Support (last 2 = bottom row)
  */
 export const getAdminMenuItems = (
   unreadTicketsBadge?: BadgeGetter,
@@ -44,6 +45,14 @@ export const getAdminMenuItems = (
     id: 'site',
     label: 'Site',
     icon: GlobeAltIcon,
+    action: () => {},
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    id: 'crm',
+    label: 'CRM',
+    icon: UsersIcon,
     action: () => {},
     requireAuth: true,
     requireAdmin: true,

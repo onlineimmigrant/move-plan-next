@@ -84,50 +84,44 @@ const TeamMember: React.FC<TeamMemberProps> = ({ section }) => {
     const fetchTeamMembers = async () => {
       try {
         setError(null);
-        
-        // Fetch profiles where team.is_team_member = true
-        // AND (team.assigned_sections is null OR team.assigned_sections contains section.id)
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select('id, full_name, team')
-          .not('team', 'is', null)
-          .order('created_at', { ascending: true });
 
-        if (fetchError) {
-          console.error('Error fetching team members:', {
-            error: fetchError,
-            message: fetchError.message,
-            details: fetchError.details,
-            hint: fetchError.hint,
-            code: fetchError.code,
-          });
-          
-          // Check if it's a column not found error
-          if (fetchError.message?.includes('column') && (fetchError.message?.includes('team') || fetchError.message?.includes('image'))) {
-            setError('Database migration needed: Please ensure the profiles table has the "team" JSONB column and "image" column.');
-          } else if (fetchError.code === 'PGRST116') {
-            // No rows found - this is okay, just means no team members yet
-            setTeamMembers([]);
-            setLoading(false);
-            return;
-          } else {
-            setError(`Failed to load team members: ${fetchError.message || fetchError.details || 'Unknown error'}`);
-          }
+        // Get current session for API authentication
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+          console.error('No active session for team members fetch');
+          setTeamMembers([]);
+          setLoading(false);
           return;
         }
 
+        // Fetch team members through the API route (server-side organization filtering)
+        const response = await fetch('/api/team-members', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to fetch team members:', response.status, errorData);
+          setError(`Failed to load team members: ${response.status}`);
+          return;
+        }
+
+        const data = await response.json();
         console.log('Team members data fetched:', data?.length || 0, 'profiles');
 
-        // Filter in JavaScript for JSONB conditions
+        // Filter by assigned sections (client-side filtering for section assignment)
         const filtered = (data || []).filter((profile: any) => {
           const team = profile.team;
           if (!team || !team.is_team_member) return false;
-          
+
           // If no assigned_sections, show in all sections
           if (!team.assigned_sections || team.assigned_sections.length === 0) {
             return true;
           }
-          
+
           // Check if this section.id is in assigned_sections
           return team.assigned_sections.includes(section.id);
         });
@@ -408,9 +402,9 @@ ADD COLUMN IF NOT EXISTS customer JSONB DEFAULT NULL;`}
 
                     {/* Description/Bio */}
                     {team.description && (
-                      <p className={cn(cardStyles.description, 'mb-4 line-clamp-3', isHorizontal ? '' : 'text-center')}>
-                        {team.description}
-                      </p>
+                      <div className={cn(cardStyles.description, 'mb-4 line-clamp-3 prose prose-sm max-w-none', isHorizontal ? '' : 'text-center')}
+                           dangerouslySetInnerHTML={{ __html: team.description }}
+                      />
                     )}
 
                     {/* Skills */}

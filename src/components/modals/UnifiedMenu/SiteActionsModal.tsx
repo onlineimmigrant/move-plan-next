@@ -21,6 +21,7 @@ import {
   PhotoIcon,
   ListBulletIcon,
   Squares2X2Icon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
@@ -34,6 +35,7 @@ import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
 import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
 import { useSettingsModal } from '@/components/modals/SettingsModal/context';
 import { useShopModal } from '@/components/modals/ShopModal';
+import { useProfileDataManagerModal } from '@/components/modals/ProfileDataManagerModal/context';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -76,6 +78,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const { openModal: openFooterEditModal } = useFooterEdit();
   const { openModal: openSettingsModal } = useSettingsModal();
   const { openModal: openShopModal } = useShopModal();
+  const { openModal: openProfileDataManagerModal } = useProfileDataManagerModal();
 
   const quickActions: QuickAction[] = [
     // Navigation Section - MOVED TO TOP (most common actions)
@@ -194,6 +197,15 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
           console.error('Error getting organization ID:', error);
           alert('Error opening page layout manager');
         }
+      },
+    },
+    {
+      id: 'team_members',
+      label: 'Team Members',
+      icon: UserGroupIcon,
+      action: () => {
+        onClose();
+        openProfileDataManagerModal();
       },
     },
     {

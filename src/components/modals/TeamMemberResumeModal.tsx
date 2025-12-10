@@ -189,7 +189,10 @@ export const TeamMemberResumeModal: React.FC<TeamMemberResumeModalProps> = ({
               {team.bio && (
                 <div>
                   <h3 className={cn('text-lg font-bold mb-2', styles.label)}>About</h3>
-                  <p className={cn('leading-relaxed', styles.text)}>{team.bio}</p>
+                  <div 
+                    className={cn('leading-relaxed prose prose-sm max-w-none', styles.text)}
+                    dangerouslySetInnerHTML={{ __html: team.bio }}
+                  />
                 </div>
               )}
 
