@@ -19,6 +19,10 @@ import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import { Toast } from '@/components/ui/Toast';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import { accountSchema, teamMemberSchema, customerSchema, validateData } from '@/lib/validations/crm';
+import AppointmentsSection from '@/components/crm/sections/AppointmentsSection';
+import SupportSection from '@/components/crm/sections/SupportSection';
+import CasesSection from '@/components/crm/sections/CasesSection';
+import ActivityTimeline from '@/components/crm/ActivityTimeline';
 
 interface Purchase {
   id: string;
@@ -79,6 +83,7 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'appointments' | 'support' | 'cases' | 'activity'>('details');
 
   useEffect(() => {
     if (account) {
@@ -604,8 +609,70 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="px-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'details'
+                  ? 'border-current text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+              style={activeTab === 'details' ? { borderColor: primary.base, color: primary.base } : {}}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab('appointments')}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'appointments'
+                  ? 'border-current text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+              style={activeTab === 'appointments' ? { borderColor: primary.base, color: primary.base } : {}}
+            >
+              Appointments
+            </button>
+            <button
+              onClick={() => setActiveTab('support')}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'support'
+                  ? 'border-current text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+              style={activeTab === 'support' ? { borderColor: primary.base, color: primary.base } : {}}
+            >
+              Support
+            </button>
+            <button
+              onClick={() => setActiveTab('cases')}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'cases'
+                  ? 'border-current text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+              style={activeTab === 'cases' ? { borderColor: primary.base, color: primary.base } : {}}
+            >
+              Cases
+            </button>
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'activity'
+                  ? 'border-current text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+              style={activeTab === 'activity' ? { borderColor: primary.base, color: primary.base } : {}}
+            >
+              Activity
+            </button>
+          </div>
+        </div>
+
         {/* Content */}
         <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+          {activeTab === 'details' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Contact & Info */}
             <div className="lg:col-span-1 space-y-4">
@@ -1701,6 +1768,24 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
               )}
             </div>
           </div>
+          )}
+
+          {/* New CRM Tabs Content */}
+          {activeTab === 'appointments' && account?.id && (
+            <AppointmentsSection profileId={account.id} />
+          )}
+
+          {activeTab === 'support' && account?.id && (
+            <SupportSection profileId={account.id} />
+          )}
+
+          {activeTab === 'cases' && account?.id && (
+            <CasesSection profileId={account.id} />
+          )}
+
+          {activeTab === 'activity' && account?.id && (
+            <ActivityTimeline profileId={account.id} />
+          )}
         </div>
 
         {/* Footer */}

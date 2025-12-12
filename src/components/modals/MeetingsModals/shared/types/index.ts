@@ -83,6 +83,10 @@ export interface MeetingsBookingModalProps {
   preselectedSlot?: TimeSlot;
   preselectedMeetingType?: MeetingType;
   onBookingSuccess?: (booking: any) => void; // Callback when booking is successfully created
+  prefilledData?: {
+    customerId?: string;
+    caseId?: string | null;
+  };
 }
 
 export interface MeetingsAdminModalProps {

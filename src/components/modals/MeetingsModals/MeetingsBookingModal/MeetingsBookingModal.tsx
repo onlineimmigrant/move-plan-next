@@ -54,7 +54,7 @@ import { logError } from '../shared/utils/errorHandling';
  * />
  * ```
  */
-export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot, onBookingSuccess }: MeetingsBookingModalProps) {
+export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot, onBookingSuccess, prefilledData }: MeetingsBookingModalProps) {
   const { settings } = useSettings();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -310,6 +310,8 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
         body: JSON.stringify({
           ...data,
           organization_id: settings.organization_id,
+          case_id: prefilledData?.caseId || data.case_id || null,
+          customer_id: prefilledData?.customerId || data.customer_id || null,
         }),
       });
 
@@ -365,7 +367,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     } finally {
       bookingState.setIsSubmitting(false);
     }
-  }, [settings?.organization_id, bookingState, announce, onBookingSuccess, onClose, loadEvents]);
+  }, [settings?.organization_id, bookingState, announce, onBookingSuccess, onClose, loadEvents, prefilledData]);
 
   const handleEventClick = useCallback((event: any) => {
     // Convert CalendarEvent to EventDetails format
