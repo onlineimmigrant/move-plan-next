@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { 
   CalendarDaysIcon, 
   ClockIcon, 
@@ -306,6 +306,78 @@ export default function BookingForm({
     setIsHovered(hovered);
   }, []);
 
+  // Memoize step configuration for performance
+  const steps = useMemo(() => [
+    { num: 1, label: 'Time', enabled: true },
+    { num: 2, label: 'Type', enabled: canProceedToStep2 },
+    { num: 3, label: 'Details', enabled: canProceedToStep3 }
+  ], [canProceedToStep2, canProceedToStep3]);
+
+  // Memoize step styles to prevent style object recreation
+  const getStepStyle = useCallback((step: { num: number; enabled: boolean }) => {
+    const isActive = currentStep === step.num;
+    
+    if (isActive) {
+      return {
+        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+        color: 'white',
+        boxShadow: isHovered 
+          ? `0 4px 12px ${primary.base}40` 
+          : `0 2px 4px ${primary.base}30`
+      };
+    }
+    
+    return {
+      backgroundColor: 'transparent',
+      color: step.enabled ? (isHovered ? primary.hover : primary.base) : '#9ca3af',
+      borderWidth: '1px',
+      borderStyle: 'solid' as const,
+      borderColor: step.enabled ? (isHovered ? `${primary.base}80` : `${primary.base}40`) : '#e5e7eb',
+      cursor: step.enabled ? 'pointer' : 'not-allowed',
+      opacity: step.enabled ? 1 : 0.6
+    };
+  }, [currentStep, primary.base, primary.hover, isHovered]);
+
+  // Memoize step badge style
+  const getStepBadgeStyle = useCallback((stepNum: number) => ({
+    backgroundColor: currentStep === stepNum 
+      ? 'rgba(255,255,255,0.25)' 
+      : currentStep > stepNum 
+        ? `${primary.base}20`
+        : 'transparent'
+  }), [currentStep, primary.base]);
+
+  // Memoize input field styles
+  const getInputStyle = useCallback((fieldName: string, hasError?: boolean) => {
+    if (hasError) return undefined;
+    if (focusedField === fieldName) {
+      return {
+        borderColor: primary.base,
+        ['--tw-ring-color' as string]: primary.base,
+      };
+    }
+    return undefined;
+  }, [focusedField, primary.base]);
+
+  // Memoize button transform handlers
+  const handleButtonMouseEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = 'translateY(-1px)';
+  }, []);
+
+  const handleButtonMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.transform = 'translateY(0)';
+  }, []);
+
+  // Memoize gradient button style
+  const gradientButtonStyle = useMemo(() => ({
+    background: `linear-gradient(to right, ${primary.base}, ${primary.hover})`
+  }), [primary.base, primary.hover]);
+
+  // Memoize hover gradient style
+  const hoverGradientStyle = useMemo(() => ({
+    background: `linear-gradient(to right, ${primary.hover}, ${primary.active})`
+  }), [primary.hover, primary.active]);
+
   // Show booking submission skeleton when submitting
   if (isSubmitting) {
     return (
@@ -320,11 +392,7 @@ export default function BookingForm({
       {/* Progress Steps */}
       <div className="flex-shrink-0 px-4 py-3">
         <nav className="flex gap-3" aria-label="Booking steps">
-          {[
-            { num: 1, label: 'Time', enabled: true },
-            { num: 2, label: 'Type', enabled: canProceedToStep2 },
-            { num: 3, label: 'Details', enabled: canProceedToStep3 }
-          ].map((step) => (
+          {steps.map((step) => (
             <button
               key={step.num}
               type="button"
@@ -333,36 +401,12 @@ export default function BookingForm({
               onMouseEnter={() => handleHoverChange(step.enabled)}
               onMouseLeave={() => handleHoverChange(false)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-              style={
-                currentStep === step.num
-                  ? {
-                      background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                      color: 'white',
-                      boxShadow: isHovered 
-                        ? `0 4px 12px ${primary.base}40` 
-                        : `0 2px 4px ${primary.base}30`
-                    }
-                  : {
-                      backgroundColor: 'transparent',
-                      color: step.enabled ? (isHovered ? primary.hover : primary.base) : '#9ca3af',
-                      borderWidth: '1px',
-                      borderStyle: 'solid',
-                      borderColor: step.enabled ? (isHovered ? `${primary.base}80` : `${primary.base}40`) : '#e5e7eb',
-                      cursor: step.enabled ? 'pointer' : 'not-allowed',
-                      opacity: step.enabled ? 1 : 0.6
-                    }
-              }
+              style={getStepStyle(step)}
               aria-pressed={currentStep === step.num}
               aria-label={`Step ${step.num}: ${step.label}`}
             >
               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold"
-                style={{
-                  backgroundColor: currentStep === step.num 
-                    ? 'rgba(255,255,255,0.25)' 
-                    : currentStep > step.num 
-                      ? `${primary.base}20`
-                      : 'transparent'
-                }}
+                style={getStepBadgeStyle(step.num)}
               >
                 {currentStep > step.num ? <CheckIcon className="w-3 h-3" /> : step.num}
               </span>
@@ -482,10 +526,7 @@ export default function BookingForm({
                     className={`w-full pl-10 pr-10 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.customer_name ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
-                    style={focusedField === 'customer_name' && !errors.customer_name ? {
-                      borderColor: primary.base,
-                      ['--tw-ring-color' as string]: primary.base,
-                    } : undefined}
+                    style={getInputStyle('customer_name', !!errors.customer_name)}
                     placeholder="John Smith"
                     required
                     aria-required="true"
@@ -540,10 +581,7 @@ export default function BookingForm({
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-300 bg-white dark:bg-gray-50'
                     }`}
-                    style={!readOnlyEmail && focusedField === 'customer_email' && !errors.customer_email ? {
-                      borderColor: primary.base,
-                      ['--tw-ring-color' as string]: primary.base,
-                    } : undefined}
+                    style={!readOnlyEmail ? getInputStyle('customer_email', !!errors.customer_email) : undefined}
                     placeholder="john@example.com"
                     required
                     aria-required="true"
@@ -598,10 +636,7 @@ export default function BookingForm({
                     onFocus={() => handleFieldFocus('customer_phone')}
                     onBlur={handleFieldBlur}
                     className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50"
-                    style={focusedField === 'customer_phone' ? {
-                      borderColor: primary.base,
-                      ['--tw-ring-color' as string]: primary.base,
-                    } : undefined}
+                    style={getInputStyle('customer_phone')}
                     placeholder="+1 234 567 8900"
                     aria-describedby="phone-help"
                   />
@@ -632,10 +667,7 @@ export default function BookingForm({
                     className={`w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
-                    style={focusedField === 'title' && !errors.title ? {
-                      borderColor: primary.base,
-                      ['--tw-ring-color' as string]: primary.base,
-                    } : undefined}
+                    style={getInputStyle('title', !!errors.title)}
                     placeholder="Initial consultation"
                   />
                 </div>
@@ -679,10 +711,7 @@ export default function BookingForm({
                     onBlur={() => setFocusedField(null)}
                     rows={3}
                     className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 resize-none focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50"
-                    style={focusedField === 'description' ? {
-                      borderColor: primary.base,
-                      ['--tw-ring-color' as string]: primary.base,
-                    } : undefined}
+                    style={getInputStyle('description')}
                     placeholder="e.g., Questions about work permits"
                     aria-describedby="notes-help"
                   />
@@ -735,11 +764,9 @@ export default function BookingForm({
                   type="button"
                   onClick={handleNextStep}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg"
-                  style={{ 
-                    background: `linear-gradient(to right, ${primary.base}, ${primary.hover})` 
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  style={gradientButtonStyle}
+                  onMouseEnter={handleButtonMouseEnter}
+                  onMouseLeave={handleButtonMouseLeave}
                 >
                   <span>Next</span>
                   <ArrowRightIcon className="w-4 h-4" />
@@ -766,13 +793,9 @@ export default function BookingForm({
               onClick={handleNextStep}
               disabled={!formData.meeting_type_id}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                background: formData.meeting_type_id 
-                  ? `linear-gradient(to right, ${primary.base}, ${primary.hover})` 
-                  : undefined
-              }}
-              onMouseEnter={(e) => formData.meeting_type_id && (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              style={formData.meeting_type_id ? gradientButtonStyle : undefined}
+              onMouseEnter={formData.meeting_type_id ? handleButtonMouseEnter : undefined}
+              onMouseLeave={formData.meeting_type_id ? handleButtonMouseLeave : undefined}
             >
               <span>Next</span>
               <ArrowRightIcon className="w-4 h-4" />
@@ -798,15 +821,15 @@ export default function BookingForm({
               onMouseEnter={() => handleHoverChange(true)}
               onMouseLeave={() => handleHoverChange(false)}
               className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                background: isSubmitting || !canSubmit 
+              style={
+                isSubmitting || !canSubmit 
                   ? undefined 
                   : isHovered 
-                    ? `linear-gradient(to right, ${primary.hover}, ${primary.active})` 
-                    : `linear-gradient(to right, ${primary.base}, ${primary.hover})`
-              }}
-              onMouseOver={(e) => canSubmit && !isSubmitting && (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    ? hoverGradientStyle
+                    : gradientButtonStyle
+              }
+              onMouseOver={canSubmit && !isSubmitting ? handleButtonMouseEnter : undefined}
+              onMouseOut={canSubmit && !isSubmitting ? handleButtonMouseLeave : undefined}
             >
               {isSubmitting ? (
                 <>

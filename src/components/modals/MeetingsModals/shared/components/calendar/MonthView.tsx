@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
-  isToday,
-} from 'date-fns';
+import { format } from 'date-fns/format';
+import { startOfMonth } from 'date-fns/startOfMonth';
+import { endOfMonth } from 'date-fns/endOfMonth';
+import { startOfWeek } from 'date-fns/startOfWeek';
+import { endOfWeek } from 'date-fns/endOfWeek';
+import { eachDayOfInterval } from 'date-fns/eachDayOfInterval';
+import { isSameMonth } from 'date-fns/isSameMonth';
+import { isSameDay } from 'date-fns/isSameDay';
+import { isToday } from 'date-fns/isToday';
 import { CalendarEvent, CalendarView } from '@/types/meetings';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useHoverBackground } from '../../hooks';
@@ -158,10 +156,102 @@ export function MonthView({
     return eventMap;
   }, [events]);
 
+  // Memoize cell style generator for performance
+  const getCellStyle = useCallback(({
+    isHighlighted,
+    isTodayDate,
+    isSelected,
+    isPastDate,
+    hasEvents,
+    isCurrentMonth
+  }: {
+    isHighlighted: boolean;
+    isTodayDate: boolean;
+    isSelected: boolean;
+    isPastDate: boolean;
+    hasEvents: boolean;
+    isCurrentMonth: boolean;
+  }) => {
+    const baseStyle: React.CSSProperties = {
+      opacity: isPastDate ? 0.6 : 1,
+      ['--tw-ring-color' as string]: primary.base,
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+      aspectRatio: window.innerWidth < 768 ? '1/1' : 'auto',
+      height: window.innerWidth >= 768 ? '60px' : 'auto',
+    };
+
+    if (isHighlighted) {
+      return {
+        ...baseStyle,
+        backgroundColor: primary.base,
+        color: 'white',
+        boxShadow: `0 0 0 3px ${primary.base}40`
+      };
+    }
+
+    if (isTodayDate && !isSelected) {
+      return {
+        ...baseStyle,
+        background: `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})`
+      };
+    }
+
+    const backgroundColor = isSelected 
+      ? primary.lighter
+      : isPastDate 
+      ? colors.bg.light 
+      : hasEvents 
+      ? primary.lighter
+      : isCurrentMonth 
+      ? colors.bg.white 
+      : colors.bg.lighter;
+
+    return {
+      ...baseStyle,
+      backgroundColor,
+      ...(isSelected && !isHighlighted ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {})
+    };
+  }, [primary.base, primary.lighter, colors.bg]);
+
+  // Memoize date number style
+  const getDateNumberStyle = useCallback((isTodayDate: boolean, isSelected: boolean) => {
+    if (isTodayDate) {
+      return {
+        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+        fontWeight: 700,
+        fontVariantNumeric: 'tabular-nums' as const
+      };
+    }
+    if (isSelected) {
+      return {
+        backgroundColor: primary.base,
+        fontWeight: 700,
+        fontVariantNumeric: 'tabular-nums' as const
+      };
+    }
+    return {
+      fontVariantNumeric: 'tabular-nums' as const
+    };
+  }, [primary.base, primary.hover]);
+
+  // Memoize event indicator style
+  const getEventIndicatorStyle = useCallback((eventCount: number, isSelected: boolean, isTodayDate: boolean) => {
+    return {
+      backgroundColor: eventCount >= 3 
+        ? '#F59E0B'
+        : eventCount === 2
+        ? primary.hover
+        : primary.base,
+      opacity: eventCount >= 3 ? 1 : 0.8,
+      ...(isSelected || isTodayDate ? { backgroundColor: 'white' } : {})
+    };
+  }, [primary.base, primary.hover]);
+
   return (
     <div className="w-full">
       <div className="w-full">
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
+        <div className="grid grid-cols-7 gap-0 sm:gap-2 md:gap-3 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
           {/* Day headers - Improved typography */}
           {dayHeaders.map(day => (
             <div 
@@ -186,15 +276,15 @@ export function MonthView({
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayEventsList = dayEvents[dateKey] || [];
             const isCurrentMonth = isSameMonth(day, currentDate);
-            const isSelected = selectedDate && isSameDay(day, selectedDate);
-            const isHighlighted = highlightedDate && isSameDay(day, highlightedDate);
+            const isSelected = !!(selectedDate && isSameDay(day, selectedDate));
+            const isHighlighted = !!(highlightedDate && isSameDay(day, highlightedDate));
             const isTodayDate = isToday(day);
             const isPastDate = day < new Date(new Date().setHours(0, 0, 0, 0));
             const hasEvents = dayEventsList.length > 0;
 
             return (
+              <div key={day.toISOString()} className="p-1 sm:p-0">
               <div
-                key={day.toISOString()}
                 onClick={() => !isPastDate && onDateClick(day)}
                 onKeyDown={(e) => !isPastDate && handleKeyDown(e, day)}
                 tabIndex={!isPastDate && isCurrentMonth ? 0 : -1}
@@ -224,101 +314,45 @@ export function MonthView({
                     e.currentTarget.style.boxShadow = 'none';
                   }
                 }}
-                className={`min-h-[70px] sm:min-h-[75px] md:min-h-[95px] p-1.5 sm:p-2 flex flex-col items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg ${
+                className={`w-full h-full min-h-[50px] sm:min-h-[75px] md:min-h-0 p-0.5 sm:p-2 flex flex-col items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-lg ${
                   isPastDate 
                     ? 'cursor-not-allowed' 
                     : isCurrentMonth ? 'cursor-pointer' : 'text-gray-400 cursor-pointer'
                 }`}
-                style={{
-                  ...(isHighlighted 
-                    ? { 
-                        backgroundColor: primary.base,
-                        color: 'white',
-                        boxShadow: `0 0 0 3px ${primary.base}40`
-                      }
-                    : isTodayDate && !isSelected 
-                    ? { background: `linear-gradient(135deg, ${primary.lighter}, ${primary.lighter})` }
-                    : { 
-                        backgroundColor: isSelected 
-                          ? primary.lighter
-                          : isPastDate 
-                          ? colors.bg.light 
-                          : hasEvents 
-                          ? primary.lighter
-                          : isCurrentMonth 
-                          ? colors.bg.white 
-                          : colors.bg.lighter
-                      }
-                  ),
-                  opacity: isPastDate ? 0.6 : 1,
-                  ...(isSelected && !isHighlighted ? { boxShadow: `inset 0 0 0 2px ${primary.base}` } : {}),
-                  ['--tw-ring-color' as string]: primary.base,
-                  touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'transparent',
-                }}
+                style={getCellStyle({
+                  isHighlighted,
+                  isTodayDate,
+                  isSelected,
+                  isPastDate,
+                  hasEvents,
+                  isCurrentMonth
+                })}
               >
-                {/* Date number - centered */}
-                <div className="relative mb-0.5">
-                  <span
-                    className={`inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full text-sm sm:text-base md:text-lg font-bold transition-all duration-200 ${
-                      isTodayDate || isSelected
-                        ? 'text-white shadow-md'
-                        : 'text-gray-900'
-                    }`}
-                    style={{
-                      ...(isTodayDate
-                        ? { 
-                            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                            fontWeight: 700
-                          }
-                        : isSelected
-                        ? { 
-                            backgroundColor: primary.base,
-                            fontWeight: 700
-                          }
-                        : {}),
-                      fontVariantNumeric: 'tabular-nums'
-                    }}
-                  >
-                    {format(day, 'd')}
-                  </span>
-                  {/* Enhanced event density indicator with color coding */}
-                  {dayEventsList.length > 0 && !isPastDate && (
-                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-                      {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-1.5 h-1.5 rounded-full shadow-sm transition-all duration-200"
-                          style={{ 
-                            backgroundColor: dayEventsList.length >= 3 
-                              ? '#F59E0B' // Warning color for busy days
-                              : dayEventsList.length === 2
-                              ? primary.hover
-                              : primary.base,
-                            opacity: dayEventsList.length >= 3 ? 1 : 0.8,
-                            ...(isSelected || isTodayDate ? { backgroundColor: 'white' } : {})
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* Enhanced event density indicator with color coding - Top right corner */}
+                {dayEventsList.length > 0 && !isPastDate && (
+                  <div className="absolute top-1 right-1 flex gap-0.5">
+                    {Array.from({ length: Math.min(dayEventsList.length, 3) }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1.5 h-1.5 rounded-full shadow-sm transition-all duration-200"
+                        style={getEventIndicatorStyle(dayEventsList.length, isSelected, isTodayDate)}
+                      />
+                    ))}
+                  </div>
+                )}
 
-                {/* Appointment count badge */}
-                <div className="min-h-[20px] flex items-center justify-center mt-auto mb-1">
-                  {dayEventsList.length > 0 && !isPastDate && (
-                    <span
-                      className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[10px] sm:text-xs font-bold rounded-full shadow-sm"
-                      style={{
-                        backgroundColor: isTodayDate || isSelected ? 'white' : `${primary.lighter}40`,
-                        color: isTodayDate || isSelected ? primary.base : primary.base,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {dayEventsList.length}
-                    </span>
-                  )}
-                </div>
+                {/* Date number - centered */}
+                <span
+                  className={`inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full text-[10px] sm:text-sm md:text-base font-bold transition-all duration-200 ${
+                    isTodayDate || isSelected
+                      ? 'text-white shadow-md'
+                      : 'text-gray-900'
+                  }`}
+                  style={getDateNumberStyle(isTodayDate, isSelected)}
+                >
+                  {format(day, 'd')}
+                </span>
+              </div>
               </div>
             );
           })}

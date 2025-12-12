@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy, memo } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
 import { ArrowLeftIcon, CalendarIcon, UserGroupIcon, ListBulletIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -63,6 +63,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
   const lastFocusableRef = useRef<HTMLButtonElement>(null);
+  const isInitialMount = useRef(true);
 
   // Tab state - Default to 'book-new' (Create tab) to match admin behavior
   const [activeTab, setActiveTab] = useState<'my-meetings' | 'book-new'>('book-new');
@@ -71,7 +72,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'booking'>(MODAL_VIEWS.CALENDAR);
   const [error, setError] = useState<string | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -100,6 +101,47 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
 
   // Accessibility features
   const { announce, announcement } = useAriaLiveAnnouncer();
+
+  // Memoize computed values
+  const isMobile = useMemo(() => 
+    typeof window !== 'undefined' && window.innerWidth < 640,
+    []
+  );
+
+  const shouldShowNavFooter = useMemo(() => 
+    currentView === 'calendar' && activeTab === 'book-new',
+    [currentView, activeTab]
+  );
+
+  // Memoize tab styles
+  const getTabStyle = useCallback((isActive: boolean, isHovered: boolean) => 
+    isActive ? {
+      background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+      color: 'white',
+      boxShadow: isHovered ? `0 4px 12px ${primary.base}40` : `0 2px 4px ${primary.base}30`,
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+    } : {
+      backgroundColor: 'transparent',
+      color: isHovered ? primary.hover : primary.base,
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: isHovered ? `${primary.base}80` : `${primary.base}40`,
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+    },
+    [primary.base, primary.hover]
+  );
+
+  // Memoize navigation button styles
+  const navButtonStyle = useMemo(() => ({
+    backgroundColor: `${primary.base}20`,
+    color: primary.base,
+  }), [primary.base]);
+
+  const continueButtonStyle = useMemo(() => ({
+    background: `linear-gradient(to right, ${primary.base}, ${primary.hover})`,
+  }), [primary.base, primary.hover]);
   
   // Focus trap implementation
   useEffect(() => {
@@ -137,23 +179,23 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     if (isOpen) {
       loadCustomerEmail();
     }
-  }, [isOpen, loadCustomerEmail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
-  // Initial data loading - matches MeetingsAdminModal pattern exactly
+  // Initial data loading - load silently without showing skeleton
   useEffect(() => {
     if (!isOpen) {
-      setInitialLoading(true);
+      isInitialMount.current = true; // Reset for next open
       return;
     }
     
     if (!settings?.organization_id) return;
 
     const loadData = async () => {
-      setInitialLoading(true);
       setError(null);
       try {
-        // Just wait for events to load - meeting types load automatically via useMeetingTypes hook
-        await loadEvents();
+        // Load events silently (showLoading = false) - no skeleton on first load
+        await loadEvents(false);
       } catch (err) {
         console.error('Error loading meeting data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load meeting data');
@@ -163,41 +205,83 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     };
 
     loadData();
-  }, [isOpen, settings?.organization_id, calendarState.currentDate, calendarState.calendarView]);
+    // Only run on modal open/close and organization change, NOT on date/view changes
+    // Date/view changes are handled by loadEvents internal dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, settings?.organization_id]);
+
+  // Reload events when calendar date or view changes (with loading indicator)
+  // Skip on initial mount to avoid duplicate load
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    if (isOpen && settings?.organization_id) {
+      loadEvents(true); // Show loading skeleton when navigating
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarState.currentDate, calendarState.calendarView]);
 
   // Load available slots when a slot is selected
   useEffect(() => {
     if (bookingState.selectedSlot) {
       loadAvailableSlots(bookingState.selectedSlot.start);
     }
-  }, [bookingState.selectedSlot, loadAvailableSlots]);
+    // loadAvailableSlots is stable from useCustomerBookingData hook
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingState.selectedSlot]);
 
-  const handleSlotClick = async (date: Date, hour?: number) => {
+  // Memoized navigation handlers
+  const handlePrevDate = useCallback(() => {
+    const newDate = calendarState.calendarView === 'month' 
+      ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
+      : calendarState.calendarView === 'week'
+      ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+      : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
+    calendarState.setCurrentDate(newDate);
+  }, [calendarState.currentDate, calendarState.calendarView, calendarState.setCurrentDate]);
+
+  const handleNextDate = useCallback(() => {
+    const newDate = calendarState.calendarView === 'month' 
+      ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
+      : calendarState.calendarView === 'week'
+      ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+      : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
+    calendarState.setCurrentDate(newDate);
+  }, [calendarState.currentDate, calendarState.calendarView, calendarState.setCurrentDate]);
+
+  const handleToday = useCallback(() => {
+    calendarState.setCurrentDate(new Date());
+  }, [calendarState.setCurrentDate]);
+
+  const handleSlotClick = useCallback(async (date: Date, hour?: number) => {
     setSelectedDate(date);
     
     // On desktop (screen width >= 640px), immediately proceed to booking
     // On mobile, just select the date and show "Continue" button
     if (window.innerWidth >= 640) {
-      // Desktop: immediate navigation
-      loadAvailableSlots(date);
+      // Desktop: immediate navigation with loading skeleton
+      loadAvailableSlots(date, true); // Show loading skeleton on user action
       setCurrentView(MODAL_VIEWS.BOOKING);
       
       if (!customerEmail || !bookingState.formData.customer_email) {
         loadCustomerEmail();
       }
     }
-  };
+  }, [customerEmail, bookingState.formData.customer_email, loadAvailableSlots, loadCustomerEmail]);
 
-  const handleCalendarBackgroundClick = () => {
+  const handleCalendarBackgroundClick = useCallback(() => {
     // Deselect date to allow exploration (mobile only)
     setSelectedDate(null);
-  };
+  }, []);
 
-  const handleProceedToBooking = async () => {
+  const handleProceedToBooking = useCallback(async () => {
     if (!selectedDate) return;
     
-    // Load available slots for the selected date
-    loadAvailableSlots(selectedDate);
+    // Load available slots for the selected date with loading skeleton
+    loadAvailableSlots(selectedDate, true);
 
     // Switch to booking view immediately (slots will load in background)
     setCurrentView(MODAL_VIEWS.BOOKING);
@@ -206,9 +290,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     if (!customerEmail || !bookingState.formData.customer_email) {
       loadCustomerEmail(); // Don't await - let it load in background
     }
-  };
+  }, [selectedDate, customerEmail, bookingState.formData.customer_email, loadAvailableSlots, loadCustomerEmail]);
 
-  const handleBookingSubmit = async (data: any) => {
+  const handleBookingSubmit = useCallback(async (data: any) => {
     if (!settings?.organization_id) {
       setError('Organization context not available');
       return;
@@ -281,9 +365,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     } finally {
       bookingState.setIsSubmitting(false);
     }
-  };
+  }, [settings?.organization_id, bookingState, announce, onBookingSuccess, onClose, loadEvents]);
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = useCallback((event: any) => {
     // Convert CalendarEvent to EventDetails format
     const eventDetails = {
       id: event.id,
@@ -307,13 +391,13 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     };
     setSelectedEvent(eventDetails);
     setShowEventDetailsModal(true);
-  };
+  }, []);
 
   const handleBookingFormChange = useCallback((data: Partial<any>) => {
     bookingState.updateFormData(data);
   }, [bookingState]);
 
-  const handleBackToCalendar = () => {
+  const handleBackToCalendar = useCallback(() => {
     // Keep customer email and name when going back
     const customerData = {
       customer_email: bookingState.formData.customer_email,
@@ -323,9 +407,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     setCurrentView(MODAL_VIEWS.CALENDAR);
     setActiveTab('book-new'); // Stay on book-new tab
     setSelectedDate(null); // Reset selected date
-  };
+  }, [bookingState]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setCurrentView(MODAL_VIEWS.CALENDAR);
     bookingState.resetForm({
       customer_email: bookingState.formData.customer_email,
@@ -333,7 +417,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
     });
     setError(null);
     onClose();
-  };
+  }, [bookingState, onClose]);
 
   // Keyboard shortcuts - defined after handleClose
   useKeyboardShortcuts({
@@ -342,9 +426,6 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
   });
 
   if (!isOpen) return null;
-
-  // Check if mobile
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
     <MeetingsErrorBoundary>
@@ -363,7 +444,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          className={`absolute inset-0 ${isMobile ? 'bg-black/50 backdrop-blur-sm' : ''}`}
           onClick={handleClose}
         />
 
@@ -413,27 +494,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                         onMouseEnter={() => setHoveredTab('book-new')}
                         onMouseLeave={() => setHoveredTab(null)}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                        style={
-                          activeTab === 'book-new'
-                            ? {
-                                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                                color: 'white',
-                                boxShadow: hoveredTab === 'book-new' 
-                                  ? `0 4px 12px ${primary.base}40` 
-                                  : `0 2px 4px ${primary.base}30`,
-                                touchAction: 'manipulation',
-                                WebkitTapHighlightColor: 'transparent',
-                              }
-                            : {
-                                backgroundColor: 'transparent',
-                                color: hoveredTab === 'book-new' ? primary.hover : primary.base,
-                                borderWidth: '1px',
-                                borderStyle: 'solid',
-                                borderColor: hoveredTab === 'book-new' ? `${primary.base}80` : `${primary.base}40`,
-                                touchAction: 'manipulation',
-                                WebkitTapHighlightColor: 'transparent',
-                              }
-                        }
+                        style={getTabStyle(activeTab === 'book-new', hoveredTab === 'book-new')}
                       >
                         <span>Book</span>
                       </button>
@@ -444,27 +505,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                           onMouseEnter={() => setHoveredTab('my-meetings')}
                           onMouseLeave={() => setHoveredTab(null)}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                          style={
-                            activeTab === 'my-meetings'
-                              ? {
-                                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                                  color: 'white',
-                                  boxShadow: hoveredTab === 'my-meetings' 
-                                    ? `0 4px 12px ${primary.base}40` 
-                                    : `0 2px 4px ${primary.base}30`,
-                                  touchAction: 'manipulation',
-                                  WebkitTapHighlightColor: 'transparent',
-                                }
-                              : {
-                                  backgroundColor: 'transparent',
-                                  color: hoveredTab === 'my-meetings' ? primary.hover : primary.base,
-                                  borderWidth: '1px',
-                                  borderStyle: 'solid',
-                                  borderColor: hoveredTab === 'my-meetings' ? `${primary.base}80` : `${primary.base}40`,
-                                  touchAction: 'manipulation',
-                                  WebkitTapHighlightColor: 'transparent',
-                                }
-                          }
+                          style={getTabStyle(activeTab === 'my-meetings', hoveredTab === 'my-meetings')}
                         >
                           <UserGroupIcon className="w-4 h-4" />
                           <span>Manage</span>
@@ -541,16 +582,14 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
             </div>
 
             {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
-            {currentView === 'calendar' && activeTab === 'book-new' && (
+            {shouldShowNavFooter && (
               <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
                 {selectedDate ? (
                   /* Show Next Button when date is selected */
                   <button
                     onClick={handleProceedToBooking}
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all shadow-md hover:shadow-lg"
-                    style={{
-                      background: `linear-gradient(to right, ${primary.base}, ${primary.hover})`
-                    }}
+                    style={continueButtonStyle}
                   >
                     <span>Continue with {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,19 +600,9 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                   /* Show calendar navigation when no date selected */
                   <div className="flex items-center justify-center gap-4">
                     <button
-                      onClick={() => {
-                        const newDate = calendarState.calendarView === 'month' 
-                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
-                          : calendarState.calendarView === 'week'
-                          ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-                          : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
-                        calendarState.setCurrentDate(newDate);
-                      }}
+                      onClick={handlePrevDate}
                       className="p-2 rounded-lg transition-colors duration-200"
-                      style={{ 
-                        backgroundColor: `${primary.base}20`,
-                        color: primary.base 
-                      }}
+                      style={navButtonStyle}
                       aria-label="Previous"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -674,23 +703,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                           onMouseEnter={() => setHoveredTab('book-new')}
                           onMouseLeave={() => setHoveredTab(null)}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                          style={
-                            activeTab === 'book-new'
-                              ? {
-                                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                                  color: 'white',
-                                  boxShadow: hoveredTab === 'book-new' 
-                                    ? `0 4px 12px ${primary.base}40` 
-                                    : `0 2px 4px ${primary.base}30`
-                                }
-                              : {
-                                  backgroundColor: 'transparent',
-                                  color: hoveredTab === 'book-new' ? primary.hover : primary.base,
-                                  borderWidth: '1px',
-                                  borderStyle: 'solid',
-                                  borderColor: hoveredTab === 'book-new' ? `${primary.base}80` : `${primary.base}40`
-                                }
-                          }
+                          style={getTabStyle(activeTab === 'book-new', hoveredTab === 'book-new')}
                         >
                           <span>Book</span>
                         </button>
@@ -702,23 +715,7 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                             onMouseEnter={() => setHoveredTab('my-meetings')}
                             onMouseLeave={() => setHoveredTab(null)}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
-                            style={
-                              activeTab === 'my-meetings'
-                                ? {
-                                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                                    color: 'white',
-                                    boxShadow: hoveredTab === 'my-meetings' 
-                                      ? `0 4px 12px ${primary.base}40` 
-                                      : `0 2px 4px ${primary.base}30`
-                                  }
-                                : {
-                                    backgroundColor: 'transparent',
-                                    color: hoveredTab === 'my-meetings' ? primary.hover : primary.base,
-                                    borderWidth: '1px',
-                                    borderStyle: 'solid',
-                                    borderColor: hoveredTab === 'my-meetings' ? `${primary.base}80` : `${primary.base}40`
-                                  }
-                            }
+                            style={getTabStyle(activeTab === 'my-meetings', hoveredTab === 'my-meetings')}
                           >
                             <UserGroupIcon className="w-4 h-4" />
                             <span>Manage</span>
@@ -800,23 +797,13 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
               </div>
 
               {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
-              {currentView === 'calendar' && activeTab === 'book-new' && (
+              {shouldShowNavFooter && (
                 <div className="sm:hidden border-t border-white/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md p-3">
                   <div className="flex items-center justify-center gap-4">
                     <button
-                      onClick={() => {
-                        const newDate = calendarState.calendarView === 'month' 
-                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() - 1, 1)
-                          : calendarState.calendarView === 'week'
-                          ? new Date(calendarState.currentDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-                          : new Date(calendarState.currentDate.getTime() - 24 * 60 * 60 * 1000);
-                        calendarState.setCurrentDate(newDate);
-                      }}
+                      onClick={handlePrevDate}
                       className="p-2 rounded-lg transition-colors duration-200"
-                      style={{ 
-                        backgroundColor: `${primary.base}20`,
-                        color: primary.base 
-                      }}
+                      style={navButtonStyle}
                       aria-label="Previous"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -824,29 +811,16 @@ export default function MeetingsBookingModal({ isOpen, onClose, preselectedSlot,
                       </svg>
                     </button>
                     <button
-                      onClick={() => calendarState.setCurrentDate(new Date())}
+                      onClick={handleToday}
                       className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                      style={{ 
-                        backgroundColor: `${primary.base}20`,
-                        color: primary.base 
-                      }}
+                      style={navButtonStyle}
                     >
                       Today
                     </button>
                     <button
-                      onClick={() => {
-                        const newDate = calendarState.calendarView === 'month' 
-                          ? new Date(calendarState.currentDate.getFullYear(), calendarState.currentDate.getMonth() + 1, 1)
-                          : calendarState.calendarView === 'week'
-                          ? new Date(calendarState.currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-                          : new Date(calendarState.currentDate.getTime() + 24 * 60 * 60 * 1000);
-                        calendarState.setCurrentDate(newDate);
-                      }}
+                      onClick={handleNextDate}
                       className="p-2 rounded-lg transition-colors duration-200"
-                      style={{ 
-                        backgroundColor: `${primary.base}20`,
-                        color: primary.base 
-                      }}
+                      style={navButtonStyle}
                       aria-label="Next"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

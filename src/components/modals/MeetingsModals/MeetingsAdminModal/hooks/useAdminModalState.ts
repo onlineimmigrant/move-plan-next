@@ -75,8 +75,8 @@ export function useAdminModalState(): AdminModalState {
   // View state
   const [currentView, setCurrentView] = useState<AdminView>('calendar');
   
-  // Loading states
-  const [loading, setLoading] = useState(true);
+  // Loading states - Initialize as false for instant UI render
+  const [loading, setLoading] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingEventDetails, setLoadingEventDetails] = useState(false);

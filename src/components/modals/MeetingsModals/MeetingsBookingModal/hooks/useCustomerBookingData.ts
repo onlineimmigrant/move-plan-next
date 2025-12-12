@@ -30,8 +30,8 @@ export interface UseCustomerBookingDataReturn {
   customerEmail: string | null;
   loadingCustomerData: boolean;
   loadCustomerEmail: () => Promise<void>;
-  loadEvents: () => Promise<void>;
-  loadAvailableSlots: (date: Date) => Promise<void>;
+  loadEvents: (showLoading?: boolean) => Promise<void>;
+  loadAvailableSlots: (date: Date, showLoading?: boolean) => Promise<void>;
 }
 
 /**
@@ -96,15 +96,18 @@ export function useCustomerBookingData({
   /**
    * Load calendar events for the current view
    * Filters to show only customer's bookings (or no bookings for guests)
+   * @param showLoading - Whether to show loading skeleton (default: true, false for initial load)
    */
-  const loadEvents = useCallback(async () => {
+  const loadEvents = useCallback(async (showLoading = true) => {
     if (!organizationId) {
       logError(new Error('Organization ID not available'), { context: 'loadEvents' });
       calendarState.setIsLoading(false);
       return;
     }
 
-    calendarState.setIsLoading(true);
+    if (showLoading) {
+      calendarState.setIsLoading(true);
+    }
     try {
       // Check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
@@ -220,18 +223,25 @@ export function useCustomerBookingData({
     } finally {
       calendarState.setIsLoading(false);
     }
-  }, [organizationId, customerEmail, calendarState, onError]);
+    // Intentionally NOT including currentDate/calendarView to prevent infinite loops
+    // The parent component handles reloading when those change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId, customerEmail]);
 
   /**
    * Load available time slots for a specific date
    * Filters out past time slots
+   * @param date - The date to load slots for
+   * @param showLoading - Whether to show loading skeleton
    */
   const loadAvailableSlots = useCallback(
-    async (date: Date) => {
+    async (date: Date, showLoading = false) => {
       if (!organizationId) return;
 
       try {
-        bookingState.setIsLoadingSlots(true);
+        if (showLoading) {
+          bookingState.setIsLoadingSlots(true);
+        }
         const now = new Date();
 
         // Format date as YYYY-MM-DD in LOCAL timezone (not UTC)

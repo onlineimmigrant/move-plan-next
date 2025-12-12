@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useCallback, memo } from 'react';
-import { format, isToday } from 'date-fns';
+import { format } from 'date-fns/format';
+import { isToday } from 'date-fns/isToday';
 import { CalendarEvent } from '@/types/meetings';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { CurrentTimeIndicator } from '../CurrentTimeIndicator';

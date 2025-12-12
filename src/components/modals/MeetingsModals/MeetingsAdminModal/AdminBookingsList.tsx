@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { 
   ArrowPathIcon,
   CalendarIcon
@@ -40,6 +41,17 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   } = useMeetingLauncher();
   
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
+
+  // Ref for virtual scrolling container
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // Virtual scrolling setup
+  const rowVirtualizer = useVirtualizer({
+    count: bookings.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 200, // Estimated card height
+    overscan: 3, // Render 3 extra items for smooth scrolling
+  });
 
   // Get current user for waiting room controls
   useEffect(() => {
@@ -324,22 +336,50 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         />
       )}
 
-      {/* Bookings Grid - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bookings.map((booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              variant="admin"
-              onJoin={handleJoinCall}
-              onCancel={handleCancelBooking}
-              isJoining={joiningBookingId === booking.id}
-              currentUserId={currentUserId || undefined}
-              userRole="admin"
-              organizationId={organizationId}
-            />
-          ))}
+      {/* Bookings Grid - Scrollable with Virtual Scrolling */}
+      <div 
+        ref={parentRef}
+        className="flex-1 overflow-y-auto p-4 min-h-0" 
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div 
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const booking = bookings[virtualRow.index];
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <div className="pb-4">
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    variant="admin"
+                    onJoin={handleJoinCall}
+                    onCancel={handleCancelBooking}
+                    isJoining={joiningBookingId === booking.id}
+                    currentUserId={currentUserId || undefined}
+                    userRole="admin"
+                    organizationId={organizationId}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

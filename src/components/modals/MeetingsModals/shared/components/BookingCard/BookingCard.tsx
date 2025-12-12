@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, lazy, Suspense, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { type BookingCardProps } from './types';
 import { getCardStyles, getTimeUntilMeeting, getRelativeTime, shouldShowCountdown } from './utils';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +22,7 @@ export function BookingCard({
 }: BookingCardProps) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isViewed, setIsViewed] = useState(false);
+  const [isPrefetched, setIsPrefetched] = useState(false);
 
   // Check if current user has viewed this meeting
   useEffect(() => {
@@ -30,6 +31,27 @@ export function BookingCard({
       setIsViewed(viewedBy.includes(currentUserId));
     }
   }, [booking.viewed_by, currentUserId]);
+
+  // Prefetch event details on hover for instant modal opening
+  const handleMouseEnter = async () => {
+    if (!isPrefetched && organizationId) {
+      setIsPrefetched(true);
+      try {
+        // Prefetch event details from API
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          fetch(`/api/meetings/bookings/${booking.id}`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            }
+          }).catch(() => {}); // Silent prefetch - errors don't matter
+        }
+      } catch (err) {
+        // Silent fail - prefetch is optimization, not critical
+      }
+    }
+  };
 
   // Mark meeting as viewed when details modal opens
   const markAsViewed = async () => {
@@ -95,6 +117,7 @@ export function BookingCard({
           borderWidth: cardStyles.borderWidth,
           opacity: cardStyles.opacity || 1,
         }}
+        onMouseEnter={handleMouseEnter}
       >
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/30 dark:bg-gray-800/30">
           {/* Left: Icon + Title + Date/Time (matching modal header) */}

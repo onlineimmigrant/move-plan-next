@@ -14,13 +14,13 @@ interface StudentContextType {
 const StudentContext = createContext<StudentContextType>({
   isStudent: false,
   organizationId: null,
-  isLoading: true,
+  isLoading: false,
 });
 
 export function StudentProvider({ children }: { children: React.ReactNode }) {
   const [isStudent, setIsStudent] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { session } = useAuth();
 
   useEffect(() => {

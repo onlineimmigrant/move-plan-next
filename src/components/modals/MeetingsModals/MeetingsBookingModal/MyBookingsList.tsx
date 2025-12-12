@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { CalendarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { type Booking } from '@/context/MeetingContext';
@@ -34,6 +35,17 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
   } = useMeetingLauncher();
   
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
+
+  // Ref for virtual scrolling container
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // Virtual scrolling setup
+  const rowVirtualizer = useVirtualizer({
+    count: bookings.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 200, // Estimated card height
+    overscan: 3, // Render 3 extra items for smooth scrolling
+  });
 
   // Get current user's email and role
   useEffect(() => {
@@ -270,27 +282,54 @@ export default function MyBookingsList({ organizationId }: MyBookingsListProps) 
 
   return (
     <div className="relative h-full flex flex-col">
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-20 pt-4 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bookings
-            .sort((a, b) => {
-              // Sort by scheduled_at ascending (nearest first)
-              return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
-            })
-            .map((booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              variant="customer"
-              onJoin={handleJoinCall}
-              onCancel={handleCancelBooking}
-              isJoining={joiningBookingId === booking.id}
-              currentUserId={userId || undefined}
-              userRole={userRole || undefined}
-              organizationId={organizationId}
-            />
-          ))}
+      {/* Scrollable Content with Virtual Scrolling */}
+      <div 
+        ref={parentRef}
+        className="flex-1 overflow-y-auto pb-20 pt-4 px-4"
+      >
+        <div 
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const booking = bookings
+              .sort((a, b) => {
+                // Sort by scheduled_at ascending (nearest first)
+                return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+              })[virtualRow.index];
+            
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <div className="pb-4">
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    variant="customer"
+                    onJoin={handleJoinCall}
+                    onCancel={handleCancelBooking}
+                    isJoining={joiningBookingId === booking.id}
+                    currentUserId={userId || undefined}
+                    userRole={userRole || undefined}
+                    organizationId={organizationId}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { Rnd } from 'react-rnd';
 import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
@@ -79,6 +79,7 @@ export default function MeetingsAdminModal({
   // Calendar state
   const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date());
   const [calendarView, setCalendarView] = useState<CalendarView>('month');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Custom hooks for state management
   const {
@@ -145,15 +146,15 @@ export default function MeetingsAdminModal({
     if (!isOpen || !settings?.organization_id) return;
 
     const loadCriticalData = async () => {
-      setLoading(true);
+      // Don't show loading state - render calendar immediately with empty data
       setError(null);
       try {
-        // Load meeting types first - needed to render UI
+        // Load meeting types in background - UI already visible
         await loadMeetingTypes();
-        setLoading(false); // Show UI immediately
       } catch (err) {
         console.error('Error loading meeting types:', err);
         setError(err instanceof Error ? err.message : 'Failed to load meeting types');
+      } finally {
         setLoading(false);
       }
     };
@@ -223,13 +224,14 @@ export default function MeetingsAdminModal({
 
   // Handle slot click (admin can select any slot)
   const handleSlotClick = useCallback((date: Date, hour?: number) => {
-    // Load available slots for the selected date
+    // Load available slots for the selected date with loading skeleton
     if (settings?.organization_id) {
+      setLoadingSlots(true); // Show loading skeleton immediately
       loadAvailableSlots(date, settings.organization_id);
     }
     // Switch to booking view
     setCurrentView('booking');
-  }, [settings?.organization_id, loadAvailableSlots, setCurrentView]);
+  }, [settings?.organization_id, loadAvailableSlots, setCurrentView, setLoadingSlots]);
 
   // Handle event click
   const handleEventClick = useCallback(async (event: CalendarEvent) => {
@@ -432,6 +434,8 @@ export default function MeetingsAdminModal({
               fetchActiveBookingCount={fetchActiveBookingCount}
               primary={primary}
               isMobile={true}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
 
             {/* Content Area */}
@@ -493,19 +497,23 @@ export default function MeetingsAdminModal({
                       onSlotClick={handleSlotClick}
                       loading={false}
                       use24Hour={use24Hour}
+                      hideViewSwitcher={true}
                     />
                   </div>
                 )
               ) : null}
             </div>
 
-            {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+            {/* Fixed Navigation Footer - Mobile Only */}
             <AdminModalFooter
               currentView={currentView}
               calendarView={calendarView}
               currentDate={currentDate}
               setCurrentDate={setCurrentDate}
+              showTypesModal={toggleTypesModal}
+              showSettingsModal={toggleSettingsModal}
               primary={primary}
+              isMobile={true}
             />
           </div>
         ) : (
@@ -539,6 +547,8 @@ export default function MeetingsAdminModal({
               fetchActiveBookingCount={fetchActiveBookingCount}
               primary={primary}
               isMobile={false}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
 
             {/* Content Area */}
@@ -589,7 +599,7 @@ export default function MeetingsAdminModal({
                     <p className="text-gray-500 dark:text-gray-400">Please create appointment types in organization settings first.</p>
                   </div>
                 ) : (
-                  <div className="p-4 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="p-4 sm:p-6 overflow-y-auto flex-1">
                     <Calendar
                       events={events}
                       currentDate={currentDate}
@@ -600,19 +610,23 @@ export default function MeetingsAdminModal({
                       onSlotClick={handleSlotClick}
                       loading={false}
                       use24Hour={use24Hour}
+                      hideViewSwitcher={false}
                     />
                   </div>
                 )
               ) : null}
             </div>
 
-            {/* Fixed Navigation Footer - Mobile Only, Calendar View Only */}
+            {/* Fixed Footer */}
             <AdminModalFooter
               currentView={currentView}
               calendarView={calendarView}
               currentDate={currentDate}
               setCurrentDate={setCurrentDate}
+              showTypesModal={toggleTypesModal}
+              showSettingsModal={toggleSettingsModal}
               primary={primary}
+              isMobile={false}
             />
           </div>
         </Rnd>

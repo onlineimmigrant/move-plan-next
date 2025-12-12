@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [organizationType, setOrganizationType] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [canonicalProfileId, setCanonicalProfileId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [profileFetched, setProfileFetched] = useState<string | null>(null);
   const router = useRouter();

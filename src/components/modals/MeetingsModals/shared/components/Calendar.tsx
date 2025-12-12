@@ -1,33 +1,33 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
-  addMonths,
-  subMonths,
-  addWeeks,
-  subWeeks,
-  addDays,
-  subDays,
-  isToday,
-  parseISO,
-} from 'date-fns';
+import React, { useState, useMemo, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { format } from 'date-fns/format';
+import { startOfMonth } from 'date-fns/startOfMonth';
+import { endOfMonth } from 'date-fns/endOfMonth';
+import { startOfWeek } from 'date-fns/startOfWeek';
+import { endOfWeek } from 'date-fns/endOfWeek';
+import { eachDayOfInterval } from 'date-fns/eachDayOfInterval';
+import { isSameMonth } from 'date-fns/isSameMonth';
+import { isSameDay } from 'date-fns/isSameDay';
+import { addMonths } from 'date-fns/addMonths';
+import { subMonths } from 'date-fns/subMonths';
+import { addWeeks } from 'date-fns/addWeeks';
+import { subWeeks } from 'date-fns/subWeeks';
+import { addDays } from 'date-fns/addDays';
+import { subDays } from 'date-fns/subDays';
+import { isToday } from 'date-fns/isToday';
+import { parseISO } from 'date-fns/parseISO';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CalendarEvent, CalendarView } from '@/types/meetings';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSwipeGesture, useHoverBackground } from '../hooks';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
 import { getCachedData, setCachedData } from '../utils/calendarCache';
-import { MonthView } from './calendar/MonthView';
-import { WeekView } from './calendar/WeekView';
-import { DayView } from './calendar/DayView';
+import { MonthView } from './calendar/MonthView'; // Eager load - most common view
+
+// Lazy load less common views for better code splitting
+const WeekView = lazy(() => import('./calendar/WeekView').then(m => ({ default: m.WeekView })));
+const DayView = lazy(() => import('./calendar/DayView').then(m => ({ default: m.DayView })));
 
 interface CalendarProps {
   events: CalendarEvent[];
@@ -41,6 +41,7 @@ interface CalendarProps {
   use24Hour?: boolean; // Time format preference from organization settings
   disableSwipe?: boolean; // Disable swipe gestures for navigation
   highlightedDate?: Date | null; // Date to highlight with primary color
+  hideViewSwitcher?: boolean; // Hide the month/week/day view switcher (mobile)
 }
 
 export default function Calendar({
@@ -55,11 +56,23 @@ export default function Calendar({
   use24Hour = true,
   disableSwipe = false,
   highlightedDate = null,
+  hideViewSwitcher = false,
 }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   const calendarRef = useRef<HTMLDivElement>(null);
+  
+  // Preload lazy-loaded views after initial render for instant switching
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Preload WeekView and DayView in the background
+      import('./calendar/WeekView');
+      import('./calendar/DayView');
+    }, 1000); // Preload after 1 second of idle time
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -282,22 +295,23 @@ export default function Calendar({
             </div>
 
             {/* View Toggle + Today Button Combined */}
-            <div className="inline-flex items-center rounded-lg bg-white/10 backdrop-blur-sm p-0.5" role="group" aria-label="Calendar controls">
-              {(['month', 'week', 'day'] as CalendarView[]).map((viewOption) => (
-                <button
-                  key={viewOption}
-                  onClick={() => onViewChange(viewOption)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
-                    view === viewOption
-                      ? 'bg-white shadow-md'
-                      : 'text-white hover:bg-white/10'
-                  }`}
-                  style={{
-                    ...(view === viewOption ? { color: primary.base } : {}),
-                    touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent',
-                  }}
-                  aria-pressed={view === viewOption}
+            {!hideViewSwitcher && (
+              <div className="inline-flex items-center rounded-lg bg-white/10 backdrop-blur-sm p-0.5" role="group" aria-label="Calendar controls">
+                {(['month', 'week', 'day'] as CalendarView[]).map((viewOption) => (
+                  <button
+                    key={viewOption}
+                    onClick={() => onViewChange(viewOption)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${
+                      view === viewOption
+                        ? 'bg-white shadow-md'
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                    style={{
+                      ...(view === viewOption ? { color: primary.base } : {}),
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                    aria-pressed={view === viewOption}
                   aria-label={`${viewOption} view`}
                 >
                   {viewOption.charAt(0).toUpperCase() + viewOption.slice(1)}
@@ -317,11 +331,12 @@ export default function Calendar({
                 Today
               </button>
             </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Calendar Content */}
+      {/* Calendar Content - MonthView eager loaded, others lazy */}
       <div className="w-full">
         {view === 'month' && (
           <MonthView
@@ -337,26 +352,49 @@ export default function Calendar({
           />
         )}
 
-        {view === 'week' && (
-          <WeekView
-            currentDate={currentDate}
-            events={events}
-            onEventClick={onEventClick}
-            onSlotClick={onSlotClick}
-            highlightedDate={highlightedDate}
-            use24Hour={use24Hour}
-          />
-        )}
+        {view !== 'month' && (
+          <Suspense fallback={
+            <div className="w-full p-2">
+              <div className="space-y-2">
+                {/* Week headers skeleton */}
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div key={i} className="h-6 sm:h-8 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+                {/* Days skeleton */}
+                {Array.from({ length: 5 }).map((_, weekIndex) => (
+                  <div key={weekIndex} className="grid grid-cols-7 gap-2">
+                    {Array.from({ length: 7 }).map((_, dayIndex) => (
+                      <div key={dayIndex} className="h-16 sm:h-20 md:h-24 bg-gray-100 rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          }>
+            {view === 'week' && (
+              <WeekView
+                currentDate={currentDate}
+                events={events}
+                onEventClick={onEventClick}
+                onSlotClick={onSlotClick}
+                highlightedDate={highlightedDate}
+                use24Hour={use24Hour}
+              />
+            )}
 
-        {view === 'day' && (
-          <DayView
-            currentDate={currentDate}
-            events={events}
-            onEventClick={onEventClick}
-            onSlotClick={onSlotClick}
-            highlightedDate={highlightedDate}
-            use24Hour={use24Hour}
-          />
+            {view === 'day' && (
+              <DayView
+                currentDate={currentDate}
+                events={events}
+                onEventClick={onEventClick}
+                onSlotClick={onSlotClick}
+                highlightedDate={highlightedDate}
+                use24Hour={use24Hour}
+              />
+            )}
+          </Suspense>
         )}
       </div>
     </div>

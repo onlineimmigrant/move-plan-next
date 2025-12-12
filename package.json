@@ -147,6 +147,7 @@
     "@parcel/css": "^1.14.0",
     "@swc/jest": "^0.2.39",
     "@tailwindcss/postcss": "^4.0.0",
+    "@tanstack/react-virtual": "^3.13.13",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
