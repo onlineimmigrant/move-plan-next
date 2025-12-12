@@ -7,8 +7,9 @@
 
 'use client';
 
-import React, { useState, useMemo, memo } from 'react';
-import { Plus, Search, Package, ChevronDown, Edit2, Trash2, AlertCircle, Check, X } from 'lucide-react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
+import InventoryToolbar from './InventoryToolbar';
+import { Plus, Package, ChevronDown, Edit2, Trash2, AlertCircle, Check, X } from 'lucide-react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { PricingPlan } from '@/types/pricingplan';
 
@@ -40,6 +41,7 @@ interface InventoryViewProps {
   inventories: Inventory[];
   pricingPlans: PricingPlan[];
   isLoading: boolean;
+  searchQuery?: string;
   onCreateInventory: (data: InventoryFormData) => Promise<void>;
   onUpdateInventory: (id: string, updates: Partial<InventoryFormData>) => Promise<void>;
   onDeleteInventory: (id: string) => Promise<void>;
@@ -62,29 +64,36 @@ function InventoryView({
   inventories,
   pricingPlans,
   isLoading,
+  searchQuery = '',
   onCreateInventory,
   onUpdateInventory,
   onDeleteInventory,
 }: InventoryViewProps) {
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
-  
-  const [searchQuery, setSearchQuery] = useState('');
   const [expandedInventoryId, setExpandedInventoryId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingInventory, setEditingInventory] = useState<Inventory | null>(null);
   const [formData, setFormData] = useState<InventoryFormData>(DEFAULT_FORM_DATA);
 
-  // Get product name for display
-  const getProductName = (planId: string | number) => {
-    const plan = pricingPlans.find(p => p.id === planId || p.id.toString() === planId.toString());
+  // Create pricing plans map for O(1) lookups (instead of O(n) find operations)
+  const pricingPlansMap = useMemo(() => {
+    const map = new Map<string, PricingPlan>();
+    pricingPlans.forEach(plan => {
+      map.set(String(plan.id), plan);
+    });
+    return map;
+  }, [pricingPlans]);
+
+  // Memoize helper functions with Map-based O(1) lookups
+  const getProductName = useCallback((planId: string | number) => {
+    const plan = pricingPlansMap.get(String(planId));
     if (!plan || !plan.product) return 'Unknown Product';
     return plan.product.product_name || 'Unknown Product';
-  };
+  }, [pricingPlansMap]);
 
-  // Get plan name for display
-  const getPlanName = (planId: string | number) => {
-    const plan = pricingPlans.find(p => p.id === planId || p.id.toString() === planId.toString());
+  const getPlanName = useCallback((planId: string | number) => {
+    const plan = pricingPlansMap.get(String(planId));
     if (!plan) return 'Unknown Plan';
     const planPackage = plan.package || 'N/A';
     const planMeasure = plan.measure || '';
@@ -96,63 +105,73 @@ function InventoryView({
     }
     
     return `${planPackage} - ${planMeasure}${typeInfo}`;
-  };
+  }, [pricingPlansMap]);
 
-  // Format price (divide by 100 with 2 decimals)
-  const formatPrice = (planId: string | number) => {
-    const plan = pricingPlans.find(p => p.id === planId || p.id.toString() === planId.toString());
+  const formatPrice = useCallback((planId: string | number) => {
+    const plan = pricingPlansMap.get(String(planId));
     if (!plan || !plan.price) return '$0.00';
     const planCurrency = plan.currency_symbol || '$';
     const formattedPrice = (plan.price / 100).toFixed(2);
     return `${planCurrency}${formattedPrice}`;
-  };
+  }, [pricingPlansMap]);
 
-  // Get available plans (not already in inventory)
+  const getStatusColor = useCallback((status: string) => {
+    switch (status) {
+      case 'In Stock': return '#10b981';
+      case 'Low Stock': return '#f59e0b';
+      case 'Out of Stock': return '#ef4444';
+      case 'Backordered': return '#3b82f6';
+      case 'Discontinued': return '#6b7280';
+      default: return '#6b7280';
+    }
+  }, []);
+
+  // Get available plans (not already in inventory) - single-pass
   const availablePlans = useMemo(() => {
-    const usedPlanIds = inventories.map(inv => String(inv.pricing_plan_id));
-    return pricingPlans.filter(plan => !usedPlanIds.includes(String(plan.id)));
+    const usedPlanIdsSet = new Set(inventories.map(inv => String(inv.pricing_plan_id)));
+    return pricingPlans.filter(plan => !usedPlanIdsSet.has(String(plan.id)));
   }, [inventories, pricingPlans]);
 
-  // Filter and sort inventories
+  // Filter and sort inventories - optimized with pre-calculated sort keys
   const filteredAndSortedInventories = useMemo(() => {
-    let filtered = inventories;
+    const query = searchQuery.trim().toLowerCase();
+    const hasSearch = query.length > 0;
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(inv => {
-        const planName = getPlanName(inv.pricing_plan_id).toLowerCase();
-        const productName = getProductName(inv.pricing_plan_id).toLowerCase();
-        const status = inv.status.toLowerCase();
-        const description = (inv.description || '').toLowerCase();
-        return planName.includes(query) || productName.includes(query) || status.includes(query) || description.includes(query);
-      });
-    }
+    // Single-pass filter
+    const filtered = hasSearch
+      ? inventories.filter(inv => {
+          const planName = getPlanName(inv.pricing_plan_id).toLowerCase();
+          const productName = getProductName(inv.pricing_plan_id).toLowerCase();
+          const status = inv.status.toLowerCase();
+          const description = (inv.description || '').toLowerCase();
+          return planName.includes(query) || productName.includes(query) || status.includes(query) || description.includes(query);
+        })
+      : inventories;
 
-    // Sort by product name, then by price
-    const sorted = [...filtered].sort((a, b) => {
-      // First sort by product name
-      const productA = getProductName(a.pricing_plan_id);
-      const productB = getProductName(b.pricing_plan_id);
-      const productCompare = productA.localeCompare(productB);
-      
-      if (productCompare !== 0) {
-        return productCompare;
-      }
-      
-      // Then sort by price
-      const planA = pricingPlans.find(p => String(p.id) === String(a.pricing_plan_id));
-      const planB = pricingPlans.find(p => String(p.id) === String(b.pricing_plan_id));
-      const priceA = planA?.price || 0;
-      const priceB = planB?.price || 0;
-      
-      return priceA - priceB;
+    // Pre-calculate sort keys once (avoid repeated lookups during sort)
+    const inventoriesWithKeys = filtered.map(inv => {
+      const plan = pricingPlansMap.get(String(inv.pricing_plan_id));
+      return {
+        inventory: inv,
+        productName: plan?.product?.product_name || 'Unknown Product',
+        price: plan?.price || 0,
+      };
     });
 
-    return sorted;
-  }, [inventories, searchQuery, pricingPlans]);
+    // Sort using pre-calculated keys (much faster)
+    inventoriesWithKeys.sort((a, b) => {
+      // First sort by product name
+      const productCompare = a.productName.localeCompare(b.productName);
+      if (productCompare !== 0) return productCompare;
+      
+      // Then sort by price
+      return a.price - b.price;
+    });
 
-  const handleOpenForm = (inventory?: Inventory) => {
+    return inventoriesWithKeys.map(item => item.inventory);
+  }, [inventories, searchQuery, pricingPlansMap, getPlanName, getProductName]);
+
+  const handleOpenForm = useCallback((inventory?: Inventory) => {
     if (inventory) {
       setEditingInventory(inventory);
       setFormData({
@@ -170,15 +189,15 @@ function InventoryView({
       setFormData(DEFAULT_FORM_DATA);
     }
     setShowForm(true);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setShowForm(false);
     setEditingInventory(null);
     setFormData(DEFAULT_FORM_DATA);
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!formData.pricing_plan_id) {
       alert('Please select a pricing plan');
       return;
@@ -190,24 +209,21 @@ function InventoryView({
       await onCreateInventory(formData);
     }
     handleCloseForm();
-  };
+  }, [formData, editingInventory, onUpdateInventory, onCreateInventory, handleCloseForm]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (confirm('Are you sure you want to delete this inventory item?')) {
       await onDeleteInventory(id);
     }
-  };
+  }, [onDeleteInventory]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'In Stock': return '#10b981';
-      case 'Low Stock': return '#f59e0b';
-      case 'Out of Stock': return '#ef4444';
-      case 'Backordered': return '#3b82f6';
-      case 'Discontinued': return '#6b7280';
-      default: return '#6b7280';
-    }
-  };
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpandedInventoryId(prev => prev === id ? null : id);
+  }, []);
+
+  const handleFormChange = useCallback((field: keyof InventoryFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   if (isLoading) {
     return (
@@ -219,35 +235,6 @@ function InventoryView({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header Section */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Manage</h2>
-          <button
-            onClick={() => handleOpenForm()}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: primary.base }}
-          >
-            <Plus className="w-4 h-4" />
-            Add Inventory
-          </button>
-        </div>
-
-        {/* Search and Sort */}
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search inventories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Content Section */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {filteredAndSortedInventories.length === 0 ? (
@@ -322,7 +309,7 @@ function InventoryView({
                         e.currentTarget.style.backgroundColor = 'white';
                       }
                     }}
-                    onClick={() => setExpandedInventoryId(isExpanded ? null : inventory.id)}
+                    onClick={() => handleToggleExpand(inventory.id)}
                   >
                     {/* Top Row: Badges - Mobile */}
                     <div className="flex items-center gap-2 flex-wrap">
@@ -659,6 +646,12 @@ function InventoryView({
           </div>
         </div>
       )}
+
+      {/* Inventory Toolbar */}
+      <InventoryToolbar
+        totalCount={filteredAndSortedInventories.length}
+        onAddInventory={() => setShowForm(true)}
+      />
     </div>
   );
 }

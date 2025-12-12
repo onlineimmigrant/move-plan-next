@@ -12,8 +12,9 @@ import ShopCustomersView from '../../ShopModal/components/CustomersView';
 
 interface CustomersViewProps {
   organizationId?: string;
+  searchQuery?: string;
 }
 
-export default function CustomersView({ organizationId }: CustomersViewProps) {
+export default function CustomersView({ organizationId, searchQuery }: CustomersViewProps) {
   return <ShopCustomersView organizationId={organizationId} />;
 }

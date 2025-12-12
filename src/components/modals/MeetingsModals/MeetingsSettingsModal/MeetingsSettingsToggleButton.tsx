@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -77,6 +77,38 @@ export default function MeetingsSettingsToggleButton({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
 
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (variant === 'primary') {
+      setIsPrimaryHovered(true);
+    }
+  }, [variant]);
+
+  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (variant === 'primary') {
+      setIsPrimaryHovered(false);
+    }
+  }, [variant]);
+
+  const handleFocus = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
+    if (variant === 'primary') {
+      e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
+    }
+  }, [variant, primary.base]);
+
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLButtonElement>) => {
+    if (variant === 'primary') {
+      e.currentTarget.style.boxShadow = '';
+    }
+  }, [variant]);
+
   // Check if user is admin
   if (!session || !isAdmin) {
     return null;
@@ -106,19 +138,11 @@ export default function MeetingsSettingsToggleButton({
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
-        onMouseEnter={() => variant === 'primary' && setIsPrimaryHovered(true)}
-        onMouseLeave={() => variant === 'primary' && setIsPrimaryHovered(false)}
-        onFocus={(e) => {
-          if (variant === 'primary') {
-            e.currentTarget.style.boxShadow = `0 0 0 3px ${primary.base}33`;
-          }
-        }}
-        onBlur={(e) => {
-          if (variant === 'primary') {
-            e.currentTarget.style.boxShadow = '';
-          }
-        }}
+        onClick={handleOpenModal}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className={`
           inline-flex items-center gap-2 rounded-md font-medium
           transition-all duration-200
@@ -149,7 +173,7 @@ export default function MeetingsSettingsToggleButton({
 
       <MeetingsSettingsModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
       />
     </>
   );

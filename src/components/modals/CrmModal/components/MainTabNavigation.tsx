@@ -26,16 +26,16 @@ export function MainTabNavigation({
 
   const tabs = [
     { id: 'accounts' as const, label: 'Accounts', icon: Users },
-    { id: 'customers' as const, label: 'Customers', icon: UserCheck },
     { id: 'leads' as const, label: 'Leads', icon: Target },
+    { id: 'customers' as const, label: 'Customers', icon: UserCheck },
     { id: 'team-members' as const, label: 'Team Members', icon: UserGroup },
-    { id: 'reviews' as const, label: 'Reviews', icon: Star },
     { id: 'testimonials' as const, label: 'Testimonials', icon: MessageSquare },
+    { id: 'reviews' as const, label: 'Reviews', icon: Star },
   ];
 
   return (
     <div className="px-6 py-4 border-b border-slate-200/50 bg-transparent">
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -53,14 +53,16 @@ export function MainTabNavigation({
                       boxShadow: `0 4px 12px ${primary.base}40`,
                     }
                   : {
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: 'rgba(0, 0, 0, 0.7)',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      backgroundColor: 'transparent',
+                      color: primary.base,
+                      border: '1px solid',
+                      borderColor: `${primary.base}40`,
                     }
               }
+              aria-current={isActive ? 'page' : undefined}
             >
               <Icon className="w-4 h-4" />
-              {tab.label}
+              <span>{tab.label}</span>
             </button>
           );
         })}

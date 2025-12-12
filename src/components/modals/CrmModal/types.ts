@@ -23,6 +23,14 @@ export interface Profile {
   country: string | null;
   created_at: string;
   organization_id: string;
+  role?: string | null;
+  user_status?: string | null;
+  is_student?: boolean;
+  is_site_creator?: boolean;
+  is_service_provider?: boolean;
+  service_title?: string | null;
+  hourly_rate?: number | null;
+  is_available_for_booking?: boolean;
   team?: TeamProfile;
   customer?: CustomerProfile;
 }
@@ -35,59 +43,71 @@ export interface TeamProfile {
   department: string;
   description: string;
   bio: string;
-  experience_years: string;
+  experience_years: number | null;
   years_of_experience: string;
   education: string;
   certifications: string;
   achievements: string;
-  skills: string;
+  skills: string[] | string;
   linkedin_url: string;
   twitter_url: string;
   github_url: string;
   portfolio_url: string;
   is_featured: boolean;
-  display_order: string;
-  assigned_sections: number[];
+  display_order: number;
+  assigned_sections: string[];
 }
 
 export interface CustomerProfile {
+  // Lead fields
+  is_lead?: boolean;
+  lead_source?: string; // "website", "referral", "cold-call", "linkedin", "event"
+  lead_status?: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  lead_score?: number; // 1-10
+  lead_notes?: string;
+  converted_at?: string;
+  
+  // Customer fields
+  is_customer: boolean;
   image: string | null;
   rating: number;
   company: string;
   job_title: string;
   pseudonym: string | null;
   description: string;
-  is_customer: boolean;
   is_featured: boolean;
   company_logo: string | null;
   linkedin_url: string | null;
   project_type: string;
   display_order: number;
-  testimonial_date: string | null;
+  
+  // Testimonial fields
   testimonial_text: string;
+  testimonial_date: string | null;
+  testimonial_status?: 'draft' | 'submitted' | 'approved' | 'published';
+  testimonial_approved_by?: string;
+  testimonial_approved_at?: string;
+  testimonial_views?: number;
+  
   assigned_sections: string[];
 }
 
-export interface LeadProfile {
-  id: string;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
-  source: string;
-  interest_level: number;
-  notes: string;
-  follow_up_date: string | null;
-  converted_to_customer: boolean;
-  converted_date: string | null;
-}
-
-export interface ReviewProfile {
-  id: string;
+export interface Review {
+  id: number;
   rating: number;
-  review_text: string;
-  review_date: string;
-  is_published: boolean;
-  response_text: string | null;
-  response_date: string | null;
-  platform: string;
+  comment: string | null;
+  submitted_at: string;
+  is_visible_to_user: boolean;
+  is_approved_by_admin: boolean;
+  product_id: number | null;
+  product_name: string | null;
+  user_id: string | null;
+  user_name: string | null;
+  user_surname: string | null;
+  organization_id: string | null;
+  admin_notes: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
 }
 
 export interface TestimonialProfile {

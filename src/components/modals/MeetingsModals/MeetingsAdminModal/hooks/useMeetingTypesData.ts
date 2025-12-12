@@ -68,27 +68,7 @@ export function useMeetingTypesData(
     }
   }, [organizationId, isOpen]);
 
-  // Listen for meeting types changes (when user edits them in settings)
-  useEffect(() => {
-    if (!isOpen || !organizationId) return;
-
-    const channel = supabase
-      .channel(`meeting-types-changes-${organizationId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'meeting_types',
-        filter: `organization_id=eq.${organizationId}`,
-      }, () => {
-        // Reload meeting types when they change
-        loadMeetingTypes();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isOpen, organizationId, loadMeetingTypes]);
+  // Listen for meeting types changes (debounced to prevent excessive reloads)\n  useEffect(() => {\n    if (!isOpen || !organizationId) return;\n\n    let debounceTimer: NodeJS.Timeout;\n    \n    const handleChange = () => {\n      // Debounce reloads to prevent rapid successive calls\n      clearTimeout(debounceTimer);\n      debounceTimer = setTimeout(() => {\n        loadMeetingTypes();\n      }, 500);\n    };\n\n    const channel = supabase\n      .channel(`meeting-types-changes-${organizationId}`)\n      .on('postgres_changes', {\n        event: '*',\n        schema: 'public',\n        table: 'meeting_types',\n        filter: `organization_id=eq.${organizationId}`,\n      }, handleChange)\n      .subscribe();\n\n    return () => {\n      clearTimeout(debounceTimer);\n      supabase.removeChannel(channel);\n    };\n  }, [isOpen, organizationId, loadMeetingTypes]);
 
   return {
     meetingTypes,

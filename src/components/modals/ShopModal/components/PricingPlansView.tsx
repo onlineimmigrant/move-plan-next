@@ -7,16 +7,18 @@
 
 'use client';
 
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Plus, Search, CreditCard, ChevronDown, Edit2, Trash2, Check, X, GripVertical } from 'lucide-react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { PricingPlan } from '@/types/pricingplan';
 import type { Product } from '../types';
+import PricingPlansToolbar from './PricingPlansToolbar';
 
 interface PricingPlansViewProps {
   pricingPlans: PricingPlan[];
   products: Product[];
   isLoading: boolean;
+  searchQuery?: string;
   onCreatePlan: (data: Partial<PricingPlan>) => Promise<void>;
   onUpdatePlan: (id: string, updates: Partial<PricingPlan>) => Promise<void>;
   onDeletePlan: (id: string) => Promise<void>;
@@ -70,6 +72,7 @@ function PricingPlansView({
   pricingPlans,
   products,
   isLoading,
+  searchQuery = '',
   onCreatePlan,
   onUpdatePlan,
   onDeletePlan,
@@ -78,7 +81,7 @@ function PricingPlansView({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive' | 'promotion'>('all');
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
@@ -86,27 +89,40 @@ function PricingPlansView({
   const [draggedPlanId, setDraggedPlanId] = useState<string | null>(null);
   const [dragOverPlanId, setDragOverPlanId] = useState<string | null>(null);
 
-  // Format price for display
-  const formatPrice = (price: number, currencySymbol: string = '£') => {
+  // Memoize helper functions
+  const formatPrice = useCallback((price: number, currencySymbol: string = '£') => {
     return `${currencySymbol}${(price / 100).toFixed(2)}`;
-  };
+  }, []);
 
-  // Get product name
-  const getProductName = (productId: number | null) => {
+  const getProductName = useCallback((productId: number | null) => {
     if (!productId) return 'Unassigned';
     const product = products.find(p => Number(p.id) === productId);
     return product?.product_name || 'Unknown Product';
-  };
+  }, [products]);
 
-  // Group plans by product
+  // Group plans by product - optimized with single-pass filter
   const groupedPlans = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    const hasSearch = query.length > 0;
+
+    // Single-pass filter combining search and status
     const filtered = pricingPlans.filter(plan => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      const productName = getProductName(plan.product_id || null).toLowerCase();
-      const planPackage = (plan.package || '').toLowerCase();
-      const description = (plan.description || '').toLowerCase();
-      return productName.includes(query) || planPackage.includes(query) || description.includes(query);
+      // Search filter
+      if (hasSearch) {
+        const productName = getProductName(plan.product_id || null).toLowerCase();
+        const planPackage = (plan.package || '').toLowerCase();
+        const description = (plan.description || '').toLowerCase();
+        if (!productName.includes(query) && !planPackage.includes(query) && !description.includes(query)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (activeFilter === 'active' && !plan.is_active) return false;
+      if (activeFilter === 'inactive' && plan.is_active) return false;
+      if (activeFilter === 'promotion' && !plan.is_promotion) return false;
+
+      return true;
     });
 
     const grouped = filtered.reduce((acc, plan) => {
@@ -124,20 +140,25 @@ function PricingPlansView({
     });
 
     return grouped;
-  }, [pricingPlans, searchQuery, products]);
+  }, [pricingPlans, products, searchQuery, activeFilter, getProductName]);
 
-  const handleFormChange = (field: keyof PlanFormData, value: any) => {
+  // Calculate filtered count
+  const filteredCount = useMemo(() => {
+    return Object.values(groupedPlans).reduce((sum, plans) => sum + plans.length, 0);
+  }, [groupedPlans]);
+
+  const handleFormChange = useCallback((field: keyof PlanFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleOpenForm = () => {
+  const handleOpenForm = useCallback(() => {
     setEditingPlan(null);
     setFormData(DEFAULT_FORM_DATA);
     setShowForm(true);
     setExpandedPlanId(null);
-  };
+  }, []);
 
-  const handleEditPlan = (plan: PricingPlan) => {
+  const handleEditPlan = useCallback((plan: PricingPlan) => {
     setEditingPlan(plan);
     setFormData({
       product_id: plan.product_id || null,
@@ -155,15 +176,15 @@ function PricingPlansView({
     });
     setShowForm(true);
     setExpandedPlanId(null);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setShowForm(false);
     setEditingPlan(null);
     setFormData(DEFAULT_FORM_DATA);
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     try {
       if (editingPlan) {
         await onUpdatePlan(editingPlan.id.toString(), formData as any);
@@ -174,9 +195,9 @@ function PricingPlansView({
     } catch (error) {
       console.error('Error submitting plan:', error);
     }
-  };
+  }, [editingPlan, formData, onUpdatePlan, onCreatePlan, handleCloseForm]);
 
-  const handleDeletePlan = async (id: string | number) => {
+  const handleDeletePlan = useCallback(async (id: string | number) => {
     if (confirm('Are you sure you want to delete this pricing plan?')) {
       try {
         await onDeletePlan(String(id));
@@ -185,21 +206,21 @@ function PricingPlansView({
         console.error('Error deleting plan:', error);
       }
     }
-  };
+  }, [onDeletePlan, expandedPlanId]);
 
-  const handleToggleExpand = (planId: string | number) => {
+  const handleToggleExpand = useCallback((planId: string | number) => {
     const planIdStr = String(planId);
     setExpandedPlanId(expandedPlanId === planIdStr ? null : planIdStr);
     setShowForm(false);
-  };
+  }, [expandedPlanId]);
 
   // Drag-and-drop handlers
-  const handleDragStart = (e: React.DragEvent, planId: string | number) => {
+  const handleDragStart = useCallback((e: React.DragEvent, planId: string | number) => {
     setDraggedPlanId(String(planId));
     e.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, planId: string | number, productId: number) => {
+  const handleDragOver = useCallback((e: React.DragEvent, planId: string | number, productId: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
@@ -208,13 +229,13 @@ function PricingPlansView({
     if (draggedPlan && (draggedPlan.product_id || 0) === productId) {
       setDragOverPlanId(String(planId));
     }
-  };
+  }, [pricingPlans, draggedPlanId]);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOverPlanId(null);
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent, targetPlanId: string | number, productId: number) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetPlanId: string | number, productId: number) => {
     e.preventDefault();
     
     if (!draggedPlanId || draggedPlanId === String(targetPlanId)) {
@@ -260,12 +281,12 @@ function PricingPlansView({
 
     setDraggedPlanId(null);
     setDragOverPlanId(null);
-  };
+  }, [draggedPlanId, pricingPlans, groupedPlans, onReorderPlans]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggedPlanId(null);
     setDragOverPlanId(null);
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -280,45 +301,13 @@ function PricingPlansView({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 sm:p-6 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CreditCard className="w-6 h-6 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-800">Pricing Plans</h3>
-            <span className="text-sm text-gray-500">({pricingPlans.length})</span>
-          </div>
-          
-          <button
-            onClick={handleOpenForm}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: primary.base }}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Pricing Plan</span>
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search pricing plans..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50"
-          />
-        </div>
-      </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {Object.keys(groupedPlans).length === 0 ? (
           <div className="text-center py-12">
             <CreditCard className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500">
-              {searchQuery ? 'No pricing plans found matching your search' : 'No pricing plans yet'}
+              No pricing plans yet
             </p>
           </div>
         ) : (
@@ -723,6 +712,15 @@ function PricingPlansView({
           </div>
         </div>
       )}
+
+      {/* Fixed Footer with Toolbar */}
+      <PricingPlansToolbar
+        pricingPlans={pricingPlans}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        filteredCount={filteredCount}
+        onAddPlan={handleOpenForm}
+      />
     </div>
   );
 }

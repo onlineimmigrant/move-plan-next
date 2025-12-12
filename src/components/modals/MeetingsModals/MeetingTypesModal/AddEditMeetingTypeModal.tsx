@@ -1,7 +1,7 @@
 // Add/Edit Meeting Type Modal
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { XMarkIcon, CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -57,18 +57,18 @@ export default function AddEditMeetingTypeModal({
 
   const isEditMode = !!meetingType?.id;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!loading) {
       onClose();
     }
-  };
+  }, [loading, onClose]);
 
-  const handleChange = (field: keyof MeetingType, value: any) => {
+  const handleChange = useCallback((field: keyof MeetingType, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
   // Focus trap implementation
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function AddEditMeetingTypeModal({
     }
   }, [isOpen, meetingType]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -188,17 +188,34 @@ export default function AddEditMeetingTypeModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, isEditMode, organizationId, onSave, onClose]);
 
-  const commonDurations = [15, 30, 45, 60, 90, 120];
-  const commonColors = [
+  const commonDurations = useMemo(() => [15, 30, 45, 60, 90, 120], []);
+  
+  const commonColors = useMemo(() => [
     { name: 'Teal', value: '#14b8a6' },
     { name: 'Blue', value: '#3b82f6' },
     { name: 'Purple', value: '#a855f7' },
     { name: 'Pink', value: '#ec4899' },
     { name: 'Orange', value: '#f97316' },
     { name: 'Green', value: '#22c55e' },
-  ];
+  ], []);
+
+  const handleDurationClick = useCallback((duration: number) => {
+    handleChange('duration_minutes', duration);
+  }, [handleChange]);
+
+  const handleColorClick = useCallback((color: string) => {
+    handleChange('color', color);
+  }, [handleChange]);
+
+  const handleToggleCustomerChoice = useCallback(() => {
+    handleChange('is_customer_choice', !formData.is_customer_choice);
+  }, [handleChange, formData.is_customer_choice]);
+
+  const handleToggleActive = useCallback(() => {
+    handleChange('is_active', !formData.is_active);
+  }, [handleChange, formData.is_active]);
 
   if (!isOpen) return null;
 
@@ -301,7 +318,7 @@ export default function AddEditMeetingTypeModal({
                   <button
                     key={duration}
                     type="button"
-                    onClick={() => handleChange('duration_minutes', duration)}
+                    onClick={() => handleDurationClick(duration)}
                     className={`px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all ${
                       formData.duration_minutes === duration
                         ? 'bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm shadow-sm'
@@ -360,7 +377,7 @@ export default function AddEditMeetingTypeModal({
                   <button
                     key={color.value}
                     type="button"
-                    onClick={() => handleChange('color', color.value)}
+                    onClick={() => handleColorClick(color.value)}
                     className="w-12 h-12 rounded-lg border-2 backdrop-blur-sm transition-all hover:scale-105"
                     style={{
                       backgroundColor: color.value,
@@ -395,7 +412,7 @@ export default function AddEditMeetingTypeModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleChange('is_customer_choice', !formData.is_customer_choice)}
+                  onClick={handleToggleCustomerChoice}
                   className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 backdrop-blur-sm"
                   style={{
                     backgroundColor: formData.is_customer_choice ? primary.base : '#e5e7eb',
@@ -420,7 +437,7 @@ export default function AddEditMeetingTypeModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleChange('is_active', !formData.is_active)}
+                  onClick={handleToggleActive}
                   className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 backdrop-blur-sm"
                   style={{
                     backgroundColor: formData.is_active ? primary.base : '#e5e7eb',

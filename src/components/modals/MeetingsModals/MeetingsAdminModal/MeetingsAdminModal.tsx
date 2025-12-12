@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { format } from 'date-fns';
 import { Rnd } from 'react-rnd';
 import { CalendarIcon, UserGroupIcon, ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -134,57 +134,92 @@ export default function MeetingsAdminModal({
     resetForm,
   } = useBookingForm();
 
-  // Load data on mount and when dependencies change
+  // Generate month key for optimized dependency tracking
+  const monthKey = useMemo(
+    () => `${currentDate.getFullYear()}-${currentDate.getMonth()}`,
+    [currentDate]
+  );
+
+  // Stage 1: Load critical data immediately (meeting types only)
   useEffect(() => {
     if (!isOpen || !settings?.organization_id) return;
 
-    const loadData = async () => {
+    const loadCriticalData = async () => {
       setLoading(true);
       setError(null);
       try {
-        await Promise.all([
-          loadMeetingTypes(),
-          loadBookings(),
-          fetchActiveBookingCount(),
-        ]);
-        
-        // Update 24-hour format preference from settings
-        if (meetingSettings.is_24_hours !== undefined) {
-          setUse24Hour(meetingSettings.is_24_hours);
-        }
+        // Load meeting types first - needed to render UI
+        await loadMeetingTypes();
+        setLoading(false); // Show UI immediately
       } catch (err) {
-        console.error('Error loading meeting data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load meeting data');
-      } finally {
+        console.error('Error loading meeting types:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load meeting types');
         setLoading(false);
       }
     };
 
-    loadData();
-  }, [isOpen, settings?.organization_id, currentDate, loadMeetingTypes, loadBookings, fetchActiveBookingCount, meetingSettings.is_24_hours, setLoading, setError, setUse24Hour]);
+    loadCriticalData();
+  }, [isOpen, settings?.organization_id, loadMeetingTypes]);
+
+  // Stage 2: Load bookings in background (per month)
+  useEffect(() => {
+    if (!isOpen || !settings?.organization_id) return;
+
+    const loadBookingsData = async () => {
+      try {
+        // loadBookings already calculates active count, no need for separate call
+        await loadBookings();
+      } catch (err) {
+        console.error('Error loading bookings:', err);
+        // Don't block UI for booking errors
+      }
+    };
+
+    loadBookingsData();
+  }, [isOpen, settings?.organization_id, monthKey, loadBookings]);
+
+  // Update 24-hour format preference when settings change
+  useEffect(() => {
+    if (meetingSettings.is_24_hours !== undefined) {
+      setUse24Hour(meetingSettings.is_24_hours);
+    }
+  }, [meetingSettings.is_24_hours, setUse24Hour]);
 
   // Listen for meeting types changes (when user edits them in settings)
   useEffect(() => {
     const handleRefresh = () => {
       if (settings?.organization_id) {
         loadMeetingTypes();
-        loadBookings();
-        fetchActiveBookingCount();
+        loadBookings(); // This already updates active count
       }
     };
     
     window.addEventListener('refreshMeetingTypes', handleRefresh);
     return () => window.removeEventListener('refreshMeetingTypes', handleRefresh);
-  }, [settings?.organization_id, loadMeetingTypes, loadBookings, fetchActiveBookingCount]);
+  }, [settings?.organization_id, loadMeetingTypes, loadBookings]);
+
+  // Preload lazy-loaded modals after initial render for instant clicks
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const preloadTimer = setTimeout(() => {
+      // Preload child modals in background
+      import('../MeetingsSettingsModal').catch(() => {});
+      import('../MeetingTypesModal').catch(() => {});
+      import('../EventDetailsModal').catch(() => {});
+      import('../InstantMeetingModal').catch(() => {});
+    }, 500);
+    
+    return () => clearTimeout(preloadTimer);
+  }, [isOpen]);
 
   // Reload data helper function
   const reloadData = useCallback(async () => {
     await Promise.all([
       loadMeetingTypes(),
-      loadBookings(),
-      fetchActiveBookingCount(),
+      loadBookings(), // This already updates active count
     ]);
-  }, [loadMeetingTypes, loadBookings, fetchActiveBookingCount]);
+  }, [loadMeetingTypes, loadBookings]);
 
   // Handle slot click (admin can select any slot)
   const handleSlotClick = useCallback((date: Date, hour?: number) => {
@@ -244,7 +279,7 @@ export default function MeetingsAdminModal({
     } finally {
       setLoadingEventDetails(false);
     }
-  }, [settings?.organization_id]);
+  }, [settings?.organization_id, setLoadingEventDetails, setSelectedEvent, toggleEventDetailsModal, setError]);
 
   // Handle booking submission
   const handleBookingSubmit = useCallback(async (data: BookingFormData) => {
@@ -284,8 +319,7 @@ export default function MeetingsAdminModal({
       // Reload data
       await Promise.all([
         loadMeetingTypes(),
-        loadBookings(),
-        fetchActiveBookingCount(),
+        loadBookings(), // This already updates active count
       ]);
 
       // Reset and redirect to manage view
@@ -302,7 +336,6 @@ export default function MeetingsAdminModal({
     onBookingSuccess,
     loadMeetingTypes,
     loadBookings,
-    fetchActiveBookingCount,
     setError,
     setSubmitting,
     setCurrentView,
@@ -316,10 +349,54 @@ export default function MeetingsAdminModal({
     onClose();
   }, [onClose, resetState, resetForm]);
 
-  if (!isOpen) return null;
+  // Memoized computed values
+  const isMobile = useMemo(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 640;
+  }, []);
 
-  // Check if mobile
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const businessHours = useMemo(() => {
+    if (meetingSettings.business_hours_start && meetingSettings.business_hours_end) {
+      return {
+        start: meetingSettings.business_hours_start,
+        end: meetingSettings.business_hours_end
+      };
+    }
+    return undefined;
+  }, [meetingSettings.business_hours_start, meetingSettings.business_hours_end]);
+
+  const hasNoMeetingTypes = useMemo(() => {
+    return meetingTypes.length === 0;
+  }, [meetingTypes.length]);
+
+  // Memoized event handlers
+  const handleStopPropagation = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleInstantMeetingSuccess = useCallback(() => {
+    toggleInstantMeetingModal();
+  }, [toggleInstantMeetingModal]);
+
+  const handleSettingsClose = useCallback(async () => {
+    toggleSettingsModal();
+    await reloadData();
+  }, [toggleSettingsModal, reloadData]);
+
+  const handleTypesModalClose = useCallback(async () => {
+    toggleTypesModal();
+    await reloadData();
+  }, [toggleTypesModal, reloadData]);
+
+  const handleEventDetailsClose = useCallback(() => {
+    toggleEventDetailsModal();
+    setSelectedEvent(null);
+  }, [toggleEventDetailsModal, setSelectedEvent]);
+
+  const handleBackToCalendar = useCallback(() => {
+    setCurrentView('calendar');
+  }, [setCurrentView]);
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -331,7 +408,7 @@ export default function MeetingsAdminModal({
       >
         {/* Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          className="absolute inset-0"
           onClick={handleClose}
         />
 
@@ -340,7 +417,7 @@ export default function MeetingsAdminModal({
           /* Mobile: Fixed fullscreen */
           <div
             className="relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleStopPropagation}
           >
             <AdminModalHeader
               currentView={currentView}
@@ -374,17 +451,14 @@ export default function MeetingsAdminModal({
                     meetingTypes={meetingTypes}
                     onChange={handleFormChange}
                     onSubmit={handleBookingSubmit}
-                    onCancel={() => setCurrentView('calendar')}
-                    onBackToCalendar={() => setCurrentView('calendar')}
+                    onCancel={handleBackToCalendar}
+                    onBackToCalendar={handleBackToCalendar}
                     isSubmitting={submitting}
                     isLoadingSlots={loadingSlots}
                     errors={{}}
                     isAdmin={true}
                     timeFormat24={use24Hour}
-                    businessHours={meetingSettings.business_hours_start && meetingSettings.business_hours_end ? {
-                      start: meetingSettings.business_hours_start,
-                      end: meetingSettings.business_hours_end
-                    } : undefined}
+                    businessHours={businessHours}
                     selectedSlot={bookingFormData.scheduled_at ? availableSlots.find(slot => 
                       slot.start.toISOString() === bookingFormData.scheduled_at
                     ) || null : null}
@@ -399,7 +473,7 @@ export default function MeetingsAdminModal({
               ) : currentView === 'manage-bookings' ? (
                 <AdminBookingsList organizationId={settings?.organization_id} />
               ) : currentView === 'calendar' ? (
-                meetingTypes.length === 0 ? (
+                hasNoMeetingTypes ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
                     <div className="text-gray-500 dark:text-gray-400 mb-4">
                       <CalendarIcon className="mx-auto h-12 w-12" />
@@ -484,17 +558,14 @@ export default function MeetingsAdminModal({
                     meetingTypes={meetingTypes}
                     onChange={handleFormChange}
                     onSubmit={handleBookingSubmit}
-                    onCancel={() => setCurrentView('calendar')}
-                    onBackToCalendar={() => setCurrentView('calendar')}
+                    onCancel={handleBackToCalendar}
+                    onBackToCalendar={handleBackToCalendar}
                     isSubmitting={submitting}
                     isLoadingSlots={loadingSlots}
                     errors={{}}
                     isAdmin={true}
                     timeFormat24={use24Hour}
-                    businessHours={meetingSettings.business_hours_start && meetingSettings.business_hours_end ? {
-                      start: meetingSettings.business_hours_start,
-                      end: meetingSettings.business_hours_end
-                    } : undefined}
+                    businessHours={businessHours}
                     selectedSlot={bookingFormData.scheduled_at ? availableSlots.find(slot => 
                       slot.start.toISOString() === bookingFormData.scheduled_at
                     ) || null : null}
@@ -509,7 +580,7 @@ export default function MeetingsAdminModal({
               ) : currentView === 'manage-bookings' ? (
                 <AdminBookingsList organizationId={settings?.organization_id} />
               ) : currentView === 'calendar' ? (
-                meetingTypes.length === 0 ? (
+                hasNoMeetingTypes ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
                     <div className="text-gray-500 dark:text-gray-400 mb-4">
                       <CalendarIcon className="mx-auto h-12 w-12" />
@@ -555,31 +626,20 @@ export default function MeetingsAdminModal({
       <InstantMeetingModal
       isOpen={showInstantMeetingModal}
       onClose={toggleInstantMeetingModal}
-      onSuccess={() => {
-        // AdminBookingsList will handle its own refresh via realtime subscriptions
-        toggleInstantMeetingModal();
-      }}
+      onSuccess={handleInstantMeetingSuccess}
     />
     
     {/* Settings Modal */}
     <MeetingsSettingsModal
       isOpen={showSettingsModal}
-      onClose={async () => {
-        toggleSettingsModal();
-        // Reload settings to update 24h format preference
-        await reloadData();
-      }}
+      onClose={handleSettingsClose}
     />
     
     {/* Meeting Types Modal */}
     {settings?.organization_id && (
       <MeetingTypesModal
         isOpen={showTypesModal}
-        onClose={async () => {
-          toggleTypesModal();
-          // Reload meeting types after changes
-          await reloadData();
-        }}
+        onClose={handleTypesModalClose}
         organizationId={settings.organization_id}
       />
     )}
@@ -587,10 +647,7 @@ export default function MeetingsAdminModal({
     {/* Event Details Modal */}
     <EventDetailsModal
       isOpen={showEventDetailsModal}
-      onClose={() => {
-        toggleEventDetailsModal();
-        setSelectedEvent(null);
-      }}
+      onClose={handleEventDetailsClose}
       event={selectedEvent}
       isAdmin={true}
       use24Hour={use24Hour}

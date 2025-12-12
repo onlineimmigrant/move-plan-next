@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
   ArrowPathIcon,
   CalendarIcon
@@ -53,11 +53,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
   }, []);
 
   // Fetch all organization bookings
-  useEffect(() => {
-    fetchBookings();
-  }, [selectedStatus, showPast, limit]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -158,9 +154,14 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStatus, showPast, limit, showError, showSuccess, showInfo]);
 
-  const handleJoinCall = async (booking: Booking) => {
+  // Call fetchBookings when dependencies change
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  const handleJoinCall = useCallback(async (booking: Booking) => {
     const timeInfo = getTimeUntilMeeting(booking);
     
     // Admins can join any time, but still validate status
@@ -182,9 +183,9 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
     } finally {
       setJoiningBookingId(null);
     }
-  };
+  }, [launchFromBooking, showError, showInfo, showSuccess]);
 
-  const handleCancelBooking = async (bookingId: string) => {
+  const handleCancelBooking = useCallback(async (bookingId: string) => {
     if (!confirm('Are you sure you want to cancel this booking?')) {
       return;
     }
@@ -214,7 +215,45 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       console.error('Failed to cancel booking:', error);
       showError('Failed to cancel booking');
     }
-  };
+  }, [fetchBookings, showSuccess, showError]);
+
+  // Memoized computed values
+  const canLoadMore = useMemo(() => {
+    return bookings.length >= limit;
+  }, [bookings.length, limit]);
+
+  // Memoized hover handlers
+  const handleRefreshHover = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.color = primary.hover;
+  }, [primary.hover]);
+
+  const handleRefreshLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.color = primary.base;
+  }, [primary.base]);
+
+  const handleActionBtnEnter = useCallback((btn: string) => () => {
+    setHoveredActionBtn(btn);
+  }, []);
+
+  const handleActionBtnLeave = useCallback(() => {
+    setHoveredActionBtn(null);
+  }, []);
+
+  const handleRefreshClick = useCallback(() => {
+    setShowPast(false);
+    setSelectedStatus('all');
+    setLimit(10);
+    fetchBookings();
+  }, [fetchBookings]);
+
+  const handleTogglePast = useCallback(() => {
+    setShowPast(!showPast);
+    setLimit(10);
+  }, [showPast]);
+
+  const handleLoadMore = useCallback(() => {
+    setLimit(limit + 10);
+  }, [limit]);
 
   if (loading) {
     return (
@@ -243,8 +282,8 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
           onClick={fetchBookings}
           className="mt-4 text-sm underline"
           style={{ color: primary.base }}
-          onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
-          onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
+          onMouseEnter={handleRefreshHover}
+          onMouseLeave={handleRefreshLeave}
         >
           Try again
         </button>
@@ -266,8 +305,8 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
           onClick={fetchBookings}
           className="mt-4 text-sm underline"
           style={{ color: primary.base }}
-          onMouseEnter={(e) => e.currentTarget.style.color = primary.hover}
-          onMouseLeave={(e) => e.currentTarget.style.color = primary.base}
+          onMouseEnter={handleRefreshHover}
+          onMouseLeave={handleRefreshLeave}
         >
           Refresh
         </button>
@@ -288,12 +327,7 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
       {/* Bookings Grid - Scrollable */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bookings
-            .sort((a, b) => {
-              // Sort by scheduled_at ascending (nearest first)
-              return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
-            })
-            .map((booking) => (
+          {bookings.map((booking) => (
             <BookingCard
               key={booking.id}
               booking={booking}
@@ -314,14 +348,9 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
         <div className="grid grid-cols-3 gap-2">
           {/* Refresh Button */}
           <button
-            onClick={() => {
-              setShowPast(false);
-              setSelectedStatus('all');
-              setLimit(10);
-              fetchBookings();
-            }}
-            onMouseEnter={() => setHoveredActionBtn('refresh')}
-            onMouseLeave={() => setHoveredActionBtn(null)}
+            onClick={handleRefreshClick}
+            onMouseEnter={handleActionBtnEnter('refresh')}
+            onMouseLeave={handleActionBtnLeave}
             className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
             style={{
               backgroundColor: primary.base,
@@ -335,12 +364,9 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
 
           {/* Active/Inactive Toggle Button with Count Badge */}
           <button
-            onClick={() => {
-              setShowPast(!showPast);
-              setLimit(10);
-            }}
-            onMouseEnter={() => setHoveredActionBtn('toggle')}
-            onMouseLeave={() => setHoveredActionBtn(null)}
+            onClick={handleTogglePast}
+            onMouseEnter={handleActionBtnEnter('toggle')}
+            onMouseLeave={handleActionBtnLeave}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative"
             style={{
               backgroundColor: primary.base,
@@ -362,16 +388,16 @@ export default function AdminBookingsList({ organizationId }: AdminBookingsListP
 
           {/* More Button */}
           <button
-            onClick={() => setLimit(limit + 10)}
-            onMouseEnter={() => setHoveredActionBtn('more')}
-            onMouseLeave={() => setHoveredActionBtn(null)}
-            disabled={bookings.length < limit}
+            onClick={handleLoadMore}
+            onMouseEnter={handleActionBtnEnter('more')}
+            onMouseLeave={handleActionBtnLeave}
+            disabled={!canLoadMore}
             className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
             style={{
-              backgroundColor: bookings.length < limit ? '#e5e7eb' : primary.base,
-              color: bookings.length < limit ? '#9ca3af' : 'white',
-              cursor: bookings.length < limit ? 'not-allowed' : 'pointer',
-              opacity: bookings.length < limit ? 0.5 : hoveredActionBtn === 'more' ? 0.9 : 1,
+              backgroundColor: !canLoadMore ? '#e5e7eb' : primary.base,
+              color: !canLoadMore ? '#9ca3af' : 'white',
+              cursor: !canLoadMore ? 'not-allowed' : 'pointer',
+              opacity: !canLoadMore ? 0.5 : hoveredActionBtn === 'more' ? 0.9 : 1,
             }}
           >
             More

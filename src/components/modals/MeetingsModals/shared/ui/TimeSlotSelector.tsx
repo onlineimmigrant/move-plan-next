@@ -132,25 +132,16 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
   // Time of day styling
   const timeOfDayStyles = {
     morning: {
-      bg: 'from-yellow-50 to-orange-50',
-      border: 'border-yellow-200',
       icon: '☀️',
       label: 'Morning',
-      hoverBg: 'hover:from-yellow-100 hover:to-orange-100'
     },
     afternoon: {
-      bg: 'from-blue-50 to-cyan-50',
-      border: 'border-blue-200',
       icon: '🌤️',
       label: 'Afternoon',
-      hoverBg: 'hover:from-blue-100 hover:to-cyan-100'
     },
     evening: {
-      bg: 'from-purple-50 to-pink-50',
-      border: 'border-purple-200',
       icon: '🌙',
       label: 'Evening',
-      hoverBg: 'hover:from-purple-100 hover:to-pink-100'
     }
   };
 
@@ -390,9 +381,10 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                                   focus-visible:outline-none 
                                   focus-visible:ring-2 
                                   focus-visible:ring-offset-2
+                                  hover:scale-105 active:scale-95
                                   ${isSelected
                                     ? 'text-white shadow-lg scale-105'
-                                    : `bg-gradient-to-br ${styles.bg} ${styles.border} text-gray-700 ${styles.hoverBg} hover:scale-105 hover:shadow-md active:scale-95`
+                                    : 'text-gray-700 hover:shadow-md'
                                   }
                                 `}
                                 style={isSelected ? {
@@ -401,6 +393,8 @@ export const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
                                   boxShadow: `0 4px 12px ${primary.base}40`,
                                   ['--tw-ring-color' as string]: primary.base
                                 } : {
+                                  background: `color-mix(in srgb, ${primary.lighter} 30%, white)`,
+                                  borderColor: `color-mix(in srgb, ${primary.border} 50%, transparent)`,
                                   ['--tw-ring-color' as string]: primary.base
                                 }}
                                 aria-label={`Select ${format(slot.start, timeFormat24 ? 'HH:mm' : 'h:mm a')} time slot. ${styles.label} time.`}
@@ -444,8 +438,17 @@ interface SelectedSlotInfoProps {
 export const SelectedSlotInfo: React.FC<SelectedSlotInfoProps> = ({
   selectedSlot,
   className = '',
-}) => (
-  <div className={`bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-3 shadow-lg ${className}`}>
+}) => {
+  const themeColors = useThemeColors();
+  const primary = themeColors.cssVars.primary;
+  
+  return (
+  <div 
+    className={`rounded-xl p-3 shadow-lg ${className}`}
+    style={{
+      background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+    }}
+  >
     <h4 className="text-xs sm:text-sm font-bold text-white mb-2 flex items-center gap-2">
       <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full">
         ✓
@@ -468,4 +471,5 @@ export const SelectedSlotInfo: React.FC<SelectedSlotInfoProps> = ({
       </div>
     </div>
   </div>
-);
+  );
+};

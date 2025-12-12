@@ -1,0 +1,227 @@
+/**
+ * TestimonialsView Component
+ *
+ * Displays and manages testimonials
+ * Part of the CRM modal - Testimonials tab
+ */
+
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Profile } from '../types';
+import { MessageSquare, Search, CheckCircle, Clock, XCircle, Star } from 'lucide-react';
+
+interface TestimonialsViewProps {
+  organizationId?: string;
+  primary?: { base: string; hover: string };
+}
+
+export default function TestimonialsView({ organizationId, primary }: TestimonialsViewProps) {
+  const [testimonials, setTestimonials] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, [organizationId]);
+
+  const fetchTestimonials = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/team-members');
+      if (!response.ok) throw new Error('Failed to fetch');
+      
+      const data = await response.json();
+      // Filter profiles with testimonial text
+      const testimonialsData = data.profiles?.filter(
+        (p: Profile) => p.customer?.testimonial_text && p.customer.testimonial_text.trim() !== ''
+      ) || [];
+      setTestimonials(testimonialsData);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (profileId: string, status: string) => {
+    try {
+      const profile = testimonials.find(t => t.id === profileId);
+      if (!profile) return;
+
+      const response = await fetch('/api/accounts/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profileId,
+          customer: {
+            ...profile.customer,
+            testimonial_status: status,
+            testimonial_approved_at: status === 'approved' ? new Date().toISOString() : null,
+            testimonial_approved_by: status === 'approved' ? 'admin' : null, // TODO: Get actual user
+          },
+        }),
+      });
+
+      if (response.ok) {
+        fetchTestimonials();
+      }
+    } catch (error) {
+      console.error('Error updating testimonial:', error);
+    }
+  };
+
+  const filteredTestimonials = testimonials.filter(testimonial => {
+    const matchesSearch = 
+      testimonial.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      testimonial.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      testimonial.customer?.testimonial_text?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || testimonial.customer?.testimonial_status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'approved': return <CheckCircle className="w-4 h-4" />;
+      case 'rejected': return <XCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
+      case 'rejected': return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
+      default: return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-gray-600 dark:text-gray-400">Loading testimonials...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Testimonials</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {filteredTestimonials.length} testimonial{filteredTestimonials.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search testimonials..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        >
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      {/* Testimonials List */}
+      {filteredTestimonials.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+          <MessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No Testimonials Yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Testimonials from customers will appear here
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {filteredTestimonials.map((testimonial) => (
+            <div
+              key={testimonial.id}
+              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {testimonial.full_name || testimonial.email}
+                  </h3>
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(testimonial.customer?.testimonial_status)}`}>
+                    {getStatusIcon(testimonial.customer?.testimonial_status)}
+                    {testimonial.customer?.testimonial_status || 'pending'}
+                  </span>
+                </div>
+                
+                {testimonial.customer?.testimonial_rating && (
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${i < (testimonial.customer?.testimonial_rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {testimonial.customer?.company && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {testimonial.customer.company}
+                  {testimonial.customer.job_title && ` • ${testimonial.customer.job_title}`}
+                </p>
+              )}
+
+              <blockquote className="text-gray-700 dark:text-gray-300 italic mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded">
+                "{testimonial.customer?.testimonial_text}"
+              </blockquote>
+
+              {testimonial.customer?.testimonial_approved_at && (
+                <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
+                  Approved {new Date(testimonial.customer.testimonial_approved_at).toLocaleDateString()}
+                </p>
+              )}
+
+              {testimonial.customer?.testimonial_status !== 'approved' && primary && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleUpdateStatus(testimonial.id, 'approved')}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    style={{ backgroundColor: primary.base }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus(testimonial.id, 'rejected')}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

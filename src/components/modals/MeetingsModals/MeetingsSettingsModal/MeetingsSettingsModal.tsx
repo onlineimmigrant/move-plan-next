@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { 
@@ -93,7 +93,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
     return () => document.removeEventListener('keydown', handleTabKey);
   }, [isOpen]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     if (!settings?.organization_id) return;
 
     try {
@@ -116,9 +116,9 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
     } finally {
       setLoading(false);
     }
-  };
+  }, [settings?.organization_id]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!settings?.organization_id) return;
 
     try {
@@ -143,9 +143,9 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
     } finally {
       setSaving(false);
     }
-  };
+  }, [settings?.organization_id, meetingSettings, onClose]);
 
-  const handleDayToggle = (day: number) => {
+  const handleDayToggle = useCallback((day: number) => {
     setMeetingSettings(prev => {
       const currentDays = prev.available_days || [1, 2, 3, 4, 5];
       const days = currentDays.includes(day)
@@ -154,9 +154,74 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
       
       return { ...prev, available_days: days };
     });
-  };
+  }, []);
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Memoized constants
+  const dayNames = useMemo(() => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], []);
+  const slotDurations = useMemo(() => [15, 30, 45, 60], []);
+
+  // Memoized handlers
+  const handleStopPropagation = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleStartTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      business_hours_start: `${e.target.value}:00`
+    }));
+  }, []);
+
+  const handleEndTimeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      business_hours_end: `${e.target.value}:00`
+    }));
+  }, []);
+
+  const handleSlotDurationChange = useCallback((duration: number) => () => {
+    setMeetingSettings(prev => ({ ...prev, slot_duration_minutes: duration }));
+  }, []);
+
+  const handleMinBookingNoticeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      min_booking_notice_hours: parseInt(e.target.value) || 0
+    }));
+  }, []);
+
+  const handleMaxBookingDaysChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      max_booking_days_ahead: parseInt(e.target.value) || 0
+    }));
+  }, []);
+
+  const handleAutoConfirmToggle = useCallback(() => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      auto_confirm_bookings: !prev.auto_confirm_bookings
+    }));
+  }, []);
+
+  const handle24HourToggle = useCallback(() => {
+    setMeetingSettings(prev => ({
+      ...prev,
+      is_24_hours: !prev.is_24_hours
+    }));
+  }, []);
+
+  const handleDayClick = useCallback((index: number) => () => {
+    handleDayToggle(index);
+  }, [handleDayToggle]);
+
+  const handleSaveHover = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = primary.hover;
+  }, [primary.hover]);
+
+  const handleSaveLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = primary.base;
+  }, [primary.base]);
 
   if (!isOpen) return null;
 
@@ -172,7 +237,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
         role="dialog"
         aria-labelledby="settings-modal-title"
         aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleStopPropagation}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && !saving) {
             onClose();
@@ -254,10 +319,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                     id="start-time"
                     type="time"
                     value={meetingSettings.business_hours_start?.slice(0, 5) || '09:00'}
-                    onChange={(e) => setMeetingSettings(prev => ({
-                      ...prev,
-                      business_hours_start: `${e.target.value}:00`
-                    }))}
+                    onChange={handleStartTimeChange}
                     onFocus={() => setFocusedField('start-time')}
                     onBlur={() => setFocusedField(null)}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none transition-all bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white"
@@ -276,10 +338,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                     id="end-time"
                     type="time"
                     value={meetingSettings.business_hours_end?.slice(0, 5) || '17:00'}
-                    onChange={(e) => setMeetingSettings(prev => ({
-                      ...prev,
-                      business_hours_end: `${e.target.value}:00`
-                    }))}
+                    onChange={handleEndTimeChange}
                     onFocus={() => setFocusedField('end-time')}
                     onBlur={() => setFocusedField(null)}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none transition-all bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white"
@@ -297,11 +356,11 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Time Slot Duration</h3>
               <div className="grid grid-cols-4 gap-3">
-                {[15, 30, 45, 60].map(duration => (
+                {slotDurations.map(duration => (
                   <button
                     key={duration}
                     type="button"
-                    onClick={() => setMeetingSettings(prev => ({ ...prev, slot_duration_minutes: duration }))}
+                    onClick={handleSlotDurationChange(duration)}
                     className="px-4 py-2.5 text-sm font-medium rounded-md border-2 transition-all min-h-[44px] backdrop-blur-sm"
                     style={{
                       borderColor: meetingSettings.slot_duration_minutes === duration ? primary.base : '#e5e7eb',
@@ -326,7 +385,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                   <button
                     key={index}
                     type="button"
-                    onClick={() => handleDayToggle(index)}
+                    onClick={handleDayClick(index)}
                     className="px-2 sm:px-3 py-2.5 text-xs font-medium rounded-md border-2 transition-all min-h-[44px] backdrop-blur-sm flex items-center justify-center"
                     style={{
                       borderColor: meetingSettings.available_days?.includes(index) ? primary.base : '#e5e7eb',
@@ -358,11 +417,8 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                     type="number"
                     min="0"
                     value={meetingSettings.min_booking_notice_hours || 2}
-                    onChange={(e) => setMeetingSettings(prev => ({
-                      ...prev,
-                      min_booking_notice_hours: parseInt(e.target.value) || 0
-                    }))}
-                    onFocus={() => setFocusedField('min-notice')}
+                    onChange={handleMinBookingNoticeChange}
+                    onFocus={() => setFocusedField('min-booking-notice')}
                     onBlur={() => setFocusedField(null)}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none transition-all bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white"
                     style={focusedField === 'min-notice' ? {
@@ -382,11 +438,8 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
                     type="number"
                     min="1"
                     value={meetingSettings.max_booking_days_ahead || 90}
-                    onChange={(e) => setMeetingSettings(prev => ({
-                      ...prev,
-                      max_booking_days_ahead: parseInt(e.target.value) || 1
-                    }))}
-                    onFocus={() => setFocusedField('max-days')}
+                    onChange={handleMaxBookingDaysChange}
+                    onFocus={() => setFocusedField('max-booking-days')}
                     onBlur={() => setFocusedField(null)}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none transition-all bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm text-gray-900 dark:text-white"
                     style={focusedField === 'max-days' ? {
@@ -410,10 +463,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
               </div>
               <button
                 type="button"
-                onClick={() => setMeetingSettings(prev => ({
-                  ...prev,
-                  auto_confirm_bookings: !prev.auto_confirm_bookings
-                }))}
+                onClick={handleAutoConfirmToggle}
                 className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 style={{
                   backgroundColor: meetingSettings.auto_confirm_bookings ? primary.base : '#e5e7eb'
@@ -440,10 +490,7 @@ export default function MeetingsSettingsModal({ isOpen, onClose }: MeetingsSetti
               </div>
               <button
                 type="button"
-                onClick={() => setMeetingSettings(prev => ({
-                  ...prev,
-                  is_24_hours: !prev.is_24_hours
-                }))}
+                onClick={handle24HourToggle}
                 className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 style={{
                   backgroundColor: meetingSettings.is_24_hours ? primary.base : '#e5e7eb'

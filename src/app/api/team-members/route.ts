@@ -22,7 +22,8 @@ export async function GET(request: Request) {
       },
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Use the Authorization header configured on the Supabase client; do not pass the token here
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
     }

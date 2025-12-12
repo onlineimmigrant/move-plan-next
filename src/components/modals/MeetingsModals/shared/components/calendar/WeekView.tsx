@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import {
   format,
   startOfWeek,
@@ -60,32 +60,40 @@ export function WeekView({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   
-  // Consistent color palette
-  const colors = {
+  // Memoize static color palette
+  const colors = useMemo(() => ({
     bg: {
       white: '#ffffff',
       light: '#fafafa',
       gray: '#f3f4f6',
     }
-  };
+  }), []);
   
-  // Shadow system
-  const shadows = {
+  // Memoize shadow system
+  const shadows = useMemo(() => ({
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  };
+  }), []);
   
-  // Helper to format time based on preference
-  const formatTime = (date: Date | number) => {
+  // Memoize format time helper
+  const formatTime = useCallback((date: Date | number) => {
     return format(date, use24Hour ? 'HH:mm' : 'h:mm a');
-  };
+  }, [use24Hour]);
   
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start from Monday
-  const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { weekStartsOn: 1 }) });
+  const weekStart = useMemo(
+    () => startOfWeek(currentDate, { weekStartsOn: 1 }),
+    [currentDate]
+  );
+  const weekDays = useMemo(
+    () => eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { weekStartsOn: 1 }) }),
+    [weekStart, currentDate]
+  );
   
-  // Show only 5 days on mobile (Mon-Fri), all 7 on desktop
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-  const displayDays = isMobile ? weekDays.slice(0, 5) : weekDays;
+  // Memoize display days calculation
+  const displayDays = useMemo(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    return isMobile ? weekDays.slice(0, 5) : weekDays;
+  }, [weekDays]);
 
   const weekEvents = useMemo(() => {
     const eventMap: Record<string, CalendarEvent[]> = {};
@@ -122,14 +130,19 @@ export function WeekView({
     return Math.max(0, Math.min(...hours) - 1); // Show 1 hour before earliest event
   }, [events, weekDays]);
 
-  // Generate hours starting from earliest event
-  const hours = Array.from({ length: 24 - earliestHour }, (_, i) => earliestHour + i);
+  // Generate hours starting from earliest event (memoized)
+  const hours = useMemo(
+    () => Array.from({ length: 24 - earliestHour }, (_, i) => earliestHour + i),
+    [earliestHour]
+  );
 
-  // Check if there are any events this week
-  const hasEvents = events.some(event => {
-    const eventDate = format(event.start, 'yyyy-MM-dd');
-    return weekDays.some(day => format(day, 'yyyy-MM-dd') === eventDate);
-  });
+  // Memoize hasEvents check
+  const hasEvents = useMemo(() => {
+    return events.some(event => {
+      const eventDate = format(event.start, 'yyyy-MM-dd');
+      return weekDays.some(day => format(day, 'yyyy-MM-dd') === eventDate);
+    });
+  }, [events, weekDays]);
 
   return (
     <div className="w-full overflow-x-auto">

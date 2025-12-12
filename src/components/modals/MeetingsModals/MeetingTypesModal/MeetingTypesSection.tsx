@@ -1,7 +1,7 @@
 // Meeting Types Section Component for GlobalSettingsModal
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@supabase/supabase-js';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -41,7 +41,7 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
   const [isAddButtonHovered, setIsAddButtonHovered] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  const loadMeetingTypes = async () => {
+  const loadMeetingTypes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,13 +62,13 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId]);
 
   useEffect(() => {
     if (organizationId) {
       loadMeetingTypes();
     }
-  }, [organizationId]);
+  }, [organizationId, loadMeetingTypes]);
 
   // Listen for refresh events
   useEffect(() => {
@@ -78,9 +78,9 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
     
     window.addEventListener('refreshMeetingTypes', handleRefresh);
     return () => window.removeEventListener('refreshMeetingTypes', handleRefresh);
-  }, [organizationId]);
+  }, [loadMeetingTypes]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm('Are you sure you want to permanently delete this meeting type? This action cannot be undone.')) {
       return;
     }
@@ -100,9 +100,9 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
       console.error('Error deleting meeting type:', err);
       alert('Failed to delete meeting type');
     }
-  };
+  }, [organizationId, loadMeetingTypes]);
 
-  const handleToggleActive = async (meetingType: MeetingType) => {
+  const handleToggleActive = useCallback(async (meetingType: MeetingType) => {
     try {
       const response = await fetch(`/api/meetings/types/${meetingType.id}`, {
         method: 'PUT',
@@ -126,7 +126,26 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
       console.error('Error updating meeting type:', err);
       alert('Failed to update meeting type');
     }
-  };
+  }, [organizationId, loadMeetingTypes]);
+
+  // Memoized event handlers - defined before early returns
+  const handleAddButtonMouseEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsAddButtonHovered(true);
+    e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
+  }, [primary.hover, primary.active]);
+
+  const handleAddButtonMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    setIsAddButtonHovered(false);
+    e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
+  }, [primary.base, primary.hover]);
+
+  const handleCardMouseEnter = useCallback((id: string) => {
+    setHoveredCard(id);
+  }, []);
+
+  const handleCardMouseLeave = useCallback(() => {
+    setHoveredCard(null);
+  }, []);
 
   if (loading) {
     return (
@@ -167,23 +186,17 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
       <div className="flex items-center justify-between gap-4">
         <button
           onClick={onAddClick}
-          onMouseEnter={(e) => {
-            setIsAddButtonHovered(true);
-            e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
+          onMouseEnter={handleAddButtonMouseEnter}
+          onMouseLeave={handleAddButtonMouseLeave}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
+          style={{
+            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
           }}
-            onMouseLeave={(e) => {
-              setIsAddButtonHovered(false);
-              e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
-            }}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
-            style={{
-              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
-            }}
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span>Add Type</span>
-          </button>
-        </div>
+        >
+          <PlusIcon className="h-5 w-5" />
+          <span>Add Type</span>
+        </button>
+      </div>
 
       {/* Meeting Types List */}
       {meetingTypes.length === 0 ? (
@@ -195,12 +208,8 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
           </p>
           <button
             onClick={onAddClick}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = `linear-gradient(135deg, ${primary.hover}, ${primary.active})`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = `linear-gradient(135deg, ${primary.base}, ${primary.hover})`;
-            }}
+            onMouseEnter={handleAddButtonMouseEnter}
+            onMouseLeave={handleAddButtonMouseLeave}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
             style={{
               background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`
@@ -215,8 +224,8 @@ export default function MeetingTypesSection({ organizationId, onAddClick, onEdit
           {meetingTypes.map((meetingType) => (
             <div
               key={meetingType.id}
-              onMouseEnter={() => setHoveredCard(meetingType.id)}
-              onMouseLeave={() => setHoveredCard(null)}
+              onMouseEnter={() => handleCardMouseEnter(meetingType.id)}
+              onMouseLeave={handleCardMouseLeave}
               className={`p-4 rounded-lg border-2 transition-all backdrop-blur-sm ${
                 meetingType.is_active
                   ? 'bg-white/60 dark:bg-gray-800/60 hover:shadow-lg'

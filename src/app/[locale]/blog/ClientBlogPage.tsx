@@ -120,6 +120,35 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const debounceTimerRef = React.useRef<NodeJS.Timeout>();
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Debounced search handler
+  const handleSearchChange = (value: string) => {
+    setLocalSearchQuery(value);
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      setSearchQuery(value);
+      if (value.trim() && !recentSearches.includes(value.trim())) {
+        const updated = [value.trim(), ...recentSearches.slice(0, 4)];
+        setRecentSearches(updated);
+        localStorage.setItem('blog_recent_searches', JSON.stringify(updated));
+      }
+    }, 180);
+  };
+  
+  // Cleanup debounce timer
+  React.useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Highlight search terms in text
   const highlightText = (text: string, query: string) => {
@@ -565,9 +594,9 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                 aria-expanded={showAutocomplete}
                 aria-activedescendant={activeIndex >= 0 ? `search-suggestion-${activeIndex}` : undefined}
                 placeholder="Search posts..."
-                value={searchQuery}
+                value={localSearchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
+                  handleSearchChange(e.target.value);
                   setShowAutocomplete(true);
                   setActiveIndex(-1);
                 }}
@@ -583,7 +612,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                     setActiveIndex(-1);
                   }, 200);
                 }}
-                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white border-gray-100 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200"
+                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 style={{
                   '--tw-ring-color': themeColors.cssVars.primary.base,
                 } as React.CSSProperties}
@@ -597,18 +626,24 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                 )}
                 
                 {/* Clear Button */}
-                {searchQuery && !isSearching && (
+                {localSearchQuery && !isSearching && (
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                    onClick={() => {
+                      setLocalSearchQuery('');
+                      setSearchQuery('');
+                      if (debounceTimerRef.current) {
+                        clearTimeout(debounceTimerRef.current);
+                      }
+                    }}
+                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Clear search"
                   >
-                    <XMarkIcon className="h-4 w-4 text-gray-500" />
+                    <XMarkIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   </button>
                 )}
                 
                 {/* Keyboard Shortcut Hint */}
-                <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 font-medium bg-gray-100 rounded-md">
+                <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-700 rounded-md">
                   <kbd>⌘</kbd><kbd>K</kbd>
                 </span>
               </div>
@@ -618,12 +653,12 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                 <div 
                   id="search-autocomplete"
                   role="listbox"
-                  className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-80 overflow-y-auto"
+                  className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 max-h-80 overflow-y-auto"
                 >
                   {/* Recent Searches */}
                   {!searchQuery && recentSearches.length > 0 && (
                     <div className="p-2">
-                      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-2">Recent</div>
+                      <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-3 py-2">Recent</div>
                       {recentSearches.map((search, idx) => (
                         <button
                           key={idx}
@@ -631,16 +666,17 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                           role="option"
                           aria-selected={activeIndex === idx}
                           onClick={() => {
+                            setLocalSearchQuery(search);
                             setSearchQuery(search);
                             setShowAutocomplete(false);
                             setActiveIndex(-1);
                           }}
-                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 flex items-center gap-2 transition-colors ${
-                            activeIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2 transition-colors ${
+                            activeIndex === idx ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                           }`}
                           style={activeIndex === idx ? { backgroundColor: `${themeColors.cssVars.primary.base}15` } : {}}
                         >
-                          <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                          <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                           {search}
                         </button>
                       ))}
@@ -650,7 +686,7 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                   {/* Autocomplete Suggestions */}
                   {searchQuery && autocompleteSuggestions.length > 0 && (
                     <div className="p-2">
-                      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 py-2">Suggestions</div>
+                      <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-3 py-2">Suggestions</div>
                       {autocompleteSuggestions.map((title, idx) => (
                         <button
                           key={idx}
@@ -658,12 +694,13 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                           role="option"
                           aria-selected={activeIndex === idx}
                           onClick={() => {
+                            setLocalSearchQuery(title);
                             setSearchQuery(title);
                             setShowAutocomplete(false);
                             setActiveIndex(-1);
                           }}
-                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 transition-colors ${
-                            activeIndex === idx ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition-colors ${
+                            activeIndex === idx ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                           }`}
                           style={activeIndex === idx ? { backgroundColor: `${themeColors.cssVars.primary.base}15` } : {}}
                         >
@@ -675,10 +712,10 @@ const ClientBlogPage: React.FC<ClientBlogPageProps> = ({
                   
                   {/* Search Tips */}
                   {!searchQuery && recentSearches.length === 0 && (
-                    <div className="p-4 text-center text-sm text-gray-500">
+                    <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
                       <p className="font-medium mb-1">Search tips:</p>
                       <p className="text-xs">Try searching by title, description, or category</p>
-                      <p className="text-xs mt-2 text-gray-400">Use ↑↓ arrows to navigate</p>
+                      <p className="text-xs mt-2 text-gray-400 dark:text-gray-500">Use ↑↓ arrows to navigate</p>
                     </div>
                   )}
                 </div>

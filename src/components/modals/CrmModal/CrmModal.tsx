@@ -15,13 +15,11 @@
 
 'use client';
 
-import React, { useState, useCallback, lazy, Suspense } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useCallback, lazy, Suspense, useTransition, useRef } from 'react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { CrmModalProps, CrmTab } from './types';
-import { MainTabNavigation } from './components/MainTabNavigation';
-import { ModalContainer } from './components/ModalContainer';
-import { LoadingState } from './components/LoadingState';
+import { ModalContainer, ModalHeader, MainTabNavigation, LoadingState } from './components';
+import { CrmProvider } from './context/CrmContext';
 
 // Lazy load heavy tab components
 const AccountsView = lazy(() => import('./components/AccountsView'));
@@ -38,68 +36,70 @@ export default function CrmModal({
   organizationId
 }: CrmModalProps) {
   const [activeTab, setActiveTab] = useState<CrmTab>(initialTab);
+  const [isPending, startTransition] = useTransition();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const themeColors = useThemeColors();
+  
+  // Track which tabs have loaded data to enable smart caching
+  const loadedTabsRef = useRef<Set<CrmTab>>(new Set());
 
   const handleTabChange = useCallback((tab: CrmTab) => {
-    setActiveTab(tab);
+    startTransition(() => {
+      setActiveTab(tab);
+      setSearchQuery(''); // Clear search when switching tabs
+    });
   }, []);
 
   const renderActiveTab = () => {
+    const primaryColors = { base: themeColors.cssVars.primary.base, hover: themeColors.cssVars.primary.hover };
+    
     switch (activeTab) {
       case 'accounts':
-        return <AccountsView organizationId={organizationId} />;
+        return <AccountsView organizationId={organizationId} searchQuery={searchQuery} />;
       case 'customers':
         return <CustomersView organizationId={organizationId} />;
       case 'leads':
-        return <LeadsView organizationId={organizationId} />;
+        return <LeadsView organizationId={organizationId} primary={primaryColors} searchQuery={searchQuery} />;
       case 'team-members':
-        return <TeamMembersView organizationId={organizationId} />;
+        return <TeamMembersView organizationId={organizationId} searchQuery={searchQuery} />;
       case 'reviews':
-        return <ReviewsView organizationId={organizationId} />;
+        return <ReviewsView organizationId={organizationId} primary={primaryColors} searchQuery={searchQuery} />;
       case 'testimonials':
-        return <TestimonialsView organizationId={organizationId} />;
+        return <TestimonialsView organizationId={organizationId} primary={primaryColors} searchQuery={searchQuery} />;
       default:
-        return <AccountsView organizationId={organizationId} />;
+        return <AccountsView organizationId={organizationId} searchQuery={searchQuery} />;
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <ModalContainer onClose={onClose}>
-      {/* Header */}
-      <div
-        className="flex items-center justify-between p-6 border-b border-white/30"
-        style={{
-          background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}10, ${themeColors.cssVars.primary.hover}05)`,
-          backdropFilter: 'blur(20px)',
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            CRM Management
-          </h2>
+    <CrmProvider>
+      <ModalContainer isOpen={isOpen} onClose={onClose}>
+        {/* Header */}
+        <ModalHeader
+          title="CRM"
+          primaryColor={themeColors.cssVars.primary.base}
+          onClose={onClose}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchSuggestions={searchSuggestions}
+        />
+
+        {/* Tab Navigation */}
+        <MainTabNavigation
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
+
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
+          <Suspense fallback={<LoadingState />}>
+            {renderActiveTab()}
+          </Suspense>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-white/20 dark:hover:bg-gray-800/50 transition-colors"
-        >
-          <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-        </button>
-      </div>
-
-      {/* Tab Navigation */}
-      <MainTabNavigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
-
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        <Suspense fallback={<LoadingState />}>
-          {renderActiveTab()}
-        </Suspense>
-      </div>
-    </ModalContainer>
+      </ModalContainer>
+    </CrmProvider>
   );
 }

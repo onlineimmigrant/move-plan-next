@@ -381,6 +381,59 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
     return filtered.reduce((sum, p) => sum + ((p.pricingplan?.price || 0) / 100), 0);
   }, [purchases, selectedPeriod, selectedDate, selectedWeek, selectedMonth, selectedYear, customStartDate, customEndDate, filterByPeriod]);
 
+  // Memoized product revenue breakdown for analytics
+  const productRevenueStats = useMemo(() => {
+    const filtered = filterByPeriod(purchases);
+    const productMap: Record<string, { revenue: number; count: number; productName: string; currency: string }> = {};
+    
+    filtered.forEach(purchase => {
+      const productId = purchase.pricingplan?.product?.id?.toString() || 'unknown';
+      const productName = purchase.pricingplan?.product?.product_name || 'Unknown Product';
+      const revenue = (purchase.pricingplan?.price || 0) / 100;
+      const currency = purchase.pricingplan?.currency_symbol || '$';
+      
+      if (!productMap[productId]) {
+        productMap[productId] = { revenue: 0, count: 0, productName, currency };
+      }
+      
+      productMap[productId].revenue += revenue;
+      productMap[productId].count += 1;
+    });
+    
+    const sorted = Object.entries(productMap)
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((a, b) => b.revenue - a.revenue);
+    
+    return sorted;
+  }, [purchases, selectedPeriod, selectedDate, selectedWeek, selectedMonth, selectedYear, customStartDate, customEndDate, filterByPeriod]);
+
+  // Memoized customer revenue breakdown for analytics
+  const customerRevenueStats = useMemo(() => {
+    const filtered = filterByPeriod(purchases);
+    const customerMap: Record<string, { revenue: number; count: number; customerName: string; email: string; currency: string }> = {};
+    
+    filtered.forEach(purchase => {
+      const customerId = purchase.profiles_id || 'unknown';
+      const customerName = purchase.profile?.full_name || purchase.profile?.username || 'Unknown Customer';
+      const email = purchase.profile?.email || '';
+      const revenue = (purchase.pricingplan?.price || 0) / 100;
+      const currency = purchase.pricingplan?.currency_symbol || '$';
+      
+      if (!customerMap[customerId]) {
+        customerMap[customerId] = { revenue: 0, count: 0, customerName, email, currency };
+      }
+      
+      customerMap[customerId].revenue += revenue;
+      customerMap[customerId].count += 1;
+    });
+    
+    const sorted = Object.entries(customerMap)
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((a, b) => b.revenue - a.revenue);
+    
+    return sorted;
+  }, [purchases, selectedPeriod, selectedDate, selectedWeek, selectedMonth, selectedYear, customStartDate, customEndDate, filterByPeriod]);
+
   // Revenue trend data for visualization
   const revenueTrendData = useMemo(() => {
     const filtered = filterByPeriod(purchases);
@@ -442,8 +495,8 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
     };
   }, [purchases, selectedPeriod, selectedDate, selectedWeek, selectedMonth, selectedYear, customStartDate, customEndDate, filterByPeriod]);
 
-  // Helper to format date for grouping
-  const formatDateGroup = (dateString: string) => {
+  // Helper to format date for grouping - memoized
+  const formatDateGroup = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
@@ -462,7 +515,90 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
       month: 'long', 
       day: 'numeric' 
     });
-  };
+  }, []);
+
+  // Memoize event handlers
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleToggleExpand = useCallback((purchaseId: string) => {
+    setExpandedOrderId(prev => prev === purchaseId ? null : purchaseId);
+  }, []);
+
+  const handleFilterStatusChange = useCallback((status: 'all' | 'active' | 'expired') => {
+    setFilterStatus(status);
+  }, []);
+
+  const handleSortByChange = useCallback((sort: 'date' | 'product' | 'customer' | 'revenue') => {
+    setSortBy(sort);
+  }, []);
+
+  const handlePeriodChange = useCallback((period: 'date' | 'week' | 'month' | 'year' | 'all' | 'custom') => {
+    setSelectedPeriod(period);
+  }, []);
+
+  const handleVisualizationTypeChange = useCallback((type: 'bar' | 'column' | 'line' | 'area' | 'table') => {
+    setVisualizationType(type);
+  }, []);
+
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  }, []);
+
+  const handleWeekChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedWeek(e.target.value);
+  }, []);
+
+  const handleMonthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedMonth(e.target.value);
+  }, []);
+
+  const handleYearChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedYear(e.target.value);
+  }, []);
+
+  const handleCustomStartDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomStartDate(e.target.value);
+  }, []);
+
+  const handleCustomEndDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomEndDate(e.target.value);
+  }, []);
+
+  const handlePreviousPage = useCallback(() => {
+    setCurrentPage(p => Math.max(1, p - 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(p => Math.min(totalPages, p + 1));
+  }, [totalPages]);
+
+  const handleLoadMoreProducts = useCallback(() => {
+    setVisibleProductsCount(prev => Math.min(prev + 10, revenueByProduct.length));
+  }, [revenueByProduct.length]);
+
+  const handleResetProducts = useCallback(() => {
+    setVisibleProductsCount(5);
+  }, []);
+
+  const handleLoadMoreCustomers = useCallback(() => {
+    setVisibleCustomersCount(prev => Math.min(prev + 10, revenueByCustomer.length));
+  }, [revenueByCustomer.length]);
+
+  const handleResetCustomers = useCallback(() => {
+    setVisibleCustomersCount(5);
+  }, []);
+
+  const handleToggleFilters = useCallback(() => {
+    setShowFiltersAccordion(prev => !prev);
+    setShowRevenueAccordion(false);
+  }, []);
+
+  const handleToggleRevenue = useCallback(() => {
+    setShowRevenueAccordion(prev => !prev);
+    setShowFiltersAccordion(false);
+  }, []);
 
   if (isLoading) {
     return (
@@ -524,7 +660,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             placeholder="Search by customer, product, plan, or transaction ID..."
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:outline-none"
           />
@@ -589,7 +725,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }
                       }}
-                      onClick={() => setExpandedOrderId(isExpanded ? null : purchase.id)}
+                      onClick={() => handleToggleExpand(purchase.id)}
                     >
                       {/* Left: Product & Customer Info */}
                       <div className="flex-1 min-w-0">
@@ -731,10 +867,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
           <div className="flex flex-col sm:flex-row gap-2 md:flex-1">
             {/* Filters Button */}
             <button
-              onClick={() => {
-                setShowFiltersAccordion(!showFiltersAccordion);
-                if (showRevenueAccordion) setShowRevenueAccordion(false);
-              }}
+              onClick={handleToggleFilters}
               className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm border w-full sm:w-auto"
               style={{ 
                 color: showFiltersAccordion ? 'white' : primary.base,
@@ -764,10 +897,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
 
             {/* Revenue/Sort Button */}
             <button
-              onClick={() => {
-                setShowRevenueAccordion(!showRevenueAccordion);
-                if (showFiltersAccordion) setShowFiltersAccordion(false);
-              }}
+              onClick={handleToggleRevenue}
               className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm border w-full sm:w-auto"
               style={{ 
                 color: showRevenueAccordion ? 'white' : primary.base,
@@ -800,7 +930,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 md:justify-end">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={handlePreviousPage}
                 disabled={currentPage === 1}
                 className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 dark:border-gray-600"
                 style={{ 
@@ -814,7 +944,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={handleNextPage}
                 disabled={currentPage === totalPages}
                 className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 dark:border-gray-600"
                 style={{ 
@@ -845,7 +975,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                 ].map((filter) => (
                   <button
                     key={filter.id}
-                    onClick={() => setFilterStatus(filter.id)}
+                    onClick={() => handleFilterStatusChange(filter.id)}
                     onMouseEnter={() => setHoveredFilter(filter.id)}
                     onMouseLeave={() => setHoveredFilter(null)}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
@@ -900,7 +1030,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   return (
                     <button
                       key={sort.id}
-                      onClick={() => setSortBy(sort.id)}
+                      onClick={() => handleSortByChange(sort.id)}
                       onMouseEnter={() => setHoveredFilter(`sort-${sort.id}`)}
                       onMouseLeave={() => setHoveredFilter(null)}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm flex-shrink-0"
@@ -956,7 +1086,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                 ].map((period) => (
                   <button
                     key={period.id}
-                    onClick={() => setSelectedPeriod(period.id)}
+                    onClick={() => handlePeriodChange(period.id)}
                     className="group relative p-4 rounded-xl border-2 text-center transition-all duration-300 flex flex-col items-center gap-2 hover:scale-105"
                     style={
                       selectedPeriod === period.id
@@ -997,7 +1127,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={handleDateChange}
                       className="w-full px-4 py-3 rounded-xl border-2 text-base font-medium transition-all duration-300 focus:outline-none focus:ring-4 focus:scale-[1.02]"
                       style={{ 
                         borderColor: selectedDate ? primary.base : '#d1d5db',
@@ -1033,7 +1163,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                     <input
                       type="date"
                       value={selectedWeek}
-                      onChange={(e) => setSelectedWeek(e.target.value)}
+                      onChange={handleWeekChange}
                       className="w-full px-4 py-3 rounded-xl border-2 text-base font-medium transition-all duration-300 focus:outline-none focus:ring-4 focus:scale-[1.02]"
                       style={{ 
                         borderColor: selectedWeek ? primary.base : '#d1d5db',
@@ -1074,7 +1204,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                     <input
                       type="month"
                       value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      onChange={handleMonthChange}
                       className="w-full px-4 py-3 rounded-xl border-2 text-base font-medium transition-all duration-300 focus:outline-none focus:ring-4 focus:scale-[1.02]"
                       style={{ 
                         borderColor: selectedMonth ? primary.base : '#d1d5db',
@@ -1154,7 +1284,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                       <input
                         type="date"
                         value={customStartDate}
-                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        onChange={handleCustomStartDateChange}
                         className="w-full px-4 py-3 rounded-xl border-2 text-base font-medium transition-all duration-300 focus:outline-none focus:ring-4 focus:scale-[1.02]"
                         style={{ 
                           borderColor: customStartDate ? primary.base : '#d1d5db',
@@ -1172,7 +1302,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                       <input
                         type="date"
                         value={customEndDate}
-                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        onChange={handleCustomEndDateChange}
                         className="w-full px-4 py-3 rounded-xl border-2 text-base font-medium transition-all duration-300 focus:outline-none focus:ring-4 focus:scale-[1.02]"
                         style={{ 
                           borderColor: customEndDate ? primary.base : '#d1d5db',
@@ -1259,7 +1389,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   })}
                   {visibleProductsCount < revenueByProduct.length && (
                     <button
-                      onClick={() => setVisibleProductsCount(prev => Math.min(prev + 10, revenueByProduct.length))}
+                      onClick={handleLoadMoreProducts}
                       className="w-full mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, ${primary.base}15, ${primary.hover}15)`,
@@ -1272,7 +1402,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   )}
                   {visibleProductsCount > 5 && visibleProductsCount >= revenueByProduct.length && (
                     <button
-                      onClick={() => setVisibleProductsCount(5)}
+                      onClick={handleResetProducts}
                       className="w-full mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, ${primary.base}15, ${primary.hover}15)`,
@@ -1340,7 +1470,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   })}
                   {visibleCustomersCount < revenueByCustomer.length && (
                     <button
-                      onClick={() => setVisibleCustomersCount(prev => Math.min(prev + 10, revenueByCustomer.length))}
+                      onClick={handleLoadMoreCustomers}
                       className="w-full mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, ${primary.base}15, ${primary.hover}15)`,
@@ -1353,7 +1483,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   )}
                   {visibleCustomersCount > 5 && visibleCustomersCount >= revenueByCustomer.length && (
                     <button
-                      onClick={() => setVisibleCustomersCount(5)}
+                      onClick={handleResetCustomers}
                       className="w-full mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, ${primary.base}15, ${primary.hover}15)`,
@@ -1401,7 +1531,7 @@ export default function OrdersView({ organizationId: propOrgId }: OrdersViewProp
                   ].map((type) => (
                     <button
                       key={type.id}
-                      onClick={() => setVisualizationType(type.id)}
+                      onClick={() => handleVisualizationTypeChange(type.id)}
                       className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 flex items-center gap-1.5"
                       style={{
                         background: visualizationType === type.id ? primary.base : 'transparent',

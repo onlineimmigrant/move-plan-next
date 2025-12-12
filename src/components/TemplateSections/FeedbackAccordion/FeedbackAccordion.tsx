@@ -303,11 +303,8 @@ const FeedbackAccordion: React.FC<FeedbackAccordionProps> = ({ type, slug, pageS
   if (isLoading) return <div className="text-center text-gray-500 py-12"><Loading /></div>;
   if (error) return <p className="text-center text-red-500 py-12">{error}</p>;
   
-  // Hide component if less than 2 reviews exist
-  if (totalApprovedFeedbacks < 2) {
-
-    return null;
-  }
+  // Show component even with 0 reviews to allow users to submit first review
+  // Removed: if (totalApprovedFeedbacks < 2) { return null; }
 
 
 

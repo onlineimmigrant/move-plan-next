@@ -6,8 +6,9 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon, ChevronDown, Search, ArrowUpDown, GripVertical } from 'lucide-react';
+import FeaturesToolbar from './FeaturesToolbar';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/UnsplashImageSearch';
@@ -20,6 +21,7 @@ interface FeaturesViewProps {
   pricingPlans: PricingPlan[];
   pricingPlanFeatures: PricingPlanFeature[];
   isLoading: boolean;
+  searchQuery?: string;
   onCreateFeature: (data: Partial<Feature>) => Promise<void>;
   onUpdateFeature: (id: string, updates: Partial<Feature>) => Promise<void>;
   onDeleteFeature: (id: string) => Promise<void>;
@@ -27,11 +29,25 @@ interface FeaturesViewProps {
   onRemoveFeature: (pricingplanId: string, featureId: string) => Promise<void>;
 }
 
+const DEFAULT_FORM_DATA = {
+  name: '',
+  content: '',
+  feature_image: '',
+  slug: '',
+  display_content: false,
+  display_on_product_card: false,
+  type: '',
+  package: '',
+  order: 0,
+  is_help_center: false,
+};
+
 function FeaturesView({
   features,
   pricingPlans,
   pricingPlanFeatures,
   isLoading,
+  searchQuery = '',
   onCreateFeature,
   onUpdateFeature,
   onDeleteFeature,
@@ -45,25 +61,48 @@ function FeaturesView({
   const [isCreating, setIsCreating] = useState(false);
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
   const [openDropdownFeatureId, setOpenDropdownFeatureId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'order' | 'type'>('order');
   const [expandedFeatureId, setExpandedFeatureId] = useState<string | null>(null);
   const [draggedFeature, setDraggedFeature] = useState<Feature | null>(null);
   const [dragOverFeature, setDragOverFeature] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    content: '',
-    feature_image: '',
-    slug: '',
-    display_content: false,
-    display_on_product_card: false,
-    type: '',
-    package: '',
-    order: 0,
-    is_help_center: false,
-  });
+  const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
 
-  const handleEdit = (feature: Feature) => {
+  // Memoize helper functions
+  const formatPlanBadge = useCallback((plan: PricingPlan) => {
+    const packageName = plan.package || '';
+    const measure = plan.measure || '';
+    const currencySymbol = plan.currency_symbol || '$';
+    const price = plan.price ? `${currencySymbol}${(plan.price / 100).toFixed(2)}` : '';
+    return [packageName, measure, price].filter(Boolean).join(' - ');
+  }, []);
+
+  const getAssignedPlansForFeature = useCallback((featureId: string): PricingPlan[] => {
+    const assignedPlanIds = pricingPlanFeatures
+      .filter(pf => pf.feature_id === featureId)
+      .map(pf => String(pf.pricingplan_id));
+    
+    return pricingPlans.filter(plan => assignedPlanIds.includes(String(plan.id)));
+  }, [pricingPlanFeatures, pricingPlans]);
+
+  const groupAssignedPlansByProduct = useCallback((assignedPlans: PricingPlan[]) => {
+    return assignedPlans.reduce((acc, plan) => {
+      const productName = (plan as any).product_name || 'Unknown Product';
+      if (!acc[productName]) {
+        acc[productName] = [];
+      }
+      acc[productName].push(plan);
+      return acc;
+    }, {} as Record<string, PricingPlan[]>);
+  }, []);
+
+  const isFeatureAssignedToPlan = useCallback((featureId: string, planId: string): boolean => {
+    return pricingPlanFeatures.some(
+      pf => pf.feature_id === featureId && String(pf.pricingplan_id) === planId
+    );
+  }, [pricingPlanFeatures]);
+
+  // Memoize event handlers
+  const handleEdit = useCallback((feature: Feature) => {
     setEditingFeature(feature);
     setFormData({
       name: feature.name || '',
@@ -78,26 +117,15 @@ function FeaturesView({
       is_help_center: feature.is_help_center || false,
     });
     setIsCreating(false);
-  };
+  }, []);
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     setEditingFeature(null);
-    setFormData({
-      name: '',
-      content: '',
-      feature_image: '',
-      slug: '',
-      display_content: false,
-      display_on_product_card: false,
-      type: '',
-      package: '',
-      order: 0,
-      is_help_center: false,
-    });
+    setFormData(DEFAULT_FORM_DATA);
     setIsCreating(true);
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (editingFeature) {
       await onUpdateFeature(editingFeature.id, formData);
     } else {
@@ -105,88 +133,61 @@ function FeaturesView({
     }
     setEditingFeature(null);
     setIsCreating(false);
-  };
+  }, [editingFeature, formData, onUpdateFeature, onCreateFeature]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setEditingFeature(null);
     setIsCreating(false);
-  };
+  }, []);
 
-  const handleImageSelect = (url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
-    setFormData({ ...formData, feature_image: url });
+  const handleImageSelect = useCallback((url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
+    setFormData(prev => ({ ...prev, feature_image: url }));
     setIsImageGalleryOpen(false);
-  };
+  }, []);
 
-  // Group pricing plans by product
-  const groupedPricingPlans = pricingPlans.reduce((acc, plan) => {
+  // Group pricing plans by product - memoized
+  const groupedPricingPlans = useMemo(() => pricingPlans.reduce((acc, plan) => {
     const productName = (plan as any).product_name || 'Unknown Product';
     if (!acc[productName]) {
       acc[productName] = [];
     }
     acc[productName].push(plan);
     return acc;
-  }, {} as Record<string, PricingPlan[]>);
+  }, {} as Record<string, PricingPlan[]>), [pricingPlans]);
 
-  const getAssignedPlansForFeature = (featureId: string): PricingPlan[] => {
-    const assignedPlanIds = pricingPlanFeatures
-      .filter(pf => pf.feature_id === featureId)
-      .map(pf => String(pf.pricingplan_id));
-    
-    return pricingPlans.filter(plan => assignedPlanIds.includes(String(plan.id)));
-  };
-
-  const groupAssignedPlansByProduct = (assignedPlans: PricingPlan[]) => {
-    return assignedPlans.reduce((acc, plan) => {
-      const productName = (plan as any).product_name || 'Unknown Product';
-      if (!acc[productName]) {
-        acc[productName] = [];
-      }
-      acc[productName].push(plan);
-      return acc;
-    }, {} as Record<string, PricingPlan[]>);
-  };
-
-  const formatPlanBadge = (plan: PricingPlan) => {
-    const packageName = plan.package || '';
-    const measure = plan.measure || '';
-    const currencySymbol = plan.currency_symbol || '$';
-    const price = plan.price ? `${currencySymbol}${(plan.price / 100).toFixed(2)}` : '';
-    return [packageName, measure, price].filter(Boolean).join(' - ');
-  };
-
-  // Search and filter features
+  // Search and filter features - optimized single-pass
   const filteredAndSortedFeatures = useMemo(() => {
-    let filtered = features;
+    const query = searchQuery.trim().toLowerCase();
+    const hasSearch = query.length > 0;
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = features.filter(feature => {
-        // Search in feature name and content
-        const featureMatch = 
-          feature.name?.toLowerCase().includes(query) ||
-          feature.content?.toLowerCase().includes(query);
+    // Single-pass filter and search
+    const filtered = hasSearch
+      ? features.filter(feature => {
+          // Search in feature name and content
+          const featureMatch = 
+            feature.name?.toLowerCase().includes(query) ||
+            feature.content?.toLowerCase().includes(query);
 
-        // Search in assigned pricing plans
-        const assignedPlans = getAssignedPlansForFeature(feature.id);
-        const planMatch = assignedPlans.some(plan => {
-          const productName = ((plan as any).product_name || '').toLowerCase();
-          const packageName = (plan.package || '').toLowerCase();
-          const measure = (plan.measure || '').toLowerCase();
-          const price = plan.price ? (plan.price / 100).toFixed(2) : '';
-          
-          return productName.includes(query) ||
-                 packageName.includes(query) ||
-                 measure.includes(query) ||
-                 price.includes(query);
-        });
+          if (featureMatch) return true;
 
-        return featureMatch || planMatch;
-      });
-    }
+          // Search in assigned pricing plans
+          const assignedPlans = getAssignedPlansForFeature(feature.id);
+          return assignedPlans.some(plan => {
+            const productName = ((plan as any).product_name || '').toLowerCase();
+            const packageName = (plan.package || '').toLowerCase();
+            const measure = (plan.measure || '').toLowerCase();
+            const price = plan.price ? (plan.price / 100).toFixed(2) : '';
+            
+            return productName.includes(query) ||
+                   packageName.includes(query) ||
+                   measure.includes(query) ||
+                   price.includes(query);
+          });
+        })
+      : features;
 
     // Sort
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return (a.name || '').localeCompare(b.name || '');
@@ -197,27 +198,25 @@ function FeaturesView({
           return (a.order || 999) - (b.order || 999);
       }
     });
+  }, [features, searchQuery, sortBy, getAssignedPlansForFeature]);
 
-    return sorted;
-  }, [features, searchQuery, sortBy, pricingPlanFeatures, pricingPlans]);
-
-  // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, feature: Feature) => {
+  // Drag and drop handlers - memoized
+  const handleDragStart = useCallback((e: React.DragEvent, feature: Feature) => {
     setDraggedFeature(feature);
     e.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, featureId: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, featureId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverFeature(featureId);
-  };
+  }, []);
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setDragOverFeature(null);
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent, targetFeature: Feature) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetFeature: Feature) => {
     e.preventDefault();
     setDragOverFeature(null);
 
@@ -234,53 +233,27 @@ function FeaturesView({
     await onUpdateFeature(targetFeature.id, { order: draggedOrder });
 
     setDraggedFeature(null);
-  };
+  }, [draggedFeature, onUpdateFeature]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggedFeature(null);
     setDragOverFeature(null);
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (confirm('Are you sure you want to delete this feature?')) {
       await onDeleteFeature(id);
     }
-  };
+  }, [onDeleteFeature]);
 
-  const isFeatureAssignedToPlan = (featureId: string, planId: string): boolean => {
-    const result = pricingPlanFeatures.some(
-      pf => {
-        const featureMatch = pf.feature_id === featureId;
-        const planMatch = String(pf.pricingplan_id) === planId;
-        console.log('Checking assignment:', {
-          featureId,
-          planId,
-          pf_feature_id: pf.feature_id,
-          pf_pricingplan_id: pf.pricingplan_id,
-          featureMatch,
-          planMatch,
-          bothMatch: featureMatch && planMatch
-        });
-        return featureMatch && planMatch;
-      }
-    );
-    console.log('isFeatureAssignedToPlan result:', result);
-    return result;
-  };
-
-  const toggleFeatureAssignment = async (featureId: string, planId: string) => {
-    console.log('toggleFeatureAssignment called:', { featureId, planId });
-    console.log('Current pricingPlanFeatures:', pricingPlanFeatures);
-    
+  const toggleFeatureAssignment = useCallback(async (featureId: string, planId: string) => {
     if (isFeatureAssignedToPlan(featureId, planId)) {
-      console.log('Removing feature assignment');
       await onRemoveFeature(planId, featureId);
     } else {
-      console.log('Adding feature assignment');
       await onAssignFeature(planId, featureId);
     }
     // Don't close the dropdown - let user continue selecting
-  };
+  }, [isFeatureAssignedToPlan, onRemoveFeature, onAssignFeature]);
 
   if (isLoading) {
     return (
@@ -296,54 +269,7 @@ function FeaturesView({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header with Search and Sort */}
-      <div className="px-6 py-4 border-b border-slate-200/50">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Manage</h3>
-          <button
-            onClick={handleCreate}
-            className="px-4 py-2 rounded-lg text-white font-medium text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: primary.base }}
-          >
-            <Plus className="w-4 h-4" />
-            New Feature
-          </button>
-        </div>
-        
-        {/* Search and Sort Controls */}
-        <div className="flex gap-3 items-center">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search features, products, packages, prices..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-opacity-50 focus:outline-none"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'name' | 'order' | 'type')}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-opacity-50 focus:outline-none"
-            >
-              <option value="order">Order</option>
-              <option value="name">Name</option>
-              <option value="type">Type</option>
-            </select>
-            <ArrowUpDown className="w-4 h-4 text-gray-400" />
-          </div>
-        </div>
 
-        {searchQuery && (
-          <div className="mt-2 text-sm text-gray-500">
-            Found {filteredAndSortedFeatures.length} of {features.length} features
-          </div>
-        )}
-      </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -572,13 +498,6 @@ function FeaturesView({
                 <Search className="h-16 w-16 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">No features found</h3>
                 <p className="text-sm text-gray-500">Try a different search term</p>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="mt-4 text-sm font-medium hover:underline"
-                  style={{ color: primary.base }}
-                >
-                  Clear search
-                </button>
               </>
             ) : (
               <>
@@ -827,6 +746,15 @@ function FeaturesView({
           </div>
         )}
       </div>
+
+      {/* Features Toolbar */}
+      <FeaturesToolbar
+        totalCount={features.length}
+        filteredCount={filteredAndSortedFeatures.length}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        onAddFeature={handleCreate}
+      />
 
       {/* Image Gallery Modal */}
       {isImageGalleryOpen && (

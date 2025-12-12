@@ -61,7 +61,7 @@ export function useAdminBookings(
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [activeBookingCount, setActiveBookingCount] = useState(0);
 
-  // Fetch active booking count
+  // Fetch active booking count - standalone call
   const fetchActiveBookingCount = useCallback(async () => {
     if (!organizationId) return;
     
@@ -107,8 +107,15 @@ export function useAdminBookings(
 
       const bookingsData = await bookingsResponse.json();
 
+      // Get bookings and calculate active count
+      const bookings = bookingsData.bookings || [];
+      const activeBookings = bookings.filter((b: any) => 
+        !['cancelled', 'completed'].includes(b.status)
+      );
+      setActiveBookingCount(activeBookings.length);
+
       // Convert bookings to calendar events
-      const calendarEvents: CalendarEvent[] = (bookingsData.bookings || []).map((booking: any) => ({
+      const calendarEvents: CalendarEvent[] = bookings.map((booking: any) => ({
         id: booking.id,
         title: booking.title,
         start: new Date(booking.scheduled_at),

@@ -75,8 +75,8 @@ export function MonthView({
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   
-  // Enhanced color palette
-  const colors = {
+  // Memoize static color palette
+  const colors = useMemo(() => ({
     bg: {
       white: '#ffffff',
       light: '#fafafa',
@@ -85,14 +85,14 @@ export function MonthView({
       hover: `${primary.lighter}`,
       selected: `${primary.lighter}`,
     }
-  };
+  }), [primary.lighter]);
   
-  // Enhanced shadow system
-  const shadows = {
+  // Memoize shadow system
+  const shadows = useMemo(() => ({
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
     hover: `0 6px 12px -2px ${primary.base}20, 0 3px 6px -1px ${primary.base}15`,
-  };
+  }), [primary.base]);
   
   // Hover background hook
   const hoverBg = useHoverBackground(colors.bg.hover);
@@ -106,16 +106,34 @@ export function MonthView({
   }, [onDateClick]);
   
   // Helper to format time based on preference
-  const formatTime = (date: Date | number) => {
+  const formatTime = useCallback((date: Date | number) => {
     return format(date, use24Hour ? 'HH:mm' : 'h:mm a');
-  };
+  }, [use24Hour]);
   
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart);
-  const calendarEnd = endOfWeek(monthEnd);
+  // Memoize calendar date calculations
+  const { monthStart, monthEnd, calendarStart, calendarEnd } = useMemo(() => {
+    const mStart = startOfMonth(currentDate);
+    const mEnd = endOfMonth(currentDate);
+    const cStart = startOfWeek(mStart);
+    const cEnd = endOfWeek(mEnd);
+    return {
+      monthStart: mStart,
+      monthEnd: mEnd,
+      calendarStart: cStart,
+      calendarEnd: cEnd,
+    };
+  }, [currentDate]);
 
-  const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  const days = useMemo(
+    () => eachDayOfInterval({ start: calendarStart, end: calendarEnd }),
+    [calendarStart, calendarEnd]
+  );
+
+  // Memoize static day headers
+  const dayHeaders = useMemo(
+    () => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    []
+  );
 
   const dayEvents = useMemo(() => {
     const eventMap: Record<string, CalendarEvent[]> = {};
@@ -145,7 +163,7 @@ export function MonthView({
       <div className="w-full">
         <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 rounded-lg overflow-hidden p-1 sm:p-1.5 md:p-2">
           {/* Day headers - Improved typography */}
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {dayHeaders.map(day => (
             <div 
               key={day} 
               className="p-1.5 sm:p-2 text-center rounded-md"

@@ -1,7 +1,6 @@
-// MeetingTypesModal - Dedicated modal for managing meeting types
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MeetingTypesSection from './MeetingTypesSection';
 import AddEditMeetingTypeModal from './AddEditMeetingTypeModal';
 import { ClockIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -82,11 +81,34 @@ export default function MeetingTypesModal({ isOpen, onClose, organizationId }: M
     };
   }, [isOpen]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setShowAddEditModal(false);
     setEditingMeetingType(null);
     onClose();
-  };
+  }, [onClose]);
+
+  const handleStopPropagation = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleAddClick = useCallback(() => {
+    setEditingMeetingType(null);
+    setShowAddEditModal(true);
+  }, []);
+
+  const handleEditClick = useCallback((meetingType: any) => {
+    setEditingMeetingType(meetingType);
+    setShowAddEditModal(true);
+  }, []);
+
+  const handleAddEditModalClose = useCallback(() => {
+    setShowAddEditModal(false);
+    setEditingMeetingType(null);
+  }, []);
+
+  const handleAddEditModalSave = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('refreshMeetingTypes'));
+  }, []);
   
   if (!isOpen) return null;
 
@@ -105,7 +127,7 @@ export default function MeetingTypesModal({ isOpen, onClose, organizationId }: M
           role="dialog"
           aria-labelledby="meeting-types-modal-title"
           aria-modal="true"
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleStopPropagation}
           onKeyDown={(e) => {
             if (e.key === 'Escape') handleClose();
           }}
@@ -141,14 +163,8 @@ export default function MeetingTypesModal({ isOpen, onClose, organizationId }: M
           <div className="p-4 sm:p-6 bg-white/20 dark:bg-gray-900/20 overflow-y-auto flex-1">
             <MeetingTypesSection
               organizationId={organizationId}
-              onAddClick={() => {
-                setEditingMeetingType(null);
-                setShowAddEditModal(true);
-              }}
-              onEditClick={(meetingType: any) => {
-                setEditingMeetingType(meetingType);
-                setShowAddEditModal(true);
-              }}
+              onAddClick={handleAddClick}
+              onEditClick={handleEditClick}
             />
           </div>
 
@@ -166,14 +182,8 @@ export default function MeetingTypesModal({ isOpen, onClose, organizationId }: M
       {/* Add/Edit Meeting Type Modal */}
       <AddEditMeetingTypeModal
         isOpen={showAddEditModal}
-        onClose={() => {
-          setShowAddEditModal(false);
-          setEditingMeetingType(null);
-        }}
-        onSave={() => {
-          // Refresh the meeting types list
-          window.dispatchEvent(new CustomEvent('refreshMeetingTypes'));
-        }}
+        onClose={handleAddEditModalClose}
+        onSave={handleAddEditModalSave}
         organizationId={organizationId}
         meetingType={editingMeetingType}
       />

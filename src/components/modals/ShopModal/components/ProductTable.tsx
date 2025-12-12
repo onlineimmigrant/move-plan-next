@@ -10,8 +10,6 @@ interface ProductTableProps {
   pricingPlansByProduct: Record<number, PricingPlan[]>;
   onEdit: (product: Product) => void;
   onDelete: (id: number) => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
 }
 
 function ProductTableComponent({
@@ -19,8 +17,6 @@ function ProductTableComponent({
   pricingPlansByProduct,
   onEdit,
   onDelete,
-  searchQuery,
-  onSearchChange,
 }: ProductTableProps) {
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set());
 
@@ -56,18 +52,6 @@ function ProductTableComponent({
 
   return (
     <div className="space-y-4">
-      {/* Search Input */}
-      <div className="relative">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search products by name..."
-          className="w-full px-4 py-2 text-sm border border-slate-200/50 rounded-lg bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
-          aria-label="Search products"
-        />
-      </div>
-
       {/* Table */}
       {products.length === 0 ? (
         <p className="text-gray-600 text-sm text-center py-8">No products found.</p>

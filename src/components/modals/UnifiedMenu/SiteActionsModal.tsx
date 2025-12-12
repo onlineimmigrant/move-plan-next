@@ -35,7 +35,7 @@ import { useHeaderEdit } from '@/components/modals/HeaderEditModal/context';
 import { useFooterEdit } from '@/components/modals/FooterEditModal/context';
 import { useSettingsModal } from '@/components/modals/SettingsModal/context';
 import { useShopModal } from '@/components/modals/ShopModal';
-import { useProfileDataManagerModal } from '@/components/modals/ProfileDataManagerModal/context';
+import { useCrmModal } from '@/components/modals/CrmModal/context';
 import { getOrganizationId } from '@/lib/supabase';
 import { getBaseUrl } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -78,7 +78,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
   const { openModal: openFooterEditModal } = useFooterEdit();
   const { openModal: openSettingsModal } = useSettingsModal();
   const { openModal: openShopModal } = useShopModal();
-  const { openModal: openProfileDataManagerModal } = useProfileDataManagerModal();
+  const { openModal: openCrmModal } = useCrmModal();
 
   const quickActions: QuickAction[] = [
     // Navigation Section - MOVED TO TOP (most common actions)
@@ -205,7 +205,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       icon: UserGroupIcon,
       action: () => {
         onClose();
-        openProfileDataManagerModal();
+        openCrmModal('team-members');
       },
     },
     {

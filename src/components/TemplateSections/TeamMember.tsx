@@ -112,10 +112,13 @@ const TeamMember: React.FC<TeamMemberProps> = ({ section }) => {
         const data = await response.json();
         console.log('Team members data fetched:', data?.length || 0, 'profiles');
 
-        // Filter by assigned sections (client-side filtering for section assignment)
+        // Filter by assigned sections and featured status (client-side filtering)
         const filtered = (data || []).filter((profile: any) => {
           const team = profile.team;
           if (!team || !team.is_team_member) return false;
+          
+          // Only show featured team members on the website
+          if (!team.is_featured) return false;
 
           // If no assigned_sections, show in all sections
           if (!team.assigned_sections || team.assigned_sections.length === 0) {

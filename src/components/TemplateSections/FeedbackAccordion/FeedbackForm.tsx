@@ -420,6 +420,28 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ productId, onSubmit, isOpen
       return;
     }
 
+    // Auto-convert user from lead to customer when submitting review
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('customer')
+      .eq('id', userIdToUse)
+      .single();
+
+    if (userProfile?.customer?.is_lead) {
+      await supabase
+        .from('profiles')
+        .update({
+          customer: {
+            ...userProfile.customer,
+            is_lead: false,
+            is_customer: true,
+            converted_at: new Date().toISOString(),
+            lead_status: 'converted',
+          }
+        })
+        .eq('id', userIdToUse);
+    }
+
     setSuccess('Review submitted successfully!');
     setRating(0);
     setComment('');

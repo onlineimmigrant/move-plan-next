@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Product } from '../types';
 
@@ -10,6 +10,7 @@ interface ProductListToolbarProps {
   activeTab: 'all' | 'active' | 'archived';
   onTabChange: (tab: 'all' | 'active' | 'archived') => void;
   filteredCount: number;
+  onAddProduct?: () => void;
 }
 
 export default function ProductListToolbar({
@@ -17,6 +18,7 @@ export default function ProductListToolbar({
   activeTab,
   onTabChange,
   filteredCount,
+  onAddProduct,
 }: ProductListToolbarProps) {
   const [showFiltersAccordion, setShowFiltersAccordion] = useState(false);
   const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
@@ -56,6 +58,20 @@ export default function ProductListToolbar({
             <ChevronDown className="h-5 w-5" />
           )}
         </button>
+
+        {/* Right side - Add Product button */}
+        {onAddProduct && (
+          <button
+            onClick={onAddProduct}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity text-sm"
+            style={{
+              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        )}
       </div>
 
       {/* Filters accordion */}

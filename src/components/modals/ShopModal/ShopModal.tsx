@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense, useTransition } from 'react';
 import { Plus, Archive, CreditCard } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -75,6 +75,7 @@ export default function ShopModal() {
 
   // Main tab state
   const [mainTab, setMainTab] = useState<MainTab>('products');
+  const [isPending, startTransition] = useTransition();
   
   // View state ('list' or 'form')
   const [view, setView] = useState<'list' | 'form'>('list');
@@ -347,19 +348,17 @@ export default function ShopModal() {
       <ModalContainer isOpen={isOpen} onClose={closeModal}>
         <ModalHeader
           title="Shop"
-          subtitle={view === 'form' 
-            ? (selectedProduct ? 'Edit' : 'Create')
-            : 'Manage your shop: products, pricing, and more'
-          }
           productCount={productData.products.length}
           primaryColor={primary.base}
           onClose={closeModal}
+          searchQuery={filters.searchQuery}
+          onSearchChange={(query: string) => setFilters(prev => ({ ...prev, searchQuery: query }))}
         />
 
         {/* Main Tab Navigation */}
         <MainTabNavigation
           activeTab={mainTab}
-          onTabChange={setMainTab}
+          onTabChange={(tab) => startTransition(() => setMainTab(tab))}
         />
 
         {/* Content Area */}
@@ -382,8 +381,6 @@ export default function ShopModal() {
                       pricingPlansByProduct={pricingPlansData.pricingPlansByProduct}
                       onEdit={handleProductSelect}
                       onDelete={handleDeleteClick}
-                      searchQuery={filters.searchQuery}
-                      onSearchChange={(query: string) => setFilters(prev => ({ ...prev, searchQuery: query }))}
                     />
                   )}
                 </div>
@@ -395,19 +392,8 @@ export default function ShopModal() {
                     activeTab={filters.activeTab}
                     onTabChange={(tab: 'all' | 'active' | 'archived') => setFilters(prev => ({ ...prev, activeTab: tab }))}
                     filteredCount={filteredProducts.length}
+                    onAddProduct={handleCreateNew}
                   />
-                )}
-
-                {/* Floating Create Button */}
-                {!productData.isLoading && !productData.error && (
-                  <button
-                    onClick={handleCreateNew}
-                    className="fixed bottom-20 right-6 sm:bottom-24 sm:right-8 p-4 rounded-full shadow-lg hover:shadow-xl transition-shadow text-white flex items-center gap-2"
-                    style={{ backgroundColor: primary.base, zIndex: 10002 }}
-                    aria-label="Create new product"
-                  >
-                    <Plus className="w-6 h-6" />
-                  </button>
                 )}
               </>
             ) : (
@@ -435,6 +421,7 @@ export default function ShopModal() {
                 pricingPlans={pricingPlansManagementData.pricingPlans}
                 products={productData.products}
                 isLoading={pricingPlansManagementData.isLoading}
+                searchQuery={filters.searchQuery}
                 onCreatePlan={async (data) => {
                   await pricingPlansManagementData.createPricingPlan(data);
                 }}
@@ -457,6 +444,7 @@ export default function ShopModal() {
                 pricingPlans={pricingPlansData.allPricingPlans}
                 pricingPlanFeatures={featuresData.pricingPlanFeatures}
                 isLoading={featuresData.isLoading}
+                searchQuery={filters.searchQuery}
                 onCreateFeature={async (data) => {
                   await featuresData.createFeature(data);
                 }}
@@ -481,6 +469,7 @@ export default function ShopModal() {
                 inventories={inventoryData.inventories}
                 pricingPlans={pricingPlansData.allPricingPlans}
                 isLoading={inventoryData.isLoading}
+                searchQuery={filters.searchQuery}
                 onCreateInventory={async (data) => {
                   await inventoryData.createInventory(data);
                 }}
@@ -495,7 +484,7 @@ export default function ShopModal() {
           ) : mainTab === 'customers' ? (
             /* Customers Tab */
             <Suspense fallback={<LoadingState message="Loading customers..." />}>
-              <CustomersView />
+              <CustomersView searchQuery={filters.searchQuery} />
             </Suspense>
           ) : mainTab === 'orders' ? (
             /* Orders Tab */

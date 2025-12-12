@@ -9,11 +9,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, Search, Mail, MapPin, Building2, Star, Loader2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Users, Mail, MapPin, Building2, Star, Loader2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import CustomersToolbar from './CustomersToolbar';
 import { supabase } from '@/lib/supabaseClient';
 import { useSettings } from '@/context/SettingsContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import CustomerDetailModal from '@/components/modals/CustomerDetailModal';
+import { AccountDetailModal } from '@/components/modals/CrmModal/components/AccountDetailModal';
 
 interface CustomerProfile {
   id: string;
@@ -46,9 +47,10 @@ interface CustomerProfile {
 
 interface CustomersViewProps {
   organizationId?: string;
+  searchQuery?: string;
 }
 
-export default function CustomersView({ organizationId: propOrgId }: CustomersViewProps = {}) {
+export default function CustomersView({ organizationId: propOrgId, searchQuery = '' }: CustomersViewProps = {}) {
   const { settings } = useSettings();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -57,7 +59,6 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [customerPurchases, setCustomerPurchases] = useState<Record<string, { totalSpent: number; hasActiveOrders: boolean; currency: string; hasPaidOrders: boolean }>>({});
@@ -69,6 +70,16 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
   const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  
+  // Toast for AccountDetailModal
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToastMessage(message);
+    setToastType(type);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
 
   const fetchCustomers = useCallback(async () => {
     try {
@@ -160,10 +171,9 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
 
   useEffect(() => {
     if (organizationId) {
-      fetchCustomers();
-      fetchCustomerPurchases();
+      fetchCustomers(); // Now fetches both customers and purchases
     }
-  }, [organizationId, fetchCustomers, fetchCustomerPurchases]);
+  }, [organizationId, fetchCustomers]);
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
@@ -201,6 +211,22 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, typeFilter, searchQuery]);
+
+  // Memoize customer counts for filter options (single-pass)
+  const customerCounts = useMemo(() => {
+    return customers.reduce(
+      (counts, customer) => {
+        counts.total++;
+        const stats = customerPurchases[customer.id] || { hasActiveOrders: false, hasPaidOrders: false };
+        if (stats.hasActiveOrders) counts.active++;
+        else counts.inactive++;
+        if (stats.hasPaidOrders) counts.paid++;
+        else counts.free++;
+        return counts;
+      },
+      { total: 0, active: 0, inactive: 0, paid: 0, free: 0 }
+    );
+  }, [customers, customerPurchases]);
 
   const handleCustomerClick = useCallback((customer: CustomerProfile) => {
     setSelectedCustomer(customer);
@@ -265,19 +291,10 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header with Search */}
+      {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search customers by name, email, or company..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Customers</h3>
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {filteredCustomers.length} {filteredCustomers.length === 1 ? 'customer' : 'customers'}
           </div>
@@ -420,7 +437,7 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
                 color: isFilterOpen ? 'white' : primary.base,
                 background: isFilterOpen 
                   ? `linear-gradient(135deg, ${primary.base}, ${primary.hover})` 
-                  : 'white',
+                  : '#f3f4f6',
                 borderColor: isFilterOpen ? primary.base : '#e5e7eb',
               }}
             >
@@ -486,9 +503,9 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
                 </label>
                 <div className="flex gap-2 overflow-x-auto">
                   {[
-                    { id: 'all' as const, label: 'All Customers', count: customers.length },
-                    { id: 'active' as const, label: 'Active', count: customers.filter(c => customerPurchases[c.id]?.hasActiveOrders).length },
-                    { id: 'inactive' as const, label: 'Inactive', count: customers.filter(c => !customerPurchases[c.id]?.hasActiveOrders).length },
+                    { id: 'all' as const, label: 'All Customers', count: customerCounts.total },
+                    { id: 'active' as const, label: 'Active', count: customerCounts.active },
+                    { id: 'inactive' as const, label: 'Inactive', count: customerCounts.inactive },
                   ].map((filter) => (
                     <button
                       key={filter.id}
@@ -538,9 +555,9 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
                 </label>
                 <div className="flex gap-2 overflow-x-auto">
                   {[
-                    { id: 'all' as const, label: 'All Types', count: customers.length },
-                    { id: 'paid' as const, label: 'Paid', count: customers.filter(c => customerPurchases[c.id]?.hasPaidOrders).length },
-                    { id: 'free' as const, label: 'Free', count: customers.filter(c => !customerPurchases[c.id]?.hasPaidOrders).length },
+                    { id: 'all' as const, label: 'All Types', count: customerCounts.total },
+                    { id: 'paid' as const, label: 'Paid', count: customerCounts.paid },
+                    { id: 'free' as const, label: 'Free', count: customerCounts.free },
                   ].map((filter) => (
                     <button
                       key={filter.id}
@@ -605,12 +622,38 @@ export default function CustomersView({ organizationId: propOrgId }: CustomersVi
         )}
       </div>
 
-      {/* Customer Detail Modal */}
-      <CustomerDetailModal
-        isOpen={isDetailModalOpen}
-        customer={selectedCustomer}
-        onClose={handleCloseDetailModal}
+      {/* Customers Toolbar */}
+      <CustomersToolbar
+        totalCount={customers.length}
+        filteredCount={filteredCustomers.length}
+        statusFilter={statusFilter}
+        typeFilter={typeFilter}
+        onStatusFilterChange={setStatusFilter}
+        onTypeFilterChange={setTypeFilter}
+        onAddCustomer={() => {/* Could open account creation modal */}}
       />
+
+      {/* Customer Detail Modal */}
+      <AccountDetailModal
+        isOpen={isDetailModalOpen}
+        account={selectedCustomer}
+        onClose={handleCloseDetailModal}
+        onUpdate={fetchCustomers}
+        showToast={showToast}
+      />
+      
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-[100000]">
+          <div className={`px-4 py-3 rounded-lg shadow-lg ${
+            toastType === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            {toastMessage}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

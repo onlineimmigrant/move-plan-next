@@ -1,0 +1,285 @@
+/**
+ * ReviewsView Component
+ *
+ * Displays and manages customer reviews
+ * Part of the CRM modal - Reviews tab
+ */
+
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Review } from '../types';
+import { Star, Search, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react';
+
+interface ReviewsViewProps {
+  organizationId?: string;
+  primary?: { base: string; hover: string };
+}
+
+export default function ReviewsView({ organizationId, primary }: ReviewsViewProps) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [ratingFilter, setRatingFilter] = useState<string>('all');
+  const [approvalFilter, setApprovalFilter] = useState<string>('all');
+
+  useEffect(() => {
+    fetchReviews();
+  }, [organizationId, ratingFilter, approvalFilter]);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      
+      const params = new URLSearchParams();
+      if (ratingFilter !== 'all') params.append('rating_min', ratingFilter);
+      if (approvalFilter === 'approved') params.append('is_approved', 'true');
+      if (approvalFilter === 'pending') params.append('is_approved', 'false');
+      
+      const response = await fetch(`/api/reviews?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch');
+      
+      const data = await response.json();
+      setReviews(data.reviews || []);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveReview = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          is_approved_by_admin: true,
+        }),
+      });
+
+      if (response.ok) {
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error approving review:', error);
+    }
+  };
+
+  const handleRejectReview = async (reviewId: string) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          is_approved_by_admin: false,
+        }),
+      });
+
+      if (response.ok) {
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error rejecting review:', error);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    }
+  };
+
+  const filteredReviews = reviews.filter(review => {
+    const matchesSearch = 
+      review.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      review.user_surname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      review.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      review.comment?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-gray-600 dark:text-gray-400">Loading reviews...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Reviews</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {filteredReviews.length} review{filteredReviews.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search reviews..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+        <select
+          value={ratingFilter}
+          onChange={(e) => setRatingFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        >
+          <option value="all">All Ratings</option>
+          <option value="5">5 Stars</option>
+          <option value="4">4+ Stars</option>
+          <option value="3">3+ Stars</option>
+          <option value="2">2+ Stars</option>
+          <option value="1">1+ Stars</option>
+        </select>
+        <select
+          value={approvalFilter}
+          onChange={(e) => setApprovalFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+        >
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+        </select>
+      </div>
+
+      {/* Reviews List */}
+      {filteredReviews.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+          <Star className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No Reviews Yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Customer reviews will appear here
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {filteredReviews.map((review) => (
+            <div
+              key={review.id}
+              className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {review.user_name} {review.user_surname}
+                    </h3>
+                    {review.is_approved_by_admin ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <CheckCircle className="w-4 h-4" />
+                        Approved
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                        <Clock className="w-4 h-4" />
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {review.rating}/5
+                    </span>
+                  </div>
+                </div>
+                
+                {!review.is_approved_by_admin && primary && (
+                  <button
+                    onClick={() => handleDeleteReview(review.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="Delete review"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              {review.product_name && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Product: {review.product_name}
+                </p>
+              )}
+
+              {review.comment && (
+                <p className="text-gray-700 dark:text-gray-300 mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded">
+                  {review.comment}
+                </p>
+              )}
+
+              <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
+                Submitted {new Date(review.submitted_at).toLocaleDateString()}
+              </p>
+
+              {review.admin_notes && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded mb-3">
+                  <p className="text-sm text-blue-900 dark:text-blue-300">
+                    <strong>Admin Notes:</strong> {review.admin_notes}
+                  </p>
+                </div>
+              )}
+
+              {!review.is_approved_by_admin && primary && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApproveReview(review.id)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    style={{ backgroundColor: primary.base }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleRejectReview(review.id)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+                  >
+                    Keep Pending
+                  </button>
+                </div>
+              )}
+
+              {review.is_approved_by_admin && review.approved_at && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Approved {new Date(review.approved_at).toLocaleDateString()}
+                  {review.approved_by && ` by ${review.approved_by}`}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

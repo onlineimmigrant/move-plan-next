@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { memo, useRef } from 'react';
+import React, { memo, useRef, useMemo, useCallback } from 'react';
 import Button from '@/ui/Button';
 import { ImagePreview } from './ImagePreview';
 import { TaxCodeSelector } from './TaxCodeSelector';
@@ -51,19 +51,39 @@ const ProductDetailViewComponent = ({
   onOpenMediaGallery,
   carouselRef,
 }: ProductDetailViewProps) => {
-  const isEditMode = selectedProduct !== null;
-  const isSaving = isCreating || isUpdating;
+  // Memoize computed values
+  const isEditMode = useMemo(() => selectedProduct !== null, [selectedProduct]);
+  const isSaving = useMemo(() => isCreating || isUpdating, [isCreating, isUpdating]);
 
-  // Extract Unsplash attribution from attrs if it exists
-  let unsplashAttribution = null;
-  try {
-    if (formData.attributes) {
-      const attrs = JSON.parse(formData.attributes);
-      unsplashAttribution = attrs.unsplash_attribution || null;
+  // Extract Unsplash attribution from attrs if it exists - memoized to avoid repeated JSON parsing
+  const unsplashAttribution = useMemo(() => {
+    try {
+      if (formData.attributes) {
+        const attrs = JSON.parse(formData.attributes);
+        return attrs.unsplash_attribution || null;
+      }
+    } catch (e) {
+      // Ignore parse errors
     }
-  } catch (e) {
-    // Ignore parse errors
-  }
+    return null;
+  }, [formData.attributes]);
+
+  // Memoize validation check
+  const hasValidationErrors = useMemo(
+    () => Object.keys(validationErrors).length > 0,
+    [validationErrors]
+  );
+
+  // Memoize formatted timestamp
+  const formattedTimestamp = useMemo(() => {
+    if (!selectedProduct?.updated_at) return null;
+    return new Date(selectedProduct.updated_at).toLocaleString();
+  }, [selectedProduct?.updated_at]);
+
+  // Memoize toggle handler
+  const handleToggleDisplay = useCallback(() => {
+    onFormDataChange('is_displayed', !formData.is_displayed);
+  }, [onFormDataChange, formData.is_displayed]);
 
   return (
     <div className="flex flex-col h-full bg-white/50 dark:bg-gray-900/50">
@@ -72,7 +92,7 @@ const ProductDetailViewComponent = ({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {isEditMode 
-              ? selectedProduct.product_name || 'Untitled Product'
+              ? selectedProduct?.product_name || 'Untitled Product'
               : 'Fill in the details'
             }
           </h2>
@@ -84,7 +104,7 @@ const ProductDetailViewComponent = ({
               type="button"
               role="switch"
               aria-checked={formData.is_displayed}
-              onClick={() => onFormDataChange('is_displayed', !formData.is_displayed)}
+              onClick={handleToggleDisplay}
               className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
@@ -128,8 +148,8 @@ const ProductDetailViewComponent = ({
           {/* Left side - timestamp for edit mode */}
           {isEditMode ? (
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              {selectedProduct?.updated_at && (
-                <span>Updated: {new Date(selectedProduct.updated_at).toLocaleString()}</span>
+              {formattedTimestamp && (
+                <span>Updated: {formattedTimestamp}</span>
               )}
             </div>
           ) : (
@@ -149,7 +169,7 @@ const ProductDetailViewComponent = ({
             <Button
               variant="primary"
               onClick={onSave}
-              disabled={Object.keys(validationErrors).length > 0}
+              disabled={hasValidationErrors}
               loading={isSaving}
               loadingText={isEditMode ? 'Updating...' : 'Creating...'}
               className="px-6 py-2"
@@ -170,13 +190,27 @@ const ProductDetailViewComponent = ({
 export const ProductDetailView = memo(
   ProductDetailViewComponent,
   (prevProps, nextProps) => {
-    return (
-      prevProps.formData === nextProps.formData &&
-      prevProps.selectedProduct?.id === nextProps.selectedProduct?.id &&
-      prevProps.isCreating === nextProps.isCreating &&
-      prevProps.isUpdating === nextProps.isUpdating &&
-      JSON.stringify(prevProps.validationErrors) === JSON.stringify(nextProps.validationErrors)
-    );
+    // Optimize comparison - avoid expensive JSON.stringify
+    if (prevProps.formData !== nextProps.formData) return false;
+    if (prevProps.selectedProduct?.id !== nextProps.selectedProduct?.id) return false;
+    if (prevProps.isCreating !== nextProps.isCreating) return false;
+    if (prevProps.isUpdating !== nextProps.isUpdating) return false;
+    
+    // Efficient validation errors comparison
+    const prevKeys = Object.keys(prevProps.validationErrors);
+    const nextKeys = Object.keys(nextProps.validationErrors);
+    if (prevKeys.length !== nextKeys.length) return false;
+    
+    // Only compare if there are errors
+    if (prevKeys.length > 0) {
+      for (const key of prevKeys) {
+        if (prevProps.validationErrors[key] !== nextProps.validationErrors[key]) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }
 );
 

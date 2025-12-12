@@ -164,11 +164,32 @@ const Testimonials: React.FC<TestimonialsProps> = ({ section }) => {
       try {
         setError(null);
         
-        // Fetch profiles where customer.is_customer = true
-        // AND (customer.assigned_sections is null OR customer.assigned_sections contains section.id)
+        // Get current user's organization
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', session.user.id)
+          .single();
+
+        const orgId = userProfile?.organization_id;
+        if (!orgId) {
+          setError('No organization found');
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch profiles where customer.is_customer = true AND belongs to same organization
         const { data, error: fetchError } = await supabase
           .from('profiles')
           .select('id, full_name, customer')
+          .eq('organization_id', orgId)
           .not('customer', 'is', null)
           .order('created_at', { ascending: true });
 
@@ -188,6 +209,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({ section }) => {
         const filtered = (data || []).filter((profile: any) => {
           const customer = profile.customer;
           if (!customer || !customer.is_customer || !customer.testimonial_text) return false;
+          
+          // Only show approved testimonials
+          if (customer.testimonial_status !== 'approved') return false;
           
           // If no assigned_sections, show in all sections
           if (!customer.assigned_sections || customer.assigned_sections.length === 0) {

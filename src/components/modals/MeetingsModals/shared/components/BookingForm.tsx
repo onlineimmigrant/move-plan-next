@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { 
   CalendarDaysIcon, 
@@ -77,8 +77,8 @@ export default function BookingForm({
   // Determine effective format preference: prefer timeFormat24, fall back to legacy use24HourFormat
   const effective24 = timeFormat24 !== undefined ? timeFormat24 : (use24HourFormat ?? true);
 
-  // Get user's timezone info with friendly display format
-  const getUserTimezoneInfo = () => {
+  // Get user's timezone info with friendly display format (memoized - expensive computation)
+  const getUserTimezoneInfo = useCallback(() => {
     try {
       // Get timezone name (e.g., "America/New_York", "Europe/London")
       const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -118,21 +118,21 @@ export default function BookingForm({
         offset: '+00:00' 
       };
     }
-  };
+  }, []);
   
-  const timezoneInfo = getUserTimezoneInfo();
+  const timezoneInfo = useMemo(() => getUserTimezoneInfo(), [getUserTimezoneInfo]);
   
-  // Validation functions
-  const validateEmail = (email: string) => {
+  // Validation functions (memoized)
+  const validateEmail = useCallback((email: string) => {
     if (!email) return { isValid: true, message: '' };
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regex.test(email)) {
       return { isValid: false, message: 'Please enter a valid email address' };
     }
     return { isValid: true, message: '' };
-  };
+  }, []);
   
-  const validateName = (name: string) => {
+  const validateName = useCallback((name: string) => {
     if (!name) return { isValid: true, message: '' };
     if (name.length < 2) {
       return { isValid: false, message: 'Name is too short' };
@@ -141,22 +141,22 @@ export default function BookingForm({
       return { isValid: false, message: 'Name is too long' };
     }
     return { isValid: true, message: '' };
-  };
+  }, []);
   
-  const formatPhoneNumber = (value: string) => {
+  const formatPhoneNumber = useCallback((value: string) => {
     const cleaned = value.replace(/\D/g, '');
     if (cleaned.length <= 3) return cleaned;
     if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-  };
+  }, []);
   
-  const capitalizeName = (name: string) => {
+  const capitalizeName = useCallback((name: string) => {
     return name
       .toLowerCase()
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  };
+  }, []);
 
   // Detect if selected meeting type is "Blocked Time" (system type)
   const isBlockedTimeType = useMemo(() => {
@@ -184,7 +184,7 @@ export default function BookingForm({
         duration_minutes: Math.round((selectedSlot.end.getTime() - selectedSlot.start.getTime()) / (1000 * 60)),
       });
     }
-  }, [selectedSlot]);
+  }, [selectedSlot, onChange]);
   
   // Auto-focus name field when step 3 is shown
   useEffect(() => {
@@ -193,7 +193,13 @@ export default function BookingForm({
     }
   }, [currentStep]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Memoize selectedMeetingType before handleSubmit uses it
+  const selectedMeetingType = useMemo(
+    () => meetingTypes.find(mt => mt.id === formData.meeting_type_id),
+    [meetingTypes, formData.meeting_type_id]
+  );
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate required fields
@@ -226,9 +232,7 @@ export default function BookingForm({
     };
 
     await onSubmit(submitData);
-  };
-
-  const selectedMeetingType = meetingTypes.find(mt => mt.id === formData.meeting_type_id);
+  }, [formData, isBlockedTimeType, meetingTypes, selectedMeetingType, timezoneInfo.timezoneName, onSubmit]);
   
   // Auto-generate title if empty (after selectedMeetingType is defined)
   useEffect(() => {
@@ -238,12 +242,69 @@ export default function BookingForm({
     }
   }, [formData.customer_name, formData.title, selectedMeetingType, onChange]);
 
-  // Step validation
-  const canProceedToStep2 = selectedSlot !== null;
-  const canProceedToStep3 = canProceedToStep2 && formData.meeting_type_id !== undefined;
-  const canSubmit = canProceedToStep3 && (
-    isBlockedTimeType || (formData.customer_name && formData.customer_email)
+  // Step validation (memoized)
+  const canProceedToStep2 = useMemo(() => selectedSlot !== null, [selectedSlot]);
+  const canProceedToStep3 = useMemo(
+    () => canProceedToStep2 && formData.meeting_type_id !== undefined,
+    [canProceedToStep2, formData.meeting_type_id]
   );
+  const canSubmit = useMemo(
+    () => canProceedToStep3 && (
+      isBlockedTimeType || (formData.customer_name && formData.customer_email)
+    ),
+    [canProceedToStep3, isBlockedTimeType, formData.customer_name, formData.customer_email]
+  );
+
+  // Memoized event handlers for step navigation and form interactions
+  const handleStepClick = useCallback((step: number, enabled: boolean) => {
+    if (enabled) setCurrentStep(step);
+  }, []);
+
+  const handleNextStep = useCallback(() => {
+    setCurrentStep(prev => prev + 1);
+  }, []);
+
+  const handlePrevStep = useCallback(() => {
+    setCurrentStep(prev => prev - 1);
+  }, []);
+
+  const handleNameChange = useCallback((value: string) => {
+    onChange({ customer_name: value });
+    setNameValidation(validateName(value));
+  }, [onChange, validateName]);
+
+  const handleNameBlur = useCallback(() => {
+    if (formData.customer_name) {
+      onChange({ customer_name: capitalizeName(formData.customer_name) });
+    }
+    setFocusedField(null);
+  }, [formData.customer_name, onChange, capitalizeName]);
+
+  const handleEmailChange = useCallback((value: string) => {
+    if (!readOnlyEmail) {
+      onChange({ customer_email: value });
+      setEmailValidation(validateEmail(value));
+    }
+  }, [readOnlyEmail, onChange, validateEmail]);
+
+  const handlePhoneChange = useCallback((value: string) => {
+    const formatted = formatPhoneNumber(value);
+    onChange({ customer_phone: formatted });
+  }, [onChange, formatPhoneNumber]);
+
+  const handleFieldFocus = useCallback((field: string) => {
+    if (field !== 'customer_email' || !readOnlyEmail) {
+      setFocusedField(field);
+    }
+  }, [readOnlyEmail]);
+
+  const handleFieldBlur = useCallback(() => {
+    setFocusedField(null);
+  }, []);
+
+  const handleHoverChange = useCallback((hovered: boolean) => {
+    setIsHovered(hovered);
+  }, []);
 
   // Show booking submission skeleton when submitting
   if (isSubmitting) {
@@ -267,10 +328,10 @@ export default function BookingForm({
             <button
               key={step.num}
               type="button"
-              onClick={() => step.enabled && setCurrentStep(step.num)}
+              onClick={() => handleStepClick(step.num, step.enabled)}
               disabled={!step.enabled}
-              onMouseEnter={() => step.enabled && setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              onMouseEnter={() => handleHoverChange(step.enabled)}
+              onMouseLeave={() => handleHoverChange(false)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
               style={
                 currentStep === step.num
@@ -415,18 +476,9 @@ export default function BookingForm({
                     spellCheck="false"
                     maxLength={100}
                     value={formData.customer_name || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      onChange({ customer_name: value });
-                      setNameValidation(validateName(value));
-                    }}
-                    onFocus={() => setFocusedField('customer_name')}
-                    onBlur={() => {
-                      if (formData.customer_name) {
-                        onChange({ customer_name: capitalizeName(formData.customer_name) });
-                      }
-                      setFocusedField(null);
-                    }}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    onFocus={() => handleFieldFocus('customer_name')}
+                    onBlur={handleNameBlur}
                     className={`w-full pl-10 pr-10 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.customer_name ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
@@ -477,15 +529,9 @@ export default function BookingForm({
                     spellCheck="false"
                     maxLength={255}
                     value={formData.customer_email || ''}
-                    onChange={(e) => {
-                      if (!readOnlyEmail) {
-                        const value = e.target.value;
-                        onChange({ customer_email: value });
-                        setEmailValidation(validateEmail(value));
-                      }
-                    }}
-                    onFocus={() => !readOnlyEmail && setFocusedField('customer_email')}
-                    onBlur={() => setFocusedField(null)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    onFocus={() => handleFieldFocus('customer_email')}
+                    onBlur={handleFieldBlur}
                     readOnly={readOnlyEmail}
                     className={`w-full pl-10 pr-10 py-3 text-sm sm:text-base border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
                       readOnlyEmail 
@@ -548,12 +594,9 @@ export default function BookingForm({
                     inputMode="tel"
                     maxLength={20}
                     value={formData.customer_phone || ''}
-                    onChange={(e) => {
-                      const formatted = formatPhoneNumber(e.target.value);
-                      onChange({ customer_phone: formatted });
-                    }}
-                    onFocus={() => setFocusedField('customer_phone')}
-                    onBlur={() => setFocusedField(null)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    onFocus={() => handleFieldFocus('customer_phone')}
+                    onBlur={handleFieldBlur}
                     className="w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50"
                     style={focusedField === 'customer_phone' ? {
                       borderColor: primary.base,
@@ -584,8 +627,8 @@ export default function BookingForm({
                     maxLength={200}
                     value={formData.title || ''}
                     onChange={(e) => onChange({ title: e.target.value })}
-                    onFocus={() => setFocusedField('title')}
-                    onBlur={() => setFocusedField(null)}
+                    onFocus={() => handleFieldFocus('title')}
+                    onBlur={handleFieldBlur}
                     className={`w-full pl-10 pr-3 py-3 text-sm sm:text-base border-2 rounded-lg focus:outline-none transition-all duration-200 focus:ring-2 focus:ring-offset-1 bg-white dark:bg-gray-50 ${
                       errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
@@ -690,7 +733,7 @@ export default function BookingForm({
               {selectedSlot && (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(2)}
+                  onClick={handleNextStep}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg"
                   style={{ 
                     background: `linear-gradient(to right, ${primary.base}, ${primary.hover})` 
@@ -711,7 +754,7 @@ export default function BookingForm({
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setCurrentStep(1)}
+              onClick={handlePrevStep}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
             >
               <ChevronLeftIcon className="w-4 h-4" />
@@ -720,7 +763,7 @@ export default function BookingForm({
 
             <button
               type="button"
-              onClick={() => setCurrentStep(3)}
+              onClick={handleNextStep}
               disabled={!formData.meeting_type_id}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ 
@@ -742,7 +785,7 @@ export default function BookingForm({
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setCurrentStep(2)}
+              onClick={handlePrevStep}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
             >
               <ChevronLeftIcon className="w-4 h-4" />
@@ -752,8 +795,8 @@ export default function BookingForm({
             <button
               type="submit"
               disabled={isSubmitting || !canSubmit}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              onMouseEnter={() => handleHoverChange(true)}
+              onMouseLeave={() => handleHoverChange(false)}
               className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: isSubmitting || !canSubmit 

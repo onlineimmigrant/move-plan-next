@@ -1,56 +1,132 @@
+/**
+ * ModalContainer Component
+ * 
+ * Glass morphism container with responsive behavior
+ * - Mobile: Fullscreen modal (90vh)
+ * - Desktop: Draggable/resizable modal with centered initial position
+ * Matches ShopModal styling and positioning
+ */
+
 'use client';
 
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Rnd } from 'react-rnd';
+import { Z_INDEX } from '../utils';
 
 interface ModalContainerProps {
-  children: React.ReactNode;
+  isOpen: boolean;
   onClose: () => void;
-  className?: string;
+  children: React.ReactNode;
 }
 
-export function ModalContainer({
-  children,
-  onClose,
-  className = ''
-}: ModalContainerProps) {
+export function ModalContainer({ isOpen, onClose, children }: ModalContainerProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [isMobile, setIsMobile] = React.useState(false);
 
-  // Handle escape key
+  // Detect mobile on client-side only
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Focus management
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      setTimeout(() => {
+        modalRef.current?.focus();
+      }, 100);
+    } else {
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    }
+  }, [isOpen]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [isOpen, onClose]);
 
-  // Handle click outside
-  const handleBackdropClick = (event: React.MouseEvent) => {
-    if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-      onClose();
-    }
-  };
+  if (!isOpen) return null;
 
-  return createPortal(
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200"
+      style={{ zIndex: Z_INDEX.backdrop }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="crm-modal-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-      {/* Modal */}
       <div
-        ref={modalRef}
-        className={`relative bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl max-w-7xl w-full mx-4 max-h-[95vh] overflow-hidden border border-white/20 ${className}`}
-      >
-        {children}
-      </div>
-    </div>,
-    document.body
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal - Responsive: Mobile fullscreen, Desktop draggable */}
+      {isMobile ? (
+        /* Mobile: Fixed fullscreen */
+        <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="CRM Management Modal"
+          tabIndex={-1}
+          className="crm-modal-root relative w-full h-[90vh] flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      ) : (
+        /* Desktop: Draggable & Resizable */
+        <Rnd
+          default={{
+            x: (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2 - 560,
+            y: (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 - 450,
+            width: 1120,
+            height: 900,
+          }}
+          minWidth={800}
+          minHeight={700}
+          bounds="window"
+          dragHandleClassName="modal-drag-handle"
+          enableResizing={true}
+          className="pointer-events-auto"
+          style={{ zIndex: Z_INDEX.modal }}
+        >
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="CRM Management Modal"
+            tabIndex={-1}
+            className="crm-modal-root relative h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {children}
+          </div>
+        </Rnd>
+      )}
+    </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
