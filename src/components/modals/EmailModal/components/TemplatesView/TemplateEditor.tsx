@@ -29,36 +29,51 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
   const { 
     getTemplateById, 
     createTemplate, 
-    updateTemplate 
+    updateTemplate,
+    isLoading: templatesLoading
   } = useEmailTemplates();
   
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
-  const [templateType, setTemplateType] = useState<'transactional' | 'marketing' | 'notification'>('transactional');
-  const [variables, setVariables] = useState('');
+  const [htmlCode, setHtmlCode] = useState('');
+  const [category, setCategory] = useState<'transactional' | 'marketing' | 'system'>('transactional');
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
 
   useEffect(() => {
+    // Wait for templates to load before trying to fetch
+    if (templatesLoading) return;
+    
     if (templateId && templateId > 0) {
       const template = getTemplateById(templateId);
+      console.log('Loading template:', templateId, template);
       if (template) {
-        setName(template.name);
-        setSubject(template.subject);
-        setBody(template.body);
-        setTemplateType(template.template_type);
-        setVariables(template.variables?.join(', ') || '');
+        setName(template.name || '');
+        setDescription(template.description || '');
+        setSubject(template.subject || '');
+        setHtmlCode(template.html_code || '');
+        setCategory(template.category || 'transactional');
         setIsActive(template.is_active);
+      } else {
+        console.warn('Template not found:', templateId);
       }
+    } else if (templateId === 0) {
+      // Reset form for new template
+      setName('');
+      setDescription('');
+      setSubject('');
+      setHtmlCode('');
+      setCategory('transactional');
+      setIsActive(true);
     }
-  }, [templateId]);
+  }, [templateId, getTemplateById, templatesLoading]);
 
   const handleSave = async () => {
-    if (!name.trim() || !subject.trim() || !body.trim()) {
-      alert('Please fill in all required fields');
+    if (!name.trim() || !htmlCode.trim()) {
+      alert('Please fill in template name and HTML code');
       return;
     }
 
@@ -66,11 +81,16 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
 
     const templateData = {
       name: name.trim(),
-      subject: subject.trim(),
-      body: body.trim(),
-      template_type: templateType,
-      variables: variables ? variables.split(',').map(v => v.trim()).filter(Boolean) : null,
+      description: description.trim() || null,
+      subject: subject.trim() || null,
+      html_code: htmlCode.trim(),
+      category: category,
       is_active: isActive,
+      type: null,
+      from_email_address_type: null,
+      email_main_logo_image: null,
+      is_default: false,
+      created_by: null,
     };
 
     let success = false;
@@ -93,10 +113,10 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
     if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const text = body;
+      const text = htmlCode;
       const before = text.substring(0, start);
       const after = text.substring(end);
-      setBody(before + `{{${variable}}}` + after);
+      setHtmlCode(before + `{{${variable}}}` + after);
       
       setTimeout(() => {
         textarea.focus();
@@ -123,16 +143,18 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {templateId && templateId > 0 ? 'Edit Template' : 'Create Template'}
+            {templateId && templateId > 0 ? 'Edit Template' : 'New Template'}
           </h3>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-              {showPreview ? 'Edit' : 'Preview'}
-            </button>
+            {!templatesLoading && (
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                {showPreview ? 'Edit' : 'Preview'}
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -144,7 +166,14 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {!showPreview ? (
+          {templatesLoading && templateId && templateId > 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading template...</p>
+              </div>
+            </div>
+          ) : !showPreview ? (
             <div className="space-y-4">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -163,18 +192,31 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Template Type *
+                    Category *
                   </label>
                   <select
-                    value={templateType}
-                    onChange={(e) => setTemplateType(e.target.value as any)}
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as any)}
                     className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   >
                     <option value="transactional">Transactional</option>
                     <option value="marketing">Marketing</option>
-                    <option value="notification">Notification</option>
+                    <option value="system">System</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of this template"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
               </div>
 
               <div>
@@ -190,19 +232,12 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
                 />
               </div>
 
-              {/* Variables */}
+              {/* Quick Insert Variables */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Variables (comma-separated)
+                  Quick Insert Variables
                 </label>
-                <input
-                  type="text"
-                  value={variables}
-                  onChange={(e) => setVariables(e.target.value)}
-                  placeholder="e.g., first_name, last_name, company_name"
-                  className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2">
                   {commonVariables.map((variable) => (
                     <button
                       key={variable}
@@ -241,18 +276,16 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
                 </button>
               </div>
 
-              {/* Body Editor */}
+              {/* HTML Code Editor */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Body *
+                  HTML Code *
                 </label>
                 <textarea
                   id="body-editor"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder={viewMode === 'code' 
-                    ? '<html><body>Your email content here...</body></html>' 
-                    : 'Write your email content here...'}
+                  value={htmlCode}
+                  onChange={(e) => setHtmlCode(e.target.value)}
+                  placeholder="<html><body>Your email HTML content here...</body></html>"
                   rows={15}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-mono text-sm resize-none"
                 />
@@ -282,7 +315,7 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
                 <div className="p-6">
                   <div 
                     className="prose dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: body || '<p class="text-gray-400">No content</p>' }}
+                    dangerouslySetInnerHTML={{ __html: htmlCode || '<p class="text-gray-400">No content</p>' }}
                   />
                 </div>
               </div>
@@ -300,7 +333,7 @@ export default function TemplateEditor({ templateId, onClose, primary }: Templat
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || !name.trim() || !subject.trim() || !body.trim()}
+            disabled={saving || !name.trim() || !htmlCode.trim()}
             className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,

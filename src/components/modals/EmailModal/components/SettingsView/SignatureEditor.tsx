@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Button from '@/ui/Button';
 import { 
   Save, 
   Loader2,
@@ -24,9 +25,10 @@ interface SignatureData {
 
 interface SignatureEditorProps {
   primary: { base: string; hover: string };
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
-export default function SignatureEditor({ primary }: SignatureEditorProps) {
+export default function SignatureEditor({ primary, onMobileActionsChange }: SignatureEditorProps) {
   const [signature, setSignature] = useState<SignatureData>({
     signature_html: '',
     is_organization_wide: false,
@@ -39,6 +41,42 @@ export default function SignatureEditor({ primary }: SignatureEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Load signature on mount
+
+  // Provide mobile action buttons (Reset and Save)
+  useEffect(() => {
+    if (onMobileActionsChange) {
+      onMobileActionsChange(
+        <div className="flex gap-2 lg:justify-end">
+          <Button
+            onClick={handleReset}
+            variant="light-outline"
+            className="flex-1 lg:flex-initial flex items-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            variant="primary"
+            className="flex-1 lg:flex-initial flex items-center gap-2"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save
+          </Button>
+        </div>
+      );
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [isSaving, primary, onMobileActionsChange]);
   React.useEffect(() => {
     loadSignature();
   }, []);
@@ -327,33 +365,6 @@ export default function SignatureEditor({ primary }: SignatureEditorProps) {
           <p className="text-sm">{saveResult.message}</p>
         </div>
       )}
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-            color: 'white'
-          }}
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          Save Signature
-        </button>
-      </div>
     </div>
   );
 }

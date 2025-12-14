@@ -48,23 +48,15 @@ export function useSendEmail(): UseSendEmailReturn {
       return { success: false, message: errorMsg };
     }
 
+    if (!settings.transactional_email) {
+      const errorMsg = 'Transactional email not configured. Please set up transactional email in Settings.';
+      setError(errorMsg);
+      return { success: false, message: errorMsg };
+    }
+
     try {
       setIsSending(true);
       setError(null);
-
-      // Get primary email account
-      const { data: accounts } = await supabase
-        .from('email_accounts')
-        .select('id, email_address')
-        .eq('organization_id', settings.organization_id)
-        .eq('is_active', true)
-        .eq('is_primary', true)
-        .limit(1)
-        .single();
-
-      if (!accounts) {
-        throw new Error('No primary email account configured. Please set up an email account in Settings.');
-      }
 
       const sent_log_ids: number[] = [];
 
@@ -74,16 +66,14 @@ export function useSendEmail(): UseSendEmailReturn {
           .from('email_sent_log')
           .insert({
             organization_id: settings.organization_id,
-            account_id: accounts.id,
             template_id: params.template_id || null,
-            recipient_email: recipient.email,
-            recipient_name: recipient.name || null,
-            contact_id: recipient.contact_id || null,
+            to_email: recipient.email,
+            to_name: recipient.name || null,
+            from_email: settings.transactional_email,
+            from_name: settings.transactional_email,
             subject: params.subject,
-            body: params.body,
-            status: params.schedule_at ? 'scheduled' : 'pending',
-            scheduled_at: params.schedule_at || null,
-            sent_by: session.user.id,
+            status: 'sent',
+            sent_by_user_id: session.user.id,
           })
           .select('id')
           .single();
@@ -101,17 +91,27 @@ export function useSendEmail(): UseSendEmailReturn {
         };
       }
 
+      // Get current session token
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession) {
+        throw new Error('No active session');
+      }
+
       // Call API route to send email via SES
       const response = await fetch('/api/email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authSession.access_token}`,
+        },
         body: JSON.stringify({
           organization_id: settings.organization_id,
-          account_id: accounts.id,
+          from_email: settings.transactional_email,
+          from_name: settings.transactional_email,
           recipients: params.recipients.map((r) => r.email),
           subject: params.subject,
           body: params.body,
-          reply_to: params.reply_to || accounts.email_address,
+          reply_to: params.reply_to || settings.transactional_email,
           cc: params.cc || [],
           bcc: params.bcc || [],
           sent_log_ids,

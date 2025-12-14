@@ -18,6 +18,7 @@ import {
 
 interface DomainSetupProps {
   primary: { base: string; hover: string };
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
 interface Settings {
@@ -33,7 +34,7 @@ interface DnsRecord {
   verified?: boolean;
 }
 
-export default function DomainSetup({ primary }: DomainSetupProps) {
+export default function DomainSetup({ primary, onMobileActionsChange }: DomainSetupProps) {
   const [domain, setDomain] = useState('');
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +45,35 @@ export default function DomainSetup({ primary }: DomainSetupProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
   const [dnsRecords, setDnsRecords] = useState<DnsRecord[]>([]);
+
+  // Provide mobile action button (Verify)
+  useEffect(() => {
+    if (onMobileActionsChange) {
+      onMobileActionsChange(
+        <div className="flex lg:justify-end">
+          <Button
+            onClick={handleVerify}
+            disabled={isChecking}
+            variant="primary"
+            size="sm"
+            className="w-full lg:w-auto flex items-center gap-2"
+          >
+            {isChecking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            Verify
+          </Button>
+        </div>
+      );
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [isChecking, onMobileActionsChange]);
 
   // Fetch domain from settings table
   useEffect(() => {
@@ -276,8 +306,9 @@ export default function DomainSetup({ primary }: DomainSetupProps) {
           </div>
         ) : (
           <>
-            <div className="flex flex-col sm:flex-row gap-3 mb-3">
-              <div className="flex gap-3 flex-1">
+            {/* Domain Input */}
+            <div className="flex flex-col gap-3 mb-3">
+              <div className="flex gap-3">
                 <input
                   type="text"
                   value={domain}
@@ -285,11 +316,13 @@ export default function DomainSetup({ primary }: DomainSetupProps) {
                   placeholder="yourdomain.com"
                   className="flex-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
+                {/* Save button - desktop inline */}
                 <Button
                   onClick={handleSave}
                   disabled={isSaving || domain === settings?.domain}
                   variant="primary"
                   size="default"
+                  className="hidden lg:flex"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -299,12 +332,30 @@ export default function DomainSetup({ primary }: DomainSetupProps) {
                   <span className="ml-2">Save</span>
                 </Button>
               </div>
+              
+              {/* Save button - mobile below input */}
+              <Button
+                onClick={handleSave}
+                disabled={isSaving || domain === settings?.domain}
+                variant="primary"
+                size="default"
+                className="lg:hidden w-full justify-center"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span className="ml-2">Save</span>
+              </Button>
+
+              {/* Verify button - desktop only (mobile in footer) */}
               <Button
                 onClick={handleVerify}
                 disabled={isChecking}
                 variant="primary"
                 size="default"
-                className="sm:w-auto w-full justify-center"
+                className="hidden lg:flex w-full justify-center"
               >
                 {isChecking ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

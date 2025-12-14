@@ -187,7 +187,7 @@ export async function POST(
             },
             body: JSON.stringify({
               organization_id: campaign.organization_id,
-              account_id: emailAccount.id,
+              email_account_id: emailAccount.id,
               recipients: [subscriber.email],
               subject,
               body,

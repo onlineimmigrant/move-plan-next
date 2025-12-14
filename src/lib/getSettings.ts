@@ -357,7 +357,14 @@ async function _getSettingsInternal(baseUrl?: string): Promise<Settings> {
         primary_shade,
         secondary_color,
         secondary_shade,
-        legal_notice
+        legal_notice,
+        transactional_email,
+        marketing_email,
+        transactional_email_2,
+        marketing_email_2,
+        ses_access_key_id,
+        ses_secret_access_key,
+        ses_region
       `)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
@@ -395,6 +402,13 @@ async function _getSettingsInternal(baseUrl?: string): Promise<Settings> {
       secondary_color: data.secondary_color ?? 'gray',
       secondary_shade: data.secondary_shade ?? 500,
       legal_notice: data.legal_notice ?? null,
+      transactional_email: data.transactional_email ?? null,
+      marketing_email: data.marketing_email ?? null,
+      transactional_email_2: data.transactional_email_2 ?? null,
+      marketing_email_2: data.marketing_email_2 ?? null,
+      ses_access_key_id: data.ses_access_key_id ?? null,
+      ses_secret_access_key: data.ses_secret_access_key ?? null,
+      ses_region: data.ses_region ?? null,
     };
 
     // console.log('Settings fetched successfully:', settings);

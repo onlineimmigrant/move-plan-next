@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEmailBranding } from '../../hooks/useEmailBranding';
 import { useSettings } from '@/context/SettingsContext';
+import Button from '@/ui/Button';
 import { 
   Palette, 
   Save, 
@@ -13,6 +14,7 @@ import {
   Upload,
   Eye
 } from 'lucide-react';
+import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 
 const FONT_FAMILIES = [
   { value: 'Arial, sans-serif', label: 'Arial' },
@@ -27,9 +29,10 @@ const FONT_FAMILIES = [
 
 interface BrandingEditorProps {
   primary: { base: string; hover: string };
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
-export default function BrandingEditor({ primary }: BrandingEditorProps) {
+export default function BrandingEditor({ primary, onMobileActionsChange }: BrandingEditorProps) {
   const { branding, isLoading, updateBranding } = useEmailBranding();
   const { settings } = useSettings();
   const [formData, setFormData] = useState({
@@ -44,6 +47,7 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showPreview, setShowPreview] = useState(true);
+  const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
 
   React.useEffect(() => {
     if (branding) {
@@ -58,6 +62,42 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
       });
     }
   }, [branding]);
+
+  // Provide action buttons for footer panel (both desktop and mobile)
+  useEffect(() => {
+    if (onMobileActionsChange) {
+      onMobileActionsChange(
+        <div className="flex gap-2 lg:justify-end">
+          <Button
+            onClick={handleReset}
+            variant="light-outline"
+            className="flex-1 lg:flex-initial flex items-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            variant="primary"
+            className="flex-1 lg:flex-initial flex items-center gap-2"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save
+          </Button>
+        </div>
+      );
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [isSaving, primary, onMobileActionsChange]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -85,6 +125,11 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
     setSaveResult(null);
   };
 
+  const handleImageSelect = (url: string) => {
+    setFormData({ ...formData, custom_logo_url: url });
+    setIsImageGalleryOpen(false);
+  };
+
   const getActivePrimaryColor = () => {
     if (formData.use_primary_color && settings?.primary_color) {
       return settings.primary_color;
@@ -108,9 +153,9 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Editor Panel */}
-      <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Editor Panel - 1/3 on desktop */}
+      <div className="space-y-6 lg:col-span-1">
         <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-6 space-y-6">
           {/* Primary Color Toggle */}
           <div>
@@ -200,18 +245,20 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Custom Logo URL
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={formData.custom_logo_url}
-                  onChange={(e) => setFormData({ ...formData, custom_logo_url: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  className="flex-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                />
-                <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <Upload className="w-4 h-4" />
-                </button>
-              </div>
+              <input
+                type="url"
+                value={formData.custom_logo_url}
+                onChange={(e) => setFormData({ ...formData, custom_logo_url: e.target.value })}
+                placeholder="https://example.com/logo.png"
+                className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              />
+              <button
+                onClick={() => setIsImageGalleryOpen(true)}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Custom Logo
+              </button>
             </div>
           )}
 
@@ -281,38 +328,11 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
               <p className="text-sm">{saveResult.message}</p>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                color: 'white'
-              }}
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Save Branding
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Live Preview Panel */}
-      <div className="space-y-4">
+      {/* Live Preview Panel - 2/3 on desktop */}
+      <div className="space-y-4 lg:col-span-2">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Eye className="w-5 h-5" />
@@ -320,11 +340,10 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
           </h3>
         </div>
 
-        <div className="bg-gray-100 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-900 rounded-xl">
           {/* Email Preview */}
           <div
             style={{
-              maxWidth: `${formData.container_max_width}px`,
               fontFamily: formData.font_family,
               margin: '0 auto',
             }}
@@ -388,6 +407,13 @@ export default function BrandingEditor({ primary }: BrandingEditorProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Gallery Modal */}
+      <ImageGalleryModal
+        isOpen={isImageGalleryOpen}
+        onClose={() => setIsImageGalleryOpen(false)}
+        onSelectImage={handleImageSelect}
+      />
     </div>
   );
 }

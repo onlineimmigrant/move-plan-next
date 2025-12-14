@@ -28,6 +28,7 @@ export default function SettingsView({ primary }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('accounts');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const [mobileActionButtons, setMobileActionButtons] = useState<React.ReactNode>(null);
 
   const tabs = [
     { id: 'accounts' as const, label: 'Connected Accounts', icon: Mail },
@@ -46,62 +47,64 @@ export default function SettingsView({ primary }: SettingsViewProps) {
     setShowMobileMenu(false);
   };
 
-  // Find portal container on mount
+  // Find portal container for mobile action buttons
   useEffect(() => {
-    const container = document.getElementById('settings-mobile-menu-container');
+    const container = document.getElementById('settings-mobile-actions-container');
     setPortalContainer(container);
   }, []);
 
-  // Mobile menu component
-  const mobileMenu = (
-    <div className="relative">
-      <button
-        onClick={() => setShowMobileMenu(!showMobileMenu)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg"
-        style={{
-          background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-          color: 'white',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <ActiveIcon className="w-5 h-5" />
-          <span className="font-medium text-sm">{activeTabData?.label}</span>
-        </div>
-        <ChevronDown className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`} />
-      </button>
+  // Mobile tab selector (shown at top, not in bottom panel)
+  const mobileTabSelector = (
+    <div className="lg:hidden mb-4">
+      <div className="relative">
+        <button
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg"
+          style={{
+            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <ActiveIcon className="w-5 h-5" />
+            <span className="font-medium text-sm">{activeTabData?.label}</span>
+          </div>
+          <ChevronDown className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`} />
+        </button>
 
-      {/* Dropdown Menu */}
-      {showMobileMenu && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-20">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabSelect(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
-                  isActive
-                    ? 'bg-gray-100 dark:bg-gray-700 font-medium'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                }`}
-                style={isActive ? { color: primary.base } : undefined}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+        {/* Dropdown Menu */}
+        {showMobileMenu && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-20">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabSelect(tab.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 transition-all border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
+                    isActive
+                      ? 'bg-gray-100 dark:bg-gray-700 font-medium'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  }`}
+                  style={isActive ? { color: primary.base } : undefined}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 
   return (
     <div className="flex flex-col lg:flex-row h-full">
-      {/* Mobile Dropdown Menu - Portaled to bottom panel */}
-      {portalContainer && createPortal(mobileMenu, portalContainer)}
+      {/* Mobile Action Buttons - Portaled to bottom panel */}
+      {portalContainer && mobileActionButtons && createPortal(mobileActionButtons, portalContainer)}
 
       {/* Desktop Sidebar Navigation */}
       <div className="hidden lg:block w-64 border-r border-white/20 p-4 space-y-2">
@@ -132,12 +135,15 @@ export default function SettingsView({ primary }: SettingsViewProps) {
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-        {activeTab === 'accounts' && <ConnectedAccounts primary={primary} />}
-        {activeTab === 'senders' && <SenderAddresses primary={primary} />}
-        {activeTab === 'ses' && <SESConfiguration primary={primary} />}
-        {activeTab === 'branding' && <BrandingEditor primary={primary} />}
-        {activeTab === 'domain' && <DomainSetup primary={primary} />}
-        {activeTab === 'signature' && <SignatureEditor primary={primary} />}
+        {/* Mobile Tab Selector - Show at top */}
+        {mobileTabSelector}
+        
+        {activeTab === 'accounts' && <ConnectedAccounts primary={primary} onMobileActionsChange={setMobileActionButtons} />}
+        {activeTab === 'senders' && <SenderAddresses primary={primary} onMobileActionsChange={setMobileActionButtons} />}
+        {activeTab === 'ses' && <SESConfiguration primary={primary} onMobileActionsChange={setMobileActionButtons} />}
+          {activeTab === 'branding' && <BrandingEditor primary={primary} onMobileActionsChange={setMobileActionButtons} />}
+        {activeTab === 'domain' && <DomainSetup primary={primary} onMobileActionsChange={setMobileActionButtons} />}
+        {activeTab === 'signature' && <SignatureEditor primary={primary} onMobileActionsChange={setMobileActionButtons} />}
       </div>
     </div>
   );

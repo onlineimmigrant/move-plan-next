@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSESConfiguration } from '../../hooks/useSESConfiguration';
+import Button from '@/ui/Button';
 import { Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface SenderAddressesProps {
   primary: { base: string; hover: string };
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
-export default function SenderAddresses({ primary }: SenderAddressesProps) {
+export default function SenderAddresses({ primary, onMobileActionsChange }: SenderAddressesProps) {
   const { config, isLoading, updateConfig } = useSESConfiguration();
   const [formData, setFormData] = useState({
     transactional_email: '',
@@ -25,6 +27,34 @@ export default function SenderAddresses({ primary }: SenderAddressesProps) {
       });
     }
   }, [config]);
+
+  // Provide mobile action button (Save)
+  useEffect(() => {
+    if (onMobileActionsChange) {
+      onMobileActionsChange(
+        <div className="flex lg:justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            variant="primary"
+            className="w-full lg:w-auto flex items-center gap-2"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save
+          </Button>
+        </div>
+      );
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [isSaving, primary, onMobileActionsChange]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -107,26 +137,6 @@ export default function SenderAddresses({ primary }: SenderAddressesProps) {
             <p className="text-sm">{saveResult.message}</p>
           </div>
         )}
-
-        {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-              color: 'white'
-            }}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save
-          </button>
-        </div>
       </div>
 
       {/* Info Card */}

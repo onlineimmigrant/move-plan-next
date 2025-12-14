@@ -1,20 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Mail, Users, BarChart3 } from 'lucide-react';
+import Button from '@/ui/Button';
 import CampaignsList from './CampaignsList';
 import ListsManager from './ListsManager';
 import SubscriberImporter from './SubscriberImporter';
-import { Mail, Users, BarChart3 } from 'lucide-react';
 
 type TabType = 'campaigns' | 'lists' | 'analytics';
 
 interface MarketingViewProps {
   primary: { base: string; hover: string };
   globalSearchQuery?: string;
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
-export default function MarketingView({ primary, globalSearchQuery = '' }: MarketingViewProps) {
+export default function MarketingView({ primary, globalSearchQuery = '', onMobileActionsChange }: MarketingViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>('campaigns');
+
+  // Provide action button for footer panel (only in campaigns tab)
+  useEffect(() => {
+    if (onMobileActionsChange && activeTab === 'campaigns') {
+      onMobileActionsChange(
+        <div className="flex lg:justify-end">
+          <Button
+            onClick={() => {/* TODO: Open campaign editor */}}
+            variant="primary"
+            size="sm"
+            className="w-full lg:w-auto flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Campaign
+          </Button>
+        </div>
+      );
+    } else if (onMobileActionsChange) {
+      onMobileActionsChange(null);
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [activeTab, onMobileActionsChange]);
 
   const tabs = [
     { id: 'campaigns' as const, label: 'Campaigns', icon: Mail },
@@ -23,7 +51,7 @@ export default function MarketingView({ primary, globalSearchQuery = '' }: Marke
   ];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col p-4 sm:p-6">
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <div className="flex gap-2">

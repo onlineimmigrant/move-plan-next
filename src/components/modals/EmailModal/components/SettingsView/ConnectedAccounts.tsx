@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useConnectedAccounts } from '../../hooks/useConnectedAccounts';
+import Button from '@/ui/Button';
 import { 
   Mail, 
   RefreshCw, 
@@ -10,19 +11,76 @@ import {
   AlertCircle,
   Loader2,
   Plus,
-  Star
+  Star,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { EmailProvider } from '../../types';
 
 interface ConnectedAccountsProps {
   primary: { base: string; hover: string };
+  onMobileActionsChange?: (actions: React.ReactNode) => void;
 }
 
-export default function ConnectedAccounts({ primary }: ConnectedAccountsProps) {
+export default function ConnectedAccounts({ primary, onMobileActionsChange }: ConnectedAccountsProps) {
   const { accounts, isLoading, disconnectAccount, setPrimaryAccount, triggerSync, connectAccount } = useConnectedAccounts();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [connectingGmail, setConnectingGmail] = useState(false);
   const [connectingOutlook, setConnectingOutlook] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  // Provide mobile action button with dropup menu
+  useEffect(() => {
+    if (onMobileActionsChange) {
+      onMobileActionsChange(
+        <div className="relative w-full flex lg:justify-end">
+          <Button
+            onClick={() => setShowAccountMenu(!showAccountMenu)}
+            disabled={connectingGmail || connectingOutlook}
+            variant="primary"
+            className="w-full lg:w-auto flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Account
+            <ChevronUp className={`w-4 h-4 transition-transform ${showAccountMenu ? 'rotate-180' : ''}`} />
+          </Button>
+          
+          {/* Dropup Menu */}
+          {showAccountMenu && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-20">
+              <button
+                onClick={() => {
+                  handleConnectGmail();
+                  setShowAccountMenu(false);
+                }}
+                disabled={connectingGmail}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b border-gray-100 dark:border-gray-700"
+              >
+                {connectingGmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Gmail
+              </button>
+              <button
+                onClick={() => {
+                  handleConnectOutlook();
+                  setShowAccountMenu(false);
+                }}
+                disabled={connectingOutlook}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {connectingOutlook ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Outlook
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return () => {
+      if (onMobileActionsChange) {
+        onMobileActionsChange(null);
+      }
+    };
+  }, [connectingGmail, connectingOutlook, showAccountMenu, primary, onMobileActionsChange]);
 
   const getProviderIcon = (provider: EmailProvider) => {
     switch (provider) {
@@ -138,26 +196,6 @@ export default function ConnectedAccounts({ primary }: ConnectedAccountsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Connect New Account Buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={handleConnectGmail}
-          disabled={connectingGmail}
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {connectingGmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Gmail
-        </button>
-        <button
-          onClick={handleConnectOutlook}
-          disabled={connectingOutlook}
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {connectingOutlook ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Outlook
-        </button>
-      </div>
-
       {/* Accounts List */}
       {accounts.length === 0 ? (
         <div className="text-center py-12 bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20">

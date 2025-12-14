@@ -6,15 +6,20 @@ import { useSettings } from '@/context/SettingsContext';
 
 interface EmailTemplate {
   id: number;
-  organization_id: number;
+  organization_id: string;
   name: string;
-  subject: string;
-  body: string;
-  template_type: 'transactional' | 'marketing' | 'notification';
-  variables: string[] | null;
+  description: string | null;
+  subject: string | null;
+  html_code: string | null;
+  type: string | null;
+  category: 'transactional' | 'marketing' | 'system' | null;
+  from_email_address_type: 'transactional_email' | 'marketing_email' | 'transactional_email_2' | 'marketing_email_2' | null;
+  email_main_logo_image: string | null;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  is_default: boolean;
+  created_by: string | null;
+  created_at?: string;
+  updated_at: string | null;
 }
 
 interface UseEmailTemplatesReturn {
@@ -58,6 +63,7 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
 
       if (fetchError) throw fetchError;
 
+      console.log('Fetched templates:', data);
       setTemplates(data || []);
     } catch (err) {
       console.error('Error fetching email templates:', err);
@@ -73,12 +79,12 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
 
   // Filter transactional templates
   const transactionalTemplates = templates.filter(
-    (template) => template.template_type === 'transactional'
+    (template) => template.category === 'transactional'
   );
 
   // Filter marketing templates
   const marketingTemplates = templates.filter(
-    (template) => template.template_type === 'marketing'
+    (template) => template.category === 'marketing'
   );
 
   const refreshTemplates = async () => {
@@ -95,9 +101,10 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
     const lowerQuery = query.toLowerCase();
     return templates.filter(
       (template) =>
-        template.name.toLowerCase().includes(lowerQuery) ||
-        template.subject.toLowerCase().includes(lowerQuery) ||
-        template.body.toLowerCase().includes(lowerQuery)
+        template.name?.toLowerCase().includes(lowerQuery) ||
+        template.subject?.toLowerCase().includes(lowerQuery) ||
+        template.description?.toLowerCase().includes(lowerQuery) ||
+        template.html_code?.toLowerCase().includes(lowerQuery)
     );
   };
 
@@ -169,11 +176,16 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
 
     return createTemplate({
       name: `${template.name} (Copy)`,
+      description: template.description,
       subject: template.subject,
-      body: template.body,
-      template_type: template.template_type,
-      variables: template.variables,
+      html_code: template.html_code,
+      type: template.type,
+      category: template.category,
+      from_email_address_type: template.from_email_address_type,
+      email_main_logo_image: template.email_main_logo_image,
       is_active: template.is_active,
+      is_default: false,
+      created_by: template.created_by,
     });
   };
 

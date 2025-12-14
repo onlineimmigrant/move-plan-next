@@ -33,35 +33,36 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
   } = useEmailTemplates();
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
+  const getTypeIcon = (category: string | null | undefined) => {
+    switch (category) {
       case 'transactional':
         return Mail;
       case 'marketing':
         return Megaphone;
-      case 'notification':
+      case 'system':
         return Bell;
       default:
         return FileText;
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (category: string | null | undefined) => {
     const colors = {
       transactional: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
       marketing: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
-      notification: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
+      system: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
     };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
+    return colors[category as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400';
   };
 
   const filteredTemplates = templates.filter((template) => {
-    if (typeFilter !== 'all' && template.template_type !== typeFilter) return false;
+    if (typeFilter !== 'all' && template.category !== typeFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
-        template.name.toLowerCase().includes(query) ||
-        template.subject.toLowerCase().includes(query)
+        template.name?.toLowerCase().includes(query) ||
+        template.subject?.toLowerCase().includes(query) ||
+        template.description?.toLowerCase().includes(query)
       );
     }
     return true;
@@ -84,26 +85,13 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Email Templates
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage your email templates
-          </p>
-        </div>
-        <button 
-          onClick={() => onEdit(0)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium"
-          style={{
-            background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-            color: 'white'
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          New Template
-        </button>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Email Templates
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Manage your email templates
+        </p>
       </div>
 
       {/* Filters */}
@@ -119,7 +107,7 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
             <option value="all">All Types</option>
             <option value="transactional">Transactional</option>
             <option value="marketing">Marketing</option>
-            <option value="notification">Notification</option>
+            <option value="system">System</option>
           </select>
         </div>
       </div>
@@ -128,7 +116,7 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
       {filteredTemplates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTemplates.map((template) => {
-            const TypeIcon = getTypeIcon(template.template_type);
+            const TypeIcon = getTypeIcon(template.category);
             return (
               <div
                 key={template.id}
@@ -136,15 +124,15 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${getTypeColor(template.template_type)}`}>
+                    <div className={`p-2 rounded-lg ${getTypeColor(template.category || 'notification')}`}>
                       <TypeIcon className="w-5 h-5" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white">
-                        {template.name}
+                        {template.name || 'Untitled Template'}
                       </h4>
                       <p className="text-xs text-gray-500 capitalize">
-                        {template.template_type}
+                        {template.category || template.type || 'general'}
                       </p>
                     </div>
                   </div>
@@ -154,26 +142,16 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
                   {template.subject || 'No subject'}
                 </p>
 
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                  {template.body ? template.body.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'No content'}
-                </p>
+                {template.description && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    {template.description}
+                  </p>
+                )}
 
-                {template.variables && template.variables.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {template.variables.slice(0, 3).map((variable, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 rounded"
-                      >
-                        {`{{${variable}}}`}
-                      </span>
-                    ))}
-                    {template.variables.length > 3 && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 rounded">
-                        +{template.variables.length - 3}
-                      </span>
-                    )}
-                  </div>
+                {!template.description && template.html_code && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    {template.html_code.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                  </p>
                 )}
 
                 {/* Actions */}

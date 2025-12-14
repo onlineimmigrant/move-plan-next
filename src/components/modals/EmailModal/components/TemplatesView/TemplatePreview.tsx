@@ -16,20 +16,31 @@ export default function TemplatePreview({ templateId, onClose }: TemplatePreview
   
   const template = templateId ? getTemplateById(templateId) : null;
 
+  // Extract variables from html_code (find {{variable}} patterns)
+  const extractVariables = (html: string | null): string[] => {
+    if (!html) return [];
+    const matches = html.match(/\{\{(\w+)\}\}/g);
+    if (!matches) return [];
+    return [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, '')))];
+  };
+
+  const variables = template ? extractVariables(template.html_code) : [];
+
   // Initialize sample data for variables
   React.useEffect(() => {
-    if (template?.variables) {
+    if (variables.length > 0) {
       const data: Record<string, string> = {};
-      template.variables.forEach((variable) => {
+      variables.forEach((variable) => {
         data[variable] = `Sample ${variable.replace('_', ' ')}`;
       });
       setSampleData(data);
     }
-  }, [template?.variables]);
+  }, [template?.html_code]);
   
   if (!templateId || !template) return null;
 
-  const replaceVariables = (text: string): string => {
+  const replaceVariables = (text: string | null): string => {
+    if (!text) return '';
     let result = text;
     Object.entries(sampleData).forEach(([key, value]) => {
       const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
@@ -38,8 +49,8 @@ export default function TemplatePreview({ templateId, onClose }: TemplatePreview
     return result;
   };
 
-  const previewSubject = replaceVariables(template.subject);
-  const previewBody = sanitizeEmailTemplate(replaceVariables(template.body));
+  const previewSubject = replaceVariables(template?.subject);
+  const previewBody = sanitizeEmailTemplate(replaceVariables(template?.html_code));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -63,13 +74,13 @@ export default function TemplatePreview({ templateId, onClose }: TemplatePreview
         </div>
 
         {/* Sample Data Editor */}
-        {template.variables && template.variables.length > 0 && (
+        {variables && variables.length > 0 && (
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Sample Data (edit to see changes):
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {template.variables.map((variable) => (
+              {variables.map((variable) => (
                 <div key={variable}>
                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
                     {`{{${variable}}}`}

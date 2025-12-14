@@ -29,8 +29,8 @@ export default function EmailComposer({
 
   useEffect(() => {
     if (template) {
-      onSubjectChange(template.subject);
-      onBodyChange(template.body);
+      onSubjectChange(template.subject || '');
+      onBodyChange(template.html_code || '');
     }
   }, [template?.id]);
 
@@ -155,14 +155,42 @@ export default function EmailComposer({
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Live Preview
             </h4>
-            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 min-h-[300px]">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
               <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Subject:</p>
                 <p className="font-semibold text-gray-900 dark:text-white">{subject || '(No subject)'}</p>
               </div>
-              <div
-                className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-gray-400">Email body will appear here...</p>' }}
+              <iframe
+                srcDoc={`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1f2937;
+      background: transparent;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: #3b82f6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    table { border-collapse: collapse; width: 100%; }
+    p { margin: 0 0 1em 0; }
+    h1, h2, h3, h4, h5, h6 { margin: 0 0 0.5em 0; font-weight: 600; }
+  </style>
+</head>
+<body>${previewHtml || '<p style="color: #9ca3af;">Email body will appear here...</p>'}</body>
+</html>`}
+                className="w-full border-0 bg-transparent"
+                style={{ height: '400px', minHeight: '300px' }}
+                sandbox="allow-same-origin"
+                title="Email preview"
               />
             </div>
           </div>

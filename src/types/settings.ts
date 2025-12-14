@@ -107,4 +107,13 @@ export interface Settings {
     show_footer_disclaimer?: boolean;
     footer_disclaimer?: string;
   } | null;
+  // Email configuration
+  transactional_email?: string | null;
+  marketing_email?: string | null;
+  transactional_email_2?: string | null;
+  marketing_email_2?: string | null;
+  // AWS SES configuration
+  ses_access_key_id?: string | null;
+  ses_secret_access_key?: string | null;
+  ses_region?: string | null;
 }

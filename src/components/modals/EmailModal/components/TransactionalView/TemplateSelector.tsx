@@ -24,8 +24,9 @@ export default function TemplateSelector({ onSelectTemplate, selectedTemplateId,
   const filteredTemplates = searchQuery
     ? transactionalTemplates.filter(
         (template) =>
-          template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          template.subject.toLowerCase().includes(searchQuery.toLowerCase())
+          template.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          template.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          template.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : transactionalTemplates;
 
@@ -105,34 +106,18 @@ export default function TemplateSelector({ onSelectTemplate, selectedTemplateId,
                 <div>
                   <span className="text-xs text-gray-500 dark:text-gray-500">Subject:</span>
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 line-clamp-1">
-                    {template.subject}
+                    {template.subject || 'No subject'}
                   </p>
                 </div>
-                <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">Preview:</span>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                    {template.body.replace(/<[^>]*>/g, '').substring(0, 100)}...
-                  </p>
-                </div>
-              </div>
-
-              {template.variables && template.variables.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-xs text-gray-500 dark:text-gray-500">Variables:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {template.variables.map((variable, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded"
-                      >
-                        {'{'}
-                        {variable}
-                        {'}'}
-                      </span>
-                    ))}
+                {(template.description || template.html_code) && (
+                  <div>
+                    <span className="text-xs text-gray-500 dark:text-gray-500">Preview:</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                      {template.description || (template.html_code ? template.html_code.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : '')}
+                    </p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </button>
           ))}
         </div>

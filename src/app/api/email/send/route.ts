@@ -2,47 +2,68 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 interface SendEmailRequest {
-  organization_id: number;
-  account_id: number;
+  organization_id: string;
+  from_email: string;
+  from_name?: string;
   recipients: string[];
   subject: string;
   body: string;
   reply_to?: string;
   cc?: string[];
   bcc?: string[];
-  sent_log_ids: number[];
+  sent_log_ids?: string[];
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Get auth token from request headers
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return NextResponse.json({ error: 'Unauthorized - No auth token' }, { status: 401 });
+    }
 
-    // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    if (authError || !session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Create authenticated Supabase client with the auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    );
+    
+    // Verify the session
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized - Invalid token' }, { status: 401 });
     }
 
     const body: SendEmailRequest = await request.json();
     const { 
       organization_id, 
-      account_id, 
+      from_email,
+      from_name,
       recipients, 
       subject, 
       body: emailBody, 
       reply_to,
       cc = [],
       bcc = [],
-      sent_log_ids 
+      sent_log_ids = []
     } = body;
 
     // Validate required fields
-    if (!organization_id || !account_id || !recipients?.length || !subject || !emailBody) {
+    if (!organization_id || !from_email || !recipients?.length || !subject || !emailBody) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -50,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch AWS SES configuration
-    const { data: settings, error: settingsError } = await supabase
+    const { data: settings, error: settingsError } = await supabaseAdmin
       .from('settings')
       .select('ses_access_key_id, ses_secret_access_key, ses_region, transactional_email')
       .eq('organization_id', organization_id)
@@ -70,21 +91,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get email account details
-    const { data: emailAccount, error: accountError } = await supabase
-      .from('email_accounts')
-      .select('email_address, display_name')
-      .eq('id', account_id)
-      .eq('organization_id', organization_id)
-      .single();
-
-    if (accountError || !emailAccount) {
-      return NextResponse.json(
-        { error: 'Email account not found' },
-        { status: 404 }
-      );
-    }
-
     // Initialize AWS SES client
     const sesClient = new SESClient({
       region: settings.ses_region || 'us-east-1',
@@ -94,10 +100,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const fromEmail = settings.transactional_email || emailAccount.email_address;
-    const sourceEmail = emailAccount.display_name 
-      ? `${emailAccount.display_name} <${fromEmail}>`
-      : fromEmail;
+    const sourceEmail = from_name 
+      ? `${from_name} <${from_email}>`
+      : from_email;
 
     const results: { success: boolean; recipient: string; messageId?: string; error?: string }[] = [];
 
@@ -132,12 +137,12 @@ export async function POST(request: NextRequest) {
         const response = await sesClient.send(sendCommand);
 
         // Update email_sent_log with success
-        await supabase
+        await supabaseAdmin
           .from('email_sent_log')
           .update({
             status: 'sent',
             sent_at: new Date().toISOString(),
-            message_id: response.MessageId,
+            ses_message_id: response.MessageId,
           })
           .eq('id', logId);
 
@@ -150,11 +155,12 @@ export async function POST(request: NextRequest) {
         console.error(`Failed to send email to ${recipient}:`, error);
 
         // Update email_sent_log with failure
-        await supabase
+        await supabaseAdmin
           .from('email_sent_log')
           .update({
             status: 'failed',
-            error_message: error.message || 'Failed to send email',
+            // Note: error_message column doesn't exist in current schema
+            // Using status 'failed' to indicate failure
           })
           .eq('id', logId);
 

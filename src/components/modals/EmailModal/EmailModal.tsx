@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useEmailModalStore } from './EmailModalManager';
 import { EmailProvider } from './context/EmailContext';
 import { 
@@ -41,6 +42,23 @@ export default function EmailModal() {
   const primary = themeColors.cssVars.primary;
   const [searchQuery, setSearchQuery] = useState('');
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [mobileActionButtons, setMobileActionButtons] = useState<React.ReactNode>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  // Reset filters modal when tab changes
+  React.useEffect(() => {
+    setShowFiltersModal(false);
+    setMobileActionButtons(null); // Clear action buttons when changing tabs
+  }, [activeTab]);
+
+  // Find portal container for action buttons - update when tab changes
+  React.useEffect(() => {
+    const containerId = activeTab === 'settings' 
+      ? 'settings-mobile-actions-container' 
+      : 'email-modal-actions-container';
+    const container = document.getElementById(containerId);
+    setPortalContainer(container);
+  }, [activeTab]);
 
   if (!isOpen) return null;
 
@@ -64,11 +82,11 @@ export default function EmailModal() {
           />
         );
       case 'transactional':
-        return <TransactionalView primary={primary} globalSearchQuery={searchQuery} />;
+        return <TransactionalView primary={primary} globalSearchQuery={searchQuery} onMobileActionsChange={setMobileActionButtons} />;
       case 'marketing':
-        return <MarketingView primary={primary} globalSearchQuery={searchQuery} />;
+        return <MarketingView primary={primary} globalSearchQuery={searchQuery} onMobileActionsChange={setMobileActionButtons} />;
       case 'templates':
-        return <TemplatesView primary={primary} globalSearchQuery={searchQuery} />;
+        return <TemplatesView primary={primary} globalSearchQuery={searchQuery} onMobileActionsChange={setMobileActionButtons} />;
       case 'settings':
         return <SettingsView primary={primary} />;
       default:
@@ -78,6 +96,9 @@ export default function EmailModal() {
 
   return (
     <EmailProvider>
+      {/* Portal action buttons to footer container */}
+      {portalContainer && mobileActionButtons && createPortal(mobileActionButtons, portalContainer)}
+      
       <ModalContainer isOpen={isOpen} onClose={closeEmailModal}>
         <EmailErrorBoundary onReset={() => setActiveTab('inbox')}>
           {/* Header - mirrors Shop/CRM header with advanced search */}
@@ -147,11 +168,11 @@ export default function EmailModal() {
         </div>
 
         {/* Bottom Toolbar - Fixed with Rounded Bottom (Shop/CRM Style) */}
-        <div className={`fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-b-2xl z-10 ${activeTab === 'settings' ? 'lg:hidden' : ''}`}>
+        <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-b-2xl z-10">
           {/* Main Controls Row */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between px-5 py-3 gap-3">
-            {activeTab !== 'settings' ? (
-              /* Filters Button for non-Settings tabs */
+            {activeTab === 'inbox' ? (
+              /* Filters Button for Inbox tab */
               <div className="flex flex-col sm:flex-row gap-2 md:flex-1">
                 <button
                   onClick={handleOpenFilters}
@@ -174,8 +195,8 @@ export default function EmailModal() {
                 </button>
               </div>
             ) : (
-              /* Settings Menu Button for mobile (hidden on desktop) */
-              <div className="lg:hidden w-full" id="settings-mobile-menu-container" />
+              /* Settings/Templates/Marketing/Transactional Action Buttons */
+              <div className="w-full" id={activeTab === 'settings' ? 'settings-mobile-actions-container' : 'email-modal-actions-container'} />
             )}
           </div>
         </div>

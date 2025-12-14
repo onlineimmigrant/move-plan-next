@@ -14,11 +14,14 @@ import {
 } from 'lucide-react';
 
 interface Contact {
-  id: number;
-  first_name: string;
-  last_name: string;
+  id: string;
+  full_name: string;
   email: string;
-  company?: string;
+  customer?: {
+    company_name?: string;
+    is_customer?: boolean;
+    is_lead?: boolean;
+  };
 }
 
 interface Recipient {
@@ -49,12 +52,15 @@ export default function RecipientSelector({ recipients, onRecipientsChange, prim
   const fetchContacts = async () => {
     setIsLoading(true);
     try {
+      // Fetch all profiles with customer data (customers and leads)
       const { data, error } = await supabase
-        .from('contacts')
-        .select('id, first_name, last_name, email, company')
+        .from('profiles')
+        .select('id, full_name, email, customer')
         .eq('organization_id', settings!.organization_id)
+        .not('customer', 'is', null)
         .not('email', 'is', null)
-        .limit(20);
+        .order('full_name')
+        .limit(100);
 
       if (error) throw error;
       setContacts(data || []);
@@ -72,8 +78,8 @@ export default function RecipientSelector({ recipients, onRecipientsChange, prim
       ...recipients,
       {
         email: contact.email,
-        name: `${contact.first_name} ${contact.last_name}`,
-        contact_id: contact.id,
+        name: contact.full_name,
+        contact_id: undefined,
       },
     ]);
     setShowContactList(false);
@@ -179,16 +185,21 @@ export default function RecipientSelector({ recipients, onRecipientsChange, prim
                         <span className="text-sm font-semibold"
                           style={{ color: primary.base }}
                         >
-                          {contact.first_name[0]}{contact.last_name[0]}
+                          {contact.full_name?.charAt(0).toUpperCase() || 'U'}
                         </span>
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {contact.first_name} {contact.last_name}
+                          {contact.full_name || 'Unknown'}
                         </p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
                           {contact.email}
                         </p>
+                        {contact.customer?.company_name && (
+                          <p className="text-xs text-gray-500 dark:text-gray-500">
+                            {contact.customer.company_name}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <UserPlus className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors" />
@@ -196,7 +207,7 @@ export default function RecipientSelector({ recipients, onRecipientsChange, prim
                 ))
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-500 text-center py-8">
-                  No contacts available
+                  No contacts available. Add customers or leads in the CRM modal.
                 </p>
               )}
             </div>
