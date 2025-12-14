@@ -141,7 +141,14 @@ export default function EventDetailsModal({
 
   if (!event) return null;
 
-  const startDate = new Date(event.scheduled_at);
+  // Validate date
+  const scheduledDate = new Date(event.scheduled_at);
+  if (isNaN(scheduledDate.getTime())) {
+    console.error('Invalid scheduled_at date:', event.scheduled_at);
+    return null;
+  }
+
+  const startDate = scheduledDate;
   const endDate = new Date(startDate.getTime() + event.duration_minutes * 60000);
   const now = new Date();
   

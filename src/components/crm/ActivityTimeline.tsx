@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useCRMData } from '@/context/CRMDataContext';
+import { FixedSizeList as List } from 'react-window';
+import SkeletonLoader from './SkeletonLoader';
 
 interface Activity {
   id: string;
@@ -17,94 +21,79 @@ interface ActivityTimelineProps {
 }
 
 export default function ActivityTimeline({ profileId }: ActivityTimelineProps) {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const themeColors = useThemeColors();
+  const { bookings, tickets, cases } = useCRMData();
   const [filter, setFilter] = useState<'all' | 'bookings' | 'tickets' | 'cases'>('all');
 
-  useEffect(() => {
-    loadActivities();
-  }, [profileId]);
+  const loading = bookings.isLoading || tickets.isLoading || cases.isLoading;
 
-  const loadActivities = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch all activity types in parallel
-      const [bookingsRes, ticketsRes, casesRes] = await Promise.all([
-        fetch(`/api/crm/profiles/${profileId}/appointments`),
-        fetch(`/api/crm/profiles/${profileId}/tickets`),
-        fetch(`/api/crm/profiles/${profileId}/cases`),
-      ]);
+  // Memoize activity transformation - only recalculates when source data changes
+  const activities = useMemo(() => {
+    const allActivities: Activity[] = [];
 
-      const [bookingsData, ticketsData, casesData] = await Promise.all([
-        bookingsRes.json(),
-        ticketsRes.json(),
-        casesRes.json(),
-      ]);
-
-      // Transform bookings into activities
-      const bookingActivities: Activity[] = (bookingsData.bookings || []).map((b: any) => ({
+    // Transform bookings
+    bookings.data.forEach((b: any) => {
+      allActivities.push({
         id: `booking-${b.id}`,
         type: 'booking' as const,
-        timestamp: b.booking_date,
+        timestamp: b.scheduled_at,
         title: `Appointment: ${b.meeting_type?.name || 'Meeting'}`,
-        description: `${b.start_time} - ${b.end_time}`,
+        description: b.notes || `Duration: ${b.duration_minutes} minutes`,
         status: b.status,
         metadata: b,
-      }));
+      });
+    });
 
-      // Transform tickets into activities
-      const ticketActivities: Activity[] = (ticketsData.tickets || []).map((t: any) => ({
+    // Transform tickets
+    tickets.data.forEach((t: any) => {
+      allActivities.push({
         id: `ticket-${t.id}`,
         type: 'ticket' as const,
         timestamp: t.created_at,
-        title: `Support Ticket: ${t.title}`,
-        description: t.description,
+        title: `Support Ticket: ${t.subject || 'Untitled'}`,
+        description: t.message,
         status: t.status,
         metadata: t,
-      }));
+      });
+    });
 
-      // Transform cases into activities
-      const caseActivities: Activity[] = (casesData.cases || []).flatMap((c: any) => {
-        const activities: Activity[] = [
-          {
-            id: `case-created-${c.id}`,
-            type: 'case_created' as const,
-            timestamp: c.created_at,
-            title: `Case Created: ${c.title}`,
-            description: `Case #${c.case_number} - ${c.case_type}`,
-            status: c.status,
-            metadata: c,
-          }
-        ];
-
-        // Add case update activity if updated_at is different from created_at
-        if (c.updated_at && c.updated_at !== c.created_at) {
-          activities.push({
-            id: `case-updated-${c.id}`,
-            type: 'case_updated' as const,
-            timestamp: c.updated_at,
-            title: `Case Updated: ${c.title}`,
-            description: `Status: ${c.status}`,
-            status: c.status,
-            metadata: c,
-          });
-        }
-
-        return activities;
+    // Transform cases
+    cases.data.forEach((c: any) => {
+      allActivities.push({
+        id: `case-created-${c.id}`,
+        type: 'case_created' as const,
+        timestamp: c.created_at,
+        title: `Case Created: ${c.title}`,
+        description: `Case #${c.case_number} - ${c.case_type}`,
+        status: c.status,
+        metadata: c,
       });
 
-      // Combine and sort all activities by timestamp (most recent first)
-      const allActivities = [...bookingActivities, ...ticketActivities, ...caseActivities]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      if (c.updated_at && c.updated_at !== c.created_at) {
+        allActivities.push({
+          id: `case-updated-${c.id}`,
+          type: 'case_updated' as const,
+          timestamp: c.updated_at,
+          title: `Case Updated: ${c.title}`,
+          description: `Status: ${c.status}`,
+          status: c.status,
+          metadata: c,
+        });
+      }
+    });
 
-      setActivities(allActivities);
-    } catch (error) {
-      console.error('Error loading activities:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Sort by timestamp descending
+    return allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [bookings.data, tickets.data, cases.data]);
+
+  const stats = useMemo(() => {
+    return {
+      total: activities.length,
+      bookings: activities.filter(a => a.type === 'booking').length,
+      tickets: activities.filter(a => a.type === 'ticket').length,
+      cases: activities.filter(a => a.type === 'case_created' || a.type === 'case_updated').length,
+    };
+  }, [activities]);
 
   const filteredActivities = useMemo(() => {
     if (filter === 'all') return activities;
@@ -158,16 +147,100 @@ export default function ActivityTimeline({ profileId }: ActivityTimelineProps) {
     });
   }, []);
 
-  const filterButtonStyle = useCallback((isActive: boolean) => ({
-    padding: '8px 16px',
-    fontSize: '14px',
-    fontWeight: 500,
-    color: isActive ? '#fff' : '#666',
-    background: isActive ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
-    border: `1px solid ${isActive ? 'transparent' : '#e0e0e0'}`,
-    borderRadius: '8px',
+  // Activity row component for virtual list
+  const ActivityRow = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const activity = filteredActivities[index];
+    
+    return (
+      <div style={{...style, paddingBottom: '20px'}}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '12px',
+            padding: '16px',
+            paddingBottom: '20px',
+            background: '#fff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '12px',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: `${getActivityColor(activity.type)}15`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            flexShrink: 0,
+          }}>
+            {getActivityIcon(activity.type)}
+          </div>
+          
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ 
+              fontSize: '15px', 
+              fontWeight: 600, 
+              color: '#1a1a1a',
+              marginBottom: '4px',
+            }}>
+              {activity.title}
+            </div>
+            
+            {activity.description && (
+              <div style={{ 
+                fontSize: '14px', 
+                color: '#666',
+                marginBottom: '6px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {activity.description}
+              </div>
+            )}
+            
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              fontSize: '13px',
+              color: '#999',
+            }}>
+              <span>{formatTimestamp(activity.timestamp)}</span>
+              {activity.status && (
+                <>
+                  <span>•</span>
+                  <span style={{ 
+                    color: getActivityColor(activity.type),
+                    fontWeight: 500,
+                  }}>
+                    {activity.status.replace('_', ' ').toUpperCase()}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }, [filteredActivities, getActivityIcon, getActivityColor, formatTimestamp]);
+
+  const statsCardStyle = useCallback((isActive: boolean) => ({
+    padding: '16px',
+    background: isActive ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+    borderRadius: '12px',
+    color: '#1f2937',
+    minWidth: '140px',
     cursor: 'pointer',
+    border: isActive ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
     transition: 'all 0.2s ease',
+  }), [themeColors]);
+
+  const containerStyle = useMemo(() => ({
+    width: '100%',
   }), []);
 
   const activityCardStyle = useMemo(() => ({
@@ -181,15 +254,12 @@ export default function ActivityTimeline({ profileId }: ActivityTimelineProps) {
     transition: 'all 0.2s ease',
   }), []);
 
-  const containerStyle = useMemo(() => ({
-    width: '100%',
-  }), []);
-
-  const filtersContainerStyle = useMemo(() => ({
-    display: 'flex',
-    gap: '8px',
+  const statsContainerStyle = useMemo(() => ({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '16px',
     marginBottom: '24px',
-    flexWrap: 'wrap' as const,
+    maxWidth: '800px',
   }), []);
 
   const timelineContainerStyle = useMemo(() => ({
@@ -197,80 +267,72 @@ export default function ActivityTimeline({ profileId }: ActivityTimelineProps) {
   }), []);
 
   if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-        Loading activity timeline...
-      </div>
-    );
+    return <SkeletonLoader cards={5} type="activity" />;
   }
 
   return (
     <div style={containerStyle}>
-      <div style={filtersContainerStyle}>
-        <button
+      <div style={statsContainerStyle}>
+        <div 
+          style={{
+            ...statsCardStyle(filter === 'all'),
+          }}
           onClick={() => setFilter('all')}
-          style={filterButtonStyle(filter === 'all')}
           onMouseEnter={(e) => {
-            if (filter !== 'all') {
-              e.currentTarget.style.background = '#f9fafb';
-            }
+            if (filter !== 'all') e.currentTarget.style.borderColor = '#d1d5db';
           }}
           onMouseLeave={(e) => {
-            if (filter !== 'all') {
-              e.currentTarget.style.background = 'transparent';
-            }
+            if (filter !== 'all') e.currentTarget.style.borderColor = 'transparent';
           }}
         >
-          All Activity
-        </button>
-        <button
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.total}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>All Activities</div>
+        </div>
+        <div 
+          style={{
+            ...statsCardStyle(filter === 'bookings'),
+          }}
           onClick={() => setFilter('bookings')}
-          style={filterButtonStyle(filter === 'bookings')}
           onMouseEnter={(e) => {
-            if (filter !== 'bookings') {
-              e.currentTarget.style.background = '#f9fafb';
-            }
+            if (filter !== 'bookings') e.currentTarget.style.borderColor = '#d1d5db';
           }}
           onMouseLeave={(e) => {
-            if (filter !== 'bookings') {
-              e.currentTarget.style.background = 'transparent';
-            }
+            if (filter !== 'bookings') e.currentTarget.style.borderColor = 'transparent';
           }}
         >
-          Appointments
-        </button>
-        <button
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.bookings}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Appointments</div>
+        </div>
+        <div 
+          style={{
+            ...statsCardStyle(filter === 'tickets'),
+          }}
           onClick={() => setFilter('tickets')}
-          style={filterButtonStyle(filter === 'tickets')}
           onMouseEnter={(e) => {
-            if (filter !== 'tickets') {
-              e.currentTarget.style.background = '#f9fafb';
-            }
+            if (filter !== 'tickets') e.currentTarget.style.borderColor = '#d1d5db';
           }}
           onMouseLeave={(e) => {
-            if (filter !== 'tickets') {
-              e.currentTarget.style.background = 'transparent';
-            }
+            if (filter !== 'tickets') e.currentTarget.style.borderColor = 'transparent';
           }}
         >
-          Support Tickets
-        </button>
-        <button
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.tickets}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Support Tickets</div>
+        </div>
+        <div 
+          style={{
+            ...statsCardStyle(filter === 'cases'),
+          }}
           onClick={() => setFilter('cases')}
-          style={filterButtonStyle(filter === 'cases')}
           onMouseEnter={(e) => {
-            if (filter !== 'cases') {
-              e.currentTarget.style.background = '#f9fafb';
-            }
+            if (filter !== 'cases') e.currentTarget.style.borderColor = '#d1d5db';
           }}
           onMouseLeave={(e) => {
-            if (filter !== 'cases') {
-              e.currentTarget.style.background = 'transparent';
-            }
+            if (filter !== 'cases') e.currentTarget.style.borderColor = 'transparent';
           }}
         >
-          Cases
-        </button>
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.cases}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Cases</div>
+        </div>
       </div>
 
       {filteredActivities.length === 0 ? (
@@ -288,78 +350,14 @@ export default function ActivityTimeline({ profileId }: ActivityTimelineProps) {
           </p>
         </div>
       ) : (
-        <div style={timelineContainerStyle}>
-          {filteredActivities.map((activity, index) => (
-            <div
-              key={activity.id}
-              style={activityCardStyle}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = getActivityColor(activity.type);
-                e.currentTarget.style.boxShadow = `0 2px 8px ${getActivityColor(activity.type)}25`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: `${getActivityColor(activity.type)}15`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                flexShrink: 0,
-              }}>
-                {getActivityIcon(activity.type)}
-              </div>
-              
-              <div style={{ flex: 1 }}>
-                <div style={{ 
-                  fontSize: '15px', 
-                  fontWeight: 600, 
-                  color: '#1a1a1a',
-                  marginBottom: '4px',
-                }}>
-                  {activity.title}
-                </div>
-                
-                {activity.description && (
-                  <div style={{ 
-                    fontSize: '14px', 
-                    color: '#666',
-                    marginBottom: '6px',
-                  }}>
-                    {activity.description}
-                  </div>
-                )}
-                
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: '#999',
-                }}>
-                  <span>{formatTimestamp(activity.timestamp)}</span>
-                  {activity.status && (
-                    <>
-                      <span>•</span>
-                      <span style={{ 
-                        color: getActivityColor(activity.type),
-                        fontWeight: 500,
-                      }}>
-                        {activity.status.replace('_', ' ').toUpperCase()}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <List
+          height={500}
+          itemCount={filteredActivities.length}
+          itemSize={120}
+          width="100%"
+        >
+          {ActivityRow}
+        </List>
       )}
     </div>
   );

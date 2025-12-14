@@ -12,7 +12,10 @@ export async function GET(
     // Fetch tickets for this customer
     const { data: tickets, error } = await supabase
       .from('tickets')
-      .select('*')
+      .select(`
+        *,
+        profiles!tickets_customer_id_fkey(email, full_name)
+      `)
       .eq('customer_id', profileId)
       .order('created_at', { ascending: false });
 
@@ -24,7 +27,31 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ tickets: tickets || [] });
+    // Fetch ticket responses separately for each ticket
+    const ticketsWithResponses = await Promise.all(
+      (tickets || []).map(async (ticket: any) => {
+        const { data: responses } = await supabase
+          .from('ticket_responses')
+          .select('message, is_admin, created_at')
+          .eq('ticket_id', ticket.id)
+          .order('created_at', { ascending: false });
+
+        const lastResponse = responses && responses.length > 0 ? responses[0] : null;
+
+        return {
+          ...ticket,
+          response_count: responses?.length || 0,
+          email: ticket.profiles?.email || '',
+          full_name: ticket.profiles?.full_name || '',
+          last_message: lastResponse?.message || ticket.message,
+          last_message_is_admin: lastResponse ? lastResponse.is_admin : false,
+          last_response_at: lastResponse?.created_at || ticket.created_at,
+          profiles: undefined,
+        };
+      })
+    );
+
+    return NextResponse.json({ tickets: ticketsWithResponses });
   } catch (error) {
     console.error('Unexpected error:', error);
     return NextResponse.json(
@@ -39,40 +66,40 @@ export async function POST(
   { params }: { params: Promise<{ profileId: string }> }
 ) {
   try {
-    const supabase = supabaseServer;
     const { profileId } = await params;
     const body = await request.json();
 
-    const { title, description, priority, customer_id } = body;
+    const { subject, message, priority, customer_id, organization_id } = body;
 
     // Validate required fields
-    if (!title) {
+    if (!subject) {
       return NextResponse.json(
-        { error: 'Title is required' },
+        { error: 'Subject is required' },
         { status: 400 }
       );
     }
 
-    // Get the current user's organization
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!organization_id) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Organization ID is required' },
+        { status: 400 }
       );
     }
 
-    // Get user's profile to find organization_id
-    const { data: profile } = await supabase
+    // Use service role client (bypasses RLS for admin operations)
+    const supabase = supabaseServer;
+
+    // Get customer's profile to get their email
+    const { data: customerProfile } = await supabase
       .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
+      .select('email, full_name')
+      .eq('id', customer_id || profileId)
       .single();
 
-    if (!profile?.organization_id) {
+    if (!customerProfile) {
       return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 400 }
+        { error: 'Customer profile not found' },
+        { status: 404 }
       );
     }
 
@@ -80,12 +107,14 @@ export async function POST(
     const { data: ticket, error } = await supabase
       .from('tickets')
       .insert({
-        title,
-        description: description || null,
+        subject,
+        message: message || null,
         priority: priority || 'medium',
         status: 'open',
         customer_id: customer_id || profileId,
-        organization_id: profile.organization_id,
+        organization_id: organization_id,
+        email: customerProfile.email,
+        full_name: customerProfile.full_name,
       })
       .select()
       .single();

@@ -9,7 +9,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, MapPin, Building2, Phone, Calendar, Shield, Briefcase, Star, Trash2, CheckCircle, Clock, ShoppingCart, Award, Package } from 'lucide-react';
+import { X, User, Mail, MapPin, Building2, Phone, Calendar, Shield, Briefcase, Star, Trash2, CheckCircle, Clock, ShoppingCart, Award, Package, MessageSquare, Activity, Edit2 } from 'lucide-react';
 import { PhotoIcon, PlusIcon, MinusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabaseClient';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -19,6 +19,7 @@ import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
 import { Toast } from '@/components/ui/Toast';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import { accountSchema, teamMemberSchema, customerSchema, validateData } from '@/lib/validations/crm';
+import { CRMDataProvider } from '@/context/CRMDataContext';
 import AppointmentsSection from '@/components/crm/sections/AppointmentsSection';
 import SupportSection from '@/components/crm/sections/SupportSection';
 import CasesSection from '@/components/crm/sections/CasesSection';
@@ -532,9 +533,16 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
   const accountImage = account.team?.image || account.customer?.image || null;
 
   return (
-    <div className="fixed inset-x-0 top-40 bottom-0 md:inset-4 z-[10004] flex items-start md:items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-[10004] flex items-center justify-center animate-in fade-in duration-200">
+      {/* Backdrop - Fully opaque to hide CRM modal */}
       <div
-        className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
+        className="absolute inset-0 bg-white dark:bg-gray-900"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      <div
+        className="relative w-full h-full sm:h-[90vh] sm:max-w-6xl bg-white dark:bg-gray-900 sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <Toast
@@ -545,18 +553,18 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
         />
         {/* Header */}
         <div className="relative px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             {/* Avatar Section */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {accountImage ? (
                 <img
                   src={accountImage}
                   alt={account.full_name || 'Account'}
-                  className="w-16 h-16 rounded-full object-cover"
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-semibold"
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-semibold flex-shrink-0"
                   style={{
                     background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
                   }}
@@ -564,12 +572,12 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
                   {getInitials(account.full_name)}
                 </div>
               )}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
                   {account.full_name || 'Unnamed'}
                 </h2>
                 {account.username && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                     @{account.username}
                   </p>
                 )}
@@ -577,7 +585,7 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
               aria-label="Close"
             >
               <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -610,62 +618,107 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
         </div>
 
         {/* Tab Navigation */}
-        <div className="px-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex gap-1">
+        <div className="px-6 py-4 border-b border-slate-200/50 dark:border-gray-700/50">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3">
             <button
               onClick={() => setActiveTab('details')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'details'
-                  ? 'border-current text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-              style={activeTab === 'details' ? { borderColor: primary.base, color: primary.base } : {}}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={activeTab === 'details'
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    border: '1px solid',
+                    borderColor: `${primary.base}40`,
+                  }
+              }
             >
-              Details
+              <User className="w-4 h-4" />
+              <span>Details</span>
             </button>
             <button
               onClick={() => setActiveTab('appointments')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'appointments'
-                  ? 'border-current text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-              style={activeTab === 'appointments' ? { borderColor: primary.base, color: primary.base } : {}}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={activeTab === 'appointments'
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    border: '1px solid',
+                    borderColor: `${primary.base}40`,
+                  }
+              }
             >
-              Appointments
+              <Calendar className="w-4 h-4" />
+              <span>Appointments</span>
             </button>
             <button
               onClick={() => setActiveTab('support')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'support'
-                  ? 'border-current text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-              style={activeTab === 'support' ? { borderColor: primary.base, color: primary.base } : {}}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={activeTab === 'support'
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    border: '1px solid',
+                    borderColor: `${primary.base}40`,
+                  }
+              }
             >
-              Support
+              <MessageSquare className="w-4 h-4" />
+              <span>Support</span>
             </button>
             <button
               onClick={() => setActiveTab('cases')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'cases'
-                  ? 'border-current text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-              style={activeTab === 'cases' ? { borderColor: primary.base, color: primary.base } : {}}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={activeTab === 'cases'
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    border: '1px solid',
+                    borderColor: `${primary.base}40`,
+                  }
+              }
             >
-              Cases
+              <Briefcase className="w-4 h-4" />
+              <span>Cases</span>
             </button>
             <button
               onClick={() => setActiveTab('activity')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'activity'
-                  ? 'border-current text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-              style={activeTab === 'activity' ? { borderColor: primary.base, color: primary.base } : {}}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={activeTab === 'activity'
+                ? {
+                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: primary.base,
+                    border: '1px solid',
+                    borderColor: `${primary.base}40`,
+                  }
+              }
             >
-              Activity
+              <Activity className="w-4 h-4" />
+              <span>Activity</span>
             </button>
           </div>
         </div>
@@ -1771,35 +1824,33 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
           )}
 
           {/* New CRM Tabs Content */}
-          {activeTab === 'appointments' && account?.id && (
-            <AppointmentsSection profileId={account.id} />
-          )}
+          {account?.id && (activeTab === 'appointments' || activeTab === 'support' || activeTab === 'cases' || activeTab === 'activity') && (
+            <CRMDataProvider profileId={account.id}>
+              {activeTab === 'appointments' && (
+                <AppointmentsSection profileId={account.id} />
+              )}
 
-          {activeTab === 'support' && account?.id && (
-            <SupportSection profileId={account.id} />
-          )}
+              {activeTab === 'support' && (
+                <SupportSection profileId={account.id} />
+              )}
 
-          {activeTab === 'cases' && account?.id && (
-            <CasesSection profileId={account.id} />
-          )}
+              {activeTab === 'cases' && (
+                <CasesSection profileId={account.id} />
+              )}
 
-          {activeTab === 'activity' && account?.id && (
-            <ActivityTimeline profileId={account.id} />
+              {activeTab === 'activity' && (
+                <ActivityTimeline profileId={account.id} />
+              )}
+            </CRMDataProvider>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Member since {new Date(account.created_at).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </div>
-          <div className="flex items-center gap-2">
-            {isEditing ? (
-              <>
+        {/* Footer - Fixed with minimal height */}
+        <div className="mt-auto px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
+          {isEditing ? (
+            <>
+              <div className="flex-1" />
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     setIsEditing(false);
@@ -1823,41 +1874,51 @@ export function AccountDetailModal({ isOpen, account, onClose, onUpdate, showToa
                 >
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    if (isLastAdmin) return;
-                    setShowDeleteConfirm(true);
-                  }}
-                  disabled={isLastAdmin}
-                  className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-opacity text-sm ${
-                    isLastAdmin
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:opacity-90'
-                  }`}
-                  style={{
-                    backgroundColor: isLastAdmin ? '#f3f4f6' : '#fee2e2',
-                    color: isLastAdmin ? '#9ca3af' : '#dc2626',
-                  }}
-                  title={isLastAdmin ? 'This is the last admin/superadmin and cannot be deleted.' : 'Delete account'}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  {isLastAdmin ? 'Protected' : 'Delete'}
-                </button>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity text-sm"
-                  style={{
-                    background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                  }}
-                >
-                  Edit Profile
-                </button>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  if (isLastAdmin) return;
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={isLastAdmin}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-opacity text-sm ${
+                  isLastAdmin
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:opacity-90'
+                }`}
+                style={{
+                  backgroundColor: isLastAdmin ? '#f3f4f6' : '#fee2e2',
+                  color: isLastAdmin ? '#9ca3af' : '#dc2626',
+                }}
+                title={isLastAdmin ? 'This is the last admin/superadmin and cannot be deleted.' : 'Delete account'}
+              >
+                <Trash2 className="w-4 h-4" />
+                {isLastAdmin ? 'Protected' : 'Delete'}
+              </button>
+              
+              <div className="flex-1 text-center text-xs text-gray-500 dark:text-gray-400 hidden md:block">
+                Member since {new Date(account.created_at).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+              
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 rounded-lg flex items-center gap-2 text-white font-medium hover:opacity-90 transition-opacity text-sm"
+                style={{
+                  background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                }}
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useCRMData } from '@/context/CRMDataContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import SkeletonLoader from '../SkeletonLoader';
+import { formatDateShort, formatCurrency } from '@/utils/dateHelpers';
 
 interface Case {
   id: string;
@@ -32,9 +36,13 @@ interface Stats {
 }
 
 export default function CasesSection({ profileId }: CasesSectionProps) {
-  const [cases, setCases] = useState<Case[]>([]);
-  const [loading, setLoading] = useState(true);
+  const themeColors = useThemeColors();
+  const { cases: casesData } = useCRMData();
+  const cases = casesData.data;
+  const loading = casesData.isLoading;
+  
   const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'pending' | 'closed'>('all');
 
   const stats = useMemo<Stats>(() => {
     return {
@@ -45,23 +53,13 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
     };
   }, [cases]);
 
-  useEffect(() => {
-    loadCases();
-  }, [profileId]);
-
-  const loadCases = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/crm/profiles/${profileId}/cases`);
-      if (!response.ok) throw new Error('Failed to load cases');
-      const data = await response.json();
-      setCases(data.cases || []);
-    } catch (error) {
-      console.error('Error loading cases:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filteredCases = useMemo(() => {
+    if (filter === 'all') return cases;
+    if (filter === 'active') return cases.filter(c => c.status === 'active');
+    if (filter === 'pending') return cases.filter(c => c.status === 'pending');
+    if (filter === 'closed') return cases.filter(c => c.status === 'closed');
+    return cases;
+  }, [cases, filter]);
 
   const toggleExpand = useCallback((caseId: string) => {
     setExpandedCaseId(prev => prev === caseId ? null : caseId);
@@ -88,22 +86,11 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
     }
   }, []);
 
-  const formatDate = useCallback((dateString: string | undefined) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }, []);
-
-  const formatCurrency = useCallback((amount: number | undefined) => {
-    if (amount === undefined || amount === null) return '$0.00';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  }, []);
-
   const statsCardStyle = useCallback((gradient: string) => ({
     padding: '16px',
-    background: gradient,
+    background: '#f3f4f6',
     borderRadius: '12px',
-    color: '#fff',
+    color: '#1f2937',
     minWidth: '140px',
   }), []);
 
@@ -123,10 +110,11 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
   }), []);
 
   const statsContainerStyle = useMemo(() => ({
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
     gap: '16px',
     marginBottom: '24px',
-    flexWrap: 'wrap' as const,
+    maxWidth: '800px',
   }), []);
 
   const headerStyle = useMemo(() => ({
@@ -137,31 +125,87 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
   }), []);
 
   if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-        Loading cases...
-      </div>
-    );
+    return <SkeletonLoader cards={2} type="case" />;
   }
 
   return (
     <div style={containerStyle}>
       <div style={statsContainerStyle}>
-        <div style={statsCardStyle('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.total}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Total Cases</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'all' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'all' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('all')}
+          onMouseEnter={(e) => {
+            if (filter !== 'all') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'all') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.total}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Total Cases</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #10b981 0%, #059669 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.active}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Active</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'active' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'active' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('active')}
+          onMouseEnter={(e) => {
+            if (filter !== 'active') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'active') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.active}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Active</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #f59e0b 0%, #d97706 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.pending}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Pending</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'pending' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'pending' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('pending')}
+          onMouseEnter={(e) => {
+            if (filter !== 'pending') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'pending') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.pending}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Pending</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #6b7280 0%, #4b5563 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.closed}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Closed</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'closed' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'closed' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('closed')}
+          onMouseEnter={(e) => {
+            if (filter !== 'closed') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'closed') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.closed}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Closed</div>
         </div>
       </div>
 
@@ -187,7 +231,7 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
         </div>
       ) : (
         <div>
-          {cases.map((caseItem) => {
+          {filteredCases.map((caseItem) => {
             const isExpanded = expandedCaseId === caseItem.id;
             return (
               <div
@@ -271,13 +315,13 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
                           <div style={{ padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
                             <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Created</div>
                             <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a' }}>
-                              {formatDate(caseItem.created_at)}
+                              {formatDateShort(caseItem.deadline)}
                             </div>
                           </div>
                           <div style={{ padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
                             <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Deadline</div>
                             <div style={{ fontSize: '14px', fontWeight: 600, color: caseItem.deadline ? '#ef4444' : '#999' }}>
-                              {formatDate(caseItem.deadline)}
+                              {formatDateShort(caseItem.deadline)}
                             </div>
                           </div>
                         </div>
@@ -335,7 +379,7 @@ export default function CasesSection({ profileId }: CasesSectionProps) {
 
                     {!isExpanded && (
                       <div style={{ fontSize: '13px', color: '#999', marginTop: '12px' }}>
-                        Click to expand • {formatDate(caseItem.created_at)} • {caseItem.booking_count || 0} appointments • {caseItem.ticket_count || 0} tickets
+                        Click to expand • {formatDateShort(caseItem.created_at)} • {caseItem.booking_count || 0} appointments • {caseItem.ticket_count || 0} tickets
                       </div>
                     )}
                   </div>

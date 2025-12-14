@@ -10,8 +10,10 @@ import { MenuItemConfig } from './types';
 import { SiteActionsModal } from './SiteActionsModal';
 import { useUnreadTicketCount } from './hooks/useUnreadTicketCount';
 import { useUnreadMeetingsCount } from './hooks/useUnreadMeetingsCount';
+import { useUnreadEmailCount } from './hooks/useUnreadEmailCount';
 import { triggerBadgeRefresh } from './hooks/useBadgeRefresh';
 import { useCrmModal } from '../CrmModal/context';
+import { useEmailModalStore } from '../EmailModal/EmailModalManager';
 
 // Lazy load modals for better performance
 const MeetingsBookingModal = dynamic(
@@ -59,6 +61,11 @@ const RegisterModal = dynamic(
   { ssr: false }
 );
 
+const EmailModal = dynamic(
+  () => import('../EmailModal/EmailModal').then(m => ({ default: m.default })),
+  { ssr: false }
+);
+
 /**
  * UnifiedModalManager Component
  * 
@@ -90,10 +97,14 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
 
   // CRM modal context
   const crmModal = useCrmModal();
+  
+  // Email modal store
+  const emailModal = useEmailModalStore();
 
   // Get unread counts for badges - only when authenticated
   const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
   const unreadMeetingsCount = useUnreadMeetingsCount(isAuthenticated);
+  const unreadEmailCount = useUnreadEmailCount(isAuthenticated);
 
   // Only show for authenticated users
   if (!isAuthenticated && !forceShow) {
@@ -106,7 +117,8 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
     isAdmin, 
     isSuperadmin,
     () => (unreadTicketCount > 0 ? unreadTicketCount : null),
-    () => (unreadMeetingsCount > 0 ? unreadMeetingsCount : null)
+    () => (unreadMeetingsCount > 0 ? unreadMeetingsCount : null),
+    () => (unreadEmailCount > 0 ? unreadEmailCount : null)
   );
 
   // Create menu items with actual actions
@@ -153,6 +165,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
           break;
         case 'crm':
           crmModal.openModal();
+          break;
+        case 'email':
+          emailModal.openEmailModal();
           break;
         case 'sign-in':
           setOpenModal('login');
@@ -303,6 +318,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
           }}
         />
       )}
+
+      {/* Email Modal */}
+      <EmailModal />
     </>
   );
 }

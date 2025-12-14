@@ -26,12 +26,13 @@ export type BadgeGetter = () => number | string | null;
 
 /**
  * Menu items for ADMIN and SUPERADMIN users
- * Visual order (top to bottom): Admin → Site → CRM → Appointments → (AI Agent + Support in one row)
- * Array order: Admin, Site, CRM, Appointments, AI Agent, Support (last 2 = bottom row)
+ * Visual order (top to bottom): Admin → Site → CRM → Email → Appointments → (AI Agent + Support in one row)
+ * Array order: Admin, Site, CRM, Email, Appointments, AI Agent, Support (last 2 = bottom row)
  */
 export const getAdminMenuItems = (
   unreadTicketsBadge?: BadgeGetter,
-  unreadMeetingsBadge?: BadgeGetter
+  unreadMeetingsBadge?: BadgeGetter,
+  unreadEmailsBadge?: BadgeGetter
 ): MenuItemConfig[] => [
   {
     id: 'admin',
@@ -53,6 +54,15 @@ export const getAdminMenuItems = (
     id: 'crm',
     label: 'CRM',
     icon: UsersIcon,
+    action: () => {},
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    icon: EnvelopeIcon,
+    badge: unreadEmailsBadge,
     action: () => {},
     requireAuth: true,
     requireAdmin: true,
@@ -188,11 +198,12 @@ export function getMenuItemsForUser(
   isAdmin: boolean,
   isSuperadmin: boolean,
   unreadTicketsBadge?: BadgeGetter,
-  unreadMeetingsBadge?: BadgeGetter
+  unreadMeetingsBadge?: BadgeGetter,
+  unreadEmailsBadge?: BadgeGetter
 ): MenuItemConfig[] {
   // Admin or Superadmin
   if (isAdmin || isSuperadmin) {
-    return getAdminMenuItems(unreadTicketsBadge, unreadMeetingsBadge);
+    return getAdminMenuItems(unreadTicketsBadge, unreadMeetingsBadge, unreadEmailsBadge);
   }
   
   // Authenticated regular user

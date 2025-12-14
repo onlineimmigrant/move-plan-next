@@ -1,17 +1,31 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useCRMData } from '@/context/CRMDataContext';
+import { useSettings } from '@/context/SettingsContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import Button from '@/ui/Button';
+import SkeletonLoader from '../SkeletonLoader';
+
+// Lazy load TicketsAdminModal
+const TicketsAdminModal = lazy(() => import('@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal'));
 
 interface Ticket {
   id: string;
-  title: string;
-  description?: string;
+  subject: string;
+  message: string;
   status: string;
-  priority: string;
+  priority?: string;
   created_at: string;
   updated_at: string;
   case_id?: string;
   assigned_to?: string;
+  full_name?: string;
+  email: string;
+  response_count?: number;
+  last_response_at?: string;
+  last_message?: string;
+  last_message_is_admin?: boolean;
 }
 
 interface SupportSectionProps {
@@ -26,12 +40,19 @@ interface Stats {
 }
 
 export default function SupportSection({ profileId }: SupportSectionProps) {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { settings } = useSettings();
+  const themeColors = useThemeColors();
+  const { tickets: ticketsData } = useCRMData();
+  const tickets = ticketsData.data;
+  const loading = ticketsData.isLoading;
+  
+  const [showTicketsModal, setShowTicketsModal] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
   const [newTicket, setNewTicket] = useState({
-    title: '',
-    description: '',
+    subject: '',
+    message: '',
     priority: 'medium',
   });
 
@@ -44,27 +65,28 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
     };
   }, [tickets]);
 
-  useEffect(() => {
-    loadTickets();
-  }, [profileId]);
+  const filteredTickets = useMemo(() => {
+    if (filter === 'all') return tickets;
+    if (filter === 'open') return tickets.filter(t => t.status === 'open');
+    if (filter === 'in_progress') return tickets.filter(t => t.status === 'in_progress');
+    if (filter === 'resolved') return tickets.filter(t => t.status === 'resolved');
+    return tickets;
+  }, [tickets, filter]);
 
-  const loadTickets = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/crm/profiles/${profileId}/tickets`);
-      if (!response.ok) throw new Error('Failed to load tickets');
-      const data = await response.json();
-      setTickets(data.tickets || []);
-    } catch (error) {
-      console.error('Error loading tickets:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleTicketClick = (ticketId: string) => {
+    setSelectedTicketId(ticketId);
+    setShowTicketsModal(true);
+  };
+
+  const handleCloseTicketsModal = () => {
+    setShowTicketsModal(false);
+    setSelectedTicketId(null);
+    ticketsData.mutate(); // Refresh tickets cache
   };
 
   const handleCreateTicket = async () => {
-    if (!newTicket.title.trim()) {
-      alert('Please enter a ticket title');
+    if (!newTicket.subject.trim()) {
+      alert('Please enter a ticket subject');
       return;
     }
 
@@ -73,19 +95,25 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...newTicket,
+          subject: newTicket.subject,
+          message: newTicket.message,
+          priority: newTicket.priority,
           customer_id: profileId,
+          organization_id: settings?.organization_id,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create ticket');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create ticket');
+      }
       
-      setNewTicket({ title: '', description: '', priority: 'medium' });
+      setNewTicket({ subject: '', message: '', priority: 'medium' });
       setShowNewTicketForm(false);
-      loadTickets();
+      ticketsData.mutate(); // Refresh tickets cache
     } catch (error) {
       console.error('Error creating ticket:', error);
-      alert('Failed to create ticket');
+      alert(`Failed to create ticket: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -123,9 +151,9 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
 
   const statsCardStyle = useCallback((gradient: string) => ({
     padding: '16px',
-    background: gradient,
+    background: '#f3f4f6',
     borderRadius: '12px',
-    color: '#fff',
+    color: '#1f2937',
     minWidth: '140px',
   }), []);
 
@@ -137,18 +165,6 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
     marginBottom: '12px',
     transition: 'all 0.2s ease',
     cursor: 'pointer',
-  }), []);
-
-  const buttonStyle = useMemo(() => ({
-    padding: '12px 24px',
-    fontSize: '15px',
-    fontWeight: 600,
-    color: '#fff',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
   }), []);
 
   const inputStyle = useMemo(() => ({
@@ -166,10 +182,11 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
   }), []);
 
   const statsContainerStyle = useMemo(() => ({
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
     gap: '16px',
     marginBottom: '24px',
-    flexWrap: 'wrap' as const,
+    maxWidth: '800px',
   }), []);
 
   const headerStyle = useMemo(() => ({
@@ -180,52 +197,101 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
   }), []);
 
   if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-        Loading support tickets...
-      </div>
-    );
+    return <SkeletonLoader cards={3} type="ticket" />;
   }
 
   return (
     <div style={containerStyle}>
       <div style={statsContainerStyle}>
-        <div style={statsCardStyle('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.total}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Total Tickets</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'all' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'all' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('all')}
+          onMouseEnter={(e) => {
+            if (filter !== 'all') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'all') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.total}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Total Tickets</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #f59e0b 0%, #d97706 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.open}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Open</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'open' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'open' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('open')}
+          onMouseEnter={(e) => {
+            if (filter !== 'open') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'open') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.open}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Open</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.inProgress}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>In Progress</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'in_progress' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'in_progress' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('in_progress')}
+          onMouseEnter={(e) => {
+            if (filter !== 'in_progress') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'in_progress') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.inProgress}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>In Progress</div>
         </div>
-        <div style={statsCardStyle('linear-gradient(135deg, #10b981 0%, #059669 100%)')}>
-          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px' }}>{stats.resolved}</div>
-          <div style={{ fontSize: '13px', opacity: 0.9 }}>Resolved</div>
+        <div 
+          style={{
+            ...statsCardStyle(''),
+            cursor: 'pointer',
+            border: filter === 'resolved' ? `2px solid ${themeColors.cssVars.primary.base}` : '2px solid transparent',
+            background: filter === 'resolved' ? `${themeColors.cssVars.primary.base}15` : '#f3f4f6',
+            transition: 'all 0.2s ease',
+          }}
+          onClick={() => setFilter('resolved')}
+          onMouseEnter={(e) => {
+            if (filter !== 'resolved') e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          onMouseLeave={(e) => {
+            if (filter !== 'resolved') e.currentTarget.style.borderColor = 'transparent';
+          }}
+        >
+          <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '4px', color: '#111827' }}>{stats.resolved}</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, fontWeight: 500 }}>Resolved</div>
         </div>
       </div>
 
       <div style={headerStyle}>
         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' }}>
-          Support History
+          History
         </h3>
-        <button
+        <Button
+          variant="primary"
+          size="default"
           onClick={() => setShowNewTicketForm(!showNewTicketForm)}
-          style={buttonStyle}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
         >
           {showNewTicketForm ? 'Cancel' : '+ New Ticket'}
-        </button>
+        </Button>
       </div>
 
       {showNewTicketForm && (
@@ -241,15 +307,15 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
           </h4>
           <input
             type="text"
-            placeholder="Ticket title"
-            value={newTicket.title}
-            onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+            placeholder="Subject"
+            value={newTicket.subject}
+            onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
             style={inputStyle}
           />
           <textarea
-            placeholder="Description (optional)"
-            value={newTicket.description}
-            onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+            placeholder="Message"
+            value={newTicket.message}
+            onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
             rows={4}
             style={{ ...inputStyle, resize: 'vertical' as const }}
           />
@@ -263,9 +329,13 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
             <option value="high">High Priority</option>
             <option value="urgent">Urgent</option>
           </select>
-          <button onClick={handleCreateTicket} style={buttonStyle}>
+          <Button
+            variant="primary"
+            size="default"
+            onClick={handleCreateTicket}
+          >
             Create Ticket
-          </button>
+          </Button>
         </div>
       )}
 
@@ -285,10 +355,14 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
         </div>
       ) : (
         <div>
-          {tickets.map((ticket) => (
+          {filteredTickets.map((ticket) => (
             <div
               key={ticket.id}
-              style={ticketCardStyle}
+              style={{
+                ...ticketCardStyle,
+                cursor: 'pointer',
+              }}
+              onClick={() => handleTicketClick(ticket.id)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#667eea';
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.15)';
@@ -300,24 +374,26 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                     <span style={{ 
                       fontSize: '16px', 
                       fontWeight: 600, 
                       color: '#1a1a1a' 
                     }}>
-                      {ticket.title}
+                      {ticket.subject}
                     </span>
-                    <span style={{
-                      padding: '4px 12px',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#fff',
-                      background: getPriorityColor(ticket.priority),
-                      borderRadius: '12px',
-                    }}>
-                      {ticket.priority.toUpperCase()}
-                    </span>
+                    {ticket.priority && (
+                      <span style={{
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#fff',
+                        background: getPriorityColor(ticket.priority),
+                        borderRadius: '12px',
+                      }}>
+                        {ticket.priority.toUpperCase()}
+                      </span>
+                    )}
                     <span style={{
                       padding: '4px 12px',
                       fontSize: '12px',
@@ -329,18 +405,48 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
                       {ticket.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
-                  {ticket.description && (
+                  {ticket.last_message && (
                     <div style={{ 
                       fontSize: '14px', 
-                      color: '#666', 
+                      color: ticket.last_message_is_admin ? '#667eea' : '#666',
                       marginBottom: '8px',
-                      lineHeight: '1.5'
+                      lineHeight: '1.5',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      paddingLeft: '12px',
+                      borderLeft: `3px solid ${ticket.last_message_is_admin ? '#667eea' : '#e0e0e0'}`
                     }}>
-                      {ticket.description}
+                      <span style={{ 
+                        fontSize: '12px', 
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        opacity: 0.7,
+                        marginRight: '8px'
+                      }}>
+                        {ticket.last_message_is_admin ? '👤 Support:' : '💬 Customer:'}
+                      </span>
+                      {ticket.last_message}
                     </div>
                   )}
-                  <div style={{ fontSize: '13px', color: '#999', marginTop: '8px' }}>
-                    Created {formatDate(ticket.created_at)}
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '13px', color: '#999', marginTop: '8px' }}>
+                    <div>
+                      📧 {ticket.email}
+                    </div>
+                    {ticket.response_count !== undefined && (
+                      <div>
+                        💬 {ticket.response_count} {ticket.response_count === 1 ? 'reply' : 'replies'}
+                      </div>
+                    )}
+                    <div>
+                      🕐 Created {formatDate(ticket.created_at)}
+                    </div>
+                    {ticket.last_response_at && (
+                      <div>
+                        ⚡ Last activity {formatDate(ticket.last_response_at)}
+                      </div>
+                    )}
                   </div>
                   {ticket.case_id && (
                     <div style={{ fontSize: '13px', color: '#667eea', marginTop: '4px' }}>
@@ -352,6 +458,16 @@ export default function SupportSection({ profileId }: SupportSectionProps) {
             </div>
           ))}
         </div>
+      )}
+
+      {showTicketsModal && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <TicketsAdminModal
+            isOpen={showTicketsModal}
+            onClose={handleCloseTicketsModal}
+            initialTicketId={selectedTicketId || undefined}
+          />
+        </Suspense>
       )}
     </div>
   );

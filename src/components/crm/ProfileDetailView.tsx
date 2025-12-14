@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { CRMDataProvider } from '@/context/CRMDataContext';
 import AppointmentsSection from './sections/AppointmentsSection';
 import SupportSection from './sections/SupportSection';
 import CasesSection from './sections/CasesSection';
@@ -28,8 +29,19 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'activity', label: 'Activity Timeline' },
 ];
 
+// Preload lazy components
+const preloadComponents = () => {
+  import('@/components/modals/MeetingsModals/EventDetailsModal');
+  import('@/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal');
+};
+
 export default function ProfileDetailView({ profile, onClose }: ProfileDetailViewProps) {
   const [activeTab, setActiveTab] = useState<TabType>('appointments');
+
+  // Preload lazy components on mount
+  useEffect(() => {
+    preloadComponents();
+  }, []);
 
   const customerData = useMemo(() => {
     if (typeof profile.customer === 'object' && profile.customer !== null) {
@@ -79,6 +91,7 @@ export default function ProfileDetailView({ profile, onClose }: ProfileDetailVie
     padding: '20px',
     background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
     borderRadius: '12px',
+    gap: '12px',
   }), []);
 
   const closeButtonStyle = useMemo(() => ({
@@ -91,15 +104,17 @@ export default function ProfileDetailView({ profile, onClose }: ProfileDetailVie
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    flexShrink: 0,
   }), []);
 
   const containerStyle = useMemo(() => ({
     width: '100%',
-    height: '100vh',
+    height: '100%',
+    maxHeight: '100%',
     background: '#fff',
+    display: 'grid',
+    gridTemplateRows: 'auto auto 1fr',
     overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column' as const,
   }), []);
 
   const tabsContainerStyle = useMemo(() => ({
@@ -110,73 +125,75 @@ export default function ProfileDetailView({ profile, onClose }: ProfileDetailVie
   }), []);
 
   const contentContainerStyle = useMemo(() => ({
-    flex: 1,
     overflow: 'auto',
     padding: '0 20px 20px 20px',
+    minHeight: '500px',
   }), []);
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: '#1a1a1a', marginBottom: '8px' }}>
-            {displayName}
-          </h2>
-          {displayEmail && (
-            <p style={{ margin: 0, fontSize: '14px', color: '#666', marginBottom: '4px' }}>
-              📧 {displayEmail}
-            </p>
-          )}
-          {displayPhone && (
-            <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-              📱 {displayPhone}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          style={closeButtonStyle}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#f5f5f5';
-            e.currentTarget.style.borderColor = '#ccc';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#fff';
-            e.currentTarget.style.borderColor = '#e0e0e0';
-          }}
-        >
-          Close
-        </button>
-      </div>
-
-      <div style={tabsContainerStyle}>
-        {tabs.map((tab) => (
+    <CRMDataProvider profileId={profile.id}>
+      <div style={containerStyle}>
+        <div style={headerStyle}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: '#1a1a1a', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName}
+            </h2>
+            {displayEmail && (
+              <p style={{ margin: 0, fontSize: '14px', color: '#666', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                📧 {displayEmail}
+              </p>
+            )}
+            {displayPhone && (
+              <p style={{ margin: 0, fontSize: '14px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                📱 {displayPhone}
+              </p>
+            )}
+          </div>
           <button
-            key={tab.id}
-            onClick={() => handleTabClick(tab.id)}
-            style={tabButtonStyle(tab.id)}
+            onClick={onClose}
+            style={closeButtonStyle}
             onMouseEnter={(e) => {
-              if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#1a1a1a';
-              }
+              e.currentTarget.style.background = '#f5f5f5';
+              e.currentTarget.style.borderColor = '#ccc';
             }}
             onMouseLeave={(e) => {
-              if (activeTab !== tab.id) {
-                e.currentTarget.style.color = '#666';
-              }
+              e.currentTarget.style.background = '#fff';
+              e.currentTarget.style.borderColor = '#e0e0e0';
             }}
           >
-            {tab.label}
+            Close
           </button>
-        ))}
-      </div>
+        </div>
 
-      <div style={contentContainerStyle}>
-        {activeTab === 'appointments' && <AppointmentsSection profileId={profile.id} />}
-        {activeTab === 'support' && <SupportSection profileId={profile.id} />}
-        {activeTab === 'cases' && <CasesSection profileId={profile.id} />}
-        {activeTab === 'activity' && <ActivityTimeline profileId={profile.id} />}
+        <div style={tabsContainerStyle}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              style={tabButtonStyle(tab.id)}
+              onMouseEnter={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.color = '#1a1a1a';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.color = '#666';
+                }
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={contentContainerStyle}>
+          {activeTab === 'appointments' && <AppointmentsSection profileId={profile.id} />}
+          {activeTab === 'support' && <SupportSection profileId={profile.id} />}
+          {activeTab === 'cases' && <CasesSection profileId={profile.id} />}
+          {activeTab === 'activity' && <ActivityTimeline profileId={profile.id} />}
+        </div>
       </div>
-    </div>
+    </CRMDataProvider>
   );
 }

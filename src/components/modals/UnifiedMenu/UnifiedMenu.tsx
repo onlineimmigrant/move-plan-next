@@ -9,6 +9,7 @@ import { useMenuPosition } from './hooks/useMenuPosition';
 import { useMenuKeyboard } from './hooks/useMenuKeyboard';
 import { useUnreadTicketCount } from './hooks/useUnreadTicketCount';
 import { useUnreadMeetingsCount } from './hooks/useUnreadMeetingsCount';
+import { useUnreadEmailCount } from './hooks/useUnreadEmailCount';
 import { getMenuItemsForUser } from './config/menuItems';
 
 /**
@@ -55,20 +56,23 @@ export function UnifiedMenu({
   // Get unread counts for badges - only when authenticated
   const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
   const unreadMeetingsCount = useUnreadMeetingsCount(isAuthenticated);
+  const unreadEmailCount = useUnreadEmailCount(isAuthenticated);
 
   // Get appropriate menu items based on user role
   const baseMenuItems = useMemo(() => {
     const ticketsBadgeGetter = () => (unreadTicketCount > 0 ? unreadTicketCount : null);
     const meetingsBadgeGetter = () => (unreadMeetingsCount > 0 ? unreadMeetingsCount : null);
+    const emailsBadgeGetter = () => (unreadEmailCount > 0 ? unreadEmailCount : null);
     const items = customItems || getMenuItemsForUser(
       isAuthenticated, 
       isAdmin, 
       isSuperadmin,
       ticketsBadgeGetter,
-      meetingsBadgeGetter
+      meetingsBadgeGetter,
+      emailsBadgeGetter
     );
     return items;
-  }, [customItems, isAuthenticated, isAdmin, isSuperadmin, unreadTicketCount, unreadMeetingsCount]);
+  }, [customItems, isAuthenticated, isAdmin, isSuperadmin, unreadTicketCount, unreadMeetingsCount, unreadEmailCount]);
 
   // Use the menu items directly (already filtered by role)
   const filteredItems = baseMenuItems;

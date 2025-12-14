@@ -154,6 +154,7 @@ import {
 interface TicketsAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTicketId?: string;
 }
 
 /**
@@ -183,7 +184,7 @@ const statuses = ['all', 'in progress', 'open', 'closed'];
  * @param {TicketsAdminModalProps} props - Component props
  * @returns {JSX.Element | null} Modal element or null when closed
  */
-export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModalProps) {
+export default function TicketsAdminModal({ isOpen, onClose, initialTicketId }: TicketsAdminModalProps) {
   const { t } = useAccountTranslations();
   const { settings } = useSettings();
   const themeColors = useThemeColors();
@@ -625,6 +626,17 @@ export default function TicketsAdminModal({ isOpen, onClose }: TicketsAdminModal
     prevResponseCountRef,
     onMessagesRead: markMessagesAsReadFromHook // Use hook function directly to avoid recreating
   });
+
+  // Auto-select initial ticket if provided
+  useEffect(() => {
+    if (isOpen && initialTicketId && tickets.length > 0 && !selectedTicket) {
+      const ticket = tickets.find(t => t.id === initialTicketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+        loadAttachmentUrls(ticket.ticket_responses || []);
+      }
+    }
+  }, [isOpen, initialTicketId, tickets, selectedTicket, loadAttachmentUrls]);
 
   // Mark messages as read on various triggers
   useMarkMessagesAsRead({

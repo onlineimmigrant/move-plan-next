@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useMeetingContext, type Booking } from '@/context/MeetingContext';
 import { supabase } from '@/lib/supabase';
 
@@ -15,6 +15,7 @@ interface QuickLaunchParams {
 
 export function useMeetingLauncher() {
   const { startVideoCall } = useMeetingContext();
+  const [isLaunching, setIsLaunching] = useState(false);
 
   /**
    * Launch video call from an existing booking
@@ -291,10 +292,21 @@ export function useMeetingLauncher() {
     };
   }, []);
 
+  const launchMeeting = useCallback(async (booking: Booking) => {
+    setIsLaunching(true);
+    try {
+      return await launchFromBooking({ bookingId: booking.id });
+    } finally {
+      setIsLaunching(false);
+    }
+  }, [launchFromBooking]);
+
   return {
     launchFromBooking,
     launchQuickMeeting,
     canJoinMeeting,
     getTimeUntilMeeting,
+    launchMeeting,
+    isLaunching,
   };
 }
