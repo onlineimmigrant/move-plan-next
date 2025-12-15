@@ -22,6 +22,16 @@ import { useNavigation } from '@/hooks/shared/useNavigation';
 import { useMenuData } from '@/hooks/shared/useMenuData';
 import { useComponentStyles } from '@/hooks/shared/useComponentStyles';
 
+// Footer-specific
+import { useFooterTranslations } from './footer/useFooterTranslations';
+import { 
+  useAccordionState, 
+  useFooterVisibility, 
+  useFooterStyles,
+  getLinkStyles 
+} from './footer/hooks';
+import { FooterLink } from './footer/components/FooterLink';
+
 //import SRAValidationBadge from "./SRAValidationBadge";
 
 
@@ -36,217 +46,6 @@ const LegalNoticeModal = dynamic(() => import('./legal/LegalNoticeModal'), {
 });
 
 
-// Static translations for footer
-const FOOTER_TRANSLATIONS = {
-  en: { 
-    allRightsReserved: 'All rights reserved', 
-    language: 'Language', 
-    privacySettings: 'Privacy Settings',
-    legalNotice: 'Legal Notice',
-    profile: 'Profile',
-    admin: 'Admin',
-    dashboard: 'Dashboard',
-    tickets: 'Tickets',
-    meetings: 'Meetings',
-    aiAgents: 'AI Agents',
-    logout: 'Logout',
-    login: 'Login',
-    register: 'Register',
-    links: 'Links',
-    quickLinks: 'Quick Links'
-  },
-  es: { 
-    allRightsReserved: 'Todos los derechos reservados', 
-    language: 'Idioma', 
-    privacySettings: 'Configuración de privacidad',
-    legalNotice: 'Aviso Legal',
-    profile: 'Perfil',
-    admin: 'Admin',
-    dashboard: 'Panel de control',
-    tickets: 'Tickets',
-    meetings: 'Reuniones',
-    aiAgents: 'Agentes IA',
-    logout: 'Cerrar sesión',
-    login: 'Iniciar sesión',
-    register: 'Registrarse',
-    links: 'Enlaces',
-    quickLinks: 'Enlaces Rápidos'
-  },
-  fr: { 
-    allRightsReserved: 'Tous droits réservés', 
-    language: 'Langue', 
-    privacySettings: 'Paramètres de confidentialité',
-    legalNotice: 'Mentions Légales',
-    profile: 'Profil',
-    admin: 'Admin',
-    dashboard: 'Tableau de bord',
-    tickets: 'Tickets',
-    meetings: 'Réunions',
-    aiAgents: 'Agents IA',
-    logout: 'Se déconnecter',
-    login: 'Se connecter',
-    register: 'S\'inscrire',
-    links: 'Liens',
-    quickLinks: 'Liens Rapides'
-  },
-  de: { 
-    allRightsReserved: 'Alle Rechte vorbehalten', 
-    language: 'Sprache', 
-    privacySettings: 'Datenschutz-Einstellungen',
-    legalNotice: 'Impressum',
-    profile: 'Profil',
-    admin: 'Admin',
-    dashboard: 'Dashboard',
-    tickets: 'Tickets',
-    meetings: 'Meetings',
-    aiAgents: 'KI-Agenten',
-    logout: 'Abmelden',
-    login: 'Anmelden',
-    register: 'Registrieren',
-    links: 'Links',
-    quickLinks: 'Schnellzugriff'
-  },
-  ru: { 
-    allRightsReserved: 'Все права защищены', 
-    language: 'Язык', 
-    privacySettings: 'Настройки конфиденциальности',
-    legalNotice: 'Правовая Информация',
-    profile: 'Профиль',
-    admin: 'Админ',
-    dashboard: 'Панель управления',
-    tickets: 'Тикеты',
-    meetings: 'Встречи',
-    aiAgents: 'ИИ-агенты',
-    logout: 'Выйти',
-    login: 'Войти',
-    register: 'Зарегистрироваться',
-    links: 'Ссылки',
-    quickLinks: 'Быстрые Ссылки'
-  },
-  it: { 
-    allRightsReserved: 'Tutti i diritti riservati', 
-    language: 'Lingua', 
-    privacySettings: 'Impostazioni privacy',
-    legalNotice: 'Note Legali',
-    profile: 'Profilo',
-    admin: 'Admin',
-    dashboard: 'Cruscotto',
-    tickets: 'Ticket',
-    meetings: 'Riunioni',
-    aiAgents: 'Agenti IA',
-    logout: 'Esci',
-    login: 'Accedi',
-    register: 'Registrati',
-    links: 'Collegamenti',
-    quickLinks: 'Collegamenti Rapidi'
-  },
-  pt: { 
-    allRightsReserved: 'Todos os direitos reservados', 
-    language: 'Idioma', 
-    privacySettings: 'Configurações de privacidade',
-    legalNotice: 'Aviso Legal',
-    profile: 'Perfil',
-    admin: 'Admin',
-    dashboard: 'Painel',
-    tickets: 'Tickets',
-    meetings: 'Reuniões',
-    aiAgents: 'Agentes IA',
-    logout: 'Sair',
-    login: 'Entrar',
-    register: 'Registrar',
-    links: 'Links',
-    quickLinks: 'Links Rápidos'
-  },
-  pl: { 
-    allRightsReserved: 'Wszelkie prawa zastrzeżone', 
-    language: 'Język', 
-    privacySettings: 'Ustawienia prywatności',
-    legalNotice: 'Informacje Prawne',
-    profile: 'Profil',
-    admin: 'Admin',
-    dashboard: 'Panel',
-    tickets: 'Zgłoszenia',
-    meetings: 'Spotkania',
-    aiAgents: 'Agenci AI',
-    logout: 'Wyloguj',
-    login: 'Zaloguj',
-    register: 'Zarejestruj',
-    links: 'Linki',
-    quickLinks: 'Szybkie Linki'
-  },
-  zh: { 
-    allRightsReserved: '版权所有', 
-    language: '语言', 
-    privacySettings: '隐私设置',
-    legalNotice: '法律声明',
-    profile: '个人资料',
-    admin: '管理员',
-    dashboard: '仪表板',
-    tickets: '工单',
-    meetings: '会议',
-    aiAgents: 'AI代理',
-    logout: '登出',
-    login: '登录',
-    register: '注册',
-    links: '链接',
-    quickLinks: '快速链接'
-  },
-  ja: { 
-    allRightsReserved: '全著作権所有', 
-    language: '言语：', 
-    privacySettings: 'プライバシー設定',
-    legalNotice: '法的通知',
-    profile: 'プロフィール',
-    admin: '管理者',
-    dashboard: 'ダッシュボード',
-    tickets: 'チケット',
-    meetings: 'ミーティング',
-    aiAgents: 'AIエージェント',
-    logout: 'ログアウト',
-    login: 'ログイン',
-    register: '登録',
-    links: 'リンク',
-    quickLinks: 'クイックリンク'
-  }
-};
-
-// Hook to get translations based on current locale
-function useFooterTranslations() {
-  const pathname = usePathname();
-  const { settings } = useSettings();
-  
-  // Extract locale from pathname (e.g., /en/page -> en)
-  const pathLocale = pathname.split('/')[1];
-  
-  // Use path locale if valid, otherwise fall back to application's default language, then English
-  const defaultLanguage = settings?.language || 'en';
-  const currentLocale = (pathLocale && FOOTER_TRANSLATIONS[pathLocale as keyof typeof FOOTER_TRANSLATIONS]) 
-    ? pathLocale 
-    : defaultLanguage;
-  
-  // Get translations for current locale or fallback to English
-  const translations = FOOTER_TRANSLATIONS[currentLocale as keyof typeof FOOTER_TRANSLATIONS] || FOOTER_TRANSLATIONS.en;
-  
-  return {
-    allRightsReserved: translations.allRightsReserved,
-    language: translations.language,
-    privacySettings: translations.privacySettings,
-    legalNotice: translations.legalNotice,
-    profile: translations.profile,
-    admin: translations.admin,
-    dashboard: translations.dashboard,
-    tickets: translations.tickets,
-    meetings: translations.meetings,
-    aiAgents: translations.aiAgents,
-    logout: translations.logout,
-    login: translations.login,
-    register: translations.register,
-    links: translations.links,
-    quickLinks: translations.quickLinks,
-    hasTranslations: true
-  };
-}
-
 interface FooterProps {
   menuItems?: MenuItem[];
 }
@@ -258,9 +57,10 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const { isAdmin } = useAuth();
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [showLegalNotice, setShowLegalNotice] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const footerRef = useRef<HTMLElement>(null);
+  
+  // Footer visibility and accordion state
+  const { isReady, isVisible, footerRef } = useFooterVisibility();
+  const { openAccordions, toggleAccordion } = useAccordionState();
   
   // Use shared navigation hook
   const { router, pathname, currentLocale } = useNavigation();
@@ -278,55 +78,6 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       console.log(`[Footer] ${metric.name}: ${metric.value}ms (${metric.rating})`);
     }
   });
-
-  // IntersectionObserver: Only render footer when in viewport
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Once visible, no need to observe anymore
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1, rootMargin: '50px' }
-    );
-    
-    if (footerRef.current) {
-      observer.observe(footerRef.current);
-    }
-    
-    return () => observer.disconnect();
-  }, []);
-  
-  // Defer footer rendering to prevent CLS on pages with minimal content
-  useEffect(() => {
-    // Use requestIdleCallback if available, otherwise setTimeout
-    if (typeof window !== 'undefined') {
-      if ('requestIdleCallback' in window) {
-        const handle = requestIdleCallback(() => setIsReady(true), { timeout: 100 });
-        return () => cancelIdleCallback(handle);
-      } else {
-        const timer = setTimeout(() => setIsReady(true), 100);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, []);
-  
-  // Accordion state for mobile footer sections (CLS optimization)
-  const [openAccordions, setOpenAccordions] = useState<Set<string>>(new Set());
-  
-  const toggleAccordion = (id: string) => {
-    setOpenAccordions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
 
   // Use translations with fallback
   const translations = useFooterTranslations();
@@ -369,41 +120,8 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
     setIsContactOpen(true);
   }, []);
 
-  // Handle footer_style - support both JSONB and legacy string
-  const footerStyles = useMemo(() => {
-    if (!settings?.footer_style) {
-      return {
-        type: 'default' as FooterType,
-        background: 'neutral-900',
-        color: 'neutral-400',
-        colorHover: 'white',
-        is_gradient: false,
-        gradient: undefined
-      };
-    }
-
-    // If it's an object (JSONB), use the properties
-    if (typeof settings.footer_style === 'object' && settings.footer_style !== null) {
-      return {
-        type: (settings.footer_style.type || 'default') as FooterType,
-        background: settings.footer_style.background || 'neutral-900',
-        color: settings.footer_style.color || 'neutral-400',
-        colorHover: settings.footer_style.color_hover || 'white',
-        is_gradient: settings.footer_style.is_gradient || false,
-        gradient: settings.footer_style.gradient || undefined
-      };
-    }
-
-    // Legacy string support - use it as background only
-    return {
-      type: 'default' as FooterType,
-      background: settings.footer_style,
-      color: 'neutral-400',
-      colorHover: 'white',
-      is_gradient: false,
-      gradient: undefined
-    };
-  }, [settings?.footer_style]);
+  // Footer styles from hook
+  const footerStyles = useFooterStyles({ footerStyle: settings?.footer_style });
 
   // Debug: Log legal notice settings
   useEffect(() => {
@@ -415,70 +133,6 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       footer_type: footerStyles.type
     });
   }, [settings.legal_notice, footerStyles.type]);
-
-  // Helper to get link color classes - removed dynamic Tailwind classes
-  const getLinkColorClasses = useCallback((isHeading = false) => {
-    // Never use dynamic Tailwind classes - they don't work at runtime
-    // All colors will be applied via inline styles
-    return '';
-  }, []);
-
-  // Helper to get link inline styles - support both hex and Tailwind colors
-  const getLinkStyles = useCallback((isHovered: boolean) => {
-    let color = getColorValue(footerStyles.color);
-    const hoverColor = getColorValue(footerStyles.colorHover);
-    
-    // WCAG AA compliance: Ensure sufficient contrast on dark backgrounds
-    // If background is dark (#000000), ensure text is light enough
-    const bgColor = getColorValue(footerStyles.background);
-    if (bgColor && bgColor.toLowerCase() === '#000000') {
-      // Check if text color is too dark (low contrast)
-      // Convert color to RGB and check lightness
-      const getLightness = (hex: string) => {
-        const rgb = parseInt(hex.slice(1), 16);
-        const r = (rgb >> 16) & 0xff;
-        const g = (rgb >> 8) & 0xff;
-        const b = (rgb >> 0) & 0xff;
-        return (0.299 * r + 0.587 * g + 0.114 * b) / 255; // Relative luminance
-      };
-      
-      const lightness = getLightness(color);
-      // If text is too dark (lightness < 0.6), force it to white for contrast
-      if (lightness < 0.6) {
-        color = '#ffffff';
-      }
-    }
-    
-    return {
-      color: isHovered ? hoverColor : color
-    };
-  }, [footerStyles]);
-
-  // Link wrapper component with hover state
-  const FooterLink = ({ href, children, className = '', isHeading = false }: { href: string; children: React.ReactNode; className?: string; isHeading?: boolean }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const prefetchHandlers = usePrefetchLink({
-      url: href,
-      prefetchOnHover: true,
-      delay: 100,
-    });
-    
-    return (
-      <span
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={getLinkStyles(isHovered)}
-      >
-        <LocalizedLink
-          {...prefetchHandlers}
-          href={href}
-          className={`transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${getLinkColorClasses(isHeading)} ${className}`}
-        >
-          {children}
-        </LocalizedLink>
-      </span>
-    );
-  };
 
   // Render footer based on type
   const renderFooterContent = () => {
@@ -570,7 +224,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                             : subItem.name;
                           return (
                             <li key={subItem.id}>
-                              <FooterLink href={subItem.url_name || '#'} className="text-sm">
+                              <FooterLink href={subItem.url_name || '#'} className="text-sm" footerStyles={footerStyles}>
                                 {translatedSubItemName}
                               </FooterLink>
                             </li>
@@ -612,7 +266,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                         : item.display_name;
                       return (
                         <li key={item.id}>
-                          <FooterLink href={item.url_name || '#'} className="text-sm">
+                          <FooterLink href={item.url_name || '#'} className="text-sm" footerStyles={footerStyles}>
                             {translatedDisplayName}
                           </FooterLink>
                         </li>
@@ -650,7 +304,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     <>
                       {isAdmin && (
                         <>
-                          <li><FooterLink href="/admin" className="text-sm">{translations.dashboard}</FooterLink></li>
+                          <li><FooterLink href="/admin" className="text-sm" footerStyles={footerStyles}>{translations.dashboard}</FooterLink></li>
                           <li>
                             <button
                               type="button"
@@ -661,8 +315,8 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                               {translations.tickets}
                             </button>
                           </li>
-                          <li><FooterLink href="/admin" className="text-sm">{translations.meetings}</FooterLink></li>
-                          <li><FooterLink href="/admin/ai/management" className="text-sm">{translations.aiAgents}</FooterLink></li>
+                          <li><FooterLink href="/admin" className="text-sm" footerStyles={footerStyles}>{translations.meetings}</FooterLink></li>
+                          <li><FooterLink href="/admin/ai/management" className="text-sm" footerStyles={footerStyles}>{translations.aiAgents}</FooterLink></li>
                         </>
                       )}
                       <li>
@@ -755,6 +409,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                       href={item.url_name || '#'}
                       className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                       isHeading={true}
+                      footerStyles={footerStyles}
                     >
                       {translatedDisplayName}
                     </FooterLink>
@@ -771,6 +426,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                             <FooterLink
                               href={subItem.url_name || '#'}
                               className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                              footerStyles={footerStyles}
                             >
                               {translatedSubItemName}
                             </FooterLink>
@@ -789,6 +445,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     href={group[0]?.url_name || '#'}
                     className="transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                     isHeading={true}
+                    footerStyles={footerStyles}
                   >
                     {itemsWithSubitems.length ? '' : translations.links}
                   </FooterLink>
@@ -804,6 +461,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                         <FooterLink
                           href={item.url_name || '#'}
                           className="text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                          footerStyles={footerStyles}
                         >
                           {translatedDisplayName}
                         </FooterLink>
@@ -829,7 +487,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     {isAdmin && (
                       <>
                         <li>
-                          <FooterLink href="/admin" className="text-sm">
+                          <FooterLink href="/admin" className="text-sm" footerStyles={footerStyles}>
                             {translations.dashboard}
                           </FooterLink>
                         </li>
@@ -853,12 +511,12 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                           </button>
                         </li>
                         <li>
-                          <FooterLink href="/admin" className="text-sm">
+                          <FooterLink href="/admin" className="text-sm" footerStyles={footerStyles}>
                             {translations.meetings}
                           </FooterLink>
                         </li>
                         <li>
-                          <FooterLink href="/admin/ai/management" className="text-sm">
+                          <FooterLink href="/admin/ai/management" className="text-sm" footerStyles={footerStyles}>
                             {translations.aiAgents}
                           </FooterLink>
                         </li>
@@ -988,7 +646,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               : item.display_name;
             return (
               <li key={item.id}>
-                <FooterLink href={item.url_name || '#'} className="text-sm font-medium">
+                <FooterLink href={item.url_name || '#'} className="text-sm font-medium" footerStyles={footerStyles}>
                   {translatedDisplayName}
                 </FooterLink>
               </li>
@@ -1055,7 +713,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
               : item.display_name;
             return (
-              <FooterLink key={item.id} href={item.url_name || '#'} className="text-sm">
+              <FooterLink key={item.id} href={item.url_name || '#'} className="text-sm" footerStyles={footerStyles}>
                 {translatedDisplayName}
               </FooterLink>
             );
@@ -1118,7 +776,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
             style={{ borderColor: index > 0 ? `${getColorValue(footerStyles.color)}33` : undefined }}
           >
             <h2 className="text-lg font-semibold mb-4 text-center">
-              <FooterLink href={item.url_name || '#'} isHeading={true}>
+              <FooterLink href={item.url_name || '#'} isHeading={true} footerStyles={footerStyles}>
                 {translatedDisplayName}
               </FooterLink>
             </h2>
@@ -1129,7 +787,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                   : subItem.name;
                 return (
                   <li key={subItem.id}>
-                    <FooterLink href={subItem.url_name || '#'} className="text-sm">
+                    <FooterLink href={subItem.url_name || '#'} className="text-sm" footerStyles={footerStyles}>
                       {translatedSubItemName}
                     </FooterLink>
                   </li>
@@ -1199,7 +857,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
               : item.display_name;
             return (
               <li key={item.id}>
-                <FooterLink href={item.url_name || '#'}>{translatedDisplayName}</FooterLink>
+                <FooterLink href={item.url_name || '#'} footerStyles={footerStyles}>{translatedDisplayName}</FooterLink>
               </li>
             );
           })}
@@ -1249,7 +907,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
                     : item.display_name;
                   return (
                     <li key={item.id}>
-                      <FooterLink href={item.url_name || '#'} className="text-sm">
+                      <FooterLink href={item.url_name || '#'} className="text-sm" footerStyles={footerStyles}>
                         {translatedDisplayName}
                       </FooterLink>
                     </li>

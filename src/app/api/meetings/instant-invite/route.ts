@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can send instant invites
-    if (profile.role !== 'admin') {
+    if (profile.role !== 'admin' && profile.role !== 'superadmin') {
       return NextResponse.json({ error: 'Only admins can send instant meeting invites' }, { status: 403 });
     }
 

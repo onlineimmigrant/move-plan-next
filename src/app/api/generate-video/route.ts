@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check admin permission
-    if (profile.role !== 'admin' && profile.role !== 'owner') {
+    if (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'owner') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

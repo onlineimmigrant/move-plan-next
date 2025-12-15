@@ -101,8 +101,8 @@ export async function POST(request: Request) {
     }
 
     // Check if is_default_flashcard is true and user is admin
-    const isDefaultFlashcard = chatHistory.is_default_flashcard && role === 'admin';
-    if (chatHistory.is_default_flashcard && role !== 'admin') {
+    const isDefaultFlashcard = chatHistory.is_default_flashcard && (role === 'admin' || role === 'superadmin');
+    if (chatHistory.is_default_flashcard && role !== 'admin' && role !== 'superadmin') {
       console.error('Permission error: Only admins can create default flashcards');
       return NextResponse.json({ error: 'Only admins can create default flashcards' }, { status: 403 });
     }

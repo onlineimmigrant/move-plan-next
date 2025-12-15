@@ -871,7 +871,7 @@ async function handleTaskManagement(request: Request) {
 
     if (modelType === 'user') {
       query = query.eq('user_id', user.id);
-    } else if (modelType === 'default' && profile.role !== 'admin') {
+    } else if (modelType === 'default' && profile.role !== 'admin' && profile.role !== 'superadmin') {
       logToFile('Access denied', { error: 'Only admins can modify default models', userId: user.id, modelId, modelType });
       console.error('[Tasks] Access denied: Only admins can modify default models', { userId: user.id, modelId, modelType });
       return NextResponse.json({ error: 'Only admins can modify default models' }, { status: 403 });

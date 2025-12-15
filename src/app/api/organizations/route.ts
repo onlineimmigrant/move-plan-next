@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     if (currentOrg.type === 'platform') {
       // PLATFORM ORGANIZATION LOGIC
       // Only admins in platform organizations can view all organizations they manage
-      if (profile.role !== 'admin') {
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         return NextResponse.json({ error: 'Access denied. Admin role required for platform organization access.' }, { status: 403 });
       }
 

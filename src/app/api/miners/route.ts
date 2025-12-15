@@ -105,7 +105,7 @@ export async function GET(request: Request) {
       .eq('organization_id', org.id);
 
     // If this is not an admin request or user is not admin, filter by user_id
-    if (!isAdminRequest || profile.role !== 'admin') {
+    if (!isAdminRequest || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
       console.log('🔒 Filtering by user_id (regular user):', user.id);
       minersQuery = minersQuery.eq('user_id', user.id);
     } else {
@@ -157,7 +157,7 @@ export async function GET(request: Request) {
 
     // For admin requests, fetch user profile information separately
     let enrichedMiners = miners || [];
-    if (isAdminRequest && profile.role === 'admin' && miners && miners.length > 0) {
+    if (isAdminRequest && (profile.role === 'admin' || profile.role === 'superadmin') && miners && miners.length > 0) {
       console.log('🔍 Fetching user profiles for admin view...');
       
       // Get unique user IDs

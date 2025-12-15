@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
     const isHost = booking.host_user_id === user.id;
     const isCustomer = booking.customer_id === user.id || booking.customer_email === profile?.email || booking.customer_email === user.email;
 

@@ -173,7 +173,7 @@ export async function GET(
       // Permission validation logic for regular users
       if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
         // PLATFORM/GENERAL ORGANIZATION LOGIC
-        if (profile.role !== 'admin') {
+        if (profile.role !== 'admin' && profile.role !== 'superadmin') {
           return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
         }
 
@@ -222,7 +222,7 @@ export async function GET(
           return NextResponse.json({ error: 'Access denied. You can only access your own organization.' }, { status: 403 });
         }
 
-        if (profile.role !== 'admin' && profile.role !== 'member') {
+        if (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'member') {
           return NextResponse.json({ error: 'Access denied. Insufficient permissions.' }, { status: 403 });
         }
       }
@@ -827,8 +827,8 @@ export async function PUT(
     if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
       // Platform/General organizations: check admin role and permissions
       console.log('PUT - Platform/General org access control');
-      if (profile.role !== 'admin') {
-        console.log('PUT - Access denied: not admin');
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
+        console.log('PUT - Access denied: not admin or superadmin');
         return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
       }
       
@@ -2609,7 +2609,7 @@ export async function DELETE(
 
     // Permission validation - only platform admins can delete organizations
     if (currentOrg.type === 'platform' || currentOrg.type === 'general') {
-      if (profile.role !== 'admin') {
+      if (profile.role !== 'admin' && profile.role !== 'superadmin') {
         return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
       }
 

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         .eq('id', host_user_id)
         .single();
 
-      const isAdmin = profile?.role === 'admin';
+      const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
       const sameOrg = profile?.organization_id === booking.organization_id;
 
       if (!isAdmin || !sameOrg) {

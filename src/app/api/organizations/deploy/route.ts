@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has permission to deploy this organization
-    if (profile.organization_id !== organizationId && profile.role !== 'admin') {
+    if (profile.organization_id !== organizationId && profile.role !== 'admin' && profile.role !== 'superadmin') {
       // For non-admin users, check if they can edit this organization
       const { data: generalOrgUsers, error: usersError } = await supabase
         .from('profiles')

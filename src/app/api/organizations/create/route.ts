@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check creation limit for users with is_site_creator = true (they can create only one organization)
-    if (profile.is_site_creator && profile.role !== 'admin') {
+    if (profile.is_site_creator && profile.role !== 'admin' && profile.role !== 'superadmin') {
       const { data: existingOrgs, error: existingError } = await supabase
         .from('organizations')
         .select('id')

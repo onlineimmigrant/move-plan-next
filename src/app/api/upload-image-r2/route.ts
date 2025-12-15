@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 403 });
     }
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'owner')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
