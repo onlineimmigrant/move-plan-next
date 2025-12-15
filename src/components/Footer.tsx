@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +14,14 @@ import { FooterType } from '@/types/settings';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useWebVitals } from '@/hooks/useWebVitals';
+import { usePrefetchLink } from '@/hooks/usePrefetchLink';
+
+// Shared hooks
+import { useNavigation } from '@/hooks/shared/useNavigation';
+import { useMenuData } from '@/hooks/shared/useMenuData';
+import { useComponentStyles } from '@/hooks/shared/useComponentStyles';
+
 //import SRAValidationBadge from "./SRAValidationBadge";
 
 
@@ -244,8 +252,6 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
-  const router = useRouter();
-  const pathname = usePathname();
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const { setShowSettings } = useCookieSettings();
@@ -253,6 +259,45 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [showLegalNotice, setShowLegalNotice] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const footerRef = useRef<HTMLElement>(null);
+  
+  // Use shared navigation hook
+  const { router, pathname, currentLocale } = useNavigation();
+  
+  // Use shared menu data hook
+  const { footerMenuItems: filteredMenuItems, translateMenuItem } = useMenuData({
+    menuItems,
+    currentLocale,
+    filterForFooter: true,
+  });
+  
+  // Web Vitals monitoring for Footer performance
+  useWebVitals((metric) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Footer] ${metric.name}: ${metric.value}ms (${metric.rating})`);
+    }
+  });
+
+  // IntersectionObserver: Only render footer when in viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          // Once visible, no need to observe anymore
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+    
+    if (footerRef.current) {
+      observer.observe(footerRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
   
   // Defer footer rendering to prevent CLS on pages with minimal content
   useEffect(() => {
@@ -287,25 +332,19 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   const translations = useFooterTranslations();
   
   // Get current locale for menu translations
-  const currentLocale = getLocaleFromPathname(pathname);
+  // REMOVED: Now using shared useNavigation hook
   
   const isAuthenticated = !!session;
   const maxItemsPerColumn = 8;
 
   // Memoize menu grouping logic
   const { itemsWithSubitems, itemsWithoutSubitems, groupedItemsWithoutSubitems } = useMemo(() => {
-    const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+    const safeMenuItems = filteredMenuItems; // Use filtered menu items from shared hook
     const itemsWithSubitems = safeMenuItems.filter(
-      (item) =>
-        item.is_displayed_on_footer &&
-        item.display_name !== 'Profile' &&
-        item.website_submenuitem?.length
+      (item) => item.website_submenuitem?.length
     );
     const itemsWithoutSubitems = safeMenuItems.filter(
-      (item) =>
-        item.is_displayed_on_footer &&
-        item.display_name !== 'Profile' &&
-        !item.website_submenuitem?.length
+      (item) => !item.website_submenuitem?.length
     );
     const groupedItems: MenuItem[][] = [];
     for (let i = 0; i < itemsWithoutSubitems.length; i += maxItemsPerColumn) {
@@ -316,7 +355,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
       itemsWithoutSubitems, // Add ungrouped items for mobile accordion
       groupedItemsWithoutSubitems: groupedItems,
     };
-  }, [menuItems]);
+  }, [filteredMenuItems]);
 
   // Memoize handlers
   const handleLogout = useMemo(() => () => {
@@ -418,6 +457,11 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   // Link wrapper component with hover state
   const FooterLink = ({ href, children, className = '', isHeading = false }: { href: string; children: React.ReactNode; className?: string; isHeading?: boolean }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const prefetchHandlers = usePrefetchLink({
+      url: href,
+      prefetchOnHover: true,
+      delay: 100,
+    });
     
     return (
       <span
@@ -426,6 +470,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         style={getLinkStyles(isHovered)}
       >
         <LocalizedLink
+          {...prefetchHandlers}
           href={href}
           className={`transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${getLinkColorClasses(isHeading)} ${className}`}
         >
@@ -1251,6 +1296,7 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
   return (
     <>
       <footer 
+        ref={footerRef}
         className={`px-6 ${footerStyles.type === 'compact' ? 'py-4' : 'py-12'}`}
         role="contentinfo"
         style={{
@@ -1265,8 +1311,8 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           containIntrinsicSize: footerStyles.type === 'compact' ? '0 200px' : '0 400px'
         }}
       >
-        <div className="max-w-7xl mx-auto" style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.15s ease-in' }}>
-          {isReady && (
+        <div className="max-w-7xl mx-auto" style={{ opacity: (isReady && isVisible) ? 1 : 0, transition: 'opacity 0.15s ease-in' }}>
+          {(isReady && isVisible) && (
             <>
               {renderFooterContent()}
               
@@ -1281,13 +1327,21 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
           )}
         </div>
       </footer>
-      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <Suspense fallback={null}>
+        <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      </Suspense>
       {settings.legal_notice?.enabled && (
-        <LegalNoticeModal isOpen={showLegalNotice} onClose={() => setShowLegalNotice(false)} />
-
+        <Suspense fallback={null}>
+          <LegalNoticeModal isOpen={showLegalNotice} onClose={() => setShowLegalNotice(false)} />
+        </Suspense>
       )}
     </>
   );
 };
 
-export default React.memo(Footer);
+export default React.memo(Footer, (prevProps, nextProps) => {
+  return (
+    prevProps.menuItems?.length === nextProps.menuItems?.length &&
+    JSON.stringify(prevProps.menuItems?.[0]?.id) === JSON.stringify(nextProps.menuItems?.[0]?.id)
+  );
+});

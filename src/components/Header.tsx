@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, lazy, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, useRef, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { getBackgroundStyle } from '@/utils/gradientHelper';
 import dynamic from 'next/dynamic';
@@ -13,6 +14,13 @@ import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTra
 import LocalizedLink from './LocalizedLink';
 import { useHeaderTranslations } from './header/useHeaderTranslations';
 import { saveReturnUrl } from './LoginRegistration/hooks';
+import { useWebVitals } from '@/hooks/useWebVitals';
+import { usePrefetchLink } from '@/hooks/usePrefetchLink';
+
+// Shared hooks
+import { useNavigation } from '@/hooks/shared/useNavigation';
+import { useMenuData } from '@/hooks/shared/useMenuData';
+import { useComponentStyles } from '@/hooks/shared/useComponentStyles';
 
 // Dynamic imports with ssr: false for client-only components (modals, language switcher)
 // These need to be client-only to work properly in production
@@ -57,13 +65,51 @@ import {
 import { MenuItem, SubMenuItem } from '@/types/menu';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
 
+// Prefetched Menu Link Component
+interface PrefetchedMenuLinkProps {
+  href: string;
+  onClick?: () => void;
+  className?: string;
+  title?: string;
+  'aria-label'?: string;
+  children: React.ReactNode;
+}
+
+const PrefetchedMenuLink: React.FC<PrefetchedMenuLinkProps> = ({ 
+  href, 
+  onClick, 
+  className, 
+  title, 
+  'aria-label': ariaLabel, 
+  children 
+}) => {
+  const prefetchHandlers = usePrefetchLink({
+    url: href,
+    prefetchOnHover: true,
+    delay: 100,
+  });
+
+  return (
+    <LocalizedLink
+      {...prefetchHandlers}
+      href={href}
+      onClick={onClick}
+      className={className}
+      title={title}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </LocalizedLink>
+  );
+};
+
 interface HeaderProps {
   companyLogo?: string;
   menuItems: MenuItem[] | undefined;
   fixedBannersHeight: number;
 }
 
-const Header: React.FC<HeaderProps> = ({
+const HeaderComponent: React.FC<HeaderProps> = ({
   companyLogo = '/images/logo.svg',
   menuItems = [],
   fixedBannersHeight = 0,
@@ -84,12 +130,20 @@ const Header: React.FC<HeaderProps> = ({
   const { isAdmin } = useAuth();
   const { basket } = useBasket();
   const { session, logout } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
   const isLoggedIn = !!session;
   const { settings } = useSettings();
   const t = useHeaderTranslations();
   const themeColors = useThemeColors();
+  
+  // Use shared navigation hook
+  const { router, pathname, currentLocale, navigate } = useNavigation();
+  
+  // Use shared menu data hook
+  const { headerMenuItems: filteredMenuItems, translateMenuItem } = useMenuData({
+    menuItems,
+    currentLocale,
+    filterForHeader: true,
+  });
 
   // Parse header_style JSONB structure
   const headerStyle = useMemo(() => {
@@ -247,6 +301,13 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
 
+  // Web Vitals monitoring for Header performance
+  useWebVitals((metric) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Header] ${metric.name}: ${metric.value}ms (${metric.rating})`);
+    }
+  });
+
   // Removed debug useEffect - not needed in production
 
   // Memoize callback functions for better performance
@@ -307,7 +368,7 @@ const Header: React.FC<HeaderProps> = ({
     closeTimeoutRef.current = setTimeout(() => {
       setOpenSubmenu(null);
       setHoveredSubmenuItem(null);
-    }, 300); // 300ms delay before closing
+    }, 500); // Increased to 500ms delay to allow easier mouse movement to submenu
   }, [cancelCloseTimeout]);
 
   const handleMenuEnter = useCallback((itemId: number, hasSubitems: boolean) => {
@@ -321,6 +382,14 @@ const Header: React.FC<HeaderProps> = ({
     scheduleClose();
   }, [scheduleClose]);
 
+  const handleSubmenuEnter = useCallback(() => {
+    cancelCloseTimeout();
+  }, [cancelCloseTimeout]);
+
+  const handleSubmenuLeave = useCallback(() => {
+    scheduleClose();
+  }, [scheduleClose]);
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -331,18 +400,15 @@ const Header: React.FC<HeaderProps> = ({
   }, []);
 
   // Memoize filtered menu items for performance
-  const filteredMenuItems = useMemo(() => 
-    menuItems.filter((item) => item.is_displayed && item.display_name !== 'Profile'),
-    [menuItems]
-  );
-
+  // REMOVED: Now using shared useMenuData hook
+  
   // Determine if we need larger breakpoint for mobile menu (more than 5 items)
   const hasManyItems = useMemo(() => filteredMenuItems.length > 5, [filteredMenuItems]);
   const hasTooManyItems = useMemo(() => filteredMenuItems.length > 7, [filteredMenuItems]);
   const responsiveBreakpoint = hasTooManyItems ? 'xl' : hasManyItems ? 'lg' : 'md';
 
   // Memoize current locale calculation
-  const currentLocale = useMemo(() => getLocaleFromPathname(pathname), [pathname]);
+  // REMOVED: Now using shared useNavigation hook
 
   // Memoize total items calculation
   const totalItems = useMemo(() => 
@@ -365,16 +431,9 @@ const Header: React.FC<HeaderProps> = ({
             .filter((subItem) => subItem.is_displayed !== false)
             .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-          // Get translated content for menu item
-          const translatedDisplayName = currentLocale 
-            ? getTranslatedMenuContent(item.display_name, item.display_name_translation, currentLocale)
-            : item.display_name;
-
-          const translatedMenuItemDescription = item.description
-            ? (currentLocale 
-                ? getTranslatedMenuContent(item.description, item.description_translation, currentLocale)
-                : item.description)
-            : null;
+          // Use shared translateMenuItem function
+          const translatedItem = translateMenuItem(item);
+          const { translatedDisplayName, translatedDescription: translatedMenuItemDescription } = translatedItem;
 
             // Check if current menu item is active
             const isActive = pathname.startsWith(`/${item.url_name}`) || 
@@ -427,24 +486,28 @@ const Header: React.FC<HeaderProps> = ({
                     
                     {/* Mega menu or simple dropdown based on items count */}
                     {displayedSubItems.length >= 2 ? (
-                      // Full-width mega menu for 2+ items
-                      <div 
-                        className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] transition-all duration-200 mx-4 sm:mx-8 ${
+                      // Full-width mega menu for 2+ items - rendered via portal at body level
+                      typeof window !== 'undefined' && createPortal(
+                        <div 
+                          className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
-                          // Calculate top position: banners height + nav height (64px) + gap (16px for visual separation)
-                          top: `${fixedBannersHeight + 64 + 16}px`,
+                          // Calculate top position: banners height + nav height (64px) - remove gap to prevent menu from closing
+                          top: `${fixedBannersHeight + 64}px`,
                           // Always use white background on desktop for mega menu (regardless of header type)
                           backgroundColor: 'white',
                           boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                           backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
                           // Ensure pointer events work
-                          pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
+                          pointerEvents: openSubmenu === item.id ? 'auto' : 'none',
+                          // Add padding to create hover bridge
+                          paddingTop: '8px',
+                          marginTop: '-8px'
                         }}
-                        onMouseEnter={cancelCloseTimeout}
-                        onMouseLeave={handleMenuLeave}
+                        onMouseEnter={handleSubmenuEnter}
+                        onMouseLeave={handleSubmenuLeave}
                       >
                         <div className="max-h-[calc(100vh-140px)] overflow-y-auto">
                           <div className="px-6 py-6 max-w-7xl mx-auto">
@@ -477,7 +540,7 @@ const Header: React.FC<HeaderProps> = ({
                                   onMouseLeave={() => setHoveredSubmenuItem(null)}
                                   className="group/item"
                                 >
-                                  <LocalizedLink
+                                  <PrefetchedMenuLink
                                     href={subItem.url_name}
                                     onClick={() => setOpenSubmenu(null)}
                                     className={`block rounded-lg overflow-hidden transition-all duration-200 ${item.display_as_card ? 'hover:shadow-xl hover:scale-105' : 'hover:shadow-lg border border-gray-200/30'}`}
@@ -570,18 +633,18 @@ const Header: React.FC<HeaderProps> = ({
                                       </>
                                     )}
                                   </div>
-                                </LocalizedLink>
+                                </PrefetchedMenuLink>
                               </div>
                               );
                             })}
                           </div>
                         </div>
                         </div>
-                      </div>
+                      </div>, document.body)
                     ) : (
-                      // Simple dropdown for < 2 items
+                      // Simple dropdown for < 2 items - keep absolute positioning relative to parent
                       <div 
-                        className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[60] transition-all duration-200 ${
+                        className={`absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-[9999] transition-all duration-200 ${
                           openSubmenu === item.id ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
                         style={{
@@ -593,8 +656,8 @@ const Header: React.FC<HeaderProps> = ({
                           // Ensure pointer events work
                           pointerEvents: openSubmenu === item.id ? 'auto' : 'none'
                         }}
-                        onMouseEnter={cancelCloseTimeout}
-                        onMouseLeave={handleMenuLeave}
+                        onMouseEnter={handleSubmenuEnter}
+                        onMouseLeave={handleSubmenuLeave}
                       >
                         <div className="p-2">
                           {displayedSubItems.map((subItem) => {
@@ -603,7 +666,7 @@ const Header: React.FC<HeaderProps> = ({
                               : subItem.name;
 
                             return (
-                              <LocalizedLink
+                              <PrefetchedMenuLink
                                 key={subItem.id}
                                 href={subItem.url_name}
                                 onClick={() => setOpenSubmenu(null)}
@@ -637,7 +700,7 @@ const Header: React.FC<HeaderProps> = ({
                                     {translatedSubItemName}
                                   </span>
                                 </div>
-                              </LocalizedLink>
+                              </PrefetchedMenuLink>
                             );
                           })}
                         </div>
@@ -658,7 +721,7 @@ const Header: React.FC<HeaderProps> = ({
                       e.currentTarget.style.color = getColorValue(headerColor);
                     }}
                   >
-                    <LocalizedLink
+                    <PrefetchedMenuLink
                       href={item.url_name}
                       onClick={() => setOpenSubmenu(null)}
                       className="flex items-center justify-center px-4 py-2.5 rounded-xl focus:outline-none transition-colors duration-200 group"
@@ -669,7 +732,7 @@ const Header: React.FC<HeaderProps> = ({
                         // Only apply default classes if using hex colors
                         headerColor.startsWith('#') ? '' : (isActive ? 'font-semibold' : '')
                       }`}>{translatedDisplayName}</span>
-                    </LocalizedLink>
+                    </PrefetchedMenuLink>
                   </div>
                 )}
               </div>
@@ -677,7 +740,7 @@ const Header: React.FC<HeaderProps> = ({
           })
       )}
     </>
-  ), [filteredMenuItems, currentLocale, t, pathname, openSubmenu, setOpenSubmenu, settings?.image, headerColor, headerColorHover, hoveredSubmenuItem]);
+  ), [filteredMenuItems, currentLocale, t, pathname, openSubmenu, setOpenSubmenu, settings?.image, headerColor, headerColorHover, hoveredSubmenuItem, handleMenuEnter, handleMenuLeave, handleSubmenuEnter, handleSubmenuLeave, setHoveredSubmenuItem, fixedBannersHeight, menuFontSizeClass, menuFontWeightClass, themeColors]);
 
   const renderMobileMenuItems = useMemo(() => (
     <div className="space-y-3">
@@ -827,7 +890,8 @@ const Header: React.FC<HeaderProps> = ({
       <nav
         className={`
           fixed
-          left-0 right-0 z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+          left-0 right-0 z-[9999] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+          overflow-visible
           ${
             headerType === 'ring_card_mini' || headerType === 'mini'
               ? 'px-4 pt-6' // Container padding for ring_card_mini and mini - generous top spacing for floating effect
@@ -860,6 +924,9 @@ const Header: React.FC<HeaderProps> = ({
           // For 'fixed' type, always stay visible. For others, hide on scroll down (except when mobile menu is open)
           transform: (headerType === 'fixed' || isVisible || isOpen) ? 'translateY(0)' : 'translateY(-100%)',
           pointerEvents: (headerType === 'fixed' || isVisible || isOpen) ? 'auto' : 'none',
+          // CSS content-visibility for paint optimization
+          contentVisibility: 'auto' as const,
+          containIntrinsicSize: 'auto 80px',
           // Apply glassmorphism background when scrolling up (70% opacity like breadcrumbs)
           ...(isScrollingUp 
             ? { 
@@ -877,6 +944,7 @@ const Header: React.FC<HeaderProps> = ({
       <div
         className={`
           mx-auto max-w-${menuWidth} py-2 px-4 pl-8 sm:px-6 flex justify-between items-center h-[64px]
+          overflow-visible
           ${
             headerType === 'ring_card_mini'
               ? 'border border-gray-200 rounded-full shadow-sm'
@@ -932,7 +1000,7 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Section */}
         <div 
-          className={`hidden ${responsiveBreakpoint}:flex items-center ${
+          className={`hidden ${responsiveBreakpoint}:flex items-center relative ${
             logoPosition === 'center' ? 'flex-1 justify-center' : 'justify-center flex-1 ml-8 mr-8'
           } ${
             logoPosition === 'right' ? 'order-1 flex-1' : ''
@@ -1464,19 +1532,35 @@ const Header: React.FC<HeaderProps> = ({
         </>
       )}
 
-      <LoginModal 
-        isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)}
-        onSwitchToRegister={handleSwitchToRegister}
-      />
-      <RegisterModal 
-        isOpen={isRegisterOpen} 
-        onClose={() => setIsRegisterOpen(false)}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <Suspense fallback={null}>
+        <LoginModal 
+          isOpen={isLoginOpen} 
+          onClose={() => setIsLoginOpen(false)}
+          onSwitchToRegister={handleSwitchToRegister}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <RegisterModal 
+          isOpen={isRegisterOpen} 
+          onClose={() => setIsRegisterOpen(false)}
+          onSwitchToLogin={handleSwitchToLogin}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      </Suspense>
     </>
   );
 };
+
+const Header = React.memo(HeaderComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.companyLogo === nextProps.companyLogo &&
+    prevProps.menuItems?.length === nextProps.menuItems?.length &&
+    prevProps.fixedBannersHeight === nextProps.fixedBannersHeight
+  );
+});
+
+Header.displayName = 'Header';
 
 export default Header;
