@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useEmailTemplates } from '../../hooks/useEmailTemplates';
+import { useEmailToast } from '../../hooks/useEmailToast';
 import { 
   Plus,
   Search,
@@ -13,7 +14,10 @@ import {
   Edit,
   Copy,
   Trash2,
-  Eye
+  Eye,
+  CheckSquare,
+  Square,
+  Trash
 } from 'lucide-react';
 import { LoadingState, EmptyState } from '@/components/modals/ShopModal/components';
 
@@ -31,7 +35,11 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
     deleteTemplate, 
     duplicateTemplate 
   } = useEmailTemplates();
+  const toast = useEmailToast();
   const [typeFilter, setTypeFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedTemplates, setSelectedTemplates] = useState<Set<number>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
 
   const getTypeIcon = (category: string | null | undefined) => {
     switch (category) {
@@ -57,6 +65,7 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
 
   const filteredTemplates = templates.filter((template) => {
     if (typeFilter !== 'all' && template.category !== typeFilter) return false;
+    if (categoryFilter !== 'all' && template.category !== categoryFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -69,13 +78,56 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
   });
 
   const handleDuplicate = async (id: number) => {
-    await duplicateTemplate(id);
+    const result = await duplicateTemplate(id);
+    if (result) {
+      toast.success('Template duplicated successfully!');
+    } else {
+      toast.error('Failed to duplicate template');
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this template?')) {
-      await deleteTemplate(id);
+      const result = await deleteTemplate(id);
+      if (result) {
+        toast.success('Template deleted successfully!');
+      } else {
+        toast.error('Failed to delete template');
+      }
     }
+  };
+
+  const toggleTemplateSelection = (id: number) => {
+    const newSelected = new Set(selectedTemplates);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTemplates(newSelected);
+  };
+
+  const selectAll = () => {
+    if (selectedTemplates.size === filteredTemplates.length) {
+      setSelectedTemplates(new Set());
+    } else {
+      setSelectedTemplates(new Set(filteredTemplates.map(t => t.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTemplates.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedTemplates.size} templates?`)) return;
+
+    let successCount = 0;
+    for (const id of Array.from(selectedTemplates)) {
+      const result = await deleteTemplate(id);
+      if (result) successCount++;
+    }
+    
+    toast.success(`${successCount} templates deleted successfully!`);
+    setSelectedTemplates(new Set());
+    setBulkMode(false);
   };
 
   if (isLoading) {
@@ -96,21 +148,69 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3">
-        {/* Type Filter */}
+        {/* Category Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
+          <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="flex-1 md:w-48 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
           >
-            <option value="all">All Types</option>
+            <option value="all">All Categories</option>
             <option value="transactional">Transactional</option>
             <option value="marketing">Marketing</option>
             <option value="system">System</option>
           </select>
         </div>
+
+        {/* Bulk Actions */}
+        <div className="flex items-center gap-2 ml-auto">
+          {bulkMode && selectedTemplates.size > 0 && (
+            <>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedTemplates.size} selected
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-sm font-medium"
+              >
+                <Trash className="w-4 h-4" />
+                Delete Selected
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => {
+              setBulkMode(!bulkMode);
+              if (bulkMode) setSelectedTemplates(new Set());
+            }}
+            className={`px-3 py-2 text-sm rounded-lg transition-colors font-medium ${
+              bulkMode
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {bulkMode ? 'Exit Bulk Mode' : 'Select Multiple'}
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Select All */}
+      {bulkMode && filteredTemplates.length > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <button
+            onClick={selectAll}
+            className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            {selectedTemplates.size === filteredTemplates.length ? (
+              <CheckSquare className="w-4 h-4" />
+            ) : (
+              <Square className="w-4 h-4" />
+            )}
+            {selectedTemplates.size === filteredTemplates.length ? 'Deselect All' : 'Select All'}
+          </button>
+        </div>
+      )}
 
       {/* Templates Grid */}
       {filteredTemplates.length > 0 ? (
@@ -120,10 +220,20 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
             return (
               <div
                 key={template.id}
-                className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-4 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all group"
+                className={`bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border p-4 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all group ${
+                  bulkMode && selectedTemplates.has(template.id) ? 'ring-2 ring-primary' : 'border-white/20'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
+                    {bulkMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedTemplates.has(template.id)}
+                        onChange={() => toggleTemplateSelection(template.id)}
+                        className="w-5 h-5 text-primary focus:ring-primary rounded"
+                      />
+                    )}
                     <div className={`p-2 rounded-lg ${getTypeColor(template.category || 'notification')}`}>
                       <TypeIcon className="w-5 h-5" />
                     </div>
@@ -155,37 +265,42 @@ export default function TemplatesList({ onEdit, onPreview, primary, searchQuery 
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => onEdit(template.id)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors font-medium"
-                    style={{
-                      background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
-                      color: 'white'
-                    }}
-                  >
-                    <Edit className="w-3 h-3" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onPreview(template.id)}
-                    className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => handleDuplicate(template.id)}
-                    className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(template.id)}
-                    className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
+                {!bulkMode && (
+                  <div className="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => onEdit(template.id)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors font-medium"
+                      style={{
+                        background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
+                        color: 'white'
+                      }}
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onPreview(template.id)}
+                      className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Preview"
+                    >
+                      <Eye className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDuplicate(template.id)}
+                      className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Duplicate"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(template.id)}
+                      className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

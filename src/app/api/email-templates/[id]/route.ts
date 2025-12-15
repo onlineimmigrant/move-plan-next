@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Force Node.js runtime to avoid streaming transform issues on edge
+export const runtime = 'nodejs';
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -31,18 +34,21 @@ export async function GET(
     }
 
     if (!data) {
-      return NextResponse.json(
-        { error: 'Template not found' },
-        { status: 404 }
-      );
+      return new Response(JSON.stringify({ error: 'Template not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return NextResponse.json(data, { status: 200 });
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     console.error('Error in GET /api/email-templates/[id]:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch template', details: error.message },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch template', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
@@ -78,12 +84,15 @@ export async function PUT(
     }
 
     console.log('Successfully updated email template:', id);
-    return NextResponse.json(data, { status: 200 });
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     console.error('Error in PUT /api/email-templates/[id]:', error);
-    return NextResponse.json(
-      { error: 'Failed to update template', details: error.message },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Failed to update template', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

@@ -117,6 +117,7 @@
     "react-tooltip": "^5.28.1",
     "react-virtuoso": "^4.12.6",
     "react-window": "^1.8.11",
+    "react-window-infinite-loader": "^2.0.0",
     "recharts": "^3.1.0",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",

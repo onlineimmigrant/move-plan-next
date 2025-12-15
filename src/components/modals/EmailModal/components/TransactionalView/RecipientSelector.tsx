@@ -52,13 +52,15 @@ export default function RecipientSelector({ recipients, onRecipientsChange, prim
   const fetchContacts = async () => {
     setIsLoading(true);
     try {
-      // Fetch all profiles with customer data (customers and leads)
+      // Fetch profiles with customer data (customers and leads)
+      // Use JSONB operators to filter customer field
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, customer')
         .eq('organization_id', settings!.organization_id)
         .not('customer', 'is', null)
         .not('email', 'is', null)
+        .or('customer->>is_customer.eq.true,customer->>is_lead.eq.true')
         .order('full_name')
         .limit(100);
 

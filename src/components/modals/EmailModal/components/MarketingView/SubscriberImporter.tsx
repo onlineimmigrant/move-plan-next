@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSubscribers } from '../../hooks/useSubscribers';
 import { useEmailLists } from '../../hooks/useEmailLists';
+import { useSettings } from '@/context/SettingsContext';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   Upload,
   UserPlus,
@@ -12,7 +14,8 @@ import {
   AlertCircle,
   X,
   Download,
-  Trash2
+  Trash2,
+  Users
 } from 'lucide-react';
 
 interface Subscriber {
@@ -22,11 +25,23 @@ interface Subscriber {
   status: 'active' | 'unsubscribed' | 'bounced';
 }
 
+interface Contact {
+  id: string;
+  full_name: string;
+  email: string;
+  customer?: {
+    company_name?: string;
+    is_customer?: boolean;
+    is_lead?: boolean;
+  };
+}
+
 interface SubscriberImporterProps {
   primary: { base: string; hover: string };
 }
 
 export default function SubscriberImporter({ primary }: SubscriberImporterProps) {
+  const { settings } = useSettings();
   const { subscribers, fetchSubscribers, addSubscriber, addSubscribers, deleteSubscriber } = useSubscribers();
   const { lists } = useEmailLists();
   const [selectedListId, setSelectedListId] = useState<number | null>(null);
@@ -44,7 +59,67 @@ export default function SubscriberImporter({ primary }: SubscriberImporterProps)
   const [lastName, setLastName] = useState('');
   const [addingManually, setAddingManually] = useState(false);
   
+  // CRM contacts
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [showContactList, setShowContactList] = useState(false);
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (settings?.organization_id && showContactList) {
+      fetchContacts();
+    }
+  }, [settings?.organization_id, showContactList]);
+
+  const fetchContacts = async () => {
+    setIsLoadingContacts(true);
+    try {
+      // Fetch profiles with customer data (customers and leads)
+      // Use JSONB operators to filter customer field
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, customer')
+        .eq('organization_id', settings!.organization_id)
+        .not('customer', 'is', null)
+        .not('email', 'is', null)
+        .or('customer->>is_customer.eq.true,customer->>is_lead.eq.true')
+        .order('full_name')
+        .limit(200);
+
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  };
+
+  const addContactAsSubscriber = async (contact: Contact) => {
+    if (!selectedListId) return;
+    
+    // Check if already exists
+    if (subscribers.some((s) => s.email === contact.email)) {
+      alert('This contact is already in the list');
+      return;
+    }
+
+    setAddingManually(true);
+    const names = contact.full_name?.split(' ') || [];
+    const result = await addSubscriber(selectedListId, {
+      email: contact.email,
+      first_name: names[0] || undefined,
+      last_name: names.slice(1).join(' ') || undefined,
+      status: 'active',
+    });
+
+    if (result) {
+      await fetchSubscribers(selectedListId);
+    }
+    setAddingManually(false);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,17 +233,27 @@ export default function SubscriberImporter({ primary }: SubscriberImporterProps)
     URL.revokeObjectURL(url);
   };
 
+  const filteredContacts = contacts.filter((contact) => {
+    if (!contactSearchQuery) return true;
+    const query = contactSearchQuery.toLowerCase();
+    return (
+      contact.full_name?.toLowerCase().includes(query) ||
+      contact.email?.toLowerCase().includes(query) ||
+      contact.customer?.company_name?.toLowerCase().includes(query)
+    );
+  }).filter((contact) => !subscribers.some((s) => s.email === contact.email));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* List Selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Select List
         </label>
         <select
           value={selectedListId || ''}
           onChange={(e) => handleListChange(Number(e.target.value))}
-          className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[44px] text-sm"
         >
           <option value="">Choose a list...</option>
           {lists.map((list) => (
@@ -181,41 +266,123 @@ export default function SubscriberImporter({ primary }: SubscriberImporterProps)
 
       {selectedListId && (
         <>
+          {/* Browse CRM Contacts */}
+          <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3">
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Users className="w-4 h-4" />
+                Browse CRM Contacts
+              </label>
+              <button
+                onClick={() => setShowContactList(!showContactList)}
+                className="text-xs sm:text-sm text-primary hover:underline min-h-[44px] px-2 sm:px-0"
+              >
+                {showContactList ? 'Hide' : 'Show'} Contacts
+              </button>
+            </div>
+
+            {showContactList && (
+              <div className="space-y-3">
+                {/* Search */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={contactSearchQuery}
+                    onChange={(e) => setContactSearchQuery(e.target.value)}
+                    placeholder="Search contacts..."
+                    className="w-full px-4 py-3 pl-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[44px] text-sm"
+                  />
+                  <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                </div>
+
+                {/* Contact List */}
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {isLoadingContacts ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    </div>
+                  ) : filteredContacts.length > 0 ? (
+                    filteredContacts.map((contact) => (
+                      <button
+                        key={contact.id}
+                        onClick={() => addContactAsSubscriber(contact)}
+                        disabled={addingManually}
+                        className="w-full flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{
+                              backgroundColor: `${primary.base}1A`
+                            }}
+                          >
+                            <span className="text-sm font-semibold"
+                              style={{ color: primary.base }}
+                            >
+                              {contact.full_name?.charAt(0).toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div className="text-left min-w-0 flex-1">
+                            <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {contact.full_name || 'Unknown'}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                              {contact.email}
+                            </p>
+                            {contact.customer?.company_name && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
+                                {contact.customer.company_name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <UserPlus className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 text-center py-8">
+                      {contactSearchQuery ? 'No contacts found matching your search' : 'No contacts available. Add customers or leads in the CRM modal.'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Manual Add Form */}
-          <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-4">
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <UserPlus className="w-5 h-5" />
+          <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-3 sm:p-4">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+              <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
               Add Individual Subscriber
             </h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email *"
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[44px] text-sm"
               />
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="First Name"
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[44px] text-sm"
               />
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last Name"
-                className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[44px] text-sm"
               />
             </div>
 
             <button
               onClick={handleManualAdd}
               disabled={!email || addingManually}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] text-sm"
               style={{
                 background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
                 color: 'white'
@@ -236,15 +403,15 @@ export default function SubscriberImporter({ primary }: SubscriberImporterProps)
           </div>
 
           {/* CSV Import */}
-          <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Upload className="w-5 h-5" />
+          <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-xl border border-white/20 p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
+              <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-sm sm:text-base">
+                <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
                 Bulk Import via CSV
               </h4>
               <button
                 onClick={downloadTemplate}
-                className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+                className="flex items-center gap-1 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors min-h-[44px] px-2 sm:px-0"
               >
                 <Download className="w-4 h-4" />
                 Download Template

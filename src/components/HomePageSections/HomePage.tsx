@@ -71,7 +71,7 @@ interface HomePageProps {
 }
 
 // Memoized component for better performance
-const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
+const HomePageComponent: React.FC<HomePageProps> = ({ data }) => {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [pricingComparison, setPricingComparison] = useState<PricingComparison | null>(null);
   const [isLoadingPricing, setIsLoadingPricing] = useState(false);
@@ -278,8 +278,12 @@ const HomePage: React.FC<HomePageProps> = memo(({ data }) => {
       />
     </main>
   );
-});
+};
 
+// Wrap with memo for performance
+const HomePage = memo(HomePageComponent);
 HomePage.displayName = 'HomePage';
 
+// Export
+export { HomePage };
 export default HomePage;

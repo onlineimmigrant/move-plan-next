@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import EditableTextField from '@/components/Shared/EditableFields/EditableTextField';
 import EditableTextArea from '@/components/Shared/EditableFields/EditableTextArea';
+import VirtualizedMetricsList from './VirtualizedMetricsList';
 import EditableToggle from '@/components/Shared/EditableFields/EditableToggle';
 import EditableColorPicker from '@/components/Shared/EditableFields/EditableColorPicker';
 import EditableGradientPicker from '@/components/Shared/EditableFields/EditableGradientPicker';
@@ -767,6 +768,27 @@ export default function MetricManager({
             Click "Add Existing" to add metrics from your library or "Create New" to make a new one
           </p>
         </div>
+      ) : metrics.length > 50 ? (
+        <VirtualizedMetricsList
+          metrics={metrics}
+          textStyleVariant={textStyleVariant}
+          onMetricsChange={onMetricsChange}
+          draggedIndex={draggedIndex}
+          handleDragStart={handleDragStart}
+          handleDragOver={handleDragOver}
+          handleDragEnd={handleDragEnd}
+          setDeleteModalState={setDeleteModalState}
+          setImageGalleryState={setImageGalleryState}
+          setUrlPromptState={setUrlPromptState}
+          setOpenColorPickerId={setOpenColorPickerId}
+          openColorPickerId={openColorPickerId}
+          getBackgroundStyle={getBackgroundStyle}
+          isVideoUrl={isVideoUrl}
+          textVar={textVar}
+          imageMetricsHeight={imageMetricsHeight}
+          isImageBottom={isImageBottom}
+          getEmbedUrl={getEmbedUrl}
+        />
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4 pt-12">
           {metrics.map((metric, index) => {

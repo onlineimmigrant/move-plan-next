@@ -34,6 +34,8 @@ interface UseCampaignsReturn {
   updateCampaign: (id: number, updates: Partial<EmailCampaign>) => Promise<boolean>;
   deleteCampaign: (id: number) => Promise<boolean>;
   sendCampaign: (id: number) => Promise<boolean>;
+  duplicateCampaign: (id: number) => Promise<EmailCampaign | null>;
+  bulkDeleteCampaigns: (ids: number[]) => Promise<boolean>;
 }
 
 export function useCampaigns(): UseCampaignsReturn {
@@ -207,6 +209,61 @@ export function useCampaigns(): UseCampaignsReturn {
     }
   };
 
+  const duplicateCampaign = async (id: number): Promise<EmailCampaign | null> => {
+    try {
+      const original = campaigns.find((c) => c.id === id);
+      if (!original) throw new Error('Campaign not found');
+
+      const { data, error } = await supabase
+        .from('email_campaigns')
+        .insert({
+          organization_id: settings!.organization_id,
+          name: `${original.name} (Copy)`,
+          subject: original.subject,
+          body: original.body,
+          status: 'draft',
+          list_id: original.list_id,
+          template_id: original.template_id,
+          total_recipients: 0,
+          total_sent: 0,
+          total_opened: 0,
+          total_clicked: 0,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      toast.success('Campaign duplicated successfully');
+      return data;
+    } catch (err) {
+      console.error('Error duplicating campaign:', err);
+      const message = err instanceof Error ? err.message : 'Failed to duplicate campaign';
+      setError(message);
+      toast.error(message);
+      return null;
+    }
+  };
+
+  const bulkDeleteCampaigns = async (ids: number[]): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('email_campaigns')
+        .delete()
+        .in('id', ids)
+        .eq('organization_id', settings!.organization_id);
+
+      if (error) throw error;
+      toast.success(`${ids.length} campaigns deleted`);
+      return true;
+    } catch (err) {
+      console.error('Error deleting campaigns:', err);
+      const message = err instanceof Error ? err.message : 'Failed to delete campaigns';
+      setError(message);
+      toast.error(message);
+      return false;
+    }
+  };
+
   return {
     campaigns,
     isLoading,
@@ -216,5 +273,7 @@ export function useCampaigns(): UseCampaignsReturn {
     updateCampaign,
     deleteCampaign,
     sendCampaign,
+    duplicateCampaign,
+    bulkDeleteCampaigns,
   };
 }

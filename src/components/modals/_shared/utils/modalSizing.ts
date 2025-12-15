@@ -24,6 +24,7 @@ export const getModalSizeConfig = (size: ModalSize = 'large'): ModalSizeConfig =
 
 /**
  * Calculate centered position for a modal
+ * For fixed positioning modals, always center in viewport (no scroll offset needed)
  */
 export const getCenteredPosition = (dimensions: ModalDimensions, includeScrollOffset: boolean = false): ModalPosition => {
   if (typeof window === 'undefined') {
@@ -31,12 +32,11 @@ export const getCenteredPosition = (dimensions: ModalDimensions, includeScrollOf
   }
 
   const x = Math.max(0, (window.innerWidth - dimensions.width) / 2);
-  let y = Math.max(0, (window.innerHeight - dimensions.height) / 2);
+  const y = Math.max(0, (window.innerHeight - dimensions.height) / 2);
   
-  // If scroll lock is disabled, add current scroll position to center modal in viewport
-  if (includeScrollOffset) {
-    y += window.scrollY;
-  }
+  // Note: For fixed positioning (used in DraggableWrapper), scroll offset is NOT needed
+  // because fixed elements are positioned relative to viewport, not document
+  // The includeScrollOffset parameter is kept for backward compatibility but not used
 
   return { x, y };
 };

@@ -108,21 +108,33 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
     );
   };
 
-  const createTemplate = async (template: Omit<EmailTemplate, 'id' | 'organization_id' | 'created_at' | 'updated_at'>): Promise<EmailTemplate | null> => {
+  const createTemplate = async (
+    template: Omit<EmailTemplate, 'id' | 'organization_id' | 'created_at' | 'updated_at'>
+  ): Promise<EmailTemplate | null> => {
     if (!settings?.organization_id) return null;
 
     try {
-      const { data, error } = await supabase
-        .from('email_template')
-        .insert({
+      const response = await fetch('/api/email-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           ...template,
           organization_id: settings.organization_id,
-        })
-        .select()
-        .single();
+          type: template.type ?? 'custom',
+          subject: template.subject ?? 'No Subject',
+          from_email_address_type:
+            template.from_email_address_type ??
+            (template.category === 'marketing' ? 'marketing_email' : 'transactional_email'),
+          category: template.category ?? 'transactional',
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to create template');
+      }
 
+      const data = (await response.json()) as EmailTemplate;
       await fetchTemplates();
       return data;
     } catch (err) {
@@ -132,15 +144,32 @@ export function useEmailTemplates(): UseEmailTemplatesReturn {
     }
   };
 
-  const updateTemplate = async (id: number, updates: Partial<Omit<EmailTemplate, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('email_template')
-        .update(updates)
-        .eq('id', id)
-        .eq('organization_id', settings?.organization_id);
+  const updateTemplate = async (
+    id: number,
+    updates: Partial<Omit<EmailTemplate, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>
+  ): Promise<boolean> => {
+    if (!settings?.organization_id) return false;
 
-      if (error) throw error;
+    try {
+      const response = await fetch(`/api/email-templates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...updates,
+          organization_id: settings.organization_id,
+          type: updates.type ?? 'custom',
+          subject: updates.subject ?? 'No Subject',
+          from_email_address_type:
+            updates.from_email_address_type ??
+            (updates.category === 'marketing' ? 'marketing_email' : 'transactional_email'),
+          category: updates.category ?? 'transactional',
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Failed to update template');
+      }
 
       await fetchTemplates();
       return true;

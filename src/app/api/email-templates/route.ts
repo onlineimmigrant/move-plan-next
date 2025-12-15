@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Force Node.js runtime to avoid streaming transform issues on edge
+export const runtime = 'nodejs';
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -51,12 +54,15 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json(data || [], { status: 200 });
+    return new Response(JSON.stringify(data || []), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     console.error('Error in GET /api/email-templates:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch templates', details: error.message },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch templates', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
@@ -84,27 +90,27 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!name || !html_code || !organization_id || !type || !subject) {
-      return NextResponse.json(
-        { error: 'Missing required fields: name, html_code, organization_id, type, subject' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: name, html_code, organization_id, type, subject' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // Validate from_email_address_type
     const validFromTypes = ['transactional_email', 'marketing_email', 'transactional_email_2', 'marketing_email_2'];
     if (from_email_address_type && !validFromTypes.includes(from_email_address_type)) {
-      return NextResponse.json(
-        { error: 'Invalid from_email_address_type' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Invalid from_email_address_type' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // Validate category
     const validCategories = ['transactional', 'marketing', 'system'];
     if (category && !validCategories.includes(category)) {
-      return NextResponse.json(
-        { error: 'Invalid category. Must be: transactional, marketing, or system' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Invalid category. Must be: transactional, marketing, or system' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -133,12 +139,15 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Successfully created email template:', data.id);
-    return NextResponse.json(data, { status: 201 });
+    return new Response(JSON.stringify(data), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     console.error('Error in POST /api/email-templates:', error);
-    return NextResponse.json(
-      { error: 'Failed to create template', details: error.message },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Failed to create template', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

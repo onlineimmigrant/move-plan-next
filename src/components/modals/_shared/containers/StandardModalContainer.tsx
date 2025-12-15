@@ -103,6 +103,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
     width: sizeConfig.minWidth,
     height: sizeConfig.minHeight,
   };
+  // When body scroll is not locked, center modal in current viewport (add scroll offset)
   const finalPosition = defaultPosition || getDefaultPosition(size, finalSize, disableBodyScrollLock);
 
   // Glass morphism classes
@@ -133,9 +134,9 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
             {isOpen && (
               <>
                 {isMobile ? (
-                  // Mobile: Modal positioned at current viewport (not scrolled to top)
+                  // Mobile: Modal centered in viewport with fixed positioning
                   <div
-                    className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center p-4 z-[10001]"
+                    className="fixed inset-0 flex items-center justify-center p-4 z-[10001]"
                     style={{ zIndex }}
                   >
                     <MotionDiv
@@ -144,7 +145,7 @@ export const StandardModalContainer: React.FC<StandardModalContainerProps> = ({
                       aria-modal="true"
                       aria-label={ariaLabel}
                       aria-labelledby={ariaLabelledBy}
-                      className={`w-full h-[90vh] ${glassClasses} ${className}`}
+                      className={`w-full max-h-[90vh] ${glassClasses} ${className}`}
                       variants={mobileSlideVariants}
                       initial="hidden"
                       animate="visible"

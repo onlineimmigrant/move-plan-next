@@ -68,20 +68,20 @@ export default function ListsManager({ primary, searchQuery = '' }: ListsManager
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Subscriber Lists
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             Manage your email subscriber lists
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium min-h-[44px] text-sm justify-center"
           style={{
             background: `linear-gradient(135deg, ${primary.base}, ${primary.hover})`,
             color: 'white'
@@ -94,7 +94,7 @@ export default function ListsManager({ primary, searchQuery = '' }: ListsManager
 
       {/* Lists Grid */}
       {filteredLists.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           {filteredLists.map((list) => (
             <div
               key={list.id}
