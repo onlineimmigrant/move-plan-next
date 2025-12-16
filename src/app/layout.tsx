@@ -47,6 +47,31 @@ const inter = localFont({
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
+// Self-hosted Poppins font
+const poppins = localFont({
+  src: [
+    {
+      path: '../../public/fonts/poppins-400.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/poppins-600.woff2',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/poppins-700.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-poppins',
+  display: 'optional',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+});
+
 // JetBrains Mono for code blocks - keeping from Google for now (rarely used)
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -341,7 +366,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const selectedFont = settings?.font_family || 'Inter';
   
   // Only load Inter + JetBrains Mono - other fonts loaded via CSS @import dynamically
-  const fontVarsClass = `${inter.variable} ${jetbrainsMono.variable}`;
+  const fontVarsClass = `${inter.variable} ${poppins.variable} ${jetbrainsMono.variable}`;
   
   const selectedFontVar = (() => {
     // Map font names to CSS variables (defined in globals.css)
@@ -432,6 +457,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <link rel="stylesheet" href="/styles/prose.css" />
         </noscript>
         
+        {/* Print CSS - defer loading until print media query activates */}
+        <link rel="stylesheet" href="/styles/print.css" media="print" />
+        
         {settings.google_tag && <GoogleTagManager gtmId={settings.google_tag} />}
         
         {/* Mobile Status Bar Styling - Match header background */}
@@ -469,10 +497,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </ClientProviders>
         
-        {/* Error suppression script - moved to after content for better FCP/LCP */}
+        {/* Error suppression script - defer to idle time to avoid blocking main thread */}
         <Script
           id="error-suppression"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -500,7 +528,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <Script
           id="async-prose-css"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function(){

@@ -4,7 +4,7 @@ export function GoogleTagManager({ gtmId }: { gtmId: string }) {
   return (
     <Script
       id="google-tag-manager"
-      strategy="lazyOnload"
+      strategy="worker"
       dangerouslySetInnerHTML={{
         __html: `
           (function(w,d,s,l,i){

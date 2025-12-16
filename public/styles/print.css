@@ -1,0 +1,223 @@
+/**
+ * Print Styles for Post Pages
+ * Clean, readable print output - hides non-essential elements
+ */
+
+@media print {
+  /* Hide navigation elements */
+  nav,
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide TOC sidebars */
+  aside {
+    display: none !important;
+  }
+
+  /* Hide floating buttons */
+  button[aria-label='Open table of contents'],
+  .bottom-sheet-toc {
+    display: none !important;
+  }
+
+  /* Hide admin buttons */
+  .admin-buttons {
+    display: none !important;
+  }
+
+  /* Hide code copy buttons */
+  .code-copy-button {
+    display: none !important;
+  }
+
+  /* Hide document set navigation */
+  .document-set-navigation {
+    display: none !important;
+  }
+
+  /* Main content full width */
+  main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove grid layout */
+  .grid {
+    display: block !important;
+  }
+
+  /* Article content */
+  article {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Post header */
+  .post-header {
+    margin-bottom: 2rem;
+    page-break-after: avoid;
+  }
+
+  /* Typography adjustments */
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+
+  h1 {
+    font-size: 24pt;
+    margin-top: 0;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 18pt;
+    margin-top: 1.5rem;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 14pt;
+    margin-top: 1rem;
+    page-break-after: avoid;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-size: 12pt;
+    margin-top: 0.75rem;
+    page-break-after: avoid;
+  }
+
+  /* Avoid breaking inside elements */
+  p,
+  blockquote,
+  pre,
+  ul,
+  ol {
+    page-break-inside: avoid;
+  }
+
+  /* Links */
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  /* Show link URLs after text */
+  a[href^='http']:after {
+    content: ' (' attr(href) ')';
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* Don't show URLs for internal links */
+  a[href^='#']:after,
+  a[href^='/']:after {
+    content: '';
+  }
+
+  /* Images */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+
+  table,
+  th,
+  td {
+    border: 1px solid #000;
+  }
+
+  th,
+  td {
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  /* Code blocks */
+  pre,
+  code {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  pre {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  code {
+    padding: 0.2rem 0.4rem;
+    font-size: 10pt;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Blockquotes */
+  blockquote {
+    border-left: 4px solid #000;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+  }
+
+  /* Lists */
+  ul,
+  ol {
+    margin: 0.5rem 0;
+    padding-left: 2rem;
+  }
+
+  /* Remove shadows and rounded corners */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Orphans and widows */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Print header/footer (optional - uncomment to add) */
+  /*
+  @page {
+    margin: 2cm;
+    @top-center {
+      content: 'Page ' counter(page);
+    }
+  }
+  */
+}

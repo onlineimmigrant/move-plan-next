@@ -1,12 +1,8 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-/* Self-hosted critical fonts - Inter & Poppins for instant loading */
-@import url('/fonts/fonts.css');
-
-/* Google Fonts removed - using self-hosted Inter/Poppins only for optimal performance
- * All font selections will fallback to Inter (sans-serif) or system fonts
- * This eliminates 750ms+ render-blocking requests and improves LCP
+/* Fonts are loaded via next/font/local in layout.tsx - no @font-face needed here
+ * This eliminates render-blocking CSS @import and prevents font duplication
  */
 
 :root {

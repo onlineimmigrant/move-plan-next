@@ -298,7 +298,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ overrides = [], extraCrumbs =
                     }`}
                     style={{
                       color: index === breadcrumbs.length - 1
-                        ? 'var(--breadcrumb-hover-color)'
+                        ? '#000000'
                         : 'var(--breadcrumb-color)',
                       textDecoration: 'none'
                     }}

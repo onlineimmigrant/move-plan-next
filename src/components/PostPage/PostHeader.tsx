@@ -108,7 +108,7 @@ const PostHeader: React.FC<PostHeaderProps> = memo(({ post, isAdmin, showAdminBu
             <Link href={subsectionUrl}>
               <span 
                 className="flex transition-all transition-300 group items-center mt-2 font-medium text-xs tracking-widest hover:opacity-90"
-                style={{ color: themeColors.cssVars.primary.base }}
+                style={{ color: themeColors.cssVars.primary.active }}
               >
                 {post.subsection}
                 <RightArrowDynamic />

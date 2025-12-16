@@ -17,6 +17,7 @@ const nextConfig = {
   // Production optimizations
   compress: true, // Enable gzip compression
   productionBrowserSourceMaps: false, // Disable source maps in production
+  reactStrictMode: true, // Enable React strict mode for better performance
   // Disable legacy browser support
   eslint: {
     ignoreDuringBuilds: true,
@@ -40,6 +41,8 @@ const nextConfig = {
     ],
     // Reduce memory usage and improve performance
     webpackMemoryOptimizations: true,
+    // Enable React compiler for automatic memoization
+    reactCompiler: false, // Set to true when React Compiler is stable
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],
