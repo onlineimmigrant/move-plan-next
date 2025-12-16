@@ -31,8 +31,12 @@ import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager'
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
-// Dynamic import for NavbarFooterWrapper to avoid circular dependencies
-const NavbarFooterWrapper = dynamic(() => import('@/components/NavbarFooterWrapper'), {
+// Dynamic imports for Header/Footer to avoid webpack module resolution issues
+const Header = dynamic(() => import('@/components/Header'), {
+  ssr: false,
+  loading: () => null
+});
+const Footer = dynamic(() => import('@/components/Footer'), {
   ssr: false,
   loading: () => null
 });
@@ -532,7 +536,8 @@ function BannerAwareContent({
       <BannerContainer banners={fixedBanners} />
       <div className="w-full">
         {showNavbarFooter ? (
-          <NavbarFooterWrapper menuItems={menuItems} fixedBannersHeight={fixedBannersHeight}>
+          <>
+            <Header menuItems={menuItems} fixedBannersHeight={fixedBannersHeight} />
             <main className="w-full">
               {children}
               <UnifiedSections 
@@ -543,7 +548,8 @@ function BannerAwareContent({
               <Breadcrumbs />
               <BannerContainer banners={nonFixedBanners} />
             </main>
-          </NavbarFooterWrapper>
+            <Footer menuItems={menuItems} />
+          </>
         ) : (
           <main className="w-full">
             {children}
