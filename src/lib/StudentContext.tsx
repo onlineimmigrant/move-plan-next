@@ -3,7 +3,8 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
+import { getOrganizationId } from '@/lib/supabase';
 
 interface StudentContextType {
   isStudent: boolean;

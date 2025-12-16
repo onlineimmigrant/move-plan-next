@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { MinerData } from './types';
 
 export async function fetchMiners(): Promise<MinerData[]> {

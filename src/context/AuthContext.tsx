@@ -2,9 +2,25 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { getOrganizationId } from '@/lib/supabase';
+
+// Lazy-load Supabase client - only when auth is needed
+let supabaseClientPromise: Promise<SupabaseClient> | null = null;
+let supabaseClientInstance: SupabaseClient | null = null;
+
+async function getSupabaseClient(): Promise<SupabaseClient> {
+  if (supabaseClientInstance) return supabaseClientInstance;
+  
+  if (!supabaseClientPromise) {
+    supabaseClientPromise = import('@/lib/supabaseClient').then(mod => {
+      supabaseClientInstance = mod.supabase;
+      return mod.supabase;
+    });
+  }
+  
+  return supabaseClientPromise;
+}
 
 interface AuthContextType {
   session: Session | null;
@@ -19,7 +35,6 @@ interface AuthContextType {
   setSession: React.Dispatch<React.SetStateAction<Session | null>>;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
-  supabase: SupabaseClient;
   isInGeneralOrganization: boolean;
 }
 
@@ -67,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentOrgId = await getOrganizationId(baseUrl);
       // console.log('Current organization ID:', currentOrgId);
       
+      const supabase = await getSupabaseClient();
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -97,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
             const organizationId = await getOrganizationId(baseUrl);
             
+            const supabase = await getSupabaseClient();
             // First, check if a profile already exists with the same email in this organization
             const { data: existingProfile, error: existingError } = await supabase
               .from('profiles')
@@ -252,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
       try {
+        const supabase = await getSupabaseClient();
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('getSession error:', error.message);
@@ -276,9 +294,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Defer auth check by 50ms to avoid blocking initial render (reduces Script Evaluation time)
     const timer = setTimeout(initializeSession, 50);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, newSession) => {
+    // Set up auth state listener (but only after client is loaded)
+    let subscription: { unsubscribe: () => void } | null = null;
+    getSupabaseClient().then(supabase => {
+      const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === 'INITIAL_SESSION') {
         return;
       }
@@ -294,11 +313,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setFullName(null);
         setProfileFetched(null);
       }
+      });
+      subscription = data.subscription;
     });
 
     return () => {
       clearTimeout(timer);
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -306,6 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      const supabase = await getSupabaseClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         console.error('Login error:', error.message);
@@ -328,6 +350,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      const supabase = await getSupabaseClient();
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Logout error:', error.message);
@@ -358,7 +381,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isInGeneralOrganization = useMemo(() => organizationType === 'general', [organizationType]);
 
   const contextValue = useMemo(
-    () => ({ session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, canonicalProfileId, isLoading, error, setSession, login, logout, supabase, isInGeneralOrganization }),
+    () => ({ session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, canonicalProfileId, isLoading, error, setSession, login, logout, isInGeneralOrganization }),
     [session, isAdmin, isSuperadmin, organizationId, organizationType, fullName, canonicalProfileId, isLoading, error, isInGeneralOrganization]
   );
 

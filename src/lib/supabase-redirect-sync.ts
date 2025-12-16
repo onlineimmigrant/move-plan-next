@@ -3,7 +3,7 @@
  * Automatically updates Supabase Auth redirect URLs when organizations are created/updated
  */
 
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 
 interface Organization {
   id: string;

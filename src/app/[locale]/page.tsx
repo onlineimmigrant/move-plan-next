@@ -1,6 +1,6 @@
 import { getSettings, getOrganizationId } from '@/lib/getSettings';
 import HomePage from '../../components/HomePageSections/HomePage';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { HomePageData } from '@/types/home_page_data';
 import SimpleLayoutSEO from '../../components/SimpleLayoutSEO';
 //import { MetaTags } from '../../components/MetaTags';

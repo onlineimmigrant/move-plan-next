@@ -1,0 +1,14 @@
+
+> move-plan-next@0.1.0 build
+> NODE_OPTIONS='--no-deprecation' next build
+
+   ▲ Next.js 15.5.7
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     · optimizePackageImports
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+   Skipping linting
+   Checking validity of types ...

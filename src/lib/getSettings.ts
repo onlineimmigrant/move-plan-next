@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 import { Settings } from '@/types/settings';
 import { Organization } from './types';
 import { cache } from 'react';

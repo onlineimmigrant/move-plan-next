@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { getBaseUrl } from '@/lib/utils';
 
 // Helper function to flatten JSONB fields for backward compatibility

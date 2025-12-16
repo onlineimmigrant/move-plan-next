@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 
 // TypeScript Interfaces
 export interface TicketAttachment {

@@ -1,6 +1,6 @@
 // /app/api/brands/route.ts
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { Brand } from '@/types/brand';
 
 export async function GET(request: Request) {

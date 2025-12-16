@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import * as SupabaseModule from '@/lib/supabase';
+import * as SupabaseClientModule from '@/lib/supabaseClient';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock dependencies
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
       getUser: jest.fn().mockResolvedValue({
@@ -273,7 +273,7 @@ describe('Accessibility - Keyboard Shortcuts', () => {
   });
 
   it('should support Enter key on ticket list items', async () => {
-    const supabaseMock = SupabaseModule.supabase as any;
+    const supabaseMock = SupabaseClientModule.supabase as any;
     const mockTickets = [
       { id: 'ticket-1', subject: 'Test Ticket', status: 'open' },
     ];
@@ -298,7 +298,7 @@ describe('Accessibility - Keyboard Shortcuts', () => {
   });
 
   it('should support Space key on ticket list items', async () => {
-    const supabaseMock = SupabaseModule.supabase as any;
+    const supabaseMock = SupabaseClientModule.supabase as any;
     const mockTickets = [
       { id: 'ticket-1', subject: 'Test Ticket', status: 'open' },
     ];
@@ -361,7 +361,7 @@ describe('Accessibility - Screen Reader Support', () => {
   });
 
   it('should have descriptive aria-labels on ticket list items', async () => {
-    const supabaseMock = SupabaseModule.supabase as any;
+    const supabaseMock = SupabaseClientModule.supabase as any;
     const mockTickets = [
       { 
         id: 'ticket-1', 

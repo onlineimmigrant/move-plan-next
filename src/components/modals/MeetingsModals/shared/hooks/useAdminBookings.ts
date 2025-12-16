@@ -28,7 +28,7 @@
 
 import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { CalendarEvent } from '@/types/meetings';
 import { logError } from '../utils/errorHandling';
 

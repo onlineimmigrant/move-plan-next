@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 const supabaseServer = supabase;
 import { getOrganizationId, getSettings } from '../getSettings';

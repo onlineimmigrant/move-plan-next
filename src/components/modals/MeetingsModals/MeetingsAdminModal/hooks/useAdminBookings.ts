@@ -20,7 +20,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { CalendarEvent } from '../../shared/types';
 
 export interface UseAdminBookingsReturn {

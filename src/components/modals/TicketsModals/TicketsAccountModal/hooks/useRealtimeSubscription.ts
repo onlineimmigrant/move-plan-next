@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { processTicketResponses, scrollToBottom } from '../../shared/utils';
 import type { Ticket } from '../../shared/types';
 

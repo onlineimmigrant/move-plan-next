@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { fetchMiners, createSampleMiners } from './api';
 import { FilterState, SortState, GroupByKey, MinerData } from './types';
 

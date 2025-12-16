@@ -1,4 +1,5 @@
-import { getOrganizationWithType, supabase, getOrganizationId } from '../../../lib/supabase';
+import { supabase } from '../../../lib/supabaseClient';
+import { getOrganizationWithType, getOrganizationId } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
 import ClientBlogPage from './ClientBlogPage';
 import { Suspense } from 'react';

@@ -1,8 +1,25 @@
 // src/lib/auth.ts
-import { supabase } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabaseClientPromise: Promise<SupabaseClient> | null = null;
+let supabaseClientInstance: SupabaseClient | null = null;
+
+async function getSupabaseClient(): Promise<SupabaseClient> {
+  if (supabaseClientInstance) return supabaseClientInstance;
+
+  if (!supabaseClientPromise) {
+    supabaseClientPromise = import('./supabaseClient').then((mod) => {
+      supabaseClientInstance = mod.supabase;
+      return mod.supabase;
+    });
+  }
+
+  return supabaseClientPromise;
+}
 
 export async function isAdminClient(): Promise<boolean> {
   try {
+    const supabase = await getSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       console.log('No authenticated user found');
@@ -30,6 +47,7 @@ export async function isAdminClient(): Promise<boolean> {
 
 export async function isSuperadminClient(): Promise<boolean> {
   try {
+    const supabase = await getSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return false;

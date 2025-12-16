@@ -6,7 +6,7 @@ import { FaPlus, FaSearch, FaTrash, FaTimes } from 'react-icons/fa';
 import { debounce } from '@/lib/debounce';
 import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Product {
   id: string;

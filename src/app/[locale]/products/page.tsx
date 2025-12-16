@@ -1,4 +1,5 @@
-import { supabase, getOrganizationId, getOrganizationWithType } from '../../../lib/supabase';
+import { supabase } from '../../../lib/supabaseClient';
+import { getOrganizationId, getOrganizationWithType } from '../../../lib/supabase';
 import { getBaseUrl } from '../../../lib/utils';
 import { fetchProductsListingSEOData } from '../../../lib/supabase/seo';
 import { detectUserCurrency, getPriceForCurrency } from '../../../lib/currency';

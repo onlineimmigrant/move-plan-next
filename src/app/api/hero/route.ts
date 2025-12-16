@@ -1,6 +1,6 @@
 // /app/api/hero/route.ts
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { HeroData } from '@/types/hero_data';
 
 export async function GET(request: Request) {

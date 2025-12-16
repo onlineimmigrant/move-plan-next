@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { FilterState, SortState, GroupByKey, MinerData } from '@/components/MinersComponent/types';
 
 // Fetch user's miners (only their own)

@@ -2,12 +2,17 @@
 import { getBaseUrl } from './utils';
 import { Banner, BannerOpenState, BannerPosition, BannerType } from '../components/banners/types';
 import { Organization } from './types';
-import { supabase } from './supabaseClient';
 
-// Re-export the single Supabase client instance to avoid multiple GoTrueClient instances
-export { supabase } from './supabaseClient';
+// NOTE: Intentionally no longer re-exporting `supabase` from this module.
+// Import `supabase` directly from './supabaseClient' where needed.
+
+async function getSupabase() {
+  const mod = await import('./supabaseClient');
+  return mod.supabase;
+}
 
 export async function getOrganizationId(baseUrl?: string): Promise<string | null> {
+  const supabase = await getSupabase();
   const isLocal = process.env.NODE_ENV === 'development';
   const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
@@ -83,6 +88,7 @@ export async function getOrganizationId(baseUrl?: string): Promise<string | null
 }
 
 export async function getOrganizationWithType(baseUrl?: string): Promise<{ id: string; type: string } | null> {
+  const supabase = await getSupabase();
   const isLocal = process.env.NODE_ENV === 'development';
   const currentUrl = baseUrl || getBaseUrl(true); // Use getBaseUrl for Vercel compatibility
   const tenantId = process.env.NEXT_PUBLIC_TENANT_ID;
@@ -201,6 +207,7 @@ export async function fetchUserProfile(userId?: string) {
   }
 
   try {
+    const supabase = await getSupabase();
     const organizationId = await getOrganizationId();
     if (!organizationId) {
       console.log('No organization found, skipping profile fetch');
@@ -259,6 +266,7 @@ export async function fetchUserProfile(userId?: string) {
 // Fetch banners
 export async function fetchBanners(pagePath?: string, userId?: string): Promise<Banner[]> {
   try {
+    const supabase = await getSupabase();
     const organizationId = await getOrganizationId();
     if (!organizationId) {
       console.log('No organization found, skipping banner fetch');
@@ -344,6 +352,7 @@ export async function fetchBanners(pagePath?: string, userId?: string): Promise<
 // Fetch dismissed banners
 export async function fetchDismissedBanners(userId?: string): Promise<string[]> {
   try {
+    const supabase = await getSupabase();
     const organizationId = await getOrganizationId();
     if (!organizationId) {
       console.log('No organization found, skipping dismissed banners fetch');
@@ -381,6 +390,7 @@ export async function fetchDismissedBanners(userId?: string): Promise<string[]> 
 // Dismiss a banner
 export async function dismissBanner(bannerId: string, userId: string | null, dismissalDuration: string | undefined) {
   try {
+    const supabase = await getSupabase();
     const organizationId = await getOrganizationId();
     if (!organizationId) {
       console.log('No organization found, skipping banner dismissal');

@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
-import * as SupabaseModule from '@/lib/supabase';
+import * as SupabaseClientModule from '@/lib/supabaseClient';
 
 // Mock Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
       getUser: jest.fn().mockResolvedValue({
@@ -114,7 +114,10 @@ describe('useTicketOperations', () => {
       created_at: new Date().toISOString(),
       message: 'Test message',
       messages: [],
-      organization_id: 'org-1'
+      organization_id: 'org-1',
+      preferred_contact_method: null,
+      email: 'customer@test.com',
+      ticket_responses: [],
     }];
     
     const { result } = renderHook(() => useTicketOperations(mockProps));
@@ -280,7 +283,7 @@ describe('useTagManagement', () => {
     const mockUpdateSelectedTicket = jest.fn();
     
     // Mock Supabase to return tags when fetching
-    const supabaseMock = SupabaseModule.supabase as any;
+    const supabaseMock = SupabaseClientModule.supabase as any;
     supabaseMock.from.mockImplementation((table: string) => {
       if (table === 'ticket_tags') {
         return {

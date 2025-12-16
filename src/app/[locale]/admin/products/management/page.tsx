@@ -8,7 +8,7 @@ import taxCodesData from '@/components/tax_codes.json';
 import { debounce } from '@/lib/debounce';
 import Toast from '@/components/Toast';
 import Tooltip from '@/components/Tooltip';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 // Centralized API endpoints
 const API_ENDPOINTS = {

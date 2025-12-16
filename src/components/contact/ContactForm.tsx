@@ -5,7 +5,7 @@ import { FaEnvelope, FaPhone, FaTelegramPlane, FaWhatsapp } from 'react-icons/fa
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import Toast from '../Toast'
 import Button from '@/ui/Button'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabaseClient'
 import { useSettings } from '@/context/SettingsContext'
 import { useContactTranslations } from './useContactTranslations'
 import KnowledgeBaseWidget from '../KnowledgeBaseWidget/KnowledgeBaseWidget'

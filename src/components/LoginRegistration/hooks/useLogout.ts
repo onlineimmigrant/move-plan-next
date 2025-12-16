@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Hook for handling user logout with smart redirect logic

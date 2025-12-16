@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 
 export interface LoginFormData {

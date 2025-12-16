@@ -4,7 +4,7 @@ import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { format } from 'date-fns/format';
 import { type BookingCardProps } from './types';
 import { getCardStyles, getTimeUntilMeeting, getRelativeTime, shouldShowCountdown } from './utils';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { triggerBadgeRefresh } from '@/components/modals/UnifiedMenu/hooks/useBadgeRefresh';
 
 // Lazy load EventDetailsModal

@@ -57,7 +57,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense, memo, useCallback, useMemo } from 'react';
 import { Listbox, Popover, Transition } from '@headlessui/react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useSettings } from '@/context/SettingsContext';
 import { useAccountTranslations } from '@/components/accountTranslationLogic/useAccountTranslations';
 import { getAttachmentUrl, isImageFile } from '@/lib/fileUpload';

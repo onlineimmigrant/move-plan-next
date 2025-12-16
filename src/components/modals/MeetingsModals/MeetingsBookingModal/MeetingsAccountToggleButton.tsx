@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { VideoCameraIcon } from '@heroicons/react/24/outline';
 import MeetingsBookingModal from './MeetingsBookingModal';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 /**

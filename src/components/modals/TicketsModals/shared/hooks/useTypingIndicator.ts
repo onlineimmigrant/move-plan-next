@@ -1,5 +1,5 @@
 import { useEffect, MutableRefObject } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface TypingIndicatorConfig {
   isOpen: boolean;

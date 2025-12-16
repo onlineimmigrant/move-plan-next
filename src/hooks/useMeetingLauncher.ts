@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useMeetingContext, type Booking } from '@/context/MeetingContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface LaunchVideoCallParams {
   bookingId: string;

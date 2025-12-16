@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId, getOrganizationWithType } from '@/lib/supabase';
+import { getOrganizationId, getOrganizationWithType } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { getPriceForCurrency } from '@/lib/currency';
 import { getBaseUrl } from '@/lib/utils';
 

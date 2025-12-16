@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { TicketTag, Ticket } from '../types';
 import * as TicketAPI from '../utils/ticketApi';
 

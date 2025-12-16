@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { XMarkIcon, PhotoIcon, PlusIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal/ImageGalleryModal';
 import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/components/Shared/ToastContainer';

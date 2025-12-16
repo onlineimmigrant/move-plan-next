@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useMeetingContext } from '@/context/MeetingContext';
 import VideoCallModal from './VideoCall/VideoCallModal';
 import WaitingRoom from './WaitingRoom/WaitingRoom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Wrapper component that connects VideoCallModal to MeetingContext

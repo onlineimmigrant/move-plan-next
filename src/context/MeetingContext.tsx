@@ -1,7 +1,23 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+let supabaseClientPromise: Promise<SupabaseClient> | null = null;
+let supabaseClientInstance: SupabaseClient | null = null;
+
+async function getSupabaseClient(): Promise<SupabaseClient> {
+  if (supabaseClientInstance) return supabaseClientInstance;
+
+  if (!supabaseClientPromise) {
+    supabaseClientPromise = import('@/lib/supabaseClient').then((mod) => {
+      supabaseClientInstance = mod.supabase;
+      return mod.supabase;
+    });
+  }
+
+  return supabaseClientPromise;
+}
 
 // Booking type - matching actual database schema
 export interface Booking {
@@ -119,6 +135,7 @@ export function MeetingProvider({ children }: MeetingProviderProps) {
 
   const refreshToken = useCallback(async (bookingId: string): Promise<string | null> => {
     try {
+      const supabase = await getSupabaseClient();
       // Get current session token
       const { data: { session } } = await supabase.auth.getSession();
       

@@ -1,10 +1,12 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import '@/styles/print.css';
-import { getOrganizationId, supabase } from '@/lib/supabase';
+import { getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import PostPageClient from './PostPageClient';
 import { PostPageErrorBoundary } from '@/components/PostPage/PostPageErrorBoundary';
 import PerfPostMount from '../../../components/perf/PerfPostMount';
+import { renderMarkdownToHtml } from '@/lib/markdown/renderMarkdownToHtml';
 
 // ISR for blog posts - pre-build at deploy time, allow admin edits to appear within 60s
 export const dynamicParams = true; // Allow dynamic routes not in generateStaticParams
@@ -149,6 +151,16 @@ async function fetchPostData(slug: string): Promise<Post | null> {
     if (!data) return null;
     const flattened = flattenPost(data);
     if (!flattened?.display_this_post) return null;
+
+    if (flattened.content_type === 'markdown' && flattened.content) {
+      try {
+        flattened.content = await renderMarkdownToHtml(flattened.content);
+        flattened.content_type = 'html';
+      } catch (err) {
+        console.error('[PostPage] Failed to render markdown to HTML:', err);
+      }
+    }
+
     return flattened;
   } catch (err) {
     console.error('[PostPage] Unexpected fetch error:', err);

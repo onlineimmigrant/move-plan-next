@@ -1,0 +1,675 @@
+
+> move-plan-next@0.1.0 build
+> NODE_OPTIONS='--no-deprecation' next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/ois/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/ois/move-plan-next/package-lock.json
+
+   ▲ Next.js 15.5.7
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     · optimizePackageImports
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+ ⚠ You are using an experimental edge runtime, the API might change.
+ ✓ Compiled successfully in 53s
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+ ⚠ You are using an experimental edge runtime, the API might change.
+   Generating static pages (0/846) ...
+   Generating static pages (211/846) 
+   Generating static pages (422/846) 
+   Generating static pages (634/846) 
+No organization found for URL: http://localhost:3000
+No organization found for URL: http://localhost:3000 and no valid NEXT_PUBLIC_TENANT_ID
+[PostPage] No organization id resolved
+No organization found for URL: http://localhost:3000
+No organization found for URL: http://localhost:3000 and no valid NEXT_PUBLIC_TENANT_ID
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+ ✓ Generating static pages (846/846)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                                 Size  First Load JS
+┌ ƒ /_not-found                                                            273 B         143 kB
+├ ƒ /[...slug]                                                             837 B         144 kB
+├ ● /[locale]                                                            17.7 kB         218 kB
+├   └ /en
+├ ● /[locale]/[slug]                                                     23.4 kB         395 kB
+├   ├ /en/about-us
+├   ├ /en/commercial-property-solicitors
+├   ├ /en/cookie-policy
+├   └ [+57 more paths]
+├ ● /[locale]/about-us                                                     837 B         144 kB
+├   ├ /en/about-us
+├   ├ /es/about-us
+├   ├ /fr/about-us
+├   └ [+7 more paths]
+├ ● /[locale]/account                                                    3.92 kB         415 kB
+├   ├ /en/account
+├   ├ /es/account
+├   ├ /fr/account
+├   └ [+7 more paths]
+├ ● /[locale]/account/ai                                                 3.38 kB         411 kB
+├   ├ /en/account/ai
+├   ├ /es/account/ai
+├   ├ /fr/account/ai
+├   └ [+7 more paths]
+├ ● /[locale]/account/edupro                                             9.45 kB         231 kB
+├   ├ /en/account/edupro
+├   ├ /es/account/edupro
+├   ├ /fr/account/edupro
+├   └ [+7 more paths]
+├ ƒ /[locale]/account/edupro/[slug]                                       3.7 kB         300 kB
+├ ƒ /[locale]/account/edupro/[slug]/info                                 1.97 kB         220 kB
+├ ƒ /[locale]/account/edupro/[slug]/practice                             2.28 kB         284 kB
+├ ƒ /[locale]/account/edupro/[slug]/progress                             4.28 kB         283 kB
+├ ƒ /[locale]/account/edupro/[slug]/quiz/[quizSlug]                       9.4 kB         430 kB
+├ ƒ /[locale]/account/edupro/[slug]/quiz/[quizSlug]/results              4.49 kB         271 kB
+├ ƒ /[locale]/account/edupro/[slug]/study-plan                           7.19 kB         281 kB
+├ ƒ /[locale]/account/edupro/[slug]/topic/[topicSlug]                    5.05 kB         276 kB
+├ ƒ /[locale]/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]  12.7 kB         431 kB
+├ ● /[locale]/account/edupro/memory-hub                                  73.8 kB         491 kB
+├   ├ /en/account/edupro/memory-hub
+├   ├ /es/account/edupro/memory-hub
+├   ├ /fr/account/edupro/memory-hub
+├   └ [+7 more paths]
+├ ● /[locale]/account/equipment                                          2.81 kB         204 kB
+├   ├ /en/account/equipment
+├   ├ /es/account/equipment
+├   ├ /fr/account/equipment
+├   └ [+7 more paths]
+├ ● /[locale]/account/files                                              5.68 kB         374 kB
+├   ├ /en/account/files
+├   ├ /es/account/files
+├   ├ /fr/account/files
+├   └ [+7 more paths]
+├ ● /[locale]/account/jobs                                               2.23 kB         145 kB
+├   ├ /en/account/jobs
+├   ├ /es/account/jobs
+├   ├ /fr/account/jobs
+├   └ [+7 more paths]
+├ ● /[locale]/account/miners                                             3.24 kB         461 kB
+├   ├ /en/account/miners
+├   ├ /es/account/miners
+├   ├ /fr/account/miners
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile                                            19.9 kB         291 kB
+├   ├ /en/account/profile
+├   ├ /es/account/profile
+├   ├ /fr/account/profile
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile/payments                                   6.08 kB         278 kB
+├   ├ /en/account/profile/payments
+├   ├ /es/account/profile/payments
+├   ├ /fr/account/profile/payments
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile/payments/billing                            4.4 kB         227 kB
+├   ├ /en/account/profile/payments/billing
+├   ├ /es/account/profile/payments/billing
+├   ├ /fr/account/profile/payments/billing
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile/payments/receipt                           6.01 kB         331 kB
+├   ├ /en/account/profile/payments/receipt
+├   ├ /es/account/profile/payments/receipt
+├   ├ /fr/account/profile/payments/receipt
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile/payments/receipts                             3 kB         219 kB
+├   ├ /en/account/profile/payments/receipts
+├   ├ /es/account/profile/payments/receipts
+├   ├ /fr/account/profile/payments/receipts
+├   └ [+7 more paths]
+├ ● /[locale]/account/profile/purchases                                  7.28 kB         283 kB
+├   ├ /en/account/profile/purchases
+├   ├ /es/account/profile/purchases
+├   ├ /fr/account/profile/purchases
+├   └ [+7 more paths]
+├ ● /[locale]/account/tickets                                            15.6 kB         278 kB
+├   ├ /en/account/tickets
+├   ├ /es/account/tickets
+├   ├ /fr/account/tickets
+├   └ [+7 more paths]
+├ ● /[locale]/admin                                                      21.8 kB         334 kB
+├   ├ /en/admin
+├   ├ /es/admin
+├   ├ /fr/admin
+├   └ [+7 more paths]
+├ ƒ /[locale]/admin/[table]                                              27.5 kB         281 kB
+├ ƒ /[locale]/admin/[table]/api                                            837 B         144 kB
+├ ● /[locale]/admin/ai/management                                        3.75 kB         412 kB
+├   ├ /en/admin/ai/management
+├   ├ /es/admin/ai/management
+├   ├ /fr/admin/ai/management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/create-post                                          7.28 kB         212 kB
+├   ├ /en/admin/create-post
+├   ├ /es/admin/create-post
+├   ├ /fr/admin/create-post
+├   └ [+7 more paths]
+├ ● /[locale]/admin/customers/management                                 13.6 kB         262 kB
+├   ├ /en/admin/customers/management
+├   ├ /es/admin/customers/management
+├   ├ /fr/admin/customers/management
+├   └ [+7 more paths]
+├ ƒ /[locale]/admin/edit/[slug]                                          7.33 kB         212 kB
+├ ● /[locale]/admin/email_preferences/newsletter                           732 B         144 kB
+├   ├ /en/admin/email_preferences/newsletter
+├   ├ /es/admin/email_preferences/newsletter
+├   ├ /fr/admin/email_preferences/newsletter
+├   └ [+7 more paths]
+├ ● /[locale]/admin/email-templates                                       2.5 kB         270 kB
+├   ├ /en/admin/email-templates
+├   ├ /es/admin/email-templates
+├   ├ /fr/admin/email-templates
+├   └ [+7 more paths]
+├ ● /[locale]/admin/equipment/management                                 3.48 kB         188 kB
+├   ├ /en/admin/equipment/management
+├   ├ /es/admin/equipment/management
+├   ├ /fr/admin/equipment/management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/miners/management                                    4.71 kB         462 kB
+├   ├ /en/admin/miners/management
+├   ├ /es/admin/miners/management
+├   ├ /fr/admin/miners/management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/pricingplans/management                              14.9 kB         202 kB
+├   ├ /en/admin/pricingplans/management
+├   ├ /es/admin/pricingplans/management
+├   ├ /fr/admin/pricingplans/management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/products/management                                  14.8 kB         231 kB
+├   ├ /en/admin/products/management
+├   ├ /es/admin/products/management
+├   ├ /fr/admin/products/management
+├   └ [+7 more paths]
+├ ƒ /[locale]/admin/reports/[table]                                      47.8 kB         494 kB
+├ ● /[locale]/admin/reports/custom                                       3.75 kB         321 kB
+├   ├ /en/admin/reports/custom
+├   ├ /es/admin/reports/custom
+├   ├ /fr/admin/reports/custom
+├   └ [+7 more paths]
+├ ● /[locale]/admin/site-management                                        503 B         467 kB
+├   ├ /en/admin/site-management
+├   ├ /es/admin/site-management
+├   ├ /fr/admin/site-management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/site/management                                        503 B         467 kB
+├   ├ /en/admin/site/management
+├   ├ /es/admin/site/management
+├   ├ /fr/admin/site/management
+├   └ [+7 more paths]
+├ ● /[locale]/admin/tables                                                 837 B         144 kB
+├   ├ /en/admin/tables
+├   ├ /es/admin/tables
+├   ├ /fr/admin/tables
+├   └ [+7 more paths]
+├ ● /[locale]/admin/tickets/management                                   17.4 kB         328 kB
+├   ├ /en/admin/tickets/management
+├   ├ /es/admin/tickets/management
+├   ├ /fr/admin/tickets/management
+├   └ [+7 more paths]
+├ ● /[locale]/auth/callback                                              2.82 kB         187 kB
+├   ├ /en/auth/callback
+├   ├ /es/auth/callback
+├   ├ /fr/auth/callback
+├   └ [+7 more paths]
+├ ● /[locale]/basket                                                     4.94 kB         351 kB
+├   ├ /en/basket
+├   ├ /es/basket
+├   ├ /fr/basket
+├   └ [+7 more paths]
+├ ● /[locale]/become-affiliate-partner                                     837 B         144 kB
+├   ├ /en/become-affiliate-partner
+├   ├ /es/become-affiliate-partner
+├   ├ /fr/become-affiliate-partner
+├   └ [+7 more paths]
+├ ● /[locale]/blog                                                       10.8 kB         253 kB
+├   ├ /en/blog
+├   ├ /es/blog
+├   ├ /fr/blog
+├   └ [+7 more paths]
+├ ● /[locale]/cancel                                                     2.23 kB         145 kB
+├   ├ /en/cancel
+├   ├ /es/cancel
+├   ├ /fr/cancel
+├   └ [+7 more paths]
+├ ● /[locale]/checkout                                                   14.1 kB         364 kB
+├   ├ /en/checkout
+├   ├ /es/checkout
+├   ├ /fr/checkout
+├   └ [+7 more paths]
+├ ● /[locale]/color-shades                                               2.59 kB         146 kB
+├   ├ /en/color-shades
+├   ├ /es/color-shades
+├   ├ /fr/color-shades
+├   └ [+7 more paths]
+├ ● /[locale]/contact                                                    11.2 kB         283 kB
+├   ├ /en/contact
+├   ├ /es/contact
+├   ├ /fr/contact
+├   └ [+7 more paths]
+├ ƒ /[locale]/course/[slug]                                              10.9 kB         382 kB
+├ ● /[locale]/developers                                                   837 B         144 kB
+├   ├ /en/developers
+├   ├ /es/developers
+├   ├ /fr/developers
+├   └ [+7 more paths]
+├ ● /[locale]/education-hub/courses                                      3.96 kB         211 kB
+├   ├ /en/education-hub/courses
+├   ├ /es/education-hub/courses
+├   ├ /fr/education-hub/courses
+├   └ [+7 more paths]
+├ ● /[locale]/education-hub/quizzes                                      3.85 kB         200 kB
+├   ├ /en/education-hub/quizzes
+├   ├ /es/education-hub/quizzes
+├   ├ /fr/education-hub/quizzes
+├   └ [+7 more paths]
+├ ● /[locale]/education-hub/study-resources                              4.41 kB         271 kB
+├   ├ /en/education-hub/study-resources
+├   ├ /es/education-hub/study-resources
+├   ├ /fr/education-hub/study-resources
+├   └ [+7 more paths]
+├ ● /[locale]/faq                                                        5.07 kB         293 kB
+├   ├ /en/faq
+├   ├ /es/faq
+├   ├ /fr/faq
+├   └ [+7 more paths]
+├ ● /[locale]/features                                                   8.11 kB         254 kB
+├   ├ /en/features
+├   ├ /es/features
+├   ├ /fr/features
+├   └ [+7 more paths]
+├ ƒ /[locale]/features/[slug]                                            5.14 kB         202 kB
+├ ● /[locale]/help-center                                                46.8 kB         306 kB
+├   ├ /en/help-center
+├   ├ /es/help-center
+├   ├ /fr/help-center
+├   └ [+7 more paths]
+├ ● /[locale]/investors                                                  15.4 kB         338 kB
+├   ├ /en/investors
+├   ├ /es/investors
+├   ├ /fr/investors
+├   └ [+7 more paths]
+├ ● /[locale]/login                                                      4.95 kB         329 kB
+├   ├ /en/login
+├   ├ /es/login
+├   ├ /fr/login
+├   └ [+7 more paths]
+├ ● /[locale]/products                                                   9.56 kB         309 kB
+├   ├ /en/products
+├   ├ /es/products
+├   ├ /fr/products
+├   └ [+7 more paths]
+├ ● /[locale]/products/[id]                                              21.6 kB         386 kB
+├   ├ /en/products/fee-earner-rates
+├   ├ /en/products/immigration
+├   └ /en/products/landlord-tenant
+├ ● /[locale]/referral-bonuses                                             837 B         144 kB
+├   ├ /en/referral-bonuses
+├   ├ /es/referral-bonuses
+├   ├ /fr/referral-bonuses
+├   └ [+7 more paths]
+├ ● /[locale]/register                                                   7.55 kB         362 kB
+├   ├ /en/register
+├   ├ /es/register
+├   ├ /fr/register
+├   └ [+7 more paths]
+├ ● /[locale]/register-free-trial                                        7.57 kB         362 kB
+├   ├ /en/register-free-trial
+├   ├ /es/register-free-trial
+├   ├ /fr/register-free-trial
+├   └ [+7 more paths]
+├ ● /[locale]/reset-password                                             9.29 kB         272 kB
+├   ├ /en/reset-password
+├   ├ /es/reset-password
+├   ├ /fr/reset-password
+├   └ [+7 more paths]
+├ ƒ /[locale]/sqe-2/[slug]                                               10.9 kB         382 kB
+├ ƒ /[locale]/sqe-2/legal-skills-assessments/[slug]                      8.75 kB         336 kB
+├ ƒ /[locale]/sqe-2/practice-area/[slug]                                 11.1 kB         382 kB
+├ ƒ /[locale]/sqe-2/topic/[slug]                                         11.7 kB         383 kB
+├ ● /[locale]/success                                                    3.62 kB         176 kB
+├   ├ /en/success
+├   ├ /es/success
+├   ├ /fr/success
+├   └ [+7 more paths]
+├ ● /[locale]/superadmin                                                 5.82 kB         202 kB
+├   ├ /en/superadmin
+├   ├ /es/superadmin
+├   ├ /fr/superadmin
+├   └ [+7 more paths]
+├ ● /[locale]/superadmin/email-templates                                 2.45 kB         270 kB
+├   ├ /en/superadmin/email-templates
+├   ├ /es/superadmin/email-templates
+├   ├ /fr/superadmin/email-templates
+├   └ [+7 more paths]
+├ ● /[locale]/superadmin/system-models                                   3.37 kB         404 kB
+├   ├ /en/superadmin/system-models
+├   ├ /es/superadmin/system-models
+├   ├ /fr/superadmin/system-models
+├   └ [+7 more paths]
+├ ● /[locale]/support                                                    2.59 kB         212 kB
+├   ├ /en/support
+├   ├ /es/support
+├   ├ /fr/support
+├   └ [+7 more paths]
+├ ● /[locale]/terms                                                      2.57 kB         212 kB
+├   ├ /en/terms
+├   ├ /es/terms
+├   ├ /fr/terms
+├   └ [+7 more paths]
+├ ● /[locale]/test-video                                                  131 kB         492 kB
+├   ├ /en/test-video
+├   ├ /es/test-video
+├   ├ /fr/test-video
+├   └ [+7 more paths]
+├ ● /[locale]/testik                                                     2.59 kB         146 kB
+├   ├ /en/testik
+├   ├ /es/testik
+├   ├ /fr/testik
+├   └ [+7 more paths]
+├ ● /[locale]/university-partner-programme                                 837 B         144 kB
+├   ├ /en/university-partner-programme
+├   ├ /es/university-partner-programme
+├   ├ /fr/university-partner-programme
+├   └ [+7 more paths]
+├ ƒ /[locale]/video-call/[bookingId]                                      129 kB         419 kB
+├ ƒ /api/accounts/bulk-import                                              837 B         144 kB
+├ ƒ /api/accounts/create                                                   837 B         144 kB
+├ ƒ /api/accounts/delete                                                   837 B         144 kB
+├ ƒ /api/accounts/is-last-admin                                            837 B         144 kB
+├ ƒ /api/accounts/update                                                   837 B         144 kB
+├ ƒ /api/activities                                                        837 B         144 kB
+├ ƒ /api/ai/enhance-content                                                837 B         144 kB
+├ ƒ /api/ai/translate                                                      837 B         144 kB
+├ ƒ /api/articles                                                          837 B         144 kB
+├ ƒ /api/assemblyai/token                                                  837 B         144 kB
+├ ƒ /api/auth-test                                                         837 B         144 kB
+├ ƒ /api/avatars/upload                                                    837 B         144 kB
+├ ƒ /api/blog-posts                                                        837 B         144 kB
+├ ƒ /api/brands                                                            837 B         144 kB
+├ ƒ /api/cancel-payment-intent                                             837 B         144 kB
+├ ƒ /api/chat                                                              837 B         144 kB
+├ ƒ /api/chat/extract-data                                                 837 B         144 kB
+├ ƒ /api/chat/files/parse                                                  837 B         144 kB
+├ ƒ /api/chat/files/upload                                                 837 B         144 kB
+├ ƒ /api/chat/settings                                                     837 B         144 kB
+├ ƒ /api/chat/tasks                                                        837 B         144 kB
+├ ƒ /api/conversations/create                                              837 B         144 kB
+├ ƒ /api/cookie-categories                                                 837 B         144 kB
+├ ƒ /api/cookies/categories                                                837 B         144 kB
+├ ƒ /api/cookies/consent                                                   837 B         144 kB
+├ ƒ /api/course/[slug]                                                     837 B         144 kB
+├ ƒ /api/courses                                                           837 B         144 kB
+├ ƒ /api/create-payment-intent                                             837 B         144 kB
+├ ƒ /api/create-subscription                                               837 B         144 kB
+├ ƒ /api/create-user                                                       837 B         144 kB
+├ ƒ /api/crm/profiles/[profileId]/activity                                 837 B         144 kB
+├ ƒ /api/crm/profiles/[profileId]/appointments                             837 B         144 kB
+├ ƒ /api/crm/profiles/[profileId]/cases                                    837 B         144 kB
+├ ƒ /api/crm/profiles/[profileId]/tickets                                  837 B         144 kB
+├ ƒ /api/debug-metadata                                                    837 B         144 kB
+├ ƒ /api/debug-org                                                         837 B         144 kB
+├ ƒ /api/debug/cookies                                                     837 B         144 kB
+├ ƒ /api/debug/geolocation                                                 837 B         144 kB
+├ ƒ /api/default-locale                                                    837 B         144 kB
+├ ƒ /api/delete-r2-image                                                   837 B         144 kB
+├ ƒ /api/delete-r2-video                                                   837 B         144 kB
+├ ƒ /api/document-sets                                                     837 B         144 kB
+├ ƒ /api/document-sets/[slug]                                              837 B         144 kB
+├ ƒ /api/email-templates                                                   837 B         144 kB
+├ ƒ /api/email-templates/[id]                                              837 B         144 kB
+├ ƒ /api/email-templates/preview                                           837 B         144 kB
+├ ƒ /api/email-templates/test                                              837 B         144 kB
+├ ƒ /api/email/accounts                                                    837 B         144 kB
+├ ƒ /api/email/accounts/[id]                                               837 B         144 kB
+├ ƒ /api/email/accounts/[id]/set-primary                                   837 B         144 kB
+├ ƒ /api/email/accounts/[id]/test-connection                               837 B         144 kB
+├ ƒ /api/email/campaigns/[id]/send                                         837 B         144 kB
+├ ƒ /api/email/config                                                      837 B         144 kB
+├ ƒ /api/email/oauth/gmail/callback                                        837 B         144 kB
+├ ƒ /api/email/oauth/gmail/init                                            837 B         144 kB
+├ ƒ /api/email/oauth/outlook/callback                                      837 B         144 kB
+├ ƒ /api/email/oauth/outlook/init                                          837 B         144 kB
+├ ƒ /api/email/send                                                        837 B         144 kB
+├ ƒ /api/email/ses/test                                                    837 B         144 kB
+├ ƒ /api/email/sync                                                        837 B         144 kB
+├ ƒ /api/email/templates/[id]                                              837 B         144 kB
+├ ƒ /api/email/verify-domain                                               837 B         144 kB
+├ ƒ /api/epub-proxy                                                        837 B         144 kB
+├ ƒ /api/faq                                                               837 B         144 kB
+├ ƒ /api/faqs                                                              837 B         144 kB
+├ ƒ /api/features                                                          837 B         144 kB
+├ ƒ /api/features/[slug]                                                   837 B         144 kB
+├ ƒ /api/files/share                                                       837 B         144 kB
+├ ƒ /api/files/virtual-organization                                        837 B         144 kB
+├ ƒ /api/finalize-subscription                                             837 B         144 kB
+├ ƒ /api/flashcards/create                                                 837 B         144 kB
+├ ƒ /api/footer-menu-items                                                 837 B         144 kB
+├ ƒ /api/foreign-key-options                                               837 B         144 kB
+├ ƒ /api/forms                                                             837 B         144 kB
+├ ƒ /api/forms/[id]                                                        837 B         144 kB
+├ ƒ /api/forms/[id]/submit                                                 837 B         144 kB
+├ ƒ /api/gallery/upload                                                    837 B         144 kB
+├ ƒ /api/generate-sas                                                      837 B         144 kB
+├ ƒ /api/generate-video                                                    837 B         144 kB
+├ ƒ /api/hero                                                              837 B         144 kB
+├ ƒ /api/hero-section/[id]                                                 837 B         144 kB
+├ ƒ /api/inventory                                                         837 B         144 kB
+├ ƒ /api/is-student                                                        837 B         144 kB
+├ ƒ /api/jobs                                                              837 B         144 kB
+├ ƒ /api/link-stripe-customer                                              837 B         144 kB
+├ ƒ /api/meetings/availability                                             837 B         144 kB
+├ ƒ /api/meetings/available-slots                                          837 B         144 kB
+├ ƒ /api/meetings/bookings                                                 837 B         144 kB
+├ ƒ /api/meetings/bookings/[id]                                            837 B         144 kB
+├ ƒ /api/meetings/instant-invite                                           837 B         144 kB
+├ ƒ /api/meetings/launch-video                                             837 B         144 kB
+├ ƒ /api/meetings/meeting-types                                            837 B         144 kB
+├ ƒ /api/meetings/meeting-types/[id]                                       837 B         144 kB
+├ ƒ /api/meetings/refresh-token                                            837 B         144 kB
+├ ƒ /api/meetings/rooms                                                    837 B         144 kB
+├ ƒ /api/meetings/settings                                                 837 B         144 kB
+├ ƒ /api/meetings/types                                                    837 B         144 kB
+├ ƒ /api/meetings/types/[id]                                               837 B         144 kB
+├ ƒ /api/meetings/video-token                                              837 B         144 kB
+├ ƒ /api/meetings/waiting-room/approve                                     837 B         144 kB
+├ ƒ /api/meetings/waiting-room/enter                                       837 B         144 kB
+├ ƒ /api/meetings/waiting-room/leave                                       837 B         144 kB
+├ ƒ /api/meetings/waiting-room/reject                                      837 B         144 kB
+├ ƒ /api/menu                                                              837 B         144 kB
+├ ƒ /api/menu-items                                                        837 B         144 kB
+├ ƒ /api/menu-items/[id]                                                   837 B         144 kB
+├ ƒ /api/metrics                                                           837 B         144 kB
+├ ƒ /api/metrics/[id]                                                      837 B         144 kB
+├ ƒ /api/miners                                                            837 B         144 kB
+├ ƒ /api/miners/sample                                                     837 B         144 kB
+├ ƒ /api/orders                                                            837 B         144 kB
+├ ƒ /api/organizations                                                     837 B         144 kB
+├ ƒ /api/organizations-minimal/[id]                                        837 B         144 kB
+├ ƒ /api/organizations/[id]                                                837 B         144 kB
+├ ƒ /api/organizations/[id]/clone                                          837 B         144 kB
+├ ƒ /api/organizations/[id]/sections/[section]                             837 B         144 kB
+├ ƒ /api/organizations/create                                              837 B         144 kB
+├ ƒ /api/organizations/deploy                                              837 B         144 kB
+├ ƒ /api/organizations/deploy-trigger                                      837 B         144 kB
+├ ƒ /api/organizations/samples                                             837 B         144 kB
+├ ƒ /api/page-layout                                                       837 B         144 kB
+├ ƒ /api/pexels/search                                                     837 B         144 kB
+├ ƒ /api/pexels/videos                                                     837 B         144 kB
+├ ƒ /api/posts                                                             837 B         144 kB
+├ ƒ /api/posts/[slug]                                                      837 B         144 kB
+├ ƒ /api/posts/[slug]/media                                                837 B         144 kB
+├ ƒ /api/posts/[slug]/media/[itemId]                                       837 B         144 kB
+├ ƒ /api/posts/[slug]/media/reorder                                        837 B         144 kB
+├ ƒ /api/posts/featured                                                    837 B         144 kB
+├ ƒ /api/posts/media/[id]                                                  837 B         144 kB
+├ ƒ /api/pricing-comparison                                                837 B         144 kB
+├ ƒ /api/pricingplan-features                                              837 B         144 kB
+├ ƒ /api/pricingplans                                                      837 B         144 kB
+├ ƒ /api/pricingplans-management                                           837 B         144 kB
+├ ƒ /api/pricingplans/list                                                 837 B         144 kB
+├ ƒ /api/products                                                          837 B         144 kB
+├ ƒ /api/products-summary                                                  837 B         144 kB
+├ ƒ /api/products/[id]/media                                               837 B         144 kB
+├ ƒ /api/products/[id]/media/[mediaId]                                     837 B         144 kB
+├ ƒ /api/products/[id]/r2-images                                           837 B         144 kB
+├ ƒ /api/products/[id]/r2-videos                                           837 B         144 kB
+├ ƒ /api/products/list                                                     837 B         144 kB
+├ ƒ /api/products/media/[id]                                               837 B         144 kB
+├ ƒ /api/profiles                                                          837 B         144 kB
+├ ƒ /api/question-library                                                  837 B         144 kB
+├ ƒ /api/question-library/[id]                                             837 B         144 kB
+├ ƒ /api/quizzes                                                           837 B         144 kB
+├ ƒ /api/r2-images                                                         837 B         144 kB
+├ ƒ /api/r2-videos                                                         837 B         144 kB
+├ ƒ /api/register-user                                                     837 B         144 kB
+├ ƒ /api/register-user-free-trial                                          837 B         144 kB
+├ ƒ /api/rename-r2-image                                                   837 B         144 kB
+├ ƒ /api/rename-r2-video                                                   837 B         144 kB
+├ ƒ /api/reset-password                                                    837 B         144 kB
+├ ƒ /api/revalidate                                                        837 B         144 kB
+├ ƒ /api/reviews                                                           837 B         144 kB
+├ ƒ /api/reviews/[id]                                                      837 B         144 kB
+├ ƒ /api/send-email                                                        837 B         144 kB
+├ ƒ /api/service-capacity/slots                                            837 B         144 kB
+├ ƒ /api/settings                                                          837 B         144 kB
+├ ƒ /api/setup-pricing                                                     837 B         144 kB
+├ ƒ /api/simple-test                                                       837 B         144 kB
+├ ƒ /api/sitemap-proxy                                                     837 B         144 kB
+├ ƒ /api/sqe-2/[slug]                                                      837 B         144 kB
+├ ƒ /api/sqe-2/legal-skills-assessments/[slug]                             837 B         144 kB
+├ ƒ /api/sqe-2/practice-area/[slug]                                        837 B         144 kB
+├ ƒ /api/sqe-2/topic/[slug]                                                837 B         144 kB
+├ ƒ /api/sqe-2/topics                                                      837 B         144 kB
+├ ƒ /api/stripe/publishable-key                                            837 B         144 kB
+├ ƒ /api/study-resources                                                   837 B         144 kB
+├ ƒ /api/submenu-items                                                     837 B         144 kB
+├ ƒ /api/submenu-items/[id]                                                837 B         144 kB
+├ ƒ /api/support                                                           837 B         144 kB
+├ ƒ /api/sync-app-to-stripe-old                                            837 B         144 kB
+├ ƒ /api/sync-r2-cors                                                      837 B         144 kB
+├ ƒ /api/sync-supabase-redirects                                           837 B         144 kB
+├ ƒ /api/sync-to-stripe                                                    837 B         144 kB
+├ ƒ /api/tailor-cv                                                         837 B         144 kB
+├ ƒ /api/team-members                                                      837 B         144 kB
+├ ƒ /api/template-heading-sections                                         837 B         144 kB
+├ ƒ /api/template-heading-sections/[id]                                    837 B         144 kB
+├ ƒ /api/template-sections                                                 837 B         144 kB
+├ ƒ /api/template-sections/[id]                                            837 B         144 kB
+├ ƒ /api/template-sections/[id]/metrics                                    837 B         144 kB
+├ ƒ /api/terms                                                             837 B         144 kB
+├ ƒ /api/test-cookies                                                      837 B         144 kB
+├ ƒ /api/test-flask                                                        837 B         144 kB
+├ ƒ /api/test-geo                                                          837 B         144 kB
+├ ƒ /api/test-org-cookies                                                  837 B         144 kB
+├ ƒ /api/test-org-debug/[id]                                               837 B         144 kB
+├ ƒ /api/test-video                                                        837 B         144 kB
+├ ƒ /api/tickets/assign                                                    837 B         144 kB
+├ ƒ /api/tickets/create                                                    837 B         144 kB
+├ ƒ /api/tickets/mark-read                                                 837 B         144 kB
+├ ƒ /api/tickets/priority                                                  837 B         144 kB
+├ ƒ /api/tickets/respond                                                   837 B         144 kB
+├ ƒ /api/tickets/status                                                    837 B         144 kB
+├ ƒ /api/transactions                                                      837 B         144 kB
+├ ƒ /api/transactions/sync                                                 837 B         144 kB
+├ ƒ /api/unsplash/download                                                 837 B         144 kB
+├ ƒ /api/unsplash/featured                                                 837 B         144 kB
+├ ƒ /api/unsplash/search                                                   837 B         144 kB
+├ ƒ /api/upload-image-r2                                                   837 B         144 kB
+├ ƒ /api/upload-video                                                      837 B         144 kB
+├ ƒ /api/validate-promo-code                                               837 B         144 kB
+├ ƒ /api/verify-payment-intent                                             837 B         144 kB
+├ ƒ /api/webhooks/github                                                   837 B         144 kB
+├ ƒ /api/webhooks/organization-updated                                     837 B         144 kB
+├ ƒ /api/webhooks/stripe                                                   837 B         144 kB
+├ ƒ /api/webhooks/stripe/apify                                             837 B         144 kB
+├ ƒ /api/webhooks/stripe/customer                                          837 B         144 kB
+├ ƒ /api/webhooks/stripe/payment                                           837 B         144 kB
+├ ƒ /api/webhooks/stripe/product-catalog                                   837 B         144 kB
+├ ƒ /api/whoami                                                            837 B         144 kB
+├ ƒ /api/youtube/search                                                    837 B         144 kB
+├ ƒ /auth/callback                                                       2.78 kB         187 kB
+├ ƒ /crm-test                                                            31.3 kB         348 kB
+├ ƒ /currency-test                                                         837 B         144 kB
+├ ƒ /debug-currency                                                      1.67 kB         145 kB
+├ ƒ /forms/[id]                                                          1.57 kB         145 kB
+├ ƒ /sitemap.xml                                                           837 B         144 kB
+└ ƒ /skeleton-showcase                                                   2.95 kB         146 kB
++ First Load JS shared by all                                             143 kB
+  ├ chunks/vendors.next-compiled.46eabd33-98a3de9e72096e26.js            54.2 kB
+  ├ chunks/webpack-runtime-cb130b1fc5571db7.js                           15.1 kB
+  └ other shared chunks (total)                                          73.8 kB
+
+
+ƒ Middleware                                                             79.5 kB
+
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

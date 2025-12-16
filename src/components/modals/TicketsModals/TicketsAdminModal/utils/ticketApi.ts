@@ -3,7 +3,7 @@
  * All database and API interactions for the Tickets Admin Modal
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { processTicketResponses } from '../../shared/utils/responseHelpers';
 import type {
   Ticket,

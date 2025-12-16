@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import * as SupabaseModule from '@/lib/supabase';
+import * as SupabaseClientModule from '@/lib/supabaseClient';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock all dependencies before importing component
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/supabaseClient', () => ({
   supabase: {
     auth: {
       getUser: jest.fn().mockResolvedValue({
@@ -291,7 +291,7 @@ describe('TicketsAdminModal - Error Handling', () => {
 
   it('should handle errors gracefully when failing to load tickets', async () => {
     // Mock Supabase error
-    const supabaseMock = SupabaseModule.supabase as any;
+    const supabaseMock = SupabaseClientModule.supabase as any;
     supabaseMock.from.mockImplementation(() => ({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),

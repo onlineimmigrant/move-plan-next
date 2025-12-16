@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { headers } from 'next/headers';
 import { getSettings } from './getSettings';
 import { getLocaleFromLanguage } from './language-utils';

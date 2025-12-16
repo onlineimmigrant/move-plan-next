@@ -1,6 +1,7 @@
 // /app/api/products/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { stripe } from '@/lib/stripe-supabase';
 
 // Force dynamic rendering to prevent caching

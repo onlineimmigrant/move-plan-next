@@ -1,6 +1,7 @@
 // /app/faq/page.tsx
 import ClientFAQPage from './ClientFAQPage';
-import { getOrganizationId, supabase } from '@/lib/supabase';
+import { getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { getBaseUrl } from '@/lib/utils';
 import type { FAQ } from '@/types/faq';
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { uploadAttachment } from '@/lib/fileUpload';
 import { broadcastTyping, scrollToBottom } from '../../shared/utils';
 import type { Ticket, TicketResponse, TicketAttachment } from '../../shared/types';

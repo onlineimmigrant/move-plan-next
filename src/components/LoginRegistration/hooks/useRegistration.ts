@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
+import { getOrganizationId } from '@/lib/supabase';
 import { useAuthTranslations } from '@/components/authenticationTranslationLogic/useAuthTranslations';
 import { useAuthValidation, AuthFormData } from './useAuthValidation';
 

@@ -3,8 +3,15 @@
  * Manages ticket data fetching, loading states, and avatar management for customer modal
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import {
+  useState,
+  useCallback,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+  type MutableRefObject,
+} from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { processTicketResponses } from '../../shared/utils';
 import type { Ticket, Avatar } from '../../shared/types';
 
@@ -18,10 +25,10 @@ interface UseTicketDataProps {
 
 interface UseTicketDataReturn {
   tickets: Ticket[];
-  setTickets: React.Dispatch<React.SetStateAction<Ticket[]>>;
+  setTickets: Dispatch<SetStateAction<Ticket[]>>;
   selectedTicket: Ticket | null;
-  setSelectedTicket: React.Dispatch<React.SetStateAction<Ticket | null>>;
-  selectedTicketRef: React.MutableRefObject<Ticket | null>;
+  setSelectedTicket: Dispatch<SetStateAction<Ticket | null>>;
+  selectedTicketRef: MutableRefObject<Ticket | null>;
   avatars: Avatar[];
   isLoadingTickets: boolean;
   loadingMore: boolean;

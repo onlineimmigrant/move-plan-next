@@ -9,7 +9,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useParams } from "next/navigation";
 import ColorsModal from "@/components/ColorsModal";
 import { useModal } from "@/context/ModalContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabaseClient';
 
 // Mapping of URL table names to actual Supabase table names
 const tableNameMapping: { [key: string]: string } = {

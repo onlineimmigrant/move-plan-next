@@ -1,11 +1,7 @@
 'use client';
 
-import React, { memo, useMemo, useEffect, useRef } from 'react';
+import React, { memo, useMemo, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import { MediaCarouselRenderer } from './PostEditor/ui/MediaCarouselRenderer';
 
 interface LandingPostContentProps {
@@ -18,6 +14,8 @@ interface LandingPostContentProps {
 
 const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [markdownHtml, setMarkdownHtml] = useState<string | null>(null);
+  const [markdownError, setMarkdownError] = useState<string | null>(null);
   
   // Use content directly without sanitization to preserve comments and formatting
   const processedContent = useMemo(() => {
@@ -83,6 +81,72 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
     };
   }, [processedContent, post.content_type]);
 
+  // Convert markdown to HTML on-demand (to avoid bundling markdown libs in initial JS)
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      if (post.content_type !== 'markdown') {
+        setMarkdownHtml(null);
+        setMarkdownError(null);
+        return;
+      }
+
+      if (!post?.content) {
+        setMarkdownHtml('');
+        setMarkdownError(null);
+        return;
+      }
+
+      try {
+        setMarkdownError(null);
+
+        const [{ unified }, remarkParseMod, remarkGfmMod, remarkRehypeMod, rehypeRawMod, rehypeSanitizeMod, rehypeStringifyMod] =
+          await Promise.all([
+            import('unified'),
+            import('remark-parse'),
+            import('remark-gfm'),
+            import('remark-rehype'),
+            import('rehype-raw'),
+            import('rehype-sanitize'),
+            import('rehype-stringify'),
+          ]);
+
+        const getDefault = <T,>(mod: any): T => (mod?.default ?? mod) as T;
+        const remarkParse = getDefault<any>(remarkParseMod);
+        const remarkGfm = getDefault<any>(remarkGfmMod);
+        const remarkRehype = getDefault<any>(remarkRehypeMod);
+        const rehypeRaw = getDefault<any>(rehypeRawMod);
+        const rehypeSanitize = getDefault<any>(rehypeSanitizeMod);
+        const rehypeStringify = getDefault<any>(rehypeStringifyMod);
+
+        const file = await unified()
+          .use(remarkParse)
+          .use(remarkGfm)
+          .use(remarkRehype, { allowDangerousHtml: true })
+          .use(rehypeRaw)
+          .use(rehypeSanitize)
+          .use(rehypeStringify)
+          .process(post.content);
+
+        if (!cancelled) {
+          setMarkdownHtml(String(file));
+        }
+      } catch (err) {
+        console.error('❌ Failed to render markdown:', err);
+        if (!cancelled) {
+          setMarkdownError('Failed to render content');
+          setMarkdownHtml(null);
+        }
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [post?.content, post.content_type]);
+
   if (!post?.content) {
     return (
       <div className="w-full min-h-[200px] flex items-center justify-center text-gray-500">
@@ -93,38 +157,27 @@ const LandingPostContent: React.FC<LandingPostContentProps> = memo(({ post }) =>
 
   // Render Markdown if content_type is 'markdown'
   if (post.content_type === 'markdown') {
+    if (markdownError) {
+      return (
+        <div className="w-full min-h-[200px] flex items-center justify-center text-gray-500">
+          <p>{markdownError}</p>
+        </div>
+      );
+    }
+
+    if (markdownHtml === null) {
+      return (
+        <div className="w-full min-h-[200px] flex items-center justify-center text-gray-500">
+          <p>Loading content…</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full max-w-none overflow-hidden">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-          components={{
-            // Ensure images are responsive
-            img: ({node, ...props}) => (
-              <img
-                {...props}
-                alt={props.alt || ''}
-                className="max-w-full h-auto"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
-                loading={props.loading ?? 'lazy'}
-                fetchPriority={(props as any).fetchPriority ?? 'auto'}
-              />
-            ),
-            // Ensure tables are scrollable on mobile
-            table: ({node, ...props}) => (
-              <div className="overflow-x-auto">
-                <table {...props} />
-              </div>
-            ),
-            // Ensure code blocks don't overflow
-            pre: ({node, ...props}) => (
-              <pre {...props} className="overflow-x-auto" />
-            ),
-          }}
-        >
-          {post.content}
-        </ReactMarkdown>
-      </div>
+      <div
+        className="w-full max-w-none overflow-hidden"
+        dangerouslySetInnerHTML={{ __html: markdownHtml }}
+      />
     );
   }
 

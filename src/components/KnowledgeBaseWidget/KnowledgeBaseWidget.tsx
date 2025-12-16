@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { MagnifyingGlassIcon, DocumentTextIcon, XMarkIcon, CheckCircleIcon, LightBulbIcon, ArrowRightIcon, HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/outline';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useSettings } from '@/context/SettingsContext';
 import DOMPurify from 'dompurify';
 

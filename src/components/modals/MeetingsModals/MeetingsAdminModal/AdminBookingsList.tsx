@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useMeetingLauncher } from '@/hooks/useMeetingLauncher';
 import { type Booking } from '@/context/MeetingContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/Shared/ToastContainer';
 import WaitingRoomControls from '../WaitingRoom/WaitingRoomControls';
 import { useThemeColors } from '@/hooks/useThemeColors';

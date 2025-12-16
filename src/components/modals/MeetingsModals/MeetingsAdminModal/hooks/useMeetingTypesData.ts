@@ -18,7 +18,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { MeetingType } from '../../shared/types';
 
 export interface MeetingSettings {

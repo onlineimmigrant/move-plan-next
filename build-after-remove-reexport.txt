@@ -1,0 +1,3603 @@
+
+> move-plan-next@0.1.0 build
+> NODE_OPTIONS='--no-deprecation' next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/ois/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/ois/move-plan-next/package-lock.json
+
+   ▲ Next.js 15.5.7
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     · optimizePackageImports
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+ ⚠ You are using an experimental edge runtime, the API might change.
+ ⚠ Compiled with warnings in 66s
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/admin/[table]/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/[table]/page.tsx
+
+./src/app/[locale]/admin/[table]/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/[table]/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+
+./src/app/[locale]/admin/products/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/products/management/page.tsx
+
+./src/app/[locale]/admin/products/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/products/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/LoginRegistration/GoogleSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/GoogleSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/LinkedInSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/LinkedInSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/TwitterSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/TwitterSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogin.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogin.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogin.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogin.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogout.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogout.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useRegistration.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useRegistration.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useRegistration.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useRegistration.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/contact/ContactForm.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/HeroSectionModal/hooks/useOrganizationSettings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/HeroSectionModal/hooks/useOrganizationSettings.ts
+./src/components/modals/HeroSectionModal/hooks/index.ts
+./src/components/modals/HeroSectionModal/HeroSectionEditModal.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/useAdminBookings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/useAdminBookings.ts
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/index.ts
+./src/components/modals/MeetingsModals/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/index.ts
+./src/components/modals/MeetingsModals/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+./src/components/modals/MeetingsModals/shared/components/BookingCard/index.ts
+./src/components/modals/MeetingsModals/shared/components/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+./src/components/modals/MeetingsModals/shared/components/BookingCard/index.ts
+./src/components/modals/MeetingsModals/shared/components/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/hooks/useAdminBookings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/hooks/useAdminBookings.ts
+./src/components/modals/MeetingsModals/shared/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketOperations.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketOperations.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/crm/ProfileDetailView.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/components/modals/TicketsModals/shared/hooks/useTypingIndicator.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/shared/hooks/useTypingIndicator.ts
+./src/components/modals/TicketsModals/shared/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/shared/utils/typingHelpers.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/shared/utils/typingHelpers.ts
+./src/components/modals/TicketsModals/shared/utils/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/utils/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/ClientProviders.tsx
+
+./src/context/MeetingContext.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/context/MeetingContext.tsx
+./src/app/ClientProviders.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useUserMinersDashboard.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useUserMinersDashboard.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/lib/StudentContext.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/StudentContext.tsx
+./src/app/[locale]/account/layout.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/equipment/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/equipment/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/account/tickets/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/account/tickets/page.tsx
+
+./src/app/[locale]/admin/[table]/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/[table]/page.tsx
+
+./src/app/[locale]/admin/[table]/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/[table]/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/customers/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/customers/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/equipment/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/equipment/management/page.tsx
+
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/pricingplans/management/page.tsx
+
+./src/app/[locale]/admin/products/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/products/management/page.tsx
+
+./src/app/[locale]/admin/products/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/products/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/app/[locale]/admin/tickets/management/page.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/admin/tickets/management/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/KnowledgeBaseWidget/KnowledgeBaseWidget.tsx
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/LoginRegistration/GoogleSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/GoogleSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/LinkedInSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/LinkedInSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/TwitterSignInButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/TwitterSignInButton.tsx
+./src/components/LoginRegistration/LoginForm.tsx
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogin.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogin.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogin.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogin.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useLogout.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useLogout.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useRegistration.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useRegistration.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/LoginRegistration/hooks/useRegistration.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/LoginRegistration/hooks/useRegistration.ts
+./src/components/LoginRegistration/hooks/index.ts
+./src/app/[locale]/login/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/api.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/api.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/MinersComponent/useMinersManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/MinersComponent/useMinersManagement.ts
+./src/components/MinersComponent/index.ts
+./src/app/[locale]/admin/miners/management/page.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/TemplateSections/FeedbackAccordion/FeedbackAccordion.tsx
+
+./src/components/contact/ContactForm.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/contact/ContactForm.tsx
+./src/app/[locale]/contact/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AssignmentRulesModal/AssignmentRulesModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/AvatarManagementModal/AvatarManagementModal.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/AuxiliaryModals.tsx
+./src/components/modals/TicketsModals/TicketsAdminModal/components/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/HeroSectionModal/hooks/useOrganizationSettings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/HeroSectionModal/hooks/useOrganizationSettings.ts
+./src/components/modals/HeroSectionModal/hooks/index.ts
+./src/components/modals/HeroSectionModal/HeroSectionEditModal.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/ManagedVideoCall.tsx
+./src/app/ClientProviders.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/AdminBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/useAdminBookings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/useAdminBookings.ts
+./src/components/modals/MeetingsModals/MeetingsAdminModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsAdminModal/MeetingsAdminModal.tsx
+./src/app/[locale]/admin/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/index.ts
+./src/components/modals/MeetingsModals/index.ts
+./src/components/Meetings/VideoCall/TestVideoCall.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsAccountToggleButton.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/index.ts
+./src/components/modals/MeetingsModals/index.ts
+./src/components/Meetings/VideoCall/TestVideoCall.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MyBookingsList.tsx
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/useCustomerBookingData.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+./src/components/modals/MeetingsModals/shared/components/BookingCard/index.ts
+./src/components/modals/MeetingsModals/shared/components/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/components/BookingCard/BookingCard.tsx
+./src/components/modals/MeetingsModals/shared/components/BookingCard/index.ts
+./src/components/modals/MeetingsModals/shared/components/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/MeetingsModals/shared/hooks/useAdminBookings.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/MeetingsModals/shared/hooks/useAdminBookings.ts
+./src/components/modals/MeetingsModals/shared/hooks/index.ts
+./src/components/modals/MeetingsModals/MeetingsBookingModal/MeetingsBookingModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useRealtimeSubscription.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useInternalNotes.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useMessageHandling.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/usePredefinedResponses.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTagManagement.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketOperations.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketOperations.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/realtimeSetup.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/TicketsAdminModal/utils/ticketApi.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/useTicketData.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAdminModal/TicketsAdminModal.tsx
+./src/components/modals/UnifiedMenu/UnifiedModalManager.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/shared/hooks/useTypingIndicator.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/shared/hooks/useTypingIndicator.ts
+./src/components/modals/TicketsModals/shared/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/hooks/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/TicketsModals/shared/utils/typingHelpers.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/TicketsModals/shared/utils/typingHelpers.ts
+./src/components/modals/TicketsModals/shared/utils/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/utils/index.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadEmailCount.tsx
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadMeetingsCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/components/modals/UnifiedMenu/hooks/useUnreadTicketCount.ts
+./src/components/modals/UnifiedMenu/UnifiedMenu.tsx
+./src/components/modals/UnifiedMenu/index.ts
+./src/app/[locale]/account/page.tsx
+
+./src/context/MeetingContext.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/context/MeetingContext.tsx
+./src/app/ClientProviders.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMeetingLauncher.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMeetingLauncher.ts
+./src/components/crm/sections/AppointmentsSection.tsx
+./src/components/crm/index.ts
+./src/app/crm-test/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useMiningCosts.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useMiningCosts.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/hooks/useUserMinersDashboard.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/hooks/useUserMinersDashboard.ts
+./src/components/MinersComponent/UserMinersDashboard.tsx
+./src/app/[locale]/account/miners/page.tsx
+
+./src/lib/StudentContext.tsx
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/StudentContext.tsx
+./src/app/[locale]/account/layout.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/auth.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/auth.ts
+./src/app/[locale]/course/[slug]/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/lib/fileUpload.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/fileUpload.ts
+./src/components/modals/TicketsModals/TicketsAccountModal/TicketsAccountModal.tsx
+./src/app/[locale]/account/page.tsx
+
+./src/app/[locale]/blog/page.tsx
+Attempted import error: 'supabase' is not exported from '../../../lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/blog/page.tsx
+
+./src/app/[locale]/products/page.tsx
+Attempted import error: 'supabase' is not exported from '../../../lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/products/page.tsx
+
+./src/app/[locale]/products/page.tsx
+Attempted import error: 'supabase' is not exported from '../../../lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/app/[locale]/products/page.tsx
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+./src/app/api/cancel-payment-intent/route.ts
+
+./src/lib/layout-utils.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/layout-utils.ts
+./src/app/layout.tsx
+
+./src/lib/layout-utils.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/layout-utils.ts
+./src/app/layout.tsx
+
+./src/lib/supabase-redirect-sync.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/supabase-redirect-sync.ts
+./src/app/api/sync-supabase-redirects/route.ts
+
+./src/lib/supabase/seo.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/supabase/seo.ts
+./src/app/layout.tsx
+
+./src/lib/supabase/seo.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/supabase/seo.ts
+./src/app/layout.tsx
+
+./src/lib/supabase/seo.ts
+Attempted import error: 'supabase' is not exported from '@/lib/supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/supabase/seo.ts
+./src/app/layout.tsx
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+./src/lib/getSettings.ts
+Attempted import error: 'supabase' is not exported from './supabase' (imported as 'supabase').
+
+Import trace for requested module:
+./src/lib/getSettings.ts
+
+   Skipping linting
+   Checking validity of types ...
+Failed to compile.
+
+./src/app/[locale]/account/equipment/page.tsx:4:10
+Type error: Module '"@/lib/supabase"' has no exported member 'supabase'.
+
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { useQuery } [36mfrom[39m [32m'@tanstack/react-query'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabase'[39m[33m;[39m
+ [90m   |[39m          [31m[1m^[22m[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [36minterface[39m [33mEquipmentType[39m {
+ [90m 7 |[39m   id[33m:[39m string[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

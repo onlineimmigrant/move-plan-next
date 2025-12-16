@@ -1,6 +1,7 @@
 // /app/api/menu/route.ts
 import { NextResponse } from 'next/server';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface SubMenuItem {
   id: number;

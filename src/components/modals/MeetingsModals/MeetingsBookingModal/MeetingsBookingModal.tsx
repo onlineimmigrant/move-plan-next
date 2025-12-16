@@ -26,7 +26,7 @@ import {
 import { CustomerDataLoading, CalendarLoading } from '../shared/ui';
 import { MeetingsErrorBoundary } from '../shared/ui';
 import { useSettings } from '@/context/SettingsContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Lazy load EventDetailsModal

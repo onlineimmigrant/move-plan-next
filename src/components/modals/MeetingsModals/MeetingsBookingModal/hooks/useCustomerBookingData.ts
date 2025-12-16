@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { TimeSlot } from '../../shared/types';
 import { API_ENDPOINTS, CALENDAR_VIEWS } from '../../shared/constants';
 import { logError } from '../../shared/utils/errorHandling';

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { supabase, getOrganizationId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
+import { getOrganizationId } from '@/lib/supabase';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { v4 as uuidv4 } from 'uuid';
 import FeedbackForm from './FeedbackForm';
