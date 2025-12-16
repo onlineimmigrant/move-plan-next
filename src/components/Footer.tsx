@@ -615,14 +615,14 @@ const Footer: React.FC<FooterProps> = ({ menuItems = [] }) => {
         {/* Footer Disclaimer (if enabled) */}
         {settings.legal_notice?.show_footer_disclaimer && settings.legal_notice?.footer_disclaimer && (
           <div className="mb-6">
-            <p className="text-sm opacity-70 text-left" style={{ color: getColorValue(footerStyles.color) }}>
+            <p className="text-sm text-left" style={{ color: getColorValue(footerStyles.color) }}>
               {settings.legal_notice.footer_disclaimer}
             </p>
           </div>
         )}
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <small className="text-sm" style={{ color: getColorValue(footerStyles.color), opacity: 0.7 }}>
+          <small className="text-sm" style={{ color: getColorValue(footerStyles.color) }}>
             © {new Date().getFullYear()} {settings?.site || 'Company'}. {translations.allRightsReserved}.
           </small>
           {settings?.with_language_switch && (

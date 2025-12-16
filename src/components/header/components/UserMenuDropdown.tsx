@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import LocalizedLink from '@/components/LocalizedLink';
 import { 
   Cog6ToothIcon, 
@@ -9,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface UserMenuDropdownProps {
+  isOpen: boolean;
   isAdmin: boolean;
   fixedBannersHeight: number;
   translations: any;
@@ -23,6 +25,7 @@ interface UserMenuDropdownProps {
  * Displays profile or admin menu items in a grid layout
  */
 const UserMenuDropdownComponent: React.FC<UserMenuDropdownProps> = ({
+  isOpen,
   isAdmin,
   fixedBannersHeight,
   translations,
@@ -31,12 +34,19 @@ const UserMenuDropdownComponent: React.FC<UserMenuDropdownProps> = ({
   cancelCloseTimeout,
   handleMenuLeave,
 }) => {
-  return (
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div 
-      className="fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[60] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 mx-4 sm:mx-8"
+      className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
+        isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}
       style={{
-        top: `${fixedBannersHeight + 64 + 16}px`,
+        top: `${fixedBannersHeight + 64}px`,
         boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        pointerEvents: isOpen ? 'auto' : 'none',
+        paddingTop: '8px',
+        marginTop: '-8px'
       }}
       onMouseEnter={cancelCloseTimeout}
       onMouseLeave={handleMenuLeave}
@@ -177,12 +187,14 @@ const UserMenuDropdownComponent: React.FC<UserMenuDropdownProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 export const UserMenuDropdown = React.memo(UserMenuDropdownComponent, (prevProps, nextProps) => {
   return (
+    prevProps.isOpen === nextProps.isOpen &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.fixedBannersHeight === nextProps.fixedBannersHeight
   );

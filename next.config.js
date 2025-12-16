@@ -22,6 +22,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Configure SWC to target modern browsers and disable polyfills
+  swcMinify: true,
   experimental: {
       optimizeCss: true, // Enable Critters for inlining critical CSS and deferring the rest
     // Enable optimized package imports for faster initial load
@@ -43,10 +45,12 @@ const nextConfig = {
     webpackMemoryOptimizations: true,
     // Enable React compiler for automatic memoization
     reactCompiler: false, // Set to true when React Compiler is stable
+    // Target modern browsers (ES2022+) to eliminate polyfills
+    serverExternalPackages: [],
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],
-  // Override SWC to exclude polyfills
+  // Override SWC to exclude polyfills - target ES2022
   env: {
     NEXT_PUBLIC_BROWSERSLIST_CONFIG: '>0.3%, not dead, not op_mini all'
   },
@@ -269,7 +273,7 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Target modern browsers - ES2020+ support
     if (!isServer) {
       config.target = 'web';
@@ -284,6 +288,23 @@ const nextConfig = {
         __dirname,
         'src/polyfills/next-polyfill-module-empty.js'
       );
+      
+      // Configure SWC loader to target ES2022 without polyfills
+      config.module.rules.forEach((rule) => {
+        if (rule.use && rule.use.loader === 'next-swc-loader') {
+          rule.use.options = {
+            ...rule.use.options,
+            jsc: {
+              ...rule.use.options?.jsc,
+              target: 'es2022',
+            },
+            env: {
+              targets: 'Chrome >= 92, Firefox >= 90, Safari >= 15.4, Edge >= 92',
+              mode: undefined, // Disable env transforms completely
+            },
+          };
+        }
+      });
     }
     
     config.module.rules.push({

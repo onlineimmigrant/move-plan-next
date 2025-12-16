@@ -121,11 +121,11 @@ export const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({
           <>
             <ClockIcon 
               className="w-4 h-4" 
-              style={{ color: themeColors.cssVars.primary.base }}
+              style={{ color: themeColors.cssVars.primary.active }}
             />
             <span 
               className="text-xs font-medium tabular-nums"
-              style={{ color: themeColors.cssVars.primary.base }}
+              style={{ color: themeColors.cssVars.primary.active }}
             >
               {readingTime} min · {progress}%
             </span>

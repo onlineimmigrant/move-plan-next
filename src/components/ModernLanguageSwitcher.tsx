@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -23,7 +24,7 @@ interface ModernLanguageSwitcherProps {
 }
 
 export default function ModernLanguageSwitcher({ 
-  zIndex = 20, 
+  zIndex = 9999, 
   onLanguageChange,
   preventNavigation = false,
   openUpward = false,
@@ -235,26 +236,31 @@ export default function ModernLanguageSwitcher({
         </button>
       </div>
 
-      <Transition
-        show={isOpen}
-        as={Fragment}
-        enter="transition ease-out duration-200"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-150"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <div 
-          className={`${fullWidthMobile ? 'fixed inset-x-0 md:absolute md:right-0 md:inset-x-auto' : 'absolute right-0'} ${fullWidthMobile ? '' : (openUpward ? 'bottom-full mb-2' : 'mt-2')} ${fullWidthMobile ? 'md:w-56' : 'w-56'} ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} ${fullWidthMobile ? 'rounded-none shadow-none' : 'rounded-lg shadow-xl'} bg-white border border-gray-200 focus:outline-none`}
-          style={{ 
-            zIndex: zIndex + 10,
-            boxShadow: fullWidthMobile ? 'none' : '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-            backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
-            ...(fullWidthMobile ? { bottom: dropdownBottom ?? 0 } : {})
-          }}
+      {typeof window !== 'undefined' && createPortal(
+        <Transition
+          show={isOpen}
+          as={Fragment}
+          enter="transition ease-out duration-200"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-150"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
         >
+          <div 
+            className={`${fullWidthMobile ? 'fixed inset-x-0 md:absolute md:right-0 md:inset-x-auto' : 'fixed'} ${fullWidthMobile ? '' : (openUpward ? 'bottom-full mb-2' : 'mt-2')} ${fullWidthMobile ? 'md:w-56' : 'w-56'} ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} ${fullWidthMobile ? 'rounded-none shadow-none' : 'rounded-lg shadow-xl'} bg-white border border-gray-200 focus:outline-none`}
+            style={{ 
+              zIndex,
+              boxShadow: fullWidthMobile ? 'none' : '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+              backdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(105%)',
+              ...(fullWidthMobile ? { bottom: dropdownBottom ?? 0 } : {}),
+              ...(!fullWidthMobile && containerRef.current ? {
+                top: containerRef.current.getBoundingClientRect().bottom + (openUpward ? 0 : 8),
+                right: window.innerWidth - containerRef.current.getBoundingClientRect().right,
+              } : {})
+            }}
+          >
           <div className="py-2 px-1">
             {supportedLocales.map((locale: string) => {
               const isActive = hoveredItem === locale;
@@ -291,7 +297,9 @@ export default function ModernLanguageSwitcher({
             })}
           </div>
         </div>
-      </Transition>
+      </Transition>,
+      document.body
+      )}
     </div>
   );
 }

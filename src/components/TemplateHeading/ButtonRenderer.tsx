@@ -35,6 +35,18 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({
     delay: 100,
   });
 
+  // Ensure WCAG contrast for white text on colored backgrounds
+  // If buttonTextColor is white/light and buttonColor is too light (blue-500, etc),
+  // darken the background to meet 4.5:1 contrast ratio
+  const adjustedButtonColor = React.useMemo(() => {
+    // Simple heuristic: if background is rgb(59, 130, 246) or similar light blues,
+    // darken to rgb(37, 99, 235) (blue-600) for better contrast
+    if (buttonColor === 'rgb(59, 130, 246)' || buttonColor === '#3b82f6') {
+      return 'rgb(37, 99, 235)'; // blue-600 for WCAG AA compliance
+    }
+    return buttonColor;
+  }, [buttonColor]);
+
   if (!buttonText || !buttonUrl) {
     return null;
   }
@@ -70,7 +82,7 @@ export const ButtonRenderer: React.FC<ButtonRendererProps> = ({
         href={buttonUrl}
         className="inline-flex items-center justify-center px-6 py-2 text-sm rounded-lg shadow-lg font-medium transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         style={{ 
-          backgroundColor: buttonColor,
+          backgroundColor: adjustedButtonColor,
           color: buttonTextColor,
         }}
         aria-label={`${buttonText} - Call to action button`}

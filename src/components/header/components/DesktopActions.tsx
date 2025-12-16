@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import LocalizedLink from '@/components/LocalizedLink';
 import { ShoppingCartIcon, UserIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { getColorValue } from '@/components/Shared/ColorPaletteDropdown';
@@ -45,6 +46,8 @@ const DesktopActionsComponent: React.FC<DesktopActionsProps> = ({
   handleContactModal,
   handleLogout,
 }) => {
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
   return (
     <div className="absolute right-0 flex items-center space-x-3">
       {/* Basket */}
@@ -69,9 +72,15 @@ const DesktopActionsComponent: React.FC<DesktopActionsProps> = ({
       {/* Profile/Login */}
       {(profileItemVisible || !isDesktop) && isLoggedIn && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (
         <div 
-          className="relative group"
-          onMouseEnter={cancelCloseTimeout}
-          onMouseLeave={handleMenuLeave}
+          className="relative"
+          onMouseEnter={() => {
+            setIsProfileMenuOpen(true);
+            cancelCloseTimeout();
+          }}
+          onMouseLeave={() => {
+            setIsProfileMenuOpen(false);
+            handleMenuLeave();
+          }}
         >
           <button
             type="button"
@@ -89,13 +98,20 @@ const DesktopActionsComponent: React.FC<DesktopActionsProps> = ({
           
           {/* Mega menu profile dropdown */}
           <UserMenuDropdown
+            isOpen={isProfileMenuOpen}
             isAdmin={isAdmin}
             fixedBannersHeight={fixedBannersHeight}
             translations={translations}
             handleContactModal={handleContactModal}
             handleLogout={handleLogout}
-            cancelCloseTimeout={cancelCloseTimeout}
-            handleMenuLeave={handleMenuLeave}
+            cancelCloseTimeout={() => {
+              setIsProfileMenuOpen(true);
+              cancelCloseTimeout();
+            }}
+            handleMenuLeave={() => {
+              setIsProfileMenuOpen(false);
+              handleMenuLeave();
+            }}
           />
         </div>
       ) : (profileItemVisible || !isDesktop) && headerType !== 'ring_card_mini' && headerType !== 'mini' ? (

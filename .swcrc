@@ -1,0 +1,55 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": true,
+      "dynamicImport": true
+    },
+    "target": "es2022",
+    "loose": false,
+    "externalHelpers": false,
+    "keepClassNames": false,
+    "transform": {
+      "legacyDecorator": false,
+      "decoratorMetadata": false,
+      "react": {
+        "runtime": "automatic",
+        "importSource": "react",
+        "pragma": "React.createElement",
+        "pragmaFrag": "React.Fragment",
+        "throwIfNamespace": true,
+        "development": false,
+        "useBuiltins": true
+      }
+    },
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "module": {
+    "type": "es6",
+    "strict": true,
+    "strictMode": true,
+    "lazy": false,
+    "noInterop": false
+  },
+  "minify": true,
+  "env": {
+    "targets": "Chrome >= 92, Firefox >= 90, Safari >= 15.4, Edge >= 92",
+    "mode": "usage",
+    "coreJs": false,
+    "shippedProposals": true,
+    "bugfixes": true,
+    "skip": [
+      "es.array.at",
+      "es.array.flat",
+      "es.array.flat-map",
+      "es.object.from-entries",
+      "es.object.has-own",
+      "es.string.trim-end",
+      "es.string.trim-start"
+    ]
+  }
+}

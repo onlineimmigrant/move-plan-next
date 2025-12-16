@@ -28,6 +28,27 @@ import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
+
+// Lazy-load QueryClient creation to defer initialization until actually needed
+let queryClientInstance: QueryClient | null = null;
+function getQueryClient() {
+  if (!queryClientInstance) {
+    queryClientInstance = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 60000, // 1 minute
+          gcTime: 300000, // 5 minutes
+          refetchOnWindowFocus: false,
+          retry: 1,
+        },
+        mutations: {
+          retry: 0,
+        },
+      },
+    });
+  }
+  return queryClientInstance;
+}
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
@@ -279,20 +300,8 @@ function ClientProviders({
   // Cookie banner renders immediately based on server-side check - no delay needed!
   // This eliminates CLS and improves LCP by not blocking/delaying content
 
-  // Create QueryClient instance with optimized settings
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        refetchOnWindowFocus: false,
-        retry: 1, // Reduce retries for faster failures
-        retryDelay: 1000, // Faster retry timing
-      },
-      mutations: {
-        retry: 0, // No retries for mutations
-      },
-    },
-  }));
+  // Use lazy QueryClient singleton - defers initialization until actually needed
+  const [queryClient] = useState(getQueryClient);
 
   useEffect(() => {
     const fetchTemplateData = async () => {
@@ -394,12 +403,6 @@ function ClientProviders({
     [pathname]
   );
 
-  // Only load admin providers on admin/account routes - saves 200-400ms on public pages
-  const isAdminRoute = useMemo(() => 
-    pathname.startsWith('/admin') || pathname.startsWith('/account'),
-    [pathname]
-  );
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -414,65 +417,65 @@ function ClientProviders({
                   >
                     <ToastProvider>
                       <HeaderEditProvider>
-                      <FooterEditProvider>
-                        <LayoutManagerProvider>
-                          <SettingsModalProvider>
-                          <PostEditModalProvider>
-                            <TemplateSectionEditProvider>
-                              <TemplateHeadingSectionEditProvider>
-                              <HeroSectionEditProvider>
-                                <PageCreationProvider>
-                                  <SiteMapModalProvider>
-                                    <GlobalSettingsModalProvider>
-                                      <ShopModalProvider>
-                                        <ProfileDataManagerModalProvider>
-                                          <CrmModalProvider>
-                                    <DynamicLanguageUpdater />
-                                    <DefaultLocaleCookieManager />
-                                    <CookieSettingsProvider>
-                                {/* VideoCall Modal - Only load when meeting is active */}
-                                <VideoCallLoader />
-                                <BannerAwareContent
-                                  key={`${pathname}-${showNavbarFooter}`}
-                                  showNavbarFooter={showNavbarFooter}
-                                  menuItems={menuItems}
-                                  loading={loading}
-                                  headerData={headerData}
-                                  activeLanguages={activeLanguages}
+                        <FooterEditProvider>
+                          <LayoutManagerProvider>
+                            <SettingsModalProvider>
+                              <PostEditModalProvider>
+                                <TemplateSectionEditProvider>
+                                  <TemplateHeadingSectionEditProvider>
+                                    <HeroSectionEditProvider>
+                                      <PageCreationProvider>
+                                        <SiteMapModalProvider>
+                                          <GlobalSettingsModalProvider>
+                                            <ShopModalProvider>
+                                              <ProfileDataManagerModalProvider>
+                                                <CrmModalProvider>
+                                                  <DynamicLanguageUpdater />
+                                                  <DefaultLocaleCookieManager />
+                                                  <CookieSettingsProvider>
+                                                    {/* VideoCall Modal - Only load when meeting is active */}
+                                                    <VideoCallLoader />
+                                                    <BannerAwareContent
+                                                      key={`${pathname}-${showNavbarFooter}`}
+                                                      showNavbarFooter={showNavbarFooter}
+                                                      menuItems={menuItems}
+                                                      loading={loading}
+                                                      headerData={headerData}
+                                                      activeLanguages={activeLanguages}
                                   cookieCategories={cookieCategories}
                                   cookieAccepted={cookieAccepted}
-                                  pathname={pathname}
-                                  templateSections={templateSections}
-                                  templateHeadingSections={templateHeadingSections}
-                                >
-                                  {children}
-                                </BannerAwareContent>
-                              {/* Cookie banner renders immediately if not accepted - no delay, no CLS */}
-                              <CookieBannerComponent 
-                                headerData={headerData} 
-                                activeLanguages={activeLanguages}
-                                categories={cookieCategories}
-                                cookieAccepted={cookieAccepted}
-                              />
-                              {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
-                              <StandaloneCookieSettings 
-                                headerData={headerData}
-                                activeLanguages={activeLanguages}
-                                cookieCategories={cookieCategories}
-                              />
-                              {/* Admin modal components - only rendered for admin users */}
-                              <AdminModalsGate />
-                            </CookieSettingsProvider>
-</CrmModalProvider>
-</ProfileDataManagerModalProvider>
-</ShopModalProvider>
-</GlobalSettingsModalProvider>
-</SiteMapModalProvider>
-</PageCreationProvider>
-</HeroSectionEditProvider>
-</TemplateHeadingSectionEditProvider>
-</TemplateSectionEditProvider>
-</PostEditModalProvider>
+                          pathname={pathname}
+                          templateSections={templateSections}
+                          templateHeadingSections={templateHeadingSections}
+                        >
+                          {children}
+                        </BannerAwareContent>
+                        {/* Cookie banner renders immediately if not accepted - no delay, no CLS */}
+                        <CookieBannerComponent 
+                          headerData={headerData} 
+                          activeLanguages={activeLanguages}
+                          categories={cookieCategories}
+                          cookieAccepted={cookieAccepted}
+                        />
+                        {/* Standalone CookieSettings for Footer "Privacy Settings" button */}
+                        <StandaloneCookieSettings 
+                          headerData={headerData}
+                          activeLanguages={activeLanguages}
+                          cookieCategories={cookieCategories}
+                        />
+                        {/* Admin modal components - only rendered for admin users (checked inside gate) */}
+                        <AdminModalsGate />
+                      </CookieSettingsProvider>
+                    </CrmModalProvider>
+                  </ProfileDataManagerModalProvider>
+                </ShopModalProvider>
+              </GlobalSettingsModalProvider>
+            </SiteMapModalProvider>
+          </PageCreationProvider>
+        </HeroSectionEditProvider>
+      </TemplateHeadingSectionEditProvider>
+    </TemplateSectionEditProvider>
+  </PostEditModalProvider>
 </SettingsModalProvider>
 </LayoutManagerProvider>
 </FooterEditProvider>
@@ -486,7 +489,7 @@ function ClientProviders({
 </BannerProvider>
 </AuthProvider>
 </QueryClientProvider>
-);
+  );
 }
 
 function BannerAwareContent({

@@ -48,7 +48,8 @@ const TOCItemComponent: React.FC<{
     const themeColors = useThemeColors();
     const hasChildren = item.children && item.children.length > 0;
     const isActive = activeHeadingId === item.tag_id;
-    const primary = themeColors.cssVars.primary.base;
+    // Use active shade (darker) for better contrast on white backgrounds
+    const primary = themeColors.cssVars.primary.active;
 
     // Auto-expand if this item or a child is active
     useEffect(() => {
