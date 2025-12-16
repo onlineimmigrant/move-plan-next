@@ -329,7 +329,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   return (
     <>      
       <nav
-        className={`
+        className={`site-header 
           fixed
           left-0 right-0 z-[9999] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           overflow-visible

@@ -248,7 +248,7 @@ export default function ModernLanguageSwitcher({
           leaveTo="transform opacity-0 scale-95"
         >
           <div 
-            className={`${fullWidthMobile ? 'fixed inset-x-0 md:absolute md:right-0 md:inset-x-auto' : 'fixed'} ${fullWidthMobile ? '' : (openUpward ? 'bottom-full mb-2' : 'mt-2')} ${fullWidthMobile ? 'md:w-56' : 'w-56'} ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} ${fullWidthMobile ? 'rounded-none shadow-none' : 'rounded-lg shadow-xl'} bg-white border border-gray-200 focus:outline-none`}
+            className={`header-portal ${fullWidthMobile ? 'fixed inset-x-0 md:absolute md:right-0 md:inset-x-auto' : 'fixed'} ${fullWidthMobile ? '' : (openUpward ? 'bottom-full mb-2' : 'mt-2')} ${fullWidthMobile ? 'md:w-56' : 'w-56'} ${openUpward ? 'origin-bottom-right' : 'origin-top-right'} ${fullWidthMobile ? 'rounded-none shadow-none' : 'rounded-lg shadow-xl'} bg-white border border-gray-200 focus:outline-none`}
             style={{ 
               zIndex,
               boxShadow: fullWidthMobile ? 'none' : '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',

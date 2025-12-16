@@ -38,7 +38,7 @@ const UserMenuDropdownComponent: React.FC<UserMenuDropdownProps> = ({
 
   return createPortal(
     <div 
-      className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
+      className={`header-portal fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
         isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
       }`}
       style={{

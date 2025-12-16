@@ -227,13 +227,13 @@ ADD COLUMN IF NOT EXISTS customer JSONB DEFAULT NULL;`}
       
       case 'magazine':
         return {
-          card: 'bg-white rounded-none border-l-4 border-black shadow-md hover:shadow-xl transition-all duration-300 p-6 relative overflow-hidden before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-black',
-          avatar: 'border-4 border-black shadow-lg',
-          name: 'text-2xl font-black text-black uppercase tracking-wider',
-          title: 'text-xs text-gray-600 mt-2 uppercase tracking-widest font-bold',
-          description: 'text-sm text-gray-800 leading-relaxed font-serif italic',
-          skill: 'px-3 py-1 bg-black text-white text-xs rounded-none uppercase tracking-wider font-bold',
-          socialIcon: 'text-black hover:text-gray-600 transition-colors p-2 rounded-none hover:bg-gray-100',
+          card: 'bg-white rounded-none border-l-4 border-[var(--color-primary-base)] shadow-md hover:shadow-xl transition-all duration-300 p-6 relative overflow-hidden before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-[var(--color-primary-base)] ring-1 ring-gray-200',
+          avatar: 'border-4 border-gray-200 shadow-lg ring-2 ring-gray-100',
+          name: 'text-2xl font-black text-gray-900 uppercase tracking-wider',
+          title: 'text-xs text-[var(--color-primary-base)] mt-2 uppercase tracking-widest font-bold',
+          description: 'text-sm text-gray-700 leading-relaxed font-serif italic',
+          skill: 'px-3 py-1 bg-gray-100 text-[var(--color-primary-base)] text-xs rounded-none uppercase tracking-wider font-bold border border-gray-200',
+          socialIcon: 'text-[var(--color-primary-base)] hover:text-[var(--color-primary-hover)] transition-colors p-2 rounded-none hover:bg-gray-100',
         };
       
       case 'startup':

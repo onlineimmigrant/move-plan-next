@@ -50,6 +50,17 @@ html {
 html {
   scroll-padding-top: 5rem;
 }
+/* Lower header stacking when a modal is open to ensure modals overlay the navbar */
+body.modal-open .site-header {
+  z-index: 0 !important;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+body.modal-open .header-portal {
+  display: none !important;
+}
+
 
 /* (reverted) */
 

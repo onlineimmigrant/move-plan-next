@@ -58,7 +58,7 @@ const MegaMenuComponent: React.FC<MegaMenuProps> = ({
 
   return createPortal(
     <div 
-      className={`fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
+      className={`header-portal fixed left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] transition-all duration-200 mx-4 sm:mx-8 ${
         isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
       }`}
       style={{
@@ -119,6 +119,7 @@ const MegaMenuComponent: React.FC<MegaMenuProps> = ({
                       {item.display_as_card ? (
                         // Card mode: white card with title/description
                         <div className="relative w-full h-full flex flex-col justify-center backdrop-blur-sm p-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 group-hover/item:h-full group-hover/item:top-0 group-hover/item:translate-y-0 rounded-r-sm transition-all duration-300" style={{ backgroundColor: 'var(--color-primary-base)' }} />
                           <h4 className="text-base font-medium text-gray-700 mb-2" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}>
                             {translatedSubItemName}
                           </h4>

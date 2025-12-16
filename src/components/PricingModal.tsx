@@ -31,6 +31,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/context/SettingsContext';
@@ -672,23 +673,33 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     };
   }, [isOpen, onClose, parseProductFromHash]);
 
-  if (!isOpen) return null;
+  // Toggle a body class to lower header z-index while modal is open
+  useEffect(() => {
+    if (!isOpen || typeof document === 'undefined') return;
+    document.body.classList.add('modal-open');
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
 
-  return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
+  if (!isOpen) return null;
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
+    <>
+      {/* Backdrop with higher z-index than header */}
       <div 
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        style={{ zIndex: 999998 }}
         onClick={() => {
           onClose();
-          // Remove hash when clicking backdrop
           removePricingHash();
         }}
         aria-hidden="true"
       />
       
       {/* Modal - Full Screen */}
-      <div className="relative h-full w-full flex">
+      <div className="fixed inset-0 flex" style={{ zIndex: 999999 }}>
         <div className="relative bg-white w-full h-full overflow-hidden flex flex-col">
           
           {/* Header */}
@@ -842,6 +853,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
           </div>
         </div>
       </div>
-    </div>
+    </>,
+    document.body
   );
 }
