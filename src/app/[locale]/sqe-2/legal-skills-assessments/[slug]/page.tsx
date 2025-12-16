@@ -24,7 +24,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}`);
+        const response = await fetch(`/api/sqe-2/legal-skills-assessments/${slug}?render=html`);
         if (response.ok) {
           const data = await response.json();
           setPost(data);

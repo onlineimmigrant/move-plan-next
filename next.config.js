@@ -272,6 +272,15 @@ const nextConfig = {
       config.target = 'web';
       // Set browserslist environment to production for modern builds
       process.env.BROWSERSLIST_ENV = 'modern';
+
+      // Remove Next.js runtime module polyfills from the main client bundle.
+      // This reduces "Legacy JavaScript" warnings in Lighthouse, but may break very old browsers.
+      config.resolve = config.resolve || {};
+      config.resolve.alias = config.resolve.alias || {};
+      config.resolve.alias['next/dist/build/polyfills/polyfill-module'] = path.resolve(
+        __dirname,
+        'src/polyfills/next-polyfill-module-empty.js'
+      );
     }
     
     config.module.rules.push({

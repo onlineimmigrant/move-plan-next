@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, memo, lazy, Suspense, useEffect, useRef } from 'react';
+import React, { useMemo, memo, lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PostPageSkeleton } from '@/components/PostPage/PostPageSkeleton';
 import { OptimizedPostImage } from '@/components/PostPage/OptimizedPostImage';
@@ -8,6 +8,7 @@ import { LazyMarkdownRenderer } from '@/components/PostPage/LazyMarkdownRenderer
 import Loading from '@/ui/Loading';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useDocumentSetLogic } from '@/hooks/useDocumentSetLogic';
+import { debug } from '@/utils/debug';
 import { 
   usePostPageTOC, 
   usePostPageVisibility, 
@@ -63,13 +64,13 @@ const getTranslatedContent = (
   
   // If no valid locale, return default content
   if (!isValidLocale) {
-    console.log('Translation: No valid locale provided, using default content');
+    debug.log('PostPageClient', 'Translation: No valid locale provided, using default content');
     return defaultContent;
   }
 
   // If no translations object exists, return default content
   if (!translations) {
-    console.log('Translation: No translations available, using default content');
+    debug.log('PostPageClient', 'Translation: No translations available, using default content');
     return defaultContent;
   }
 
@@ -78,12 +79,12 @@ const getTranslatedContent = (
   
   // If translation exists for locale and field is not empty, use it
   if (localeTranslations && localeTranslations[field] && localeTranslations[field]!.trim() !== '') {
-    console.log(`Translation: Found ${field} translation for locale '${locale}', using translated content`);
+    debug.log('PostPageClient', `Translation: Found ${field} translation for locale '${locale}', using translated content`);
     return localeTranslations[field];
   }
 
   // If no translation for current locale, return the original default content
-  console.log(`Translation: No ${field} translation found for locale '${locale}', using default content`);
+  debug.log('PostPageClient', `Translation: No ${field} translation found for locale '${locale}', using default content`);
   return defaultContent;
 };
 
@@ -164,27 +165,15 @@ const PostPageClient: React.FC<PostPageClientProps> = memo(({ post, slug, locale
   // Performance monitoring (enabled for admins)
   const performanceVitals = usePerformanceMonitoring(isAdmin);
 
-  // Set data attribute immediately if we can detect landing page from initial post prop
-  useEffect(() => {
-    // Set immediately based on post.type if available
-    if (post?.type === 'landing') {
-      document.body.setAttribute('data-landing-page', 'true');
-    }
-  }, [post?.type]);
-
-  // Set data attribute on body for landing pages to hide header/footer/breadcrumbs
-  useEffect(() => {
+  // Set data attribute on body for landing pages to hide header/footer/breadcrumbs.
+  // Use a layout effect to avoid a read-after-write layout thrash on first paint.
+  useLayoutEffect(() => {
     if (visibility.isLandingPost) {
-      console.log('🎯 Setting data-landing-page attribute');
       document.body.setAttribute('data-landing-page', 'true');
-      // Also log the wrapper element
-      const wrapper = document.querySelector('.main-content-wrapper');
-      console.log('🎯 main-content-wrapper element:', wrapper);
-      console.log('🎯 main-content-wrapper computed marginTop:', wrapper ? window.getComputedStyle(wrapper).marginTop : 'not found');
     } else {
-      console.log('🎯 Removing data-landing-page attribute');
       document.body.removeAttribute('data-landing-page');
     }
+
     return () => {
       document.body.removeAttribute('data-landing-page');
     };

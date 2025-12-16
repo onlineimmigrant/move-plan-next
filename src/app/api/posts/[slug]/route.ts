@@ -2,6 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 import { getOrganizationId } from '@/lib/supabase';
+import { renderMarkdownToHtml } from '@/lib/markdown/renderMarkdownToHtml';
+
+function looksLikeHtml(content: string): boolean {
+  const trimmed = content.trim();
+  return trimmed.startsWith('<') && trimmed.includes('>');
+}
 
 // Define a type for the blog post body - UPDATED FOR JSONB
 type BlogPostBody = {
@@ -123,6 +129,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
   const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get('organization_id');
+  const render = searchParams.get('render');
+  const shouldRenderHtml = render === 'html' || render === '1' || render === 'true';
   console.log('Received GET request for /api/posts/[slug]:', slug, 'organization_id:', organizationId);
 
   const nocache = searchParams.get('nocache') === '1';
@@ -159,6 +167,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       if ((postData.display_config as any)?.display_this_post === false) {
         console.log('Post hidden via display_config.display_this_post false:', slug);
         return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
+
+      if (
+        shouldRenderHtml &&
+        postData?.content_type === 'markdown' &&
+        typeof postData.content === 'string' &&
+        postData.content.length > 0 &&
+        !looksLikeHtml(postData.content)
+      ) {
+        try {
+          postData.content = await renderMarkdownToHtml(postData.content);
+          postData.content_type = 'html';
+        } catch (err) {
+          console.error('[API] Failed to render markdown to HTML:', err);
+        }
       }
 
       console.log('Fetched post:', postData);
@@ -214,6 +237,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     if ((postData.display_config as any)?.display_this_post === false) {
       console.log('Post hidden via display_config.display_this_post false:', slug);
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (
+      shouldRenderHtml &&
+      postData?.content_type === 'markdown' &&
+      typeof postData.content === 'string' &&
+      postData.content.length > 0 &&
+      !looksLikeHtml(postData.content)
+    ) {
+      try {
+        postData.content = await renderMarkdownToHtml(postData.content);
+        postData.content_type = 'html';
+      } catch (err) {
+        console.error('[API] Failed to render markdown to HTML:', err);
+      }
     }
 
     console.log('Fetched post:', postData);

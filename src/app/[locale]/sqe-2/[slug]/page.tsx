@@ -70,7 +70,7 @@ const PostPage: React.FC<{ params: Promise<{ slug: string }> }> = ({ params }) =
           throw new Error('Organization not found');
         }
 
-        const response = await fetch(`/api/sqe-2/${slug}?organization_id=${organizationId}`);
+        const response = await fetch(`/api/sqe-2/${slug}?organization_id=${organizationId}&render=html`);
         if (response.ok) {
           const data = await response.json();
           console.log('Fetched post:', data);

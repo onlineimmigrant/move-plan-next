@@ -6,13 +6,13 @@ import { Brand } from '@/types/brand';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get('organizationId');
+    const organizationIdParam = searchParams.get('organizationId');
+    const organizationId =
+      !organizationIdParam || organizationIdParam === 'undefined' || organizationIdParam === 'null'
+        ? null
+        : organizationIdParam;
 
-    if (!organizationId) {
-      return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
-    }
-
-    const { data, error } = await supabase
+    let query = supabase
       .from('website_brand')
       .select(`
         id,
@@ -20,8 +20,15 @@ export async function GET(request: Request) {
         name,
         organization_id
       `)
-      .eq('is_active', true)
-      .or(`organization_id.eq.${organizationId},organization_id.is.null`);
+      .eq('is_active', true);
+
+    // If organizationId isn't provided (e.g. global layout prefetch), return only global brands.
+    // If it is provided, return both org-specific and global brands.
+    query = organizationId
+      ? query.or(`organization_id.eq.${organizationId},organization_id.is.null`)
+      : query.is('organization_id', null);
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching brands data:', error, 'organization_id:', organizationId);

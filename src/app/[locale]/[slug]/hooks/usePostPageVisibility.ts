@@ -25,6 +25,11 @@ export function usePostPageVisibility(post: Post | null, tocLength: number) {
   const isLandingPost = useMemo(() => postType === 'landing', [postType]);
   const isMinimalPost = useMemo(() => postType === 'minimal', [postType]);
 
+  const showTOC = useMemo(() => 
+    (postType === 'default' || postType === 'doc_set') && tocLength > 0,
+    [postType, tocLength]
+  );
+
   // Set mounted state on client-side only
   useEffect(() => {
     setIsMounted(true);
@@ -32,42 +37,58 @@ export function usePostPageVisibility(post: Post | null, tocLength: number) {
 
   // Dynamically adjust TOC height to stop before footer
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || !showTOC) return;
+
+    const DEFAULT_TOC_MAX_HEIGHT = 'calc(100vh - 10rem)';
+    const tocTop = 96; // top-24 = 96px
+    const footerActivationBuffer = 200; // avoid continuous layout reads while footer is far away
+    let ticking = false;
+    let rafId: number | null = null;
 
     const adjustTocHeight = () => {
+      ticking = false;
+
       const footer = document.querySelector('footer');
-      if (footer) {
-        const footerTop = footer.getBoundingClientRect().top;
-        const viewportHeight = window.innerHeight;
-        const tocTop = 96; // top-24 = 96px
-        
-        // Calculate available height: from TOC top to footer top, with some padding
-        const availableHeight = footerTop - tocTop - 24; // 24px padding before footer
-        const maxHeight = Math.min(availableHeight, viewportHeight - tocTop - 24);
-        
-        if (maxHeight > 200) { // Minimum height threshold
-          const newHeight = `${maxHeight}px`;
-          // Only update if the value has actually changed
-          setTocMaxHeight(prev => prev === newHeight ? prev : newHeight);
-        }
+      if (!footer) return;
+
+      const footerTop = footer.getBoundingClientRect().top;
+      const viewportHeight = window.innerHeight;
+
+      // If the footer is far below the viewport, stick to the default max-height.
+      if (footerTop > viewportHeight + footerActivationBuffer) {
+        setTocMaxHeight(prev => (prev === DEFAULT_TOC_MAX_HEIGHT ? prev : DEFAULT_TOC_MAX_HEIGHT));
+        return;
+      }
+
+      // Calculate available height: from TOC top to footer top, with some padding
+      const availableHeight = footerTop - tocTop - 24; // 24px padding before footer
+      const maxHeight = Math.min(availableHeight, viewportHeight - tocTop - 24);
+
+      if (maxHeight > 200) {
+        const newHeight = `${Math.floor(maxHeight)}px`;
+        setTocMaxHeight(prev => (prev === newHeight ? prev : newHeight));
       }
     };
 
-    // Run on mount and scroll
-    adjustTocHeight();
-    window.addEventListener('scroll', adjustTocHeight, { passive: true });
-    window.addEventListener('resize', adjustTocHeight, { passive: true });
+    const requestAdjust = () => {
+      if (ticking) return;
+      ticking = true;
+      rafId = window.requestAnimationFrame(adjustTocHeight);
+    };
+
+    // Run once on mount and then throttle adjustments to animation frames.
+    requestAdjust();
+    window.addEventListener('scroll', requestAdjust, { passive: true });
+    window.addEventListener('resize', requestAdjust);
 
     return () => {
-      window.removeEventListener('scroll', adjustTocHeight);
-      window.removeEventListener('resize', adjustTocHeight);
+      window.removeEventListener('scroll', requestAdjust);
+      window.removeEventListener('resize', requestAdjust);
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+      }
     };
-  }, [isMounted]);
-
-  const showTOC = useMemo(() => 
-    (postType === 'default' || postType === 'doc_set') && tocLength > 0,
-    [postType, tocLength]
-  );
+  }, [isMounted, showTOC]);
 
   const showPostHeader = useMemo(() => 
     postType === 'default' || postType === 'minimal' || postType === 'doc_set',
