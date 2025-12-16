@@ -58,8 +58,8 @@ const CookieBanner: React.FC<CookieBannerProps> = ({
     }
   }, []);
   
-  // Ensure minimum shade of 600-700 for WCAG AA contrast
-  const buttonShade = Math.max(themeColors.raw.primary.shade, 600);
+  // Ensure minimum shade of 700 for WCAG AA contrast with white text (4.5:1)
+  const buttonShade = Math.max(themeColors.raw.primary.shade, 700);
   const buttonHoverShade = Math.min(buttonShade + 100, 900);
   const buttonBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonShade}`);
   const buttonHoverBgColor = getColorValue(`${themeColors.raw.primary.color}-${buttonHoverShade}`);

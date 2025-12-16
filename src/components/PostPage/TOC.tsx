@@ -88,7 +88,7 @@ const TOCItemComponent: React.FC<{
     };
 
     return (
-        <li style={getItemStyle(item.tag_name)} role="none">
+        <li style={getItemStyle(item.tag_name)}>
             <div className="flex items-center gap-2">
                 {hasChildren && (
                     <button
