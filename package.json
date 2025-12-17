@@ -90,7 +90,7 @@
     "minimatch": "^10.0.1",
     "mongodb": "^6.17.0",
     "nanoid": "^5.1.6",
-    "next": "^15.3.6",
+    "next": "^16.0.10",
     "next-i18next": "^15.4.2",
     "next-intl": "^4.3.4",
     "node-fetch": "^2.7.0",

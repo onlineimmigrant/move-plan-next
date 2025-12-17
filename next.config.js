@@ -18,14 +18,14 @@ const nextConfig = {
   compress: true, // Enable gzip compression
   productionBrowserSourceMaps: false, // Disable source maps in production
   reactStrictMode: true, // Enable React strict mode for better performance
-  // Disable legacy browser support
-  eslint: {
-    ignoreDuringBuilds: true,
+  // React Compiler for automatic memoization
+  reactCompiler: false, // Set to true when React Compiler is stable
+  // Turbopack configuration
+  turbopack: {
+    root: __dirname, // Explicitly set workspace root to silence lockfile warning
   },
-  // Configure SWC to target modern browsers and disable polyfills
-  swcMinify: true,
   experimental: {
-      optimizeCss: true, // Enable Critters for inlining critical CSS and deferring the rest
+    optimizeCss: true, // Enable Critters for inlining critical CSS and deferring the rest
     // Enable optimized package imports for faster initial load
     optimizePackageImports: [
       'lucide-react', 
@@ -43,10 +43,6 @@ const nextConfig = {
     ],
     // Reduce memory usage and improve performance
     webpackMemoryOptimizations: true,
-    // Enable React compiler for automatic memoization
-    reactCompiler: false, // Set to true when React Compiler is stable
-    // Target modern browsers (ES2022+) to eliminate polyfills
-    serverExternalPackages: [],
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],
@@ -59,37 +55,6 @@ const nextConfig = {
   // Enable experimental turbo mode for faster builds (if available)
   // turbo: {},
   modularizeImports: {
-    'react-icons/fa': {
-      transform: 'react-icons/fa/{{member}}',
-    },
-    'react-icons/fa6': {
-      transform: 'react-icons/fa6/{{member}}',
-    },
-    'react-icons/fi': {
-      transform: 'react-icons/fi/{{member}}',
-    },
-    'react-icons/hi': {
-      transform: 'react-icons/hi/{{member}}',
-    },
-    'react-icons/md': {
-      transform: 'react-icons/md/{{member}}',
-    },
-    'react-icons/tb': {
-      transform: 'react-icons/tb/{{member}}',
-    },
-    'react-icons/tfi': {
-      transform: 'react-icons/tfi/{{member}}',
-    },
-    'react-icons/ri': {
-      transform: 'react-icons/ri/{{member}}',
-    },
-    'react-icons/io': {
-      transform: 'react-icons/io/{{member}}',
-    },
-    // Tree-shake lucide-react (134KB → ~10KB per icon)
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
-    },
     // Tree-shake @heroicons/react (32KB → ~2KB per icon)
     '@heroicons/react/24/outline': {
       transform: '@heroicons/react/24/outline/{{member}}',

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (tags && Array.isArray(tags)) {
       for (const tag of tags) {
         try {
-          revalidateTag(tag);
+          revalidateTag(tag, 'page');
           console.log(`✅ Revalidated tag: ${tag}`);
         } catch (error) {
           console.warn(`⚠️ Failed to revalidate tag ${tag}:`, error);
@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
     // Default revalidations for homepage
     if (organizationId) {
       try {
-        revalidateTag(`hero-${organizationId}`);
-        revalidateTag(`homepage-${organizationId}`);
-        revalidateTag(`org-${organizationId}`);
+        revalidateTag(`hero-${organizationId}`, 'page');
+        revalidateTag(`homepage-${organizationId}`, 'page');
+        revalidateTag(`org-${organizationId}`, 'page');
         console.log(`✅ Revalidated organization ${organizationId} tags`);
       } catch (error) {
         console.warn(`⚠️ Failed to revalidate organization tags:`, error);

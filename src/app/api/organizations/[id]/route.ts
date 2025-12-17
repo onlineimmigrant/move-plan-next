@@ -2473,9 +2473,9 @@ export async function PUT(
       console.log('Revalidating cached data for organization:', orgId);
       
       // Revalidate by organization-specific tags
-      revalidateTag(`hero-${orgId}`);
-      revalidateTag(`homepage-${orgId}`);
-      revalidateTag('homepage');
+      revalidateTag(`hero-${orgId}`, 'page');
+      revalidateTag(`homepage-${orgId}`, 'page');
+      revalidateTag('homepage', 'page');
       
       console.log(`Revalidated tags: hero-${orgId}, homepage-${orgId}, homepage`);
     } catch (revalidateError) {

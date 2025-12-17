@@ -64,10 +64,10 @@ function isKnownRoute(pathname: string): boolean {
   return dynamicPatterns.some(pattern => pattern.test(cleanPath));
 }
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Bypass middleware for .well-known paths (prevents redirect loop)
+  // Bypass proxy for .well-known paths (prevents redirect loop)
   // This catches /.well-known/ or any path with .well-known in it (including /en/.well-known/, /en/en/.well-known/, etc.)
   if (pathname.includes('.well-known')) {
     return NextResponse.next();
@@ -104,9 +104,9 @@ export default async function middleware(request: NextRequest) {
     // baseCurrency = settings?.base_currency || 'USD';
     
     // Settings loaded successfully
-    console.log('🌐 Middleware: Settings loaded, default locale:', defaultLocale);
+    console.log('🌐 Proxy: Settings loaded, default locale:', defaultLocale);
   } catch (error) {
-    console.error('Middleware: Failed to load settings, using fallback values');
+    console.error('Proxy: Failed to load settings, using fallback values');
   }
 
   // Note: We should NOT force redirects based on database default language
@@ -257,7 +257,5 @@ export const config = {
     '/((?!api|_next|_vercel|\\.well-known|favicon.ico|sitemap.xml|robots.txt|.*\\.[a-zA-Z0-9]+$).*)',
     // Also include the root path
     '/'
-  ],
-  // Enable Edge Runtime for Vercel geolocation
-  runtime: 'experimental-edge'
+  ]
 };
