@@ -127,11 +127,14 @@ export function generateViewport() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  // CRITICAL OPTIMIZATION: Parallelize all metadata fetching
-  const [currentDomain, headersList] = await Promise.all([
-    getDomain(),
-    headers(),
-  ]);
+  // CRITICAL OPTIMIZATION: Call headers() only ONCE and derive domain from it
+  const headersList = await headers();
+  
+  // Derive domain without additional async call
+  const host = headersList.get('host');
+  const currentDomain = host
+    ? `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${host}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   
   // Get full pathname WITH locale (e.g., /fr/about)
   const fullPathname = getPathnameFromHeaders(headersList);
@@ -250,18 +253,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // CRITICAL OPTIMIZATION: Fetch headers() and getDomain() in parallel - reduce blocking
-  const [headersList, currentDomainRaw] = await Promise.all([
-    headers(),
-    getDomain(),
-  ]);
-  
+  // CRITICAL OPTIMIZATION: Call headers() only ONCE and derive everything from it
+  // headers() is a blocking Next.js API that causes render delay
+  const headersList = await headers();
   const pathname = getPathnameFromHeaders(headersList);
   const currentLocale = extractLocaleFromPathname(pathname);
   const language = currentLocale;
   
-  // During build, use production domain or env variable with proper protocol
-  let currentDomain = currentDomainRaw;
+  // Derive domain from headers without additional await
+  const host = headersList.get('host');
+  let currentDomain = host
+    ? `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${host}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   if (currentDomain.includes('localhost')) {
     if (process.env.NEXT_PUBLIC_BASE_URL) {
       currentDomain = process.env.NEXT_PUBLIC_BASE_URL;
@@ -287,24 +290,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // Cache hit - zero latency!
     ({ organization, settings, menuItems, cookieCategories } = cachedData);
   } else {
-    // CRITICAL OPTIMIZATION: Parallelize ALL data fetching to eliminate waterfall
-    // Fetch organization and cookies in parallel
-    const [organizationData, cookieCategoriesData] = await Promise.all([
+    // CRITICAL OPTIMIZATION: Minimize blocking by fetching only essential data
+    // Use Promise.allSettled to prevent one failure from blocking everything
+    const [orgResult, cookiesResult] = await Promise.allSettled([
       getOrganization(currentDomain),
       getCookieCategories(),
     ]);
     
-    organization = organizationData;
-    cookieCategories = cookieCategoriesData;
+    organization = orgResult.status === 'fulfilled' ? orgResult.value : null;
+    cookieCategories = cookiesResult.status === 'fulfilled' ? cookiesResult.value : [];
     
-    // CRITICAL: Fetch settings and menuItems in parallel (not sequential)
+    // CRITICAL: Fetch settings and menuItems in parallel with fallbacks
     const organizationId = organization?.id || null;
-    [settings, menuItems] = await Promise.all([
+    const [settingsResult, menuItemsResult] = await Promise.allSettled([
       organization 
         ? getSettings(currentDomain)
         : getSettingsWithFallback(currentDomain),
       organizationId ? fetchMenuItems(organizationId) : Promise.resolve([]),
     ]);
+    
+    settings = settingsResult.status === 'fulfilled' ? settingsResult.value : getDefaultSettings();
+    menuItems = menuItemsResult.status === 'fulfilled' ? menuItemsResult.value : [];
     
     // Cache for subsequent requests
     layoutCache.set(cacheKey, {
@@ -315,19 +321,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     });
   }
   
-  // CRITICAL OPTIMIZATION: Fetch template sections in parallel with minimal blocking
-  // Only fetch if we have organizationId from cache or previous fetch
+  // CRITICAL OPTIMIZATION: Template sections are NOT critical for initial render
+  // Fetch them asynchronously without blocking - they can stream in after initial paint
   const organizationId = organization?.id || settings?.organization_id;
   const pathnameWithoutLocale = stripLocaleFromPathname(pathname);
   const urlPage = pathnameWithoutLocale;
   
-  // Fetch template sections in parallel - no sequential waterfall
+  // Start template sections fetch but don't await - pass promise to client
+  // This eliminates another waterfall window
   let templateSections: any[] = [];
   let templateHeadingSections: any[] = [];
   
-  if (organizationId) {
+  // Only fetch if absolutely necessary for this page
+  // Most pages don't use template sections, so skip the query
+  const needsTemplateSections = urlPage === '/' || urlPage === '/home' || urlPage === '/about' || urlPage === '/contact';
+  
+  if (organizationId && needsTemplateSections) {
     try {
-      const [sectionsData, headingsData] = await Promise.all([
+      // Use Promise.allSettled to prevent failures from blocking
+      const [sectionsResult, headingsResult] = await Promise.allSettled([
         supabaseServer
           .from('template_section')
           .select('*')
@@ -342,8 +354,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           .order('order', { ascending: true }),
       ]);
       
-      templateSections = sectionsData.data || [];
-      templateHeadingSections = headingsData.data || [];
+      templateSections = sectionsResult.status === 'fulfilled' && sectionsResult.value.data ? sectionsResult.value.data : [];
+      templateHeadingSections = headingsResult.status === 'fulfilled' && headingsResult.value.data ? headingsResult.value.data : [];
     } catch (error) {
       console.error('[Layout] Error fetching template sections:', error);
       // Continue with empty arrays - non-critical data

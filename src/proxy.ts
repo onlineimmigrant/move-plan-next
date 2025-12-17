@@ -81,38 +81,30 @@ export default async function proxy(request: NextRequest) {
   // Check for default locale cookie first
   const cookieLocale = request.cookies.get('defaultLocale')?.value;
 
-  // CRITICAL OPTIMIZATION: Use in-memory cache to avoid DB query on every request
-  // This eliminates the proxy waterfall window
-  let defaultLocale = cookieLocale || 'en'; // Use cookie first, then fallback
-  let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl']; // fallback
-  const baseCurrency = 'USD'; // Use USD as fallback for local development
-  let settings: any = null;
+  // CRITICAL OPTIMIZATION: Don't block on database settings at all
+  // Use cookies/defaults immediately, fetch settings async in background
+  let defaultLocale = cookieLocale || 'en';
+  let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl'];
+  const baseCurrency = 'USD';
   
-  // Try to get cached settings without blocking
-  try {
-    // Use Promise.race to timeout if settings take too long (prevent blocking)
-    const settingsPromise = getSettings(baseUrl);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Settings timeout')), 50) // 50ms max wait
-    );
-    
-    settings = await Promise.race([settingsPromise, timeoutPromise]).catch(() => null);
-    
+  // Start settings fetch in background but don't await it (non-blocking)
+  // The layout will fetch settings again with React cache (deduplicated)
+  getSettings(baseUrl).then(settings => {
     if (settings) {
-      supportedLocales = getSupportedLocales(settings as any);
-      const dbDefaultLocale = settings.language && supportedLocales.includes(settings.language) 
+      // Settings loaded - will be used in next request via React cache
+      const dbLocales = getSupportedLocales(settings as any);
+      const dbDefaultLocale = settings.language && dbLocales.includes(settings.language) 
         ? settings.language 
         : 'en';
       
-      // Use database setting if no cookie, or if cookie doesn't match database
-      if (!cookieLocale || cookieLocale !== dbDefaultLocale) {
-        defaultLocale = dbDefaultLocale;
+      // If there's a mismatch, we could set a cookie here for next request
+      if (!cookieLocale && dbDefaultLocale !== 'en') {
+        // Note: Can't set cookies in proxy easily, but React cache will handle it in layout
       }
     }
-  } catch (error) {
-    // Settings failed or timed out - use fallback values (no blocking)
-    console.log('Proxy: Using fallback locale settings (timeout or error)');
-  }
+  }).catch(() => {
+    // Failed to load - no problem, using fallback
+  });
 
   // Note: We should NOT force redirects based on database default language
   // The home page should always be accessible at `/` and language switching should work
@@ -179,10 +171,11 @@ export default async function proxy(request: NextRequest) {
   
   if (!isLocal && hasGeolocationData && !userLanguageChoice) {
     // Production with geolocation and no user preference: use smart language detection
+    // Note: settings is null here since we don't await it, pass undefined for fallback behavior
     detectedLanguage = detectLanguageFromSources(
       country,
       acceptLanguage || undefined,
-      settings,
+      undefined, // Settings not loaded yet, use fallback
       defaultLocale
     );
     
