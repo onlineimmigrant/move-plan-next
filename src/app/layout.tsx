@@ -127,20 +127,128 @@ export function generateViewport() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  // TEMPORARY DIAGNOSTIC: Return static metadata only.
-  // This intentionally avoids headers() + all DB/settings calls to test whether
-  // root generateMetadata() is gating TTFB / initial HTML streaming (PSI “empty windows”).
-  // Revert after testing.
-  const metadataBase = new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://www.moveplannext.com');
+  // CRITICAL OPTIMIZATION: Call headers() only ONCE and derive domain from it
+  const headersList = await headers();
+  
+  // Derive domain without additional async call
+  const host = headersList.get('host');
+  const currentDomain = host
+    ? `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${host}`
+    : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  
+  // Get full pathname WITH locale (e.g., /fr/about)
+  const fullPathname = getPathnameFromHeaders(headersList);
+  
+  // Extract locale from pathname
+  const currentLocale = extractLocaleFromPathname(fullPathname);
+  
+  // Get pathname WITHOUT locale for SEO data lookup (DB stores without locale)
+  const pathnameWithoutLocale = stripLocaleFromPathname(fullPathname);
+  
+  // CRITICAL: Fetch SEO data and settings in parallel
+  const [seoDataResult, settings] = await Promise.all([
+    fetchPageSEOData(pathnameWithoutLocale, currentDomain)
+      .catch(() => fetchDefaultSEOData(currentDomain, pathnameWithoutLocale)),
+    getSettingsWithFallback(currentDomain),
+  ]);
+  
+  const seoData = seoDataResult;
+  const siteName = getSiteName(settings);
+  const supportedLocales = getSupportedLocales(settings);
+  
+  // Build canonical URL WITH locale (important for international SEO)
+  const canonicalUrl = `${currentDomain.replace(/\/$/, '')}${fullPathname}`;
+  
+  // Build hreflang alternates for all supported languages
+  const hreflangAlternates = buildHreflangAlternates(
+    currentDomain,
+    pathnameWithoutLocale,
+    supportedLocales
+  );
+  
+  // Determine og:type based on content
+  const isBlogPost = pathnameWithoutLocale.includes('/blog/') || 
+                     pathnameWithoutLocale.match(/^\/[^\/]+$/) !== null; // Single segment might be blog post
+  const ogType = isBlogPost ? 'article' : 'website';
 
+  // Enhanced metadata with SEO system data
   return {
-    metadataBase,
-    title: 'Move Plan',
-    description: 'Welcome to our platform',
-    robots: {
-      index: false,
-      follow: false,
+    metadataBase: new URL(currentDomain),
+    title: seoData.title || siteName,
+    description: seoData.description || 'Welcome to our platform',
+    keywords: Array.isArray(seoData.keywords) ? seoData.keywords.join(', ') : seoData.keywords,
+    
+    // Web App Manifest
+    manifest: '/manifest.json',
+    
+    // Apple Web App
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: siteName,
     },
+    
+    openGraph: {
+      title: seoData.title || siteName,
+      description: seoData.description || 'Welcome to our platform',
+      url: canonicalUrl,
+      siteName,
+      images: [{ 
+        url: seoData.seo_og_image || settings.seo_og_image || '/images/codedharmony.png', 
+        width: 1200, 
+        height: 630, 
+        alt: seoData.title || siteName 
+      }],
+      locale: currentLocale,
+      type: ogType,
+      // Add article-specific metadata for blog posts
+      ...(ogType === 'article' && seoData.articlePublishedTime && {
+        publishedTime: seoData.articlePublishedTime,
+        modifiedTime: seoData.articleModifiedTime,
+        authors: seoData.articleAuthor ? [seoData.articleAuthor] : undefined,
+      }),
+    },
+    
+    twitter: {
+      card: 'summary_large_image',
+      title: seoData.title || siteName,
+      description: seoData.description || 'Welcome to our platform',
+      images: [seoData.seo_og_image || settings.seo_og_image || '/images/codedharmony.png'],
+    },
+    
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    
+    alternates: { 
+      canonical: canonicalUrl,
+      // Add hreflang for all supported languages
+      languages: hreflangAlternates
+    },
+    
+    // Add Organization structured data globally
+    other: {
+      'organization-schema': JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: siteName,
+        url: currentDomain,
+        logo: `${currentDomain}/logo.png`,
+        sameAs: [
+          // Add your social media links here
+          // 'https://twitter.com/yourhandle',
+          // 'https://linkedin.com/company/yourcompany'
+        ]
+      })
+    }
   };
 }
 
