@@ -172,12 +172,10 @@ interface PostPageProps {
 }
 
 export default async function PostPage({ params }: PostPageProps) {
-  // console.log('🔥 [ServerSide] PostPage component loading');
-  
+  // CRITICAL OPTIMIZATION: Avoid sequential awaits - get params and start fetch immediately
   const { slug, locale } = await params;
-  // console.log('🔥 [ServerSide] PostPage params - slug:', slug, 'locale:', locale);
   
-  // Fetch post data server-side
+  // Fetch post data server-side (getOrganizationId is cached so should be fast)
   const post = await fetchPostData(slug);
   
   if (!post) {

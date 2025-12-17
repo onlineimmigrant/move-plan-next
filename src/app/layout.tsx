@@ -397,9 +397,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://pub-6891bafd3bd54c36b02da71be2099135.r2.dev" />
         <link rel="dns-prefetch" href="https://images.pexels.com" />
         
-        {/* Prefetch hint for Next.js router to enable faster navigation */}
-        <link rel="prefetch" href="/_next/static/css/" />
-        
         {/* Prefetch common API routes (browser cache warm-up) */}
         <link rel="prefetch" href="/api/products-summary" as="fetch" crossOrigin="anonymous" />
         <link rel="prefetch" href="/api/brands" as="fetch" crossOrigin="anonymous" />

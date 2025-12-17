@@ -5,7 +5,7 @@ import { cache } from 'react';
 
 type UUID = string;
 
-// Cache for organization ID to reuse successful fetches
+// Cache for organization ID to reuse successful fetches (in-memory)
 const organizationIdCache = new Map<string, UUID>();
 
 function isValidUUID(id: string): boolean {
@@ -13,7 +13,8 @@ function isValidUUID(id: string): boolean {
   return uuidRegex.test(id);
 }
 
-export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<UUID | null> {
+// Internal implementation
+async function _getOrganizationIdInternal(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<UUID | null> {
   let currentUrl: string | undefined;
 
   if (typeof reqOrBaseUrl === 'string') {
@@ -130,6 +131,10 @@ export async function getOrganizationId(reqOrBaseUrl?: { headers: { host?: strin
   organizationIdCache.set(currentUrl, data.id);
   return data.id as UUID;
 }
+
+// CRITICAL: Cached wrapper - deduplicates getOrganizationId requests during SSR
+// This prevents multiple DB queries for the same organization in proxy + layout + pages
+export const getOrganizationId = cache(_getOrganizationIdInternal);
 
 // Internal implementation
 async function _getOrganizationInternal(reqOrBaseUrl?: { headers: { host?: string } } | string): Promise<Organization | null> {

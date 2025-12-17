@@ -81,32 +81,37 @@ export default async function proxy(request: NextRequest) {
   // Check for default locale cookie first
   const cookieLocale = request.cookies.get('defaultLocale')?.value;
 
-  // Fetch database settings including supported locales
+  // CRITICAL OPTIMIZATION: Use in-memory cache to avoid DB query on every request
+  // This eliminates the proxy waterfall window
   let defaultLocale = cookieLocale || 'en'; // Use cookie first, then fallback
   let supportedLocales = ['en', 'es', 'fr', 'de', 'ru', 'it', 'pt', 'zh', 'ja', 'pl']; // fallback
   const baseCurrency = 'USD'; // Use USD as fallback for local development
-  let settings: any = null; // Initialize settings variable outside try block
+  let settings: any = null;
   
+  // Try to get cached settings without blocking
   try {
-    settings = await getSettings(baseUrl);
-    supportedLocales = getSupportedLocales(settings as any);
-    const dbDefaultLocale = settings.language && supportedLocales.includes(settings.language) 
-      ? settings.language 
-      : 'en';
+    // Use Promise.race to timeout if settings take too long (prevent blocking)
+    const settingsPromise = getSettings(baseUrl);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Settings timeout')), 50) // 50ms max wait
+    );
     
-    // Use database setting if no cookie, or if cookie doesn't match database
-    if (!cookieLocale || cookieLocale !== dbDefaultLocale) {
-      defaultLocale = dbDefaultLocale;
+    settings = await Promise.race([settingsPromise, timeoutPromise]).catch(() => null);
+    
+    if (settings) {
+      supportedLocales = getSupportedLocales(settings as any);
+      const dbDefaultLocale = settings.language && supportedLocales.includes(settings.language) 
+        ? settings.language 
+        : 'en';
+      
+      // Use database setting if no cookie, or if cookie doesn't match database
+      if (!cookieLocale || cookieLocale !== dbDefaultLocale) {
+        defaultLocale = dbDefaultLocale;
+      }
     }
-    
-    // TODO: Add base_currency to organization settings table
-    // For now, we'll use USD as the default fallback
-    // baseCurrency = settings?.base_currency || 'USD';
-    
-    // Settings loaded successfully
-    console.log('🌐 Proxy: Settings loaded, default locale:', defaultLocale);
   } catch (error) {
-    console.error('Proxy: Failed to load settings, using fallback values');
+    // Settings failed or timed out - use fallback values (no blocking)
+    console.log('Proxy: Using fallback locale settings (timeout or error)');
   }
 
   // Note: We should NOT force redirects based on database default language
