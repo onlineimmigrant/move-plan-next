@@ -148,19 +148,18 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
 
   return (
     <>
-      {/* Glassmorphism Overlay */}
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        {/* Banner Card */}
-        <div className="relative w-full max-w-sm md:max-w-md lg:w-1/4 bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 animate-in fade-in-0 zoom-in-95 duration-300">
-          {/* Glassmorphism effects */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-transparent rounded-3xl"></div>
-          <div className="absolute inset-0 bg-gradient-to-tl from-sky-500/10 via-transparent to-purple-500/10 rounded-3xl"></div>
+      {/* Optimized overlay - simplified backdrop */}
+      <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
+        {/* Banner Card - reduced GPU load with simpler effects */}
+        <div className="relative w-full max-w-sm md:max-w-md lg:w-1/4 bg-white/95 border border-gray-200 rounded-3xl shadow-2xl p-6 animate-in fade-in-0 zoom-in-95 duration-300">
+          {/* Simplified gradient - single layer */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-gray-50/40 rounded-3xl"></div>
           
           {/* Content */}
           <div className="relative z-10">
-            {/* Header with icon */}
+            {/* Header with icon - simplified background */}
             <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-gradient-to-br from-sky-500/20 to-purple-500/20 rounded-2xl backdrop-blur-sm">
+              <div className="p-3 bg-sky-100 rounded-2xl">
                 <GlobeAltIcon className="h-6 w-6 text-sky-600" />
               </div>
             </div>
@@ -183,17 +182,17 @@ export default function LanguageSuggestionBanner({ currentLocale }: LanguageSugg
               
               <button
                 onClick={handleSwitchToDefault}
-                className="w-full inline-flex items-center justify-center px-6 py-3 bg-white/40 hover:bg-white/60 text-gray-700 font-medium rounded-2xl backdrop-blur-sm border border-white/30 hover:border-white/50 transform hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                className="w-full inline-flex items-center justify-center px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-2xl border border-gray-300 hover:border-gray-400 transform hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
               >
                 {messages.switchButton}
               </button>
             </div>
           </div>
           
-          {/* Close button */}
+          {/* Close button - simplified */}
           <button
             onClick={handleStayInCurrent}
-            className="absolute top-4 right-4 p-1.5 rounded-xl bg-white/30 hover:bg-white/50 text-gray-600 hover:text-gray-800 backdrop-blur-sm transition-all duration-200"
+            className="absolute top-4 right-4 p-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors duration-200"
             aria-label="Close"
           >
             <XMarkIcon className="h-4 w-4" />
