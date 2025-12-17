@@ -34,8 +34,14 @@ export function CrmModalProvider({ children }: { children: React.ReactNode }) {
 
 export function useCrmModal() {
   const context = useContext(CrmModalContext);
+  // Return no-op context for non-admin users (provider not loaded)
   if (!context) {
-    throw new Error('useCrmModal must be used within CrmModalProvider');
+    return {
+      isOpen: false,
+      initialTab: 'accounts' as CrmTab,
+      openModal: () => {},
+      closeModal: () => {},
+    };
   }
   return context;
 }

@@ -24,6 +24,7 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/context/AuthContext';
 import { useTemplateSectionEdit } from '@/components/modals/TemplateSectionModal/context';
 import { useTemplateHeadingSectionEdit } from '@/components/modals/TemplateHeadingSectionModal/context';
 import { usePageCreation } from '@/components/modals/PageCreationModal/context';
@@ -56,12 +57,18 @@ interface QuickAction {
 }
 
 export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }: SiteActionsModalProps) {
+  const { isAdmin, isSuperadmin } = useAuth();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
   const pathname = usePathname();
   const [clickedItemId, setClickedItemId] = React.useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const modalRef = useRef<HTMLDivElement>(null);
+  
+  // SECURITY: Only admins and superadmins can access site management
+  if (!isAdmin && !isSuperadmin) {
+    return null;
+  }
   
   // Detect platform for keyboard shortcuts
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
