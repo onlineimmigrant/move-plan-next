@@ -111,9 +111,9 @@ export default function AIModelFormSimple({
         {!isEdit ? (
           <Combobox
             value={model.name}
-            onChange={(value: string) => {
-              handleFieldChange('name', value, false);
-              setModelQuery(value);
+            onChange={(value: string | null) => {
+              handleFieldChange('name', value || '', false);
+              setModelQuery(value || '');
             }}
           >
             <Combobox.Input
@@ -215,9 +215,9 @@ export default function AIModelFormSimple({
         {!isEdit ? (
           <Combobox
             value={model.endpoint}
-            onChange={(value: string) => {
-              handleFieldChange('endpoint', value, false);
-              setEndpointQuery(value);
+            onChange={(value: string | null) => {
+              handleFieldChange('endpoint', value || '', false);
+              setEndpointQuery(value || '');
             }}
           >
             <Combobox.Input

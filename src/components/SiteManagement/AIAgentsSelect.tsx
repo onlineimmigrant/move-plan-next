@@ -670,9 +670,9 @@ const AIAgentEditForm: React.FC<AIAgentEditFormProps> = ({
         <div className="relative">
           <Combobox
             value={editForm.name || ''}
-            onChange={(value: string) => {
-              handleFormChange('name', value);
-              setModelQuery(value);
+            onChange={(value: string | null) => {
+              handleFormChange('name', value || '');
+              setModelQuery(value || '');
             }}
           >
             <Combobox.Input
@@ -764,9 +764,9 @@ const AIAgentEditForm: React.FC<AIAgentEditFormProps> = ({
         <div className="relative">
           <Combobox
             value={editForm.endpoint || defaultFormData.endpoint}
-            onChange={(value: string) => {
-              handleFormChange('endpoint', value);
-              setEndpointQuery(value);
+            onChange={(value: string | null) => {
+              handleFormChange('endpoint', value || '');
+              setEndpointQuery(value || '');
             }}
           >
             <Combobox.Input
