@@ -82,11 +82,14 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono'
 });
 
-// REMOVED: export const dynamic and revalidate from layout
-// This allows child pages to control their own caching strategy
+// ISR: Cache layout for 1 hour to reduce server response time
+// This dramatically improves TTFB (Time to First Byte) by serving cached HTML
+// First visitor pays the ~1.5s DB fetch cost, next visitors get instant response
+export const revalidate = 3600; // Revalidate every hour
+
+// Child pages can still control their own caching strategy
 // Blog posts & products: force-static (full SSG with immutable cache)
 // Admin pages: dynamic rendering (real-time updates)
-// Without these exports, each page can set its own behavior
 
 // Fetch cookie categories at build time with ISR (24h cache) - internal implementation
 async function _getCookieCategoriesInternal() {

@@ -1,0 +1,393 @@
+
+> move-plan-next@0.1.0 build
+> NODE_OPTIONS='--no-deprecation' next build
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · cssChunking: "strict"
+     ✓ optimizeCss
+     · optimizePackageImports
+     ✓ webpackMemoryOptimizations
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 29.3s
+   Running TypeScript ...
+   Collecting page data using 9 workers ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages using 9 workers (0/845) ...
+   Generating static pages using 9 workers (211/845) 
+   Generating static pages using 9 workers (422/845) 
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+   Generating static pages using 9 workers (633/845) 
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+No organization found for URL: http://localhost:3000
+No organization found for URL: http://localhost:3000 and no valid NEXT_PUBLIC_TENANT_ID
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+No organization found for URL: http://localhost:3000 and no valid NEXT_PUBLIC_TENANT_ID
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+[PostPage] No organization id resolved
+ ✓ Generating static pages using 9 workers (845/845) in 2.7s
+   Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /_not-found
+├ ƒ /[...slug]
+├ ƒ /[locale]
+├ ƒ /[locale]/[slug]
+├ ƒ /[locale]/about-us
+├ ƒ /[locale]/account
+├ ƒ /[locale]/account/ai
+├ ƒ /[locale]/account/edupro
+├ ƒ /[locale]/account/edupro/[slug]
+├ ƒ /[locale]/account/edupro/[slug]/info
+├ ƒ /[locale]/account/edupro/[slug]/practice
+├ ƒ /[locale]/account/edupro/[slug]/progress
+├ ƒ /[locale]/account/edupro/[slug]/quiz/[quizSlug]
+├ ƒ /[locale]/account/edupro/[slug]/quiz/[quizSlug]/results
+├ ƒ /[locale]/account/edupro/[slug]/study-plan
+├ ƒ /[locale]/account/edupro/[slug]/topic/[topicSlug]
+├ ƒ /[locale]/account/edupro/[slug]/topic/[topicSlug]/lesson/[lessonId]
+├ ƒ /[locale]/account/edupro/memory-hub
+├ ƒ /[locale]/account/equipment
+├ ƒ /[locale]/account/files
+├ ƒ /[locale]/account/jobs
+├ ƒ /[locale]/account/miners
+├ ƒ /[locale]/account/profile
+├ ƒ /[locale]/account/profile/payments
+├ ƒ /[locale]/account/profile/payments/billing
+├ ƒ /[locale]/account/profile/payments/receipt
+├ ƒ /[locale]/account/profile/payments/receipts
+├ ƒ /[locale]/account/profile/purchases
+├ ƒ /[locale]/account/tickets
+├ ƒ /[locale]/admin
+├ ƒ /[locale]/admin/[table]
+├ ƒ /[locale]/admin/[table]/api
+├ ƒ /[locale]/admin/ai/management
+├ ƒ /[locale]/admin/create-post
+├ ƒ /[locale]/admin/customers/management
+├ ƒ /[locale]/admin/edit/[slug]
+├ ƒ /[locale]/admin/email_preferences/newsletter
+├ ƒ /[locale]/admin/email-templates
+├ ƒ /[locale]/admin/equipment/management
+├ ƒ /[locale]/admin/miners/management
+├ ƒ /[locale]/admin/pricingplans/management
+├ ƒ /[locale]/admin/products/management
+├ ƒ /[locale]/admin/reports/[table]
+├ ƒ /[locale]/admin/reports/custom
+├ ƒ /[locale]/admin/site-management
+├ ƒ /[locale]/admin/site/management
+├ ƒ /[locale]/admin/tables
+├ ƒ /[locale]/admin/tickets/management
+├ ƒ /[locale]/auth/callback
+├ ƒ /[locale]/basket
+├ ƒ /[locale]/become-affiliate-partner
+├ ƒ /[locale]/blog
+├ ƒ /[locale]/cancel
+├ ƒ /[locale]/checkout
+├ ƒ /[locale]/color-shades
+├ ƒ /[locale]/contact
+├ ƒ /[locale]/course/[slug]
+├ ƒ /[locale]/developers
+├ ƒ /[locale]/education-hub/courses
+├ ƒ /[locale]/education-hub/quizzes
+├ ƒ /[locale]/education-hub/study-resources
+├ ƒ /[locale]/faq
+├ ƒ /[locale]/features
+├ ƒ /[locale]/features/[slug]
+├ ƒ /[locale]/help-center
+├ ƒ /[locale]/investors
+├ ƒ /[locale]/login
+├ ƒ /[locale]/products
+├ ƒ /[locale]/products/[id]
+├ ƒ /[locale]/referral-bonuses
+├ ƒ /[locale]/register
+├ ƒ /[locale]/register-free-trial
+├ ƒ /[locale]/reset-password
+├ ƒ /[locale]/sqe-2/[slug]
+├ ƒ /[locale]/sqe-2/legal-skills-assessments/[slug]
+├ ƒ /[locale]/sqe-2/practice-area/[slug]
+├ ƒ /[locale]/sqe-2/topic/[slug]
+├ ƒ /[locale]/success
+├ ƒ /[locale]/superadmin
+├ ƒ /[locale]/superadmin/email-templates
+├ ƒ /[locale]/superadmin/system-models
+├ ƒ /[locale]/support
+├ ƒ /[locale]/terms
+├ ƒ /[locale]/test-video
+├ ƒ /[locale]/testik
+├ ƒ /[locale]/university-partner-programme
+├ ƒ /[locale]/video-call/[bookingId]
+├ ƒ /api/accounts/bulk-import
+├ ƒ /api/accounts/create
+├ ƒ /api/accounts/delete
+├ ƒ /api/accounts/is-last-admin
+├ ƒ /api/accounts/update
+├ ƒ /api/activities
+├ ƒ /api/ai/enhance-content
+├ ƒ /api/ai/translate
+├ ƒ /api/articles
+├ ƒ /api/assemblyai/token
+├ ƒ /api/auth-test
+├ ƒ /api/avatars/upload
+├ ƒ /api/blog-posts
+├ ƒ /api/brands
+├ ƒ /api/cancel-payment-intent
+├ ƒ /api/chat
+├ ƒ /api/chat/extract-data
+├ ƒ /api/chat/files/parse
+├ ƒ /api/chat/files/upload
+├ ƒ /api/chat/settings
+├ ƒ /api/chat/tasks
+├ ƒ /api/conversations/create
+├ ƒ /api/cookie-categories
+├ ƒ /api/cookies/categories
+├ ƒ /api/cookies/consent
+├ ƒ /api/course/[slug]
+├ ƒ /api/courses
+├ ƒ /api/create-payment-intent
+├ ƒ /api/create-subscription
+├ ƒ /api/create-user
+├ ƒ /api/crm/profiles/[profileId]/activity
+├ ƒ /api/crm/profiles/[profileId]/appointments
+├ ƒ /api/crm/profiles/[profileId]/cases
+├ ƒ /api/crm/profiles/[profileId]/tickets
+├ ƒ /api/debug-metadata
+├ ƒ /api/debug-org
+├ ƒ /api/debug/cookies
+├ ƒ /api/debug/geolocation
+├ ƒ /api/default-locale
+├ ƒ /api/delete-r2-image
+├ ƒ /api/delete-r2-video
+├ ƒ /api/document-sets
+├ ƒ /api/document-sets/[slug]
+├ ƒ /api/email-templates
+├ ƒ /api/email-templates/[id]
+├ ƒ /api/email-templates/preview
+├ ƒ /api/email-templates/test
+├ ƒ /api/email/accounts
+├ ƒ /api/email/accounts/[id]
+├ ƒ /api/email/accounts/[id]/set-primary
+├ ƒ /api/email/accounts/[id]/test-connection
+├ ƒ /api/email/campaigns/[id]/send
+├ ƒ /api/email/config
+├ ƒ /api/email/oauth/gmail/callback
+├ ƒ /api/email/oauth/gmail/init
+├ ƒ /api/email/oauth/outlook/callback
+├ ƒ /api/email/oauth/outlook/init
+├ ƒ /api/email/send
+├ ƒ /api/email/ses/test
+├ ƒ /api/email/sync
+├ ƒ /api/email/templates/[id]
+├ ƒ /api/email/verify-domain
+├ ƒ /api/epub-proxy
+├ ƒ /api/faq
+├ ƒ /api/faqs
+├ ƒ /api/features
+├ ƒ /api/features/[slug]
+├ ƒ /api/files/share
+├ ƒ /api/files/virtual-organization
+├ ƒ /api/finalize-subscription
+├ ƒ /api/flashcards/create
+├ ƒ /api/footer-menu-items
+├ ƒ /api/foreign-key-options
+├ ƒ /api/forms
+├ ƒ /api/forms/[id]
+├ ƒ /api/forms/[id]/submit
+├ ƒ /api/gallery/upload
+├ ƒ /api/generate-sas
+├ ƒ /api/generate-video
+├ ƒ /api/hero
+├ ƒ /api/hero-section/[id]
+├ ƒ /api/inventory
+├ ƒ /api/is-student
+├ ƒ /api/jobs
+├ ƒ /api/link-stripe-customer
+├ ƒ /api/meetings/availability
+├ ƒ /api/meetings/available-slots
+├ ƒ /api/meetings/bookings
+├ ƒ /api/meetings/bookings/[id]
+├ ƒ /api/meetings/instant-invite
+├ ƒ /api/meetings/launch-video
+├ ƒ /api/meetings/meeting-types
+├ ƒ /api/meetings/meeting-types/[id]
+├ ƒ /api/meetings/refresh-token
+├ ƒ /api/meetings/rooms
+├ ƒ /api/meetings/settings
+├ ƒ /api/meetings/types
+├ ƒ /api/meetings/types/[id]
+├ ƒ /api/meetings/video-token
+├ ƒ /api/meetings/waiting-room/approve
+├ ƒ /api/meetings/waiting-room/enter
+├ ƒ /api/meetings/waiting-room/leave
+├ ƒ /api/meetings/waiting-room/reject
+├ ƒ /api/menu
+├ ƒ /api/menu-items
+├ ƒ /api/menu-items/[id]
+├ ƒ /api/metrics
+├ ƒ /api/metrics/[id]
+├ ƒ /api/miners
+├ ƒ /api/miners/sample
+├ ƒ /api/orders
+├ ƒ /api/organizations
+├ ƒ /api/organizations-minimal/[id]
+├ ƒ /api/organizations/[id]
+├ ƒ /api/organizations/[id]/clone
+├ ƒ /api/organizations/[id]/sections/[section]
+├ ƒ /api/organizations/create
+├ ƒ /api/organizations/deploy
+├ ƒ /api/organizations/deploy-trigger
+├ ƒ /api/organizations/samples
+├ ƒ /api/page-layout
+├ ƒ /api/pexels/search
+├ ƒ /api/pexels/videos
+├ ƒ /api/posts
+├ ƒ /api/posts/[slug]
+├ ƒ /api/posts/[slug]/media
+├ ƒ /api/posts/[slug]/media/[itemId]
+├ ƒ /api/posts/[slug]/media/reorder
+├ ƒ /api/posts/featured
+├ ƒ /api/posts/media/[id]
+├ ƒ /api/pricing-comparison
+├ ƒ /api/pricingplan-features
+├ ƒ /api/pricingplans
+├ ƒ /api/pricingplans-management
+├ ƒ /api/pricingplans/list
+├ ƒ /api/products
+├ ƒ /api/products-summary
+├ ƒ /api/products/[id]/media
+├ ƒ /api/products/[id]/media/[mediaId]
+├ ƒ /api/products/[id]/r2-images
+├ ƒ /api/products/[id]/r2-videos
+├ ƒ /api/products/list
+├ ƒ /api/products/media/[id]
+├ ƒ /api/profiles
+├ ƒ /api/question-library
+├ ƒ /api/question-library/[id]
+├ ƒ /api/quizzes
+├ ƒ /api/r2-images
+├ ƒ /api/r2-videos
+├ ƒ /api/register-user
+├ ƒ /api/register-user-free-trial
+├ ƒ /api/rename-r2-image
+├ ƒ /api/rename-r2-video
+├ ƒ /api/reset-password
+├ ƒ /api/revalidate
+├ ƒ /api/reviews
+├ ƒ /api/reviews/[id]
+├ ƒ /api/send-email
+├ ƒ /api/service-capacity/slots
+├ ƒ /api/settings
+├ ƒ /api/setup-pricing
+├ ƒ /api/simple-test
+├ ƒ /api/sitemap-proxy
+├ ƒ /api/sqe-2/[slug]
+├ ƒ /api/sqe-2/legal-skills-assessments/[slug]
+├ ƒ /api/sqe-2/practice-area/[slug]
+├ ƒ /api/sqe-2/topic/[slug]
+├ ƒ /api/sqe-2/topics
+├ ƒ /api/stripe/publishable-key
+├ ƒ /api/study-resources
+├ ƒ /api/submenu-items
+├ ƒ /api/submenu-items/[id]
+├ ƒ /api/support
+├ ƒ /api/sync-app-to-stripe-old
+├ ƒ /api/sync-r2-cors
+├ ƒ /api/sync-supabase-redirects
+├ ƒ /api/sync-to-stripe
+├ ƒ /api/tailor-cv
+├ ƒ /api/team-members
+├ ƒ /api/template-heading-sections
+├ ƒ /api/template-heading-sections/[id]
+├ ƒ /api/template-sections
+├ ƒ /api/template-sections/[id]
+├ ƒ /api/template-sections/[id]/metrics
+├ ƒ /api/terms
+├ ƒ /api/test-cookies
+├ ƒ /api/test-flask
+├ ƒ /api/test-geo
+├ ƒ /api/test-org-cookies
+├ ƒ /api/test-org-debug/[id]
+├ ƒ /api/test-video
+├ ƒ /api/tickets/assign
+├ ƒ /api/tickets/create
+├ ƒ /api/tickets/mark-read
+├ ƒ /api/tickets/priority
+├ ƒ /api/tickets/respond
+├ ƒ /api/tickets/status
+├ ƒ /api/transactions
+├ ƒ /api/transactions/sync
+├ ƒ /api/unsplash/download
+├ ƒ /api/unsplash/featured
+├ ƒ /api/unsplash/search
+├ ƒ /api/upload-image-r2
+├ ƒ /api/upload-video
+├ ƒ /api/validate-promo-code
+├ ƒ /api/verify-payment-intent
+├ ƒ /api/webhooks/github
+├ ƒ /api/webhooks/organization-updated
+├ ƒ /api/webhooks/stripe
+├ ƒ /api/webhooks/stripe/apify
+├ ƒ /api/webhooks/stripe/customer
+├ ƒ /api/webhooks/stripe/payment
+├ ƒ /api/webhooks/stripe/product-catalog
+├ ƒ /api/whoami
+├ ƒ /api/youtube/search
+├ ƒ /auth/callback
+├ ƒ /crm-test
+├ ƒ /currency-test
+├ ƒ /debug-currency
+├ ƒ /forms/[id]
+├ ƒ /sitemap.xml
+└ ƒ /skeleton-showcase
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
