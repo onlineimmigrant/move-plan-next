@@ -26,6 +26,7 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true, // Enable Critters for inlining critical CSS and deferring the rest
+    cssChunking: 'strict', // Reduce CSS chunk fragmentation for faster loading
     // Enable optimized package imports for faster initial load
     optimizePackageImports: [
       'lucide-react', 
@@ -304,6 +305,9 @@ const nextConfig = {
       
       // Split manifest into separate chunk for better caching
       config.optimization.moduleIds = 'deterministic';
+      
+      // Optimize CSS loading to prevent render blocking
+      config.optimization.realContentHash = true; // Better long-term caching
     }
     
     // Optimize chunk splitting for better caching and smaller initial bundles

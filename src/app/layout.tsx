@@ -127,8 +127,11 @@ export function generateViewport() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const currentDomain = await getDomain();
-  const headersList = await headers();
+  // CRITICAL OPTIMIZATION: Parallelize all metadata fetching
+  const [currentDomain, headersList] = await Promise.all([
+    getDomain(),
+    headers(),
+  ]);
   
   // Get full pathname WITH locale (e.g., /fr/about)
   const fullPathname = getPathnameFromHeaders(headersList);
@@ -139,16 +142,14 @@ export async function generateMetadata(): Promise<Metadata> {
   // Get pathname WITHOUT locale for SEO data lookup (DB stores without locale)
   const pathnameWithoutLocale = stripLocaleFromPathname(fullPathname);
   
-  // Use comprehensive SEO system (query DB with locale-stripped path)
-  let seoData;
-  try {
-    seoData = await fetchPageSEOData(pathnameWithoutLocale, currentDomain);
-  } catch (error) {
-    console.error('❌ [Layout generateMetadata] Error fetching SEO data, using fallback:', error);
-    seoData = await fetchDefaultSEOData(currentDomain, pathnameWithoutLocale);
-  }
-
-  const settings = await getSettingsWithFallback(currentDomain);
+  // CRITICAL: Fetch SEO data and settings in parallel
+  const [seoDataResult, settings] = await Promise.all([
+    fetchPageSEOData(pathnameWithoutLocale, currentDomain)
+      .catch(() => fetchDefaultSEOData(currentDomain, pathnameWithoutLocale)),
+    getSettingsWithFallback(currentDomain),
+  ]);
+  
+  const seoData = seoDataResult;
   const siteName = getSiteName(settings);
   const supportedLocales = getSupportedLocales(settings);
   
@@ -249,16 +250,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // TEMPORARILY COMMENTED OUT TO TEST SSG - headers() prevents static generation
-  const headersList = await headers();
+  // CRITICAL OPTIMIZATION: Fetch headers() and getDomain() in parallel - reduce blocking
+  const [headersList, currentDomainRaw] = await Promise.all([
+    headers(),
+    getDomain(),
+  ]);
+  
   const pathname = getPathnameFromHeaders(headersList);
   const currentLocale = extractLocaleFromPathname(pathname);
   const language = currentLocale;
   
-  // Get domain with localhost handling for build
-  let currentDomain = await getDomain();
-  
   // During build, use production domain or env variable with proper protocol
+  let currentDomain = currentDomainRaw;
   if (currentDomain.includes('localhost')) {
     if (process.env.NEXT_PUBLIC_BASE_URL) {
       currentDomain = process.env.NEXT_PUBLIC_BASE_URL;
@@ -284,18 +287,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // Cache hit - zero latency!
     ({ organization, settings, menuItems, cookieCategories } = cachedData);
   } else {
-    // Cache miss - fetch from database and cache for next request
-    [organization, cookieCategories] = await Promise.all([
+    // CRITICAL OPTIMIZATION: Parallelize ALL data fetching to eliminate waterfall
+    // Fetch organization and cookies in parallel
+    const [organizationData, cookieCategoriesData] = await Promise.all([
       getOrganization(currentDomain),
       getCookieCategories(),
     ]);
     
-    settings = organization 
-      ? await getSettings(currentDomain)
-      : await getSettingsWithFallback(currentDomain);
+    organization = organizationData;
+    cookieCategories = cookieCategoriesData;
     
+    // CRITICAL: Fetch settings and menuItems in parallel (not sequential)
     const organizationId = organization?.id || null;
-    menuItems = organizationId ? await fetchMenuItems(organizationId) : [];
+    [settings, menuItems] = await Promise.all([
+      organization 
+        ? getSettings(currentDomain)
+        : getSettingsWithFallback(currentDomain),
+      organizationId ? fetchMenuItems(organizationId) : Promise.resolve([]),
+    ]);
     
     // Cache for subsequent requests
     layoutCache.set(cacheKey, {
@@ -306,20 +315,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     });
   }
   
-  // Fetch template sections server-side to prevent CLS
+  // CRITICAL OPTIMIZATION: Fetch template sections in parallel with minimal blocking
+  // Only fetch if we have organizationId from cache or previous fetch
+  const organizationId = organization?.id || settings?.organization_id;
+  const pathnameWithoutLocale = stripLocaleFromPathname(pathname);
+  const urlPage = pathnameWithoutLocale;
+  
+  // Fetch template sections in parallel - no sequential waterfall
   let templateSections: any[] = [];
   let templateHeadingSections: any[] = [];
   
-  try {
-    const organizationId = organization?.id || settings?.organization_id;
-    if (organizationId) {
-      // Strip locale from pathname for database lookup
-      const pathnameWithoutLocale = stripLocaleFromPathname(pathname);
-      // Use pathname as-is for database query (sections are stored with actual path, not /home)
-      const urlPage = pathnameWithoutLocale;
-      
-      console.log('[Layout] Fetching template sections:', { pathname, pathnameWithoutLocale, urlPage, organizationId });
-      
+  if (organizationId) {
+    try {
       const [sectionsData, headingsData] = await Promise.all([
         supabaseServer
           .from('template_section')
@@ -337,17 +344,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       
       templateSections = sectionsData.data || [];
       templateHeadingSections = headingsData.data || [];
-      
-      console.log('[Layout] Fetched sections:', { 
-        sectionsCount: templateSections.length, 
-        headingsCount: templateHeadingSections.length 
-      });
-    } else {
-      console.log('[Layout] No organizationId, skipping sections fetch');
+    } catch (error) {
+      console.error('[Layout] Error fetching template sections:', error);
+      // Continue with empty arrays - non-critical data
     }
-  } catch (error) {
-    console.error('[Layout] Error fetching template sections:', error);
-    // Continue with empty arrays - non-critical data
   }
   
   // Quick cookie check (no async) - COMMENTED OUT FOR SSG TEST
@@ -396,6 +396,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://rgbmdfaoowqbgshjuwwm.supabase.co" />
         <link rel="preconnect" href="https://pub-6891bafd3bd54c36b02da71be2099135.r2.dev" />
         <link rel="dns-prefetch" href="https://images.pexels.com" />
+        
+        {/* Prefetch hint for Next.js router to enable faster navigation */}
+        <link rel="prefetch" href="/_next/static/css/" />
         
         {/* Prefetch common API routes (browser cache warm-up) */}
         <link rel="prefetch" href="/api/products-summary" as="fetch" crossOrigin="anonymous" />
