@@ -11,6 +11,7 @@ import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GTMComp
 import { Metadata } from 'next';
 import { fetchPageSEOData, fetchDefaultSEOData } from '@/lib/supabase/seo';
 import Script from 'next/script';
+import { Suspense } from 'react';
 import LayoutSEO from '@/components/LayoutSEO';
 import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
@@ -82,11 +83,9 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono'
 });
 
-// ISR: Cache layout for 1 hour to reduce server response time
-// This dramatically improves TTFB (Time to First Byte) by serving cached HTML
-// First visitor pays the ~1.5s DB fetch cost, next visitors get instant response
-export const revalidate = 3600; // Revalidate every hour
-
+// STREAMING OPTIMIZATION: No revalidate export needed
+// Layout uses streaming with Suspense to send HTML shell immediately
+// while tenant data loads in parallel (fixes TTFB without ISR)
 // Child pages can still control their own caching strategy
 // Blog posts & products: force-static (full SSG with immutable cache)
 // Admin pages: dynamic rendering (real-time updates)
@@ -495,22 +494,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }}
       >
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
-        <ClientProviders
-          settings={settings}
-          headerData={headerData}
-          activeLanguages={getSupportedLocales(settings as any)}
-          baseUrl={currentDomain}
-          menuItems={menuItems}
-          cookieCategories={cookieCategories}
-          cookieAccepted={cookieAccepted}
-          templateSections={templateSections}
-          templateHeadingSections={templateHeadingSections}
-          pathnameFromServer={pathname}
-        >
-          <LanguageSuggestionBanner currentLocale={currentLocale} />
-          <SimpleLayoutSEO />
-          {children}
-        </ClientProviders>
+        <Suspense fallback={null}>
+          <ClientProviders
+            settings={settings}
+            headerData={headerData}
+            activeLanguages={getSupportedLocales(settings as any)}
+            baseUrl={currentDomain}
+            menuItems={menuItems}
+            cookieCategories={cookieCategories}
+            cookieAccepted={cookieAccepted}
+            templateSections={templateSections}
+            templateHeadingSections={templateHeadingSections}
+            pathnameFromServer={pathname}
+          >
+            <LanguageSuggestionBanner currentLocale={currentLocale} />
+            <SimpleLayoutSEO />
+            {children}
+          </ClientProviders>
+        </Suspense>
         
         {/* Error suppression script - defer to idle time to avoid blocking main thread */}
         <Script
