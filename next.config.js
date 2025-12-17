@@ -40,9 +40,13 @@ const nextConfig = {
       'rehype-raw',
       'rehype-sanitize',
       'framer-motion',
+      'react-icons',
+      '@tiptap/react',
     ],
     // Reduce memory usage and improve performance
     webpackMemoryOptimizations: true,
+    // Enable more aggressive tree-shaking
+    optimizeServerReact: true,
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],

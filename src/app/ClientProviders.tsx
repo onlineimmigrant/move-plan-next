@@ -29,26 +29,21 @@ import { PageSectionsProvider } from '@/context/PageSectionsContext';
 import { BannerContainer } from '@/components/banners/BannerContainer';
 import DefaultLocaleCookieManager from '@/components/DefaultLocaleCookieManager';
 
-// Lazy-load QueryClient creation to defer initialization until actually needed
-let queryClientInstance: QueryClient | null = null;
-function getQueryClient() {
-  if (!queryClientInstance) {
-    queryClientInstance = new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime: 60000, // 1 minute
-          gcTime: 300000, // 5 minutes
-          refetchOnWindowFocus: false,
-          retry: 1,
-        },
-        mutations: {
-          retry: 0,
-        },
-      },
-    });
-  }
-  return queryClientInstance;
-}
+// Singleton QueryClient with optimal defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60000,
+      gcTime: 300000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
@@ -299,9 +294,6 @@ function ClientProviders({
   
   // Cookie banner renders immediately based on server-side check - no delay needed!
   // This eliminates CLS and improves LCP by not blocking/delaying content
-
-  // Use lazy QueryClient singleton - defers initialization until actually needed
-  const [queryClient] = useState(getQueryClient);
 
   useEffect(() => {
     const fetchTemplateData = async () => {
