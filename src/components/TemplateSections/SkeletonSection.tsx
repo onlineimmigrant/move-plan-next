@@ -29,6 +29,16 @@ interface SkeletonSectionProps {
    * Ref for IntersectionObserver
    */
   sectionRef?: React.RefObject<HTMLElement>;
+  
+  /**
+   * Section type to match real content height
+   */
+  sectionType?: string;
+  
+  /**
+   * Whether this is a slider section
+   */
+  isSlider?: boolean;
 }
 
 export const SkeletonSection: React.FC<SkeletonSectionProps> = ({
@@ -36,12 +46,33 @@ export const SkeletonSection: React.FC<SkeletonSectionProps> = ({
   backgroundStyle,
   ariaLabel = 'Loading section...',
   sectionRef,
+  sectionType,
+  isSlider,
 }) => {
+  // Match the min-height of real sections to prevent layout shift
+  const minHeightClass = 
+    ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'form_harmony'].includes(sectionType || '')
+      ? 'min-h-0'
+      : isSlider
+      ? 'min-h-[600px]'
+      : 'min-h-[600px]';
+
+  const paddingClass = 
+    ['brand', 'article_slider', 'contact', 'faq', 'pricing_plans', 'reviews', 'form_harmony'].includes(sectionType || '')
+      ? 'px-0 py-0'
+      : isSlider
+      ? 'px-0 py-8'
+      : 'px-4 py-8';
+  
   return (
     <section
       ref={sectionRef}
-      className="px-4 py-8 min-h-[600px] text-xl relative"
-      style={backgroundStyle}
+      className={`${paddingClass} ${minHeightClass} text-xl relative`}
+      style={{
+        ...backgroundStyle,
+        contentVisibility: 'auto', // Browser optimization to prevent layout shifts
+        containIntrinsicSize: '0 600px', // Estimate size when not visible
+      }}
       aria-label={ariaLabel}
       aria-busy="true"
     >

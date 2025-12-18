@@ -280,17 +280,8 @@ const UnifiedSections: React.FC<UnifiedSectionsProps> = ({
   return (
     <>
       {sections.map((section, index) => {
-        // Adaptive performance strategy:
-        // - Slow network (2g): Only first section priority
-        // - Medium network (3g): First 2 sections priority  
-        // - Fast network (4g/5g): First 3 sections priority
-        // 
-        // Benefits:
-        // - Faster initial load on slow connections
-        // - Optimized LCP for all network conditions
-        // - Browser lazy loading handles remaining images
-        // - Zero layout shifts (all sections render, only images lazy load)
-        const isPriority = index < priorityCount;
+        // First 4 sections priority for performance
+        const isPriority = index < 4;
         
         if (section.type === 'template_section') {
           return <TemplateSection key={section.id} section={section.data} isPriority={isPriority} />;

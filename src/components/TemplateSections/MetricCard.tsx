@@ -105,7 +105,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
     return (
       <div className={mediaClasses}>
-        <div className="w-full overflow-hidden rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96 relative group">
+        <div 
+          className="w-full overflow-hidden rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96 relative group"
+          style={{
+            aspectRatio: '4/3',
+            contentVisibility: 'auto',
+            containIntrinsicSize: '800px 600px',
+          }}
+        >
           <Image
             src={metric.image}
             alt={metric.title || 'Metric image'}
@@ -113,8 +120,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               'w-full h-full object-cover transition-transform duration-500 group-hover:scale-105',
               metric.is_image_rounded_full && 'rounded-full object-contain'
             )}
-            width={800}
-            height={600}
+            fill
             loading={isPriority ? 'eager' : 'lazy'}
             priority={isPriority}
             fetchPriority={isPriority ? 'high' : 'low'}

@@ -87,39 +87,10 @@ function usePerformanceMonitor(sectionId: number, sectionTitle: string) {
 
 /**
  * Smart lazy loading with skeleton placeholder
- * Loads sections progressively while maintaining layout stability
+ * DEPRECATED - No longer used. All sections render immediately with content-visibility.
+ * Priority sections skip lazy loading entirely to prevent layout shifts
  */
-function useSmartLazySection(isPriority: boolean = false) {
-  const [isVisible, setIsVisible] = React.useState(isPriority);
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (isPriority) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.disconnect();
-          }
-        });
-      },
-      {
-        rootMargin: '300px', // Load 300px before visible
-        threshold: 0.01,
-      }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [isPriority]);
-
-  return { isVisible, sectionRef };
-}
+// function useSmartLazySection(isPriority: boolean = false) { ... }
 
 const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, isPriority = false }) => {
   // Early return to avoid null/undefined issues
@@ -136,8 +107,8 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
 
   const pathname = usePathname();
   
-  // Smart lazy loading with skeleton placeholder (prevents CLS while improving performance)
-  const { isVisible, sectionRef } = useSmartLazySection(isPriority);
+  // Use ref for section element (no lazy loading - all sections render immediately)
+  const sectionRef = useRef<HTMLElement>(null);
   
   // Extract locale from pathname
   const currentLocale = extractLocaleFromPathname(pathname);
@@ -203,17 +174,8 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
     );
   }, [section.is_gradient, section.gradient, section.background_color]);
 
-  // Skeleton placeholder for lazy loading
-  if (!isVisible) {
-    return (
-      <SkeletonSection
-        sectionRef={sectionRef}
-        gridColumns={section.grid_columns || 3}
-        backgroundStyle={sectionBackgroundStyle}
-        ariaLabel={`Loading ${section.section_title || 'section'}...`}
-      />
-    );
-  }
+  // Render all content immediately - no lazy loading, no content-visibility
+  // Performance boost comes from eliminating IntersectionObserver overhead
   
   return (
     <section
