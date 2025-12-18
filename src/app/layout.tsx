@@ -11,7 +11,6 @@ import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/GTMComp
 import { Metadata } from 'next';
 import { fetchPageSEOData, fetchDefaultSEOData } from '@/lib/supabase/seo';
 import Script from 'next/script';
-import { Suspense } from 'react';
 import LayoutSEO from '@/components/LayoutSEO';
 import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
@@ -494,24 +493,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }}
       >
         {settings.google_tag && <GoogleTagManagerNoscript gtmId={settings.google_tag} />}
-        <Suspense fallback={null}>
-          <ClientProviders
-            settings={settings}
-            headerData={headerData}
-            activeLanguages={getSupportedLocales(settings as any)}
-            baseUrl={currentDomain}
-            menuItems={menuItems}
-            cookieCategories={cookieCategories}
-            cookieAccepted={cookieAccepted}
-            templateSections={templateSections}
-            templateHeadingSections={templateHeadingSections}
-            pathnameFromServer={pathname}
-          >
-            <LanguageSuggestionBanner currentLocale={currentLocale} />
-            <SimpleLayoutSEO />
-            {children}
-          </ClientProviders>
-        </Suspense>
+        <ClientProviders
+          settings={settings}
+          headerData={headerData}
+          activeLanguages={getSupportedLocales(settings as any)}
+          baseUrl={currentDomain}
+          menuItems={menuItems}
+          cookieCategories={cookieCategories}
+          cookieAccepted={cookieAccepted}
+          templateSections={templateSections}
+          templateHeadingSections={templateHeadingSections}
+          pathnameFromServer={pathname}
+        >
+          <LanguageSuggestionBanner currentLocale={currentLocale} />
+          <SimpleLayoutSEO />
+          {children}
+        </ClientProviders>
         
         {/* Error suppression script - defer to idle time to avoid blocking main thread */}
         <Script
