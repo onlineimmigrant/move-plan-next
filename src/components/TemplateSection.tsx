@@ -174,8 +174,8 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
     );
   }, [section.is_gradient, section.gradient, section.background_color]);
 
-  // Render all content immediately - no lazy loading, no content-visibility
-  // Performance boost comes from eliminating IntersectionObserver overhead
+  // Render all content immediately, but use content-visibility for off-screen sections
+  // Priority sections visible immediately, non-priority use content-visibility: auto with conservative size
   
   return (
     <section
@@ -188,7 +188,10 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
           ? 'px-0 py-8 min-h-[600px]' 
           : 'px-4 py-8 min-h-[600px]'
       } text-xl relative group`}
-      style={sectionBackgroundStyle}
+      style={{
+        ...sectionBackgroundStyle,
+        ...(isPriority ? {} : { contentVisibility: 'auto', containIntrinsicSize: '1px 600px' })
+      }}
       aria-label={section.section_title || 'Content section'}
     >
       {/* Hover Edit Buttons for Admin */}
@@ -342,7 +345,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
                 />
               ) : (
                 /* Regular Grid for smaller datasets */
-                <div className={`grid ${responsiveGridClasses} gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:gap-x-10 md:gap-y-12 lg:gap-x-12 lg:gap-y-14 xl:gap-x-14 xl:gap-y-16 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20`}>
+                <div className={`grid ${responsiveGridClasses} items-stretch gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:gap-x-10 md:gap-y-12 lg:gap-x-12 lg:gap-y-14 xl:gap-x-14 xl:gap-y-16 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20`}>
                   {(section.website_metric || []).map((metric, index) => {
                     // Get translated content for each metric
                     const translatedMetricTitle = getTranslatedContent(

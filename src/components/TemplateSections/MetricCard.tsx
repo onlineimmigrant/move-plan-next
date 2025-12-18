@@ -109,8 +109,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           className="w-full overflow-hidden rounded-b-3xl h-64 sm:h-72 md:h-80 lg:h-96 relative group"
           style={{
             aspectRatio: '4/3',
-            contentVisibility: 'auto',
-            containIntrinsicSize: '800px 600px',
           }}
         >
           <Image
@@ -135,7 +133,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col mx-auto',
+        'flex flex-col w-full min-w-0',
         'transition-all duration-300 ease-out',
         'hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1',
         'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2',
@@ -147,8 +145,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         ...(metric.is_card_type && metricBgStyle ? metricBgStyle : {}),
         animationDelay: `${animationDelay}ms`,
         animationFillMode: 'backwards',
-        contentVisibility: 'auto',
-        containIntrinsicSize: '600px'
       }}
       tabIndex={0}
     >
