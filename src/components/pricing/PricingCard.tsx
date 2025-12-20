@@ -11,6 +11,7 @@ interface Feature {
   name: string;
   slug: string;
   type?: string;
+  order?: number;
 }
 
 interface PricingCardProps {
@@ -46,6 +47,8 @@ interface PricingCardProps {
     viewLess: string;
   };
   isLoadingFeatures: boolean;
+  searchQuery?: string;
+  highlightMatch?: (text: string, query: string) => React.ReactNode;
 }
 
 const PricingCard = memo<PricingCardProps>(({
@@ -74,6 +77,8 @@ const PricingCard = memo<PricingCardProps>(({
   onToggleExpanded,
   translations,
   isLoadingFeatures,
+  searchQuery,
+  highlightMatch,
 }) => {
   const themeColors = useThemeColors();
   const primaryColor = themeColors.cssVars.primary.base;
@@ -91,8 +96,50 @@ const PricingCard = memo<PricingCardProps>(({
     : monthlyPromotionPrice || monthlyPrice;
 
   const maxFeatures = PRICING_CONSTANTS.MAX_VISIBLE_FEATURES;
-  const featuresToShow = isExpanded ? features : features.slice(0, maxFeatures);
-  const hasMoreFeatures = features.length > maxFeatures;
+  
+  // Sort features by type and order to match comparison table
+  const sortedFeatures = useMemo(() => {
+    if (!realFeatures || realFeatures.length === 0) {
+      return features;
+    }
+    
+    // Create a map of feature name to order
+    const featureOrderMap = new Map<string, { order: number; type: string }>();
+    realFeatures.forEach(rf => {
+      featureOrderMap.set(rf.name, { order: rf.order || 999, type: rf.type || 'features' });
+    });
+    
+    // Type priority: modules -> features -> support -> bonus
+    const typePriority: { [key: string]: number } = {
+      'modules': 1,
+      'features': 2,
+      'support': 3,
+      'bonus': 4
+    };
+    
+    return [...features].sort((a, b) => {
+      const aData = featureOrderMap.get(a);
+      const bData = featureOrderMap.get(b);
+      
+      if (!aData && !bData) return 0;
+      if (!aData) return 1;
+      if (!bData) return -1;
+      
+      // First sort by type priority
+      const aTypePriority = typePriority[aData.type.toLowerCase()] || 999;
+      const bTypePriority = typePriority[bData.type.toLowerCase()] || 999;
+      
+      if (aTypePriority !== bTypePriority) {
+        return aTypePriority - bTypePriority;
+      }
+      
+      // Then sort by order within same type
+      return aData.order - bData.order;
+    });
+  }, [features, realFeatures]);
+  
+  const featuresToShow = isExpanded ? sortedFeatures : sortedFeatures.slice(0, maxFeatures);
+  const hasMoreFeatures = sortedFeatures.length > maxFeatures;
 
   // Memoize button styles to prevent recalculation on every render
   const buttonStyles = useMemo(() => ({
@@ -131,10 +178,10 @@ const PricingCard = memo<PricingCardProps>(({
 
   return (
     <div
-      className={`relative rounded-2xl border border-gray-200/30 backdrop-blur-sm transition-all hover:shadow-2xl group ${
+      className={`relative rounded-2xl border backdrop-blur-sm transition-all group ${
         highlighted
-          ? 'shadow-xl ring-2 ring-white/30'
-          : 'shadow-lg hover:border-gray-200/50'
+          ? 'border-blue-200/70 bg-blue-50/30'
+          : 'border-gray-200/50 hover:border-gray-300/70'
       }`}
       style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
     >
@@ -155,10 +202,12 @@ const PricingCard = memo<PricingCardProps>(({
 
       <div className="p-8">
         <div className="text-center mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{name}</h3>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {searchQuery && highlightMatch ? highlightMatch(name, searchQuery) : name}
+          </h3>
           {description && (
             <p className="text-gray-600 dark:text-gray-400 mb-2 font-light text-sm leading-relaxed">
-              {description}
+              {searchQuery && highlightMatch ? highlightMatch(description, searchQuery) : description}
             </p>
           )}
 
@@ -264,11 +313,11 @@ const PricingCard = memo<PricingCardProps>(({
                             e.currentTarget.style.color = '#4b5563';
                           }}
                         >
-                          {feature}
+                          {searchQuery && highlightMatch ? highlightMatch(feature, searchQuery) : feature}
                         </Link>
                       ) : (
                         <span className={`text-gray-600 ${featureTextSize} ${featureWeight} leading-relaxed`}>
-                          {feature}
+                          {searchQuery && highlightMatch ? highlightMatch(feature, searchQuery) : feature}
                         </span>
                       )}
                     </li>
@@ -327,7 +376,9 @@ const PricingCard = memo<PricingCardProps>(({
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.isLoadingFeatures === nextProps.isLoadingFeatures &&
     prevProps.features.length === nextProps.features.length &&
-    prevProps.realFeatures?.length === nextProps.realFeatures?.length
+    prevProps.realFeatures?.length === nextProps.realFeatures?.length &&
+    prevProps.searchQuery === nextProps.searchQuery &&
+    prevProps.realFeatures === nextProps.realFeatures
   );
 });
 

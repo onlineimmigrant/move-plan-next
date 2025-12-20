@@ -30,19 +30,23 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon as XMarkIconMini } from '@heroicons/react/20/solid';
+import { Search, X } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { getTranslatedMenuContent, getLocaleFromPathname } from '@/utils/menuTranslations';
 import { detectUserCurrency, getPriceForCurrency, SUPPORTED_CURRENCIES } from '@/lib/currency';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import PricingModalProductBadges from '@/components/PricingModalProductBadges';
 import { PricingComparisonProduct } from '@/types/product';
 import { PricingPlan } from '@/types/pricingplan';
 import PricingCard from '@/components/pricing/PricingCard';
 import PricingComparisonTable from '@/components/pricing/PricingComparisonTable';
+import PricingToggle from '@/components/pricing/PricingToggle';
 import { 
   generateProductPricingUrl, 
   generateBasicPricingUrl,
@@ -225,6 +229,7 @@ interface SamplePricingPlan {
   annualPromotionPrice?: number; // Annual promotional price
   currencySymbol?: string; // Currency symbol for monthly price
   annualCurrencySymbol?: string; // Currency symbol for annual price
+  recurring_interval?: string; // Recurring interval (month, year, etc.)
 }
 
 interface PricingComparison {
@@ -270,6 +275,7 @@ function usePricingTranslations() {
 // No more sample data - using real database content only
 
 export default function PricingModal({ isOpen, onClose, pricingComparison }: PricingModalProps) {
+  const themeColors = useThemeColors();
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PricingComparisonProduct | null>(null);
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
@@ -280,6 +286,179 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
   const [initialProductIdentifier, setInitialProductIdentifier] = useState<string | null>(null);
   const [userCurrency, setUserCurrency] = useState('USD');
   const [currencySymbol, setCurrencySymbol] = useState('$');
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('pricing_recent_searches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse recent searches');
+      }
+    }
+  }, []);
+
+  // Keyboard shortcuts and autocomplete navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      // Arrow navigation in autocomplete
+      if (showAutocomplete && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        const filteredRecent = recentSearches.filter(search => search.toLowerCase().includes(searchQuery.toLowerCase()));
+        const filteredSuggestions = searchSuggestions.filter(suggestion => suggestion.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+        const totalItems = filteredRecent.length + filteredSuggestions.length;
+        
+        if (totalItems === 0) return;
+        
+        if (e.key === 'ArrowDown') {
+          setActiveIndex(prev => prev < totalItems - 1 ? prev + 1 : prev);
+        } else {
+          setActiveIndex(prev => prev > -1 ? prev - 1 : -1);
+        }
+      }
+
+      // Enter to select suggestion
+      if (showAutocomplete && e.key === 'Enter' && activeIndex >= 0) {
+        e.preventDefault();
+        const filteredRecent = recentSearches.filter(search => search.toLowerCase().includes(searchQuery.toLowerCase()));
+        const filteredSuggestions = searchSuggestions.filter(suggestion => suggestion.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+        
+        if (activeIndex < filteredRecent.length) {
+          // Selected from recent searches
+          handleSearchChange(filteredRecent[activeIndex]);
+        } else {
+          // Selected from suggestions
+          const suggestionIndex = activeIndex - filteredRecent.length;
+          if (filteredSuggestions[suggestionIndex]) {
+            handleSearchChange(filteredSuggestions[suggestionIndex]);
+          }
+        }
+        setShowAutocomplete(false);
+      }
+
+      // Escape to close autocomplete
+      if (e.key === 'Escape') {
+        setShowAutocomplete(false);
+        setActiveIndex(-1);
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showAutocomplete, searchQuery, searchSuggestions, recentSearches, activeIndex]);
+
+  // Debounced search handler
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      // Only save to recent searches when user actually searches (not empty and different from last)
+      if (value.trim() && !recentSearches.includes(value.trim()) && value.length > 2) {
+        const updated = [value.trim(), ...recentSearches.slice(0, 4)];
+        setRecentSearches(updated);
+        localStorage.setItem('pricing_recent_searches', JSON.stringify(updated));
+      }
+    }, 50);
+  }, [recentSearches]);
+
+  // Clear search
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    setShowAutocomplete(false);
+    setActiveIndex(-1);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+  }, []);
+
+  // Highlight matching text in search results
+  const highlightMatch = useCallback((text: string, query: string) => {
+    if (!query.trim() || !text) return text;
+    
+    try {
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedQuery})`, 'gi');
+      const parts = text.split(regex);
+      
+      return (
+        <>
+          {parts.map((part, index) => {
+            if (!part) return null;
+            // When splitting with a capturing group, matched parts appear at odd indices
+            const isMatch = index % 2 === 1;
+            return isMatch ? (
+              <span key={index} style={{ backgroundColor: 'rgb(219 234 254)', color: 'rgb(30 64 175)', padding: '0 2px', borderRadius: '2px' }}>
+                {part}
+              </span>
+            ) : (
+              <React.Fragment key={index}>{part}</React.Fragment>
+            );
+          })}
+        </>
+      );
+    } catch (e) {
+      console.error('Error in highlightMatch:', e);
+      return text;
+    }
+  }, []);
+
+  // Generate search suggestions based on pricing plans
+  useEffect(() => {
+    if (pricingPlans.length === 0) return;
+    
+    const suggestions = new Set<string>();
+    
+    pricingPlans.forEach(plan => {
+      // Add plan names/packages
+      if (plan.package) suggestions.add(plan.package);
+      
+      // Add product names
+      if (plan.product?.product_name) suggestions.add(plan.product.product_name);
+      
+      // Add pricing info
+      if (plan.price) suggestions.add(`$${plan.price}`);
+      if (plan.monthly_price_calculated) suggestions.add(`$${plan.monthly_price_calculated}/month`);
+      if (plan.total_price_calculated) suggestions.add(`$${plan.total_price_calculated} total`);
+      
+      // Add intervals
+      if (plan.recurring_interval) suggestions.add(plan.recurring_interval);
+      
+      // Add features from planFeatures
+      const planFeaturesForId = planFeatures[plan.id] || [];
+      planFeaturesForId.forEach(feature => {
+        if (feature.name) suggestions.add(feature.name);
+        if (feature.content) {
+          // Split content into words and add meaningful ones
+          feature.content.split(' ').forEach(word => {
+            if (word.length > 3) suggestions.add(word);
+          });
+        }
+      });
+    });
+    
+    setSearchSuggestions(Array.from(suggestions).slice(0, 10));
+  }, [pricingPlans, planFeatures]);
   const translations = usePricingTranslations();
   const pathname = usePathname();
   const { settings } = useSettings();
@@ -561,6 +740,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
         promotionPrice: monthlyIsPromotion ? monthlyPromotionPrice : annualIsPromotion ? annualPromotionPrice : undefined,
         monthlyPromotionPrice,
         annualPromotionPrice,
+        // Add recurring interval for search
+        recurring_interval: monthly?.recurring_interval || annual?.recurring_interval || 'month',
       };
     }).sort((a, b) => a.order - b.order);
 
@@ -581,10 +762,72 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
     return sortedPlans;
   }, [planFeatures, userCurrency, currencySymbol]);
 
-  const displayPlans = useMemo(() => transformPricingPlans(pricingPlans), [transformPricingPlans, pricingPlans]);
+  const displayPlans = useMemo(() => {
+    const transformedPlans = transformPricingPlans(pricingPlans);
+    
+    if (!searchQuery.trim()) {
+      return transformedPlans;
+    }
+    
+    const searchLower = searchQuery.toLowerCase();
+    
+    return transformedPlans.filter(plan => {
+      // Search in plan name
+      if (plan.name?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in description
+      if (plan.description?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in features
+      if (plan.features?.some(feature => feature.toLowerCase().includes(searchLower))) return true;
+      
+      // Search in real features
+      if (plan.realFeatures?.some(feature => 
+        feature.name?.toLowerCase().includes(searchLower) || 
+        feature.content?.toLowerCase().includes(searchLower)
+      )) return true;
+      
+      // Search in pricing information
+      if (plan.monthlyPrice?.toString().includes(searchLower) || 
+          plan.annualPrice?.toString().includes(searchLower)) return true;
+      
+      // Search in product slug
+      if (plan.productSlug?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in plan type/interval
+      if (plan.recurring_interval?.toLowerCase().includes(searchLower)) return true;
+      
+      return false;
+    });
+  }, [transformPricingPlans, pricingPlans, searchQuery]);
 
   // Check if any plans are one-time payments to hide annual/monthly toggle
   const hasOneTimePlans = useMemo(() => pricingPlans.some(plan => plan.type === 'one_time'), [pricingPlans]);
+
+  // Track scroll position to show fixed toggle
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScroll = () => {
+      const scrollContainer = document.querySelector('[data-pricing-content]');
+      if (scrollContainer) {
+        setHasScrolled(scrollContainer.scrollTop > 50);
+      }
+    };
+
+    const scrollContainer = document.querySelector('[data-pricing-content]');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [isOpen]);
+
+  // Reset scroll state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasScrolled(false);
+    }
+  }, [isOpen]);
 
   // Get translated title and description
   const getTranslatedTitle = () => {
@@ -682,10 +925,22 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
       <div className="fixed inset-0 flex" style={{ zIndex: 999999 }}>
         <div className="relative bg-white w-full h-full overflow-hidden flex flex-col">
           
+          {/* Fixed Pricing Toggle - appears at top when scrolled */}
+          {!hasOneTimePlans && hasScrolled && (
+            <div className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm px-6 py-4 sm:px-8 border-b border-gray-200/50">
+              <PricingToggle
+                isAnnual={isAnnual}
+                onToggle={setIsAnnual}
+                translations={translations}
+                variant="fixed"
+              />
+            </div>
+          )}
+          
           {/* Header */}
-          <div className="relative bg-white px-6 py-6 sm:px-8 sm:py-8 flex-shrink-0 border-b border-gray-100">
-            {/* Logo - Top Left */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+          <div className="relative bg-white px-6 py-6 sm:px-8 sm:py-8">
+            {/* Logo - Top Left - Hidden on mobile when space is limited */}
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 hidden sm:block">
               {settings?.image ? (
                 <Image
                   src={settings.image}
@@ -704,20 +959,148 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
               )}
             </div>
             
-            {/* Close Button - Top Right */}
-            <button
-              onClick={() => {
-                onClose();
-                // Remove hash when clicking close button
-                removePricingHash();
-              }}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-50"
-              aria-label="Close pricing modal"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
+            {/* Search and Close Button Container */}
+            <div className="flex items-center gap-3 justify-end min-w-0">
+              {/* Search - CRM Style */}
+              <div className="relative flex-1 max-w-sm min-w-0">
+                {/* Search Icon */}
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  <Search className={`h-5 w-5 transition-all duration-200 ${
+                    searchQuery ? 'text-gray-600 scale-110' : 'text-gray-400'
+                  }`} />
+                </span>
+                
+                {/* Search Input */}
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  role="search"
+                  aria-label="Search pricing plans"
+                  aria-controls="search-autocomplete"
+                  aria-expanded={showAutocomplete}
+                  aria-activedescendant={activeIndex >= 0 ? `search-suggestion-${activeIndex}` : undefined}
+                  placeholder="Search plans..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    handleSearchChange(e.target.value);
+                    setShowAutocomplete(true);
+                    setActiveIndex(-1);
+                  }}
+                  onFocus={(e) => {
+                    setShowAutocomplete(true);
+                    setActiveIndex(-1);
+                    e.currentTarget.style.boxShadow = `0 0 0 3px ${themeColors.cssVars.primary.base}20`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.boxShadow = '';
+                    setTimeout(() => {
+                      setShowAutocomplete(false);
+                      setActiveIndex(-1);
+                    }, 200);
+                  }}
+                  className="w-full pl-12 pr-24 py-3.5 text-base border bg-white border-gray-100 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500"
+                />
+                
+                {/* Right Side Icons */}
+                <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-4">
+                  {/* Clear Button */}
+                  {searchQuery && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
+                  )}
+                  
+                  {/* Keyboard Shortcut Hint */}
+                  <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 font-medium bg-gray-100 rounded-md">
+                    <kbd>⌘</kbd><kbd>K</kbd>
+                  </span>
+                </div>
+                
+                {/* Autocomplete Dropdown */}
+                {showAutocomplete && searchQuery && (searchSuggestions.length > 0 || recentSearches.filter(search => search.toLowerCase().includes(searchQuery.toLowerCase())).length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                    {/* Recent Searches */}
+                    {recentSearches.filter(search => search.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 && (
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Recent Searches</div>
+                        {recentSearches
+                          .filter(search => search.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .slice(0, 3)
+                          .map((search, index) => (
+                          <button
+                            key={search}
+                            onClick={() => {
+                              handleSearchChange(search);
+                              setShowAutocomplete(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded-md transition-colors ${
+                              activeIndex === index ? 'font-medium' : 'text-gray-700'
+                            }`}
+                            style={{
+                              backgroundColor: activeIndex === index ? `${themeColors.cssVars.primary.lighter}80` : undefined,
+                              color: activeIndex === index ? themeColors.cssVars.primary.base : undefined,
+                            }}
+                          >
+                            {highlightMatch(search, searchQuery)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Search Suggestions */}
+                    {searchSuggestions
+                      .filter(suggestion => suggestion.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .slice(0, 5)
+                      .map((suggestion, index) => {
+                      const actualIndex = recentSearches.filter(search => search.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? index + 3 : index;
+                      return (
+                        <button
+                          key={suggestion}
+                          id={`search-suggestion-${actualIndex}`}
+                          onClick={() => {
+                            handleSearchChange(suggestion);
+                            setShowAutocomplete(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${
+                            activeIndex === actualIndex ? 'font-medium' : 'text-gray-700'
+                          }`}
+                          style={{
+                            backgroundColor: activeIndex === actualIndex ? `${themeColors.cssVars.primary.lighter}80` : undefined,
+                            color: activeIndex === actualIndex ? themeColors.cssVars.primary.base : undefined,
+                          }}
+                        >
+                          {highlightMatch(suggestion, searchQuery)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  onClose();
+                  // Remove hash when clicking close button
+                  removePricingHash();
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-50 flex-shrink-0"
+                aria-label="Close pricing modal"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 bg-white px-6 py-6 sm:px-8 sm:py-8 overflow-y-auto relative" data-pricing-content>
             
-            <div className="text-center max-w-4xl mx-auto">
+            {/* Scrollable Title and Description */}
+            <div className="text-center max-w-4xl mx-auto mb-8">
               <h2 className="text-3xl sm:text-4xl lg:text-4xl font-extralight tracking-tight mb-3 sm:mb-4 text-gray-700 leading-tight">
                 {getTranslatedTitle()}
               </h2>
@@ -734,44 +1117,30 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                 />
               </div>
               
-              {/* Pricing Toggle - Only show for recurring plans */}
-              {!hasOneTimePlans && (
-                <div className="flex justify-center">
-                  <div className="relative bg-gray-50/70 p-0.5 rounded-full border border-gray-200/50 backdrop-blur-sm">
-                    <div className={` ${
-                      isAnnual ? 'transform translate-x-full' : 'transform translate-x-0'
-                    }`}></div>
-                    <button 
-                      onClick={() => setIsAnnual(false)}
-                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
-                        !isAnnual 
-                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      {translations.monthly}
-                    </button>
-                    <button 
-                      onClick={() => setIsAnnual(true)}
-                      className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-out ${
-                        isAnnual 
-                          ? 'text-gray-700 bg-white shadow-sm border border-gray-200/60' 
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      {translations.annual}
-                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
-                        %
-                      </span>
-                    </button>
-                  </div>
+              {/* Search Results Indicator */}
+              {searchQuery && (
+                <div className="text-center mb-6">
+                  <p className="text-sm text-gray-600">
+                    {displayPlans.length === 0 
+                      ? `No plans found for "${searchQuery}"`
+                      : `Found ${displayPlans.length} plan${displayPlans.length === 1 ? '' : 's'} for "${searchQuery}"`
+                    }
+                  </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 bg-white px-6 py-6 sm:px-8 sm:py-8 overflow-y-auto">
+            {/* Fixed Pricing Toggle - at the level where buttons appear */}
+            {!hasOneTimePlans && !hasScrolled && (
+              <div className="sticky top-0 z-20 bg-white/95 px-6 py-4 sm:px-8 mb-6">
+                <PricingToggle
+                  isAnnual={isAnnual}
+                  onToggle={setIsAnnual}
+                  translations={translations}
+                  variant="inline"
+                />
+              </div>
+            )}
             
 
 
@@ -782,7 +1151,7 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                 Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="relative bg-white rounded-3xl border border-gray-200 shadow-sm p-8 animate-pulse"
+                    className="relative bg-white rounded-3xl border border-gray-200/60 p-8 animate-pulse"
                   >
                     <div className="text-center mb-8">
                       <div className="h-6 bg-gray-200 rounded mb-2"></div>
@@ -793,7 +1162,8 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                   </div>
                 ))
               ) : (
-                displayPlans.map((plan) => (
+                <>
+                  {displayPlans.map((plan) => (
                   <PricingCard
                     key={`${plan.planId}-${plan.name}`}
                     name={plan.name}
@@ -824,8 +1194,11 @@ export default function PricingModal({ isOpen, onClose, pricingComparison }: Pri
                     }))}
                     translations={translations}
                     isLoadingFeatures={isLoadingFeatures}
+                    searchQuery={searchQuery}
+                    highlightMatch={highlightMatch}
                   />
-                ))
+                ))}
+                </>
               )}
             </div>
 

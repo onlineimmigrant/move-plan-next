@@ -41,6 +41,27 @@
   animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Exceptional pricing toggle animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Spring-like scale animation for micro-interactions */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
 /* Smooth scrolling behavior */
 html {
   scroll-behavior: smooth;

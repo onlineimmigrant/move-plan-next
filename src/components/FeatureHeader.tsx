@@ -27,29 +27,30 @@ export default function FeatureHeader({ feature }: { feature: Feature }) {
 
   const renderFeatureIcon = (iconName?: string) => {
     if (!iconName || iconName.trim() === '') {
-      return <MdOutlineFeaturedPlayList className="w-6 h-6 text-gray-500" />;
+      return null;
     }
     const IconComponent = Icons[iconName as HeroIconName];
     if (!IconComponent) {
-      console.warn(`Icon "${iconName}" not found in @heroicons/react/24/outline; using fallback`);
-      return <MdOutlineFeaturedPlayList className="w-16 h-16 text-gray-500" />;
+      console.warn(`Icon "${iconName}" not found in @heroicons/react/24/outline`);
+      return null;
     }
     return <IconComponent className="w-16 h-16 text-gray-500" />;
   };
 
+  const hasIcon = feature.feature_image && feature.feature_image.trim() !== '';
+
   return (
-    <header className="flex flex-col sm:flex-row items-center gap-6 mb-16 sm:mb-24">
-      <div className="w-24 h-24 sm:w-28 sm:h-28 neomorphic rounded-full flex items-center justify-center">
-        {renderFeatureIcon(feature.feature_image)}
-      </div>
-      <div className="text-center sm:text-left">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-thin text-gray-900 tracking-tight leading-tight">
-          {feature.name}
-        </h1>
+    <header className="flex flex-col items-center gap-6 mb-16 sm:mb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {hasIcon && (
+        <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow duration-300">
+          {renderFeatureIcon(feature.feature_image)}
+        </div>
+      )}
+      <div className="text-center w-full">
         {feature.type && (
-          <div className="mt-4">
+          <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-500">
             <span 
-              className="inline-block px-4 py-1.5 text-xs font-medium rounded-full tracking-wide uppercase border"
+              className="inline-block px-4 py-1.5 text-xs font-medium rounded-full tracking-wide uppercase border shadow-sm"
               style={{
                 backgroundColor: themeColors.cssVars.primary.lighter,
                 color: themeColors.cssVars.primary.base,
@@ -60,6 +61,9 @@ export default function FeatureHeader({ feature }: { feature: Feature }) {
             </span>
           </div>
         )}
+        <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-thin text-gray-900 tracking-tight leading-[1.1] max-w-3xl mx-auto">
+          {feature.name}
+        </h1>
       </div>
     </header>
   );

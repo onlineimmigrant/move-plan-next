@@ -8,6 +8,9 @@ import { MagnifyingGlassIcon, ArrowRightIcon, BeakerIcon } from '@heroicons/reac
 import { getOrganizationId } from '@/lib/supabase';
 import parse from 'html-react-parser';
 import { useProductTranslations } from '@/components/product/useProductTranslations';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import AdvancedSearchInput from '@/components/features/AdvancedSearchInput';
+import { SliderNavigation } from '@/ui/SliderNavigation';
 
 interface Feature {
   id: string;
@@ -27,6 +30,8 @@ interface Feature {
 
 // Memoized Feature Card Component for better performance
 const FeatureCard = memo(({ feature, t }: { feature: Feature; t: any }) => {
+  const themeColors = useThemeColors();
+  
   const IconComponent = useMemo(() => {
     return Icons[feature.feature_image as keyof typeof Icons] || BeakerIcon;
   }, [feature.feature_image]);
@@ -40,19 +45,40 @@ const FeatureCard = memo(({ feature, t }: { feature: Feature; t: any }) => {
   }, [feature.content, t.t.noContentAvailable]);
 
   return (
-    <Link href={`/features/${feature.slug}`} className="group h-full">
-      <div className="h-full neomorphic rounded-3xl overflow-hidden flex flex-col transition-all duration-500 transform hover:scale-[1.02]">
-        {/* Icon Header */}
-        <div className="w-full h-20 bg-gradient-to-br from-gray-50 to-white flex items-center justify-center relative group-hover:from-white group-hover:to-gray-50 transition-all duration-300">
-          <IconComponent className="h-10 w-10 text-gray-500 group-hover:text-gray-700 group-hover:scale-110 transition-all duration-300 opacity-90" />
-        </div>
-        
+    <Link 
+      href={`/features/${feature.slug}`} 
+      className="group h-full focus:outline-none rounded-3xl transition-all"
+      onFocus={(e) => {
+        e.currentTarget.style.outline = `2px solid ${themeColors.cssVars.primary.base}`;
+        e.currentTarget.style.outlineOffset = '2px';
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.outline = 'none';
+      }}
+    >
+      <div 
+        className="h-full bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden flex flex-col transition-all duration-500 transform hover:scale-[1.03] hover:-translate-y-1 active:scale-[1.01] shadow-sm hover:shadow-xl border"
+        style={{ borderColor: 'rgb(243 244 246)' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = themeColors.cssVars.primary.light;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'rgb(243 244 246)';
+        }}
+      >
         {/* Content */}
-        <div className="p-8 sm:p-12 flex flex-col flex-grow bg-gradient-to-br from-white to-gray-50 text-center gap-y-4">
+        <div className="p-4 sm:p-10 flex flex-col flex-grow bg-gradient-to-br from-white to-gray-50 text-center gap-y-4">
           {/* Type Badge */}
           {feature.type && (
             <div className="flex justify-center mb-2">
-              <span className="inline-block px-4 py-1.5 bg-sky-50 text-sky-600 text-xs font-medium rounded-full tracking-wide uppercase border border-sky-100">
+              <span 
+                className="inline-block px-4 py-1.5 text-xs font-medium rounded-full tracking-wide uppercase border shadow-sm"
+                style={{
+                  backgroundColor: themeColors.cssVars.primary.lighter,
+                  color: themeColors.cssVars.primary.base,
+                  borderColor: themeColors.cssVars.primary.light,
+                }}
+              >
                 {feature.type}
               </span>
             </div>
@@ -61,13 +87,16 @@ const FeatureCard = memo(({ feature, t }: { feature: Feature; t: any }) => {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 leading-relaxed tracking-[-0.02em] line-clamp-2">
             {feature.name}
           </h2>
-          <div className="text-sm sm:text-base text-gray-600 font-normal leading-relaxed line-clamp-3 flex-grow tracking-wider">
+          <div className="text-sm sm:text-base text-gray-600 font-normal leading-relaxed line-clamp-3 flex-grow">
             {truncatedContent}
           </div>
           
           {/* Arrow Icon */}
           <div className="flex justify-center mt-2">
-            <span className="text-xl text-sky-500 group-hover:text-sky-600 group-hover:scale-110 transition-all duration-200">↗</span>
+            <span 
+              className="text-2xl group-hover:scale-125 group-hover:rotate-45 transition-all duration-300"
+              style={{ color: themeColors.cssVars.primary.base }}
+            >↗</span>
           </div>
         </div>
       </div>
@@ -104,14 +133,15 @@ const FeatureCardSkeleton = memo(() => (
 FeatureCardSkeleton.displayName = 'FeatureCardSkeleton';
 
 export default function FeaturesPage() {
+  const themeColors = useThemeColors();
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMounted, setIsMounted] = useState(false);
-  const [displayedCount, setDisplayedCount] = useState(20); // Limit to 20 initially
+  const [displayedCount, setDisplayedCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isSliderMode, setIsSliderMode] = useState(true); // Toggle between slider and grid
+  const [isSliderMode, setIsSliderMode] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const touchStartX = useRef(0);
@@ -120,6 +150,13 @@ export default function FeaturesPage() {
 
   // Get translations
   const t = useProductTranslations();
+
+  // Generate search suggestions from feature names and types
+  const searchSuggestions = useMemo(() => {
+    const names = features.map(f => f.name);
+    const types = [...new Set(features.map(f => f.type).filter(Boolean))] as string[];
+    return [...names, ...types];
+  }, [features]);
 
   // Constants for pagination and slider
   const ITEMS_PER_PAGE = 20;
@@ -369,35 +406,31 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-20">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12">
         {/* Elegant Header Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-thin text-gray-900 mb-6 tracking-tight leading-none">{t.t.featuresHeading}</h1>
-          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-8"></div>
-          <p className="text-lg sm:text-xl text-gray-500 font-light max-w-2xl mx-auto leading-relaxed mb-10">
+        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-thin text-gray-900 mb-6 tracking-tight leading-[1.1]">{t.t.featuresHeading}</h1>
+          <div 
+            className="w-32 h-1 mx-auto mb-8 rounded-full"
+            style={{
+              background: `linear-gradient(to right, transparent, ${themeColors.cssVars.primary.light}, transparent)`,
+            }}
+          ></div>
+          <p className="text-[clamp(1rem,2vw,1.25rem)] text-gray-500 font-light max-w-2xl mx-auto leading-relaxed mb-10">
             {filteredFeatures.length === 0 
               ? t.t.noFeaturesAvailable
               : `Discover ${displayedFeatures.length} of ${filteredFeatures.length} available capabilities`
             }
           </p>
           
-          {/* Search Bar - Help Section Style */}
-          <div className="relative max-w-2xl mx-auto group">
-            <div className="absolute inset-0 bg-gradient-to-r from-sky-100 via-white to-sky-100 rounded-3xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 blur-xl"></div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 sm:pl-6 flex items-center pointer-events-none z-10">
-                <MagnifyingGlassIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 group-focus-within:text-sky-500 transition-colors duration-300" />
-              </div>
-              <input
-                type="text"
-                placeholder={t.t.searchFeatures}
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="relative block w-full pl-12 sm:pl-16 pr-6 sm:pr-8 py-4 sm:py-6 bg-gray-50/80 backdrop-blur-sm border-0 rounded-3xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:bg-white transition-all duration-500 text-base sm:text-lg font-normal hover:bg-gray-100/80"
-                aria-label={t.t.searchFeatures}
-              />
-            </div>
-          </div>
+          {/* Advanced Search - Pricing Modal Style */}
+          <AdvancedSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+            suggestions={searchSuggestions}
+            placeholder={t.t.searchFeatures}
+          />
         </div>
 
         {/* Features Content */}
@@ -438,7 +471,7 @@ export default function FeaturesPage() {
               >
                 {/* Slider Container - Wider on large devices */}
                 <div className="px-0 sm:px-4 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-                  <div className="relative px-12 sm:px-16 md:px-20 lg:px-24 xl:px-28 2xl:px-32 py-8">
+                  <div className="relative px-2 py-8">
                     {/* Feature Cards - Horizontal Flex Layout */}
                     <div className="flex items-stretch justify-center gap-x-4 sm:gap-x-6 md:gap-x-8 lg:gap-x-12 min-h-[450px] sm:min-h-[500px] md:min-h-[550px]">
                       {getCurrentSlideItems().map((item, idx) => {
@@ -492,58 +525,20 @@ export default function FeaturesPage() {
                         );
                       })}
                     </div>
-                    
-                    {/* Navigation Arrows - Outside container on large devices */}
-                    {totalSlides > itemsPerSlide && (
-                      <>
-                        <button
-                          onClick={prevSlide}
-                          className="absolute left-0 sm:left-2 md:left-4 lg:-left-4 xl:-left-6 2xl:-left-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
-                          aria-label="Previous slide"
-                        >
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={nextSlide}
-                          className="absolute right-0 sm:right-2 md:right-4 lg:-right-4 xl:-right-6 2xl:-right-8 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 bg-white/90 hover:bg-white backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border border-gray-200/50 z-10"
-                          aria-label="Next slide"
-                        >
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
                   </div>
                   
-                  {/* Dot Indicators - Limited to max 10 dots */}
-                  {totalSlides > itemsPerSlide && (
-                    <div className="flex justify-center gap-2 mt-6">
-                      {Array.from({ length: Math.min(totalSlides, 10) }).map((_, index) => {
-                        // Calculate which dot should be active
-                        const activeDot = totalSlides <= 10 ? currentSlide : Math.floor((currentSlide / totalSlides) * 10);
-                        
-                        return (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              // If we have more items than dots, map dot position to item position
-                              const targetSlide = totalSlides <= 10 ? index : Math.floor((index / 10) * totalSlides);
-                              goToSlide(targetSlide);
-                            }}
-                            className={`transition-all duration-300 rounded-full ${
-                              index === activeDot
-                                ? 'w-8 h-2 bg-gray-700'
-                                : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
-                            }`}
-                            aria-label={`Go to slide ${index + 1}`}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
+                  {/* Unified Slider Navigation */}
+                  <SliderNavigation
+                    onPrevious={prevSlide}
+                    onNext={nextSlide}
+                    currentIndex={currentSlide}
+                    totalItems={totalSlides}
+                    onDotClick={goToSlide}
+                    showDots={true}
+                    buttonPosition="bottom-right"
+                    buttonVariant="minimal"
+                    dotVariant="default"
+                  />
                 </div>
               </div>
             ) : (

@@ -163,7 +163,7 @@ export default function PricingComparisonTable({
         </h3>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

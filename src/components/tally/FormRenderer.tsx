@@ -583,18 +583,23 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
   const steppedFormContent = (
     <AnimatePresence mode="wait">
       <motion.div key={current.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }} className="space-y-10">
+        {/* Skip link for accessibility */}
+        <a href="#question-navigation" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-black text-white px-4 py-2 rounded z-50">
+          Skip to navigation
+        </a>
+
         {/* Progress */}
-        <div className={`${progressClass} font-medium text-gray-600 uppercase tracking-wider`}>
+        <div aria-live="polite" className={`${progressClass} font-medium text-gray-600 uppercase tracking-wider`}>
           Question {step + 1} of {visibleQuestions.length}
         </div>
 
         {/* Title & Description */}
-        <h1 className={`${titleClass} font-bold text-gray-900 leading-tight`}>
+        <h1 id={`question-${current.id}-title`} className={`${titleClass} font-bold text-gray-900 leading-tight`}>
           {current.label}
-          {current.required && <span className="text-red-500 ml-2">*</span>}
+          {current.required && <span className="text-red-500 ml-2" aria-label="required">*</span>}
         </h1>
         {current.description && (
-          <p className={`${descriptionClass} text-gray-600 max-w-3xl mt-4 leading-relaxed`}>{current.description}</p>
+          <p id={`question-${current.id}-description`} className={`${descriptionClass} text-gray-600 max-w-3xl mt-4 leading-relaxed`}>{current.description}</p>
         )}
 
             {/* Field */}
@@ -603,6 +608,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="text"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="Type your answer here..."
                   value={answers[current.id] || ""}
@@ -615,6 +622,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="email"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="your@email.com"
                   value={answers[current.id] || ""}
@@ -627,6 +636,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="tel"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="+1 (555) 000-0000"
                   value={answers[current.id] || ""}
@@ -639,6 +650,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="url"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="https://example.com"
                   value={answers[current.id] || ""}
@@ -651,6 +664,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="number"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   placeholder="0"
                   value={answers[current.id] || ""}
@@ -663,6 +678,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <input
                   type="date"
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all`}
                   value={answers[current.id] || ""}
                   onChange={(e) => setAnswers({ ...answers, [current.id]: e.target.value })}
@@ -673,6 +690,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <textarea
                   autoFocus
                   rows={textareaRowsClass}
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${textareaPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all resize-none`}
                   placeholder="Share your thoughts..."
                   value={answers[current.id] || ""}
@@ -683,6 +702,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
               {current.type === "dropdown" && (
                 <select
                   autoFocus
+                  aria-labelledby={`question-${current.id}-title`}
+                  aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                   className={`w-full ${inputTextClass} ${inputHeightClass} ${inputPaddingClass} ${inputBorderClass} border-gray-300  focus:outline-none transition-all bg-white cursor-pointer`}
                   value={answers[current.id] || ""}
                   onChange={(e) => {
@@ -708,7 +729,7 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
               )}
 
               {current.type === "checkbox" && (
-                <div className="space-y-4">
+                <div role="group" aria-labelledby={`question-${current.id}-title`} aria-describedby={current.description ? `question-${current.id}-description` : undefined} className="space-y-4">
                   {(current.options || []).map((opt) => (
                     <label
                       key={opt}
@@ -734,10 +755,12 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
               )}
 
               {current.type === "rating" && (
-                <div className="flex gap-4 justify-center">
+                <div role="radiogroup" aria-labelledby={`question-${current.id}-title`} aria-describedby={current.description ? `question-${current.id}-description` : undefined} className="flex gap-4 justify-center">
                   {Array.from({ length: parseInt(current.options?.[0] || "5") }, (_, i) => i + 1).map((rating) => (
                     <button
                       key={rating}
+                      role="radio"
+                      aria-checked={answers[current.id] === rating.toString()}
                       onClick={() => {
                         const newAnswers = { ...answers, [current.id]: rating.toString() };
                         setAnswers(newAnswers);
@@ -767,6 +790,8 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
                 <div className="space-y-4">
                   <input
                     type="file"
+                    aria-labelledby={`question-${current.id}-title`}
+                    aria-describedby={current.description ? `question-${current.id}-description` : undefined}
                     className={`w-full ${fileInputTextClass} ${fileInputBorderClass} border-gray-300  focus:outline-none transition-all bg-white cursor-pointer file:mr-4 file:px-6 file:py-3 file:rounded-lg file:border-0 file:bg-black file:text-white file:cursor-pointer hover:file:bg-gray-800`}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -782,7 +807,7 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
               )}
 
               {(current.type === "yesno" || current.type === "multiple") && (
-                <div className="space-y-4">
+                <div role="radiogroup" aria-labelledby={`question-${current.id}-title`} aria-describedby={current.description ? `question-${current.id}-description` : undefined} className="space-y-4">
                   {(current.type === "yesno" ? ["Yes", "No"] : current.options || []).map((opt) => (
                     <label
                       key={opt}
@@ -818,7 +843,7 @@ const FormRenderer = memo(function FormRenderer({ form, settings }: { form: Form
 
             {/* Footer */}
             <div className={`flex flex-col gap-4 ${isCompact ? 'pt-6' : 'pt-12'}`}>
-              <div className="flex justify-between items-center">
+              <div id="question-navigation" className="flex justify-between items-center">
                 {step > 0 && (
                   <Button 
                     variant="outline"
