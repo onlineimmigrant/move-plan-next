@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ShareIcon } from '@heroicons/react/24/outline';
 
 interface SocialShareProps {
@@ -8,8 +9,25 @@ interface SocialShareProps {
 }
 
 export default function SocialShare({ featureName, slug }: SocialShareProps) {
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const [shareUrl, setShareUrl] = useState('');
+  const [mounted, setMounted] = useState(false);
   const shareText = `Check out ${featureName} feature!`;
+  
+  useEffect(() => {
+    setShareUrl(window.location.href);
+    setMounted(true);
+  }, []);
+
+  // Don't render social links until client-side mounted to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2 justify-center my-8">
+        <div className="p-2 rounded-full bg-gray-100 w-8 h-8"></div>
+        <div className="p-2 rounded-full bg-gray-100 w-8 h-8"></div>
+        <div className="p-2 rounded-full bg-gray-100 w-8 h-8"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex items-center gap-2 justify-center my-8">

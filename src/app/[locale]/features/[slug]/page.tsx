@@ -51,32 +51,9 @@ interface FeaturePageProps {
 
 // Generate static params for all features (required for Next.js 16 production builds)
 export async function generateStaticParams() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
-    
-    if (!organizationId) {
-      return [];
-    }
-
-    const response = await fetch(`${baseUrl}/api/features?organization_id=${organizationId}`, {
-      cache: 'no-store'
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch features for static params');
-      return [];
-    }
-
-    const features = await response.json();
-    
-    return Array.isArray(features) ? features.map((feature: Feature) => ({
-      slug: feature.slug,
-    })) : [];
-  } catch (error) {
-    console.error('Error in generateStaticParams:', error);
-    return [];
-  }
+  // Return empty array to use dynamic rendering instead of static generation
+  // This prevents build-time errors when API is not available
+  return [];
 }
 
 // Generate metadata for SEO

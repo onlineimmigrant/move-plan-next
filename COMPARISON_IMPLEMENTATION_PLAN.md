@@ -55,21 +55,32 @@ CREATE INDEX idx_comparison_competitor_data ON comparison_competitor USING GIN (
 -- Enable Row Level Security
 ALTER TABLE comparison_competitor ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy: Users can only see competitors from their organization
-CREATE POLICY "Users can view competitors from their organization" 
+-- RLS Policy: Public read access - anyone can view competitors (for public comparison sections)
+CREATE POLICY "Public can view competitors" 
   ON comparison_competitor
   FOR SELECT 
-  USING (organization_id IN (
-    SELECT organization_id FROM profiles WHERE id = auth.uid()
-  ));
+  USING (is_active = true);
 
--- RLS Policy: Users can manage competitors in their organization
-CREATE POLICY "Users can manage competitors in their organization" 
+-- RLS Policy: Only admins/superadmins can manage (INSERT/UPDATE/DELETE) competitors
+CREATE POLICY "Only admins can manage competitors" 
   ON comparison_competitor
   FOR ALL 
-  USING (organization_id IN (
-    SELECT organization_id FROM profiles WHERE id = auth.uid()
-  ));
+  USING (
+    organization_id IN (
+      SELECT organization_id 
+      FROM profiles 
+      WHERE id = auth.uid() 
+      AND (role = 'admin' OR role = 'superadmin')
+    )
+  )
+  WITH CHECK (
+    organization_id IN (
+      SELECT organization_id 
+      FROM profiles 
+      WHERE id = auth.uid() 
+      AND (role = 'admin' OR role = 'superadmin')
+    )
+  );
 
 -- Add 'comparison' to section_type enum
 DO $$
@@ -474,6 +485,7 @@ export async function GET(request: NextRequest) {
 
 import React, { useState, useEffect } from 'react';
 import { ComparisonCompetitor, ComparisonSectionConfig, CompetitorPlan, CompetitorFeature } from '@/types/comparison';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ComparisonTabProps {
   formData: any;
@@ -485,6 +497,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
   const [competitors, setCompetitors] = useState<ComparisonCompetitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features'>('competitors');
+  const themeColors = useThemeColors();
 
   const config: ComparisonSectionConfig = formData.comparison_config || {
     competitor_ids: [],
@@ -534,9 +547,13 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
           onClick={() => setActiveTab('competitors')}
           className={`px-4 py-2 -mb-px ${
             activeTab === 'competitors'
-              ? 'border-b-2 border-blue-500 text-blue-600'
+              ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
           }`}
+          style={activeTab === 'competitors' ? {
+            borderBottomColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : {}}
         >
           Competitors
         </button>
@@ -544,9 +561,13 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
           onClick={() => setActiveTab('pricing')}
           className={`px-4 py-2 -mb-px ${
             activeTab === 'pricing'
-              ? 'border-b-2 border-blue-500 text-blue-600'
+              ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
           }`}
+          style={activeTab === 'pricing' ? {
+            borderBottomColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : {}}
         >
           Pricing
         </button>
@@ -554,9 +575,13 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
           onClick={() => setActiveTab('features')}
           className={`px-4 py-2 -mb-px ${
             activeTab === 'features'
-              ? 'border-b-2 border-blue-500 text-blue-600'
+              ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
           }`}
+          style={activeTab === 'features' ? {
+            borderBottomColor: themeColors.cssVars.primary.base,
+            color: themeColors.cssVars.primary.base
+          } : {}}
         >
           Features
         </button>
@@ -571,7 +596,16 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
               onClick={() => {
                 // TODO: Open create competitor modal
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-white rounded-lg transition-all"
+              style={{
+                backgroundColor: themeColors.cssVars.primary.base,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.9';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
             >
               Add Competitor
             </button>
@@ -592,7 +626,10 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
                     type="checkbox"
                     checked={config.competitor_ids.includes(competitor.id)}
                     onChange={() => toggleCompetitor(competitor.id)}
-                    className="h-4 w-4 text-blue-600"
+                    className="h-4 w-4"
+                    style={{
+                      accentColor: themeColors.cssVars.primary.base,
+                    }}
                   />
                   {competitor.logo_url && (
                     <img
@@ -676,7 +713,10 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
                     },
                   })
                 }
-                className="h-4 w-4 text-blue-600"
+                className="h-4 w-4"
+                style={{
+                  accentColor: themeColors.cssVars.primary.base,
+                }}
               />
               <span className="text-sm font-medium text-gray-700">
                 Only show features displayed on products
@@ -800,9 +840,12 @@ export default function ComparisonSection({ section }: ComparisonSectionProps) {
                     onClick={() => setShowYearly(false)}
                     className={`px-4 py-2 rounded-md transition ${
                       !showYearly
-                        ? 'bg-blue-600 text-white'
+                        ? 'text-white'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
+                    style={!showYearly ? {
+                      backgroundColor: themeColors.cssVars.primary.base,
+                    } : {}}
                   >
                     Monthly
                   </button>
@@ -810,9 +853,12 @@ export default function ComparisonSection({ section }: ComparisonSectionProps) {
                     onClick={() => setShowYearly(true)}
                     className={`px-4 py-2 rounded-md transition ${
                       showYearly
-                        ? 'bg-blue-600 text-white'
+                        ? 'text-white'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
+                    style={showYearly ? {
+                      backgroundColor: themeColors.cssVars.primary.base,
+                    } : {}}
                   >
                     Yearly
                   </button>
