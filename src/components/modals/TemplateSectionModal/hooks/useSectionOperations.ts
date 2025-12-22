@@ -21,12 +21,14 @@ export interface TemplateSectionFormData {
   is_section_title_aligned_right: boolean;
   is_image_bottom: boolean;
   is_slider: boolean;
-  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
+  section_type: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony' | 'comparison';
   // Deprecated - keep for backward compat (only is_reviews_section remains as it may still be in DB)
   is_reviews_section: boolean;
   form_id?: string | null;
   url_page?: string;
   website_metric?: any[];
+  organization_id?: string | null;
+  comparison_config?: any;
 }
 
 export function useSectionOperations() {

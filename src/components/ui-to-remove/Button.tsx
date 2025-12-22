@@ -63,7 +63,7 @@ const HoverEditButtons: React.FC<HoverEditButtonsProps> = ({
   };
 
   return (
-    <div className={cn(`absolute ${positionClasses[position]} z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-3`, className)}>
+    <div className={cn(`absolute ${positionClasses[position]} z-[10000] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-3`, className)}>
       {/* Edit Button */}
       <Button
         onClick={(e) => {

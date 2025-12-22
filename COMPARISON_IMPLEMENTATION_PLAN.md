@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS comparison_competitor (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
   -- Organization ownership
-  organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   
   -- Basic info
   name VARCHAR(255) NOT NULL,
@@ -235,7 +235,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from('comparison_competitor')
       .select('*')
-      .eq('organization_id', parseInt(organizationId))
+      .eq('organization_id', organizationId)
       .eq('is_active', true)
       .order('sort_order', { ascending: true });
 
@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     const competitorData = {
-      organization_id: parseInt(organization_id),
+      organization_id,
       name,
       logo_url: logo_url || null,
       website_url: website_url || null,
@@ -422,7 +422,7 @@ export async function GET(request: NextRequest) {
       const planQuery = supabase
         .from('pricingplan')
         .select('*')
-        .eq('organization_id', parseInt(organizationId))
+        .eq('organization_id', organizationId)
         .eq('is_active', true);
 
       if (config.pricing?.our_plan_ids && config.pricing.our_plan_ids.length > 0) {
@@ -440,7 +440,7 @@ export async function GET(request: NextRequest) {
       const featureQuery = supabase
         .from('feature')
         .select('*')
-        .eq('organization_id', parseInt(organizationId));
+        .eq('organization_id', organizationId);
 
       if (config.features?.our_feature_ids && config.features.our_feature_ids.length > 0) {
         featureQuery.in('id', config.features.our_feature_ids);

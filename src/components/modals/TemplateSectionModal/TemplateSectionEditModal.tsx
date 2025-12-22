@@ -22,6 +22,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTemplateSectionEdit } from './context';
 import useFocusTrap from '@/hooks/useFocusTrap';
 import { SettingsTab, LayoutTab, LayoutOptionsTab, StyleTab, ContentTab, TranslationsSection, FormsTab, QuickPicksSection } from './components';
+import { ComparisonTab } from './components/ComparisonTab_enhanced';
 import { useSectionOperations, TemplateSectionFormData, useSectionTypeFilter } from './hooks';
 import DeleteSectionModal from './DeleteSectionModal';
 import Button from '@/ui/Button';
@@ -202,6 +203,7 @@ export default function TemplateSectionEditModal() {
     is_reviews_section: false,
     url_page: undefined,
     website_metric: undefined,
+    organization_id: null,
   });
 
   // Initialize form data when editing section changes
@@ -222,6 +224,9 @@ export default function TemplateSectionEditModal() {
         else if (section.is_faq_section) sectionType = 'faq';
         else if (section.is_pricingplans_section) sectionType = 'pricing_plans';
       }
+      
+      // Handle comparison section type
+      if (section.section_type === 'comparison') sectionType = 'comparison';
       
       // Initialize local title/description state
       const title = editingSection.section_title || '';
@@ -250,6 +255,8 @@ export default function TemplateSectionEditModal() {
         is_reviews_section: editingSection.is_reviews_section || false,
         url_page: editingSection.url_page,
         website_metric: editingSection.website_metric,
+        organization_id: editingSection.organization_id,
+        comparison_config: editingSection.comparison_config || null,
       });
     }
   }, [editingSection]);
@@ -712,7 +719,17 @@ export default function TemplateSectionEditModal() {
                               <StyleTab formData={formData} setFormData={setFormData} />
                             )}
                             {section.component === 'content' && (
-                              <ContentTab formData={formData} mode={mode} />
+                              <>
+                                {formData.section_type === 'comparison' ? (
+                                  <ComparisonTab 
+                                    formData={formData} 
+                                    setFormData={setFormData} 
+                                    organizationId={formData.organization_id}
+                                  />
+                                ) : (
+                                  <ContentTab formData={formData} mode={mode} />
+                                )}
+                              </>
                             )}
                           </div>
                         </div>

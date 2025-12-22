@@ -25,6 +25,7 @@ type BlogPostBody = {
     section_id?: number | null;
     subsection?: string | null;
     order?: number;
+    section?: string | null; // Section name like 'Landing'
   };
   
   cta_config?: {
@@ -255,6 +256,7 @@ export async function POST(request: NextRequest) {
     const section_id = organization_config.section_id ?? null;
     const subsection = organization_config.subsection ?? null;
     const order = organization_config.order ?? 0;
+    const section = organization_config.section ?? null;
     
     const cta_cards = cta_config.cta_cards ?? [];
     const products = product_config.products ?? [];
@@ -263,10 +265,22 @@ export async function POST(request: NextRequest) {
     const is_company_author = author_config.is_company_author ?? false;
     const author_id = author_config.author_id ?? null;
 
-    if (!title || !slug || !content) {
-      console.error('Missing required fields:', { title: !!title, slug: !!slug, content: !!content });
+    // Only require title and content if section is NOT 'Landing'
+    const isLandingPage = section === 'Landing';
+    
+    if (!isLandingPage && (!title || !slug || !content)) {
+      console.error('Missing required fields:', { title: !!title, slug: !!slug, content: !!content, section });
       return NextResponse.json(
         { error: 'Missing required fields: title, slug, and content are required' },
+        { status: 400 }
+      );
+    }
+    
+    // For landing pages, only slug is required
+    if (isLandingPage && !slug) {
+      console.error('Missing required field for landing page:', { slug: !!slug, section });
+      return NextResponse.json(
+        { error: 'Missing required field: slug is required' },
         { status: 400 }
       );
     }

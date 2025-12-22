@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   let organizationId = searchParams.get('organization_id');
   const helpCenter = searchParams.get('help_center');
+  const planId = searchParams.get('plan_id');
 
   if (!organizationId) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -36,7 +37,29 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('Fetching features for organization_id:', organizationId, 'helpCenter:', helpCenter);
+    console.log('Fetching features for organization_id:', organizationId, 'helpCenter:', helpCenter, 'planId:', planId);
+    
+    // If planId is provided, fetch features for that specific plan
+    if (planId) {
+      const { data, error } = await supabase
+        .from('pricingplan_features')
+        .select('feature:feature_id(*)')
+        .eq('pricingplan_id', planId);
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      
+      // Extract features from the join result and filter by organization
+      const features = (data || [])
+        .map((item: any) => item.feature)
+        .filter((f: any) => f && f.organization_id === organizationId);
+      
+      return NextResponse.json(features);
+    }
+    
+    // Otherwise, fetch all features for the organization
     let query = supabase
       .from('feature')
       .select('*')

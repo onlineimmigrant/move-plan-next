@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useToast } from '@/components/Shared/ToastContainer';
 import { revalidateHomepage } from '@/lib/revalidation';
+import { useAuth } from '@/context/AuthContext';
 
 // Types
 interface Metric {
@@ -38,12 +39,13 @@ interface TemplateSectionData {
   image_metrics_height?: string;
   is_image_bottom: boolean;
   is_slider?: boolean;
-  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
+  section_type?: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony' | 'comparison';
   is_reviews_section: boolean;
   website_metric?: Metric[];
   organization_id: string | null;
   url_page?: string;
   form_id?: string | null;
+  comparison_config?: any;
 }
 
 interface TemplateSectionEditContextType {
@@ -91,9 +93,10 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
   const [mode, setMode] = useState<'create' | 'edit'>('edit');
   const [refreshKey, setRefreshKey] = useState(0);
   const toast = useToast();
+  const { organizationId } = useAuth();
 
   const openModal = useCallback((section: TemplateSectionData | null = null, urlPage?: string) => {
-    console.log('[TemplateSectionEditContext] openModal called:', { section, urlPage });
+    console.log('[TemplateSectionEditContext] openModal called:', { section, urlPage, organizationId });
     
     if (section) {
       setEditingSection(section);
@@ -115,7 +118,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         is_reviews_section: false,
         section_type: 'general' as const,
         website_metric: [],
-        organization_id: null,
+        organization_id: organizationId,
         url_page: urlPage || '',
       };
       console.log('[TemplateSectionEditContext] Creating new section with data:', newSection);
@@ -123,7 +126,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
       setMode('create');
     }
     setIsOpen(true);
-  }, []);
+  }, [organizationId]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -160,6 +163,7 @@ export const TemplateSectionEditProvider: React.FC<TemplateSectionEditProviderPr
         form_id: data.form_id || null,
         is_reviews_section: data.is_reviews_section,
         image_metrics_height: data.image_metrics_height,
+        comparison_config: data.comparison_config || null,
         // NOTE: website_metric is NOT included - metrics are managed via /api/template-sections/[id]/metrics
       };
 

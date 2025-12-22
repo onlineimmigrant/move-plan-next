@@ -187,7 +187,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = React.memo(({ section, i
           : section.is_slider 
           ? 'px-0 py-8 min-h-[600px]' 
           : 'px-4 py-8 min-h-[600px]'
-      } text-xl relative group`}
+      } text-xl relative group hover:z-[10001]`}
       style={{
         ...sectionBackgroundStyle,
         ...(isPriority ? {} : { contentVisibility: 'auto', containIntrinsicSize: '1px 600px' })

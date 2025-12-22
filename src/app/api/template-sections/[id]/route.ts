@@ -76,6 +76,7 @@ export async function PUT(
       section_type: body.section_type || 'general',
       form_id: body.form_id || null,
       image_metrics_height: body.image_metrics_height || null,
+      comparison_config: body.comparison_config !== undefined ? body.comparison_config : null,
     };
 
     // Handle translation fields

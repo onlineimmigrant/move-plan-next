@@ -24,6 +24,7 @@ const PricingPlansSectionWrapper = dynamic(() => import('@/components/TemplateSe
 const TeamMember = dynamic(() => import('@/components/TemplateSections/TeamMember'));
 const Testimonials = dynamic(() => import('@/components/TemplateSections/Testimonials'));
 const AppointmentSection = dynamic(() => import('@/components/TemplateSections/AppointmentSection'));
+const ComparisonSection = dynamic(() => import('@/components/TemplateSections/ComparisonSection'));
 
 interface SectionTypeRendererProps {
   sectionType?: string;
@@ -44,6 +45,7 @@ const SECTION_TYPE_MAP: Record<string, React.ComponentType<any>> = {
   appointment: ({ section }) => <AppointmentSection section={section} />,
   team: ({ section }) => <TeamMember section={section} />,
   testimonials: ({ section }) => <Testimonials section={section} />,
+  comparison: ({ section }) => <ComparisonSection section={section} />,
   form_harmony: ({ section }) => {
     if (!section.form_id) {
       return (

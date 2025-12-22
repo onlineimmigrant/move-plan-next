@@ -16,10 +16,11 @@ import {
   ChatBubbleBottomCenterTextIcon,
   CalendarIcon,
   ClipboardDocumentListIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 
 export interface SectionTypeOption {
-  value: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony';
+  value: 'general' | 'brand' | 'article_slider' | 'contact' | 'faq' | 'reviews' | 'help_center' | 'real_estate' | 'pricing_plans' | 'team' | 'testimonials' | 'appointment' | 'form_harmony' | 'comparison';
   label: string;
   description: string;
   shortDescription?: string;
@@ -131,6 +132,14 @@ export const SECTION_TYPE_OPTIONS: SectionTypeOption[] = [
     shortDescription: 'Custom forms',
     icon: ClipboardDocumentListIcon,
     color: 'violet',
+  },
+  {
+    value: 'comparison',
+    label: 'Comparison',
+    description: 'Compare pricing and features with competitors',
+    shortDescription: 'Competitor comparison',
+    icon: TableCellsIcon,
+    color: 'emerald',
   },
 ];
 

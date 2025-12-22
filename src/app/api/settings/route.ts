@@ -12,15 +12,19 @@ const supabaseAuth = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// GET - Fetch settings (for debugging)
+// GET - Fetch settings
 export async function GET(request: NextRequest) {
   try {
-    // For now, fetch the first settings record (you can add organization_id query param later)
-    const { data, error } = await supabase
-      .from('settings')
-      .select('*')
-      .limit(1)
-      .single();
+    const { searchParams } = new URL(request.url);
+    const organizationId = searchParams.get('organization_id');
+
+    let query = supabase.from('settings').select('*');
+
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    }
+
+    const { data, error } = await query.limit(1).single();
 
     if (error) {
       console.error('Error fetching settings:', error);

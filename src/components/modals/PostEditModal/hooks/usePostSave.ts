@@ -58,6 +58,7 @@ export function usePostSave(
         },
         organization_config: {
           section_id: formData.section.trim() ? parseInt(formData.section) : null,
+          section: formData.section.trim() || null, // Add section name for validation
           subsection: formData.subsection.trim() || null,
           order: formData.order.trim() ? parseInt(formData.order) : 0,
           doc_set: formData.docSet && formData.docSet !== '__custom__' ? formData.docSet : null,

@@ -95,6 +95,7 @@ export async function GET(request: Request) {
         order,
         url_page,
         organization_id,
+        comparison_config,
         website_templatesection_metrics!templatesection_id (
           metric_id,
           order,
@@ -250,6 +251,7 @@ export async function POST(request: Request) {
       section_type: body.section_type || 'general',
       form_id: body.form_id || null,
       image_metrics_height: body.image_metrics_height || null,
+      comparison_config: body.comparison_config || null,
       order: nextOrder,
       url_page: body.url_page,
       organization_id: organizationId,

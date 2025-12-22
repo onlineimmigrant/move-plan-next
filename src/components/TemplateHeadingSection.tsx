@@ -150,7 +150,7 @@ const TemplateHeadingSection: React.FC<TemplateHeadingSectionProps> = React.memo
           return (
           <section
             key={section.id}
-            className={`relative isolate group px-6 py-28 overflow-hidden`}
+            className={`relative isolate group px-6 py-28 overflow-hidden hover:z-[10001]`}
             style={{
               ...headingBackgroundStyle,
               minHeight: hasImage ? '600px' : '400px',

@@ -31,26 +31,29 @@ export default function PricingToggle({
   const sizeConfig = {
     sm: {
       container: 'p-0.5',
-      button: 'px-3 py-1 text-xs',
+      button: 'px-3 text-xs',
       indicator: 'top-0.5 bottom-0.5',
-      height: 'h-7'
+      height: 'h-7',
+      buttonWidth: 'min-w-[70px]'
     },
     md: {
       container: 'p-0.5',
-      button: 'px-4 py-1.5 text-xs',
+      button: 'px-4 text-xs',
       indicator: 'top-0.5 bottom-0.5',
-      height: 'h-8'
+      height: 'h-8',
+      buttonWidth: 'min-w-[80px]'
     },
     lg: {
       container: 'p-1',
-      button: 'px-5 py-2 text-sm',
+      button: 'px-5 text-sm',
       indicator: 'top-1 bottom-1',
-      height: 'h-10'
+      height: 'h-10',
+      buttonWidth: 'min-w-[90px]'
     }
   };
 
   const config = sizeConfig[size];
-  const baseClasses = `relative bg-gradient-to-r from-gray-50/80 to-gray-100/80 ${config.container} rounded-full border border-gray-200/60 transition-all duration-300`;
+  const baseClasses = `relative flex items-stretch h-full bg-gradient-to-r from-gray-50/80 to-gray-100/80 ${config.container} rounded-full border border-gray-200/60 transition-all duration-300`;
   const backdropClasses = variant === 'fixed' ? 'backdrop-blur-md' : '';
 
   // Simplified toggle handler without animation guards (unnecessary complexity)
@@ -88,7 +91,7 @@ export default function PricingToggle({
 
       <div
         ref={containerRef}
-        className={`flex justify-center ${config.height}`}
+        className={`flex items-center justify-center ${config.height}`}
       >
         <div className={`${baseClasses} ${backdropClasses}`}>
           {/* Background indicator */}
@@ -105,7 +108,7 @@ export default function PricingToggle({
           {/* Enhanced buttons with better hover states */}
           <button
             onClick={() => handleToggle(false)}
-            className={`relative z-10 ${config.button} rounded-full font-semibold transition-all duration-200 ${
+            className={`relative z-10 h-full ${config.button} ${config.buttonWidth} grid place-items-center leading-none rounded-full font-semibold transition-all duration-200 ${
               !isAnnual
                 ? 'text-gray-900 transform scale-105'
                 : 'text-gray-500 hover:text-gray-700 hover:scale-102'
@@ -116,7 +119,7 @@ export default function PricingToggle({
 
           <button
             onClick={() => handleToggle(true)}
-            className={`relative z-10 ${config.button} rounded-full font-semibold transition-all duration-200 ${
+            className={`relative z-10 h-full ${config.button} ${config.buttonWidth} grid place-items-center leading-none rounded-full font-semibold transition-all duration-200 ${
               isAnnual
                 ? 'text-gray-900 transform scale-105'
                 : 'text-gray-500 hover:text-gray-700 hover:scale-102'

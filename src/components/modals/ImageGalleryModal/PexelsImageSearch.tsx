@@ -273,9 +273,9 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {mediaType === 'photos' ? (
-                photos.map((photo) => (
+                photos.map((photo, index) => (
                   <div
-                    key={photo.id}
+                    key={`${photo.id}-${index}`}
                     className="relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 aspect-square"
                     onClick={() => handleSelectPhoto(photo)}
                   >
@@ -293,7 +293,7 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
                   </div>
                 ))
               ) : (
-                videos.map((video) => {
+                videos.map((video, index) => {
                   // Get preview quality video for hover playback
                   const previewVideo = video.video_files
                     .filter(file => file.quality === 'sd' || file.quality === 'hd')
@@ -303,7 +303,7 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
                   
                   return (
                     <div
-                      key={video.id}
+                      key={`${video.id}-${index}`}
                       className="relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-square"
                       onClick={() => handleSelectVideo(video)}
                       onMouseEnter={() => setHoveredVideoId(video.id)}
