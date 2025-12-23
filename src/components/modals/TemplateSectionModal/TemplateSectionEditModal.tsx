@@ -570,8 +570,8 @@ export default function TemplateSectionEditModal() {
             width: (typeof window !== 'undefined' ? window.innerWidth * 0.8 : 1120),
             height: 900,
           }}
-          minWidth={800}
-          minHeight={700}
+          minWidth={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 800}
+          minHeight={typeof window !== 'undefined' && window.innerWidth < 768 ? 500 : 700}
           bounds="window"
           dragHandleClassName="modal-drag-handle"
           enableResizing={true}
@@ -601,18 +601,18 @@ export default function TemplateSectionEditModal() {
     return (
       <>
         {/* Header - Matching Hero Edit Modal */}
-        <div className="modal-drag-handle flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-white/20 dark:border-gray-700/20 cursor-move bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
-          <div className="flex items-center space-x-3">
-            <RectangleStackIcon className="h-6 w-6" style={{ color: primary.base }} />
+        <div className="modal-drag-handle flex-shrink-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/20 dark:border-gray-700/20 cursor-move bg-white/30 dark:bg-gray-800/30 rounded-t-2xl">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <RectangleStackIcon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" style={{ color: primary.base }} />
             <h2 
               id="section-modal-title" 
-              className="text-xl font-semibold text-gray-900 dark:text-gray-100"
+              className="text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate"
             >
-              {mode === 'create' ? 'Create Template Section' : 'Edit Template Section'}
+              {mode === 'create' ? 'Create Section' : 'Edit Section'}
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               onClick={() => {
                 // Close entire modal, bypassing menu close
@@ -628,15 +628,15 @@ export default function TemplateSectionEditModal() {
         </div>
 
         {/* Mega Menu Buttons - Matching Hero Edit Modal */}
-        <div className="px-6 py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 relative z-30">
-          <div className="flex gap-2">
+        <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center border-b border-white/10 dark:border-gray-700/20 bg-white/30 dark:bg-gray-800/30 relative z-30 overflow-x-auto">
+          <div className="flex gap-1.5 sm:gap-2">
             {menus.map((menu) => (
               <div key={menu.id} className="relative">
                 <button
                   onClick={() => setOpenMenu(openMenu === menu.id ? null : menu.id)}
                   onMouseEnter={() => setHoveredButton(menu.id)}
                   onMouseLeave={() => setHoveredButton(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm transition-all duration-300 shadow-sm whitespace-nowrap"
                   style={
                     openMenu === menu.id
                       ? {
@@ -675,7 +675,7 @@ export default function TemplateSectionEditModal() {
             
             {/* Mega Menu Panel */}
             <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto max-h-[calc(90vh-132px)] rounded-b-2xl" style={{ top: '132px' }}>
-              <div className="max-w-7xl mx-auto px-6 py-6 h-full">
+              <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 h-full">
                 {menus.filter(menu => menu.id === openMenu).map((menu) => (
                   <div key={menu.id}>
                     {/* Menu Header */}
@@ -702,7 +702,7 @@ export default function TemplateSectionEditModal() {
                     </div>
                     
                     {/* Regular Grid Layout */}
-                    <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                    <div className={`grid gap-6 ${menu.sections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
                       {menu.sections.map((section) => (
                         <div key={section.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
@@ -1200,7 +1200,7 @@ export default function TemplateSectionEditModal() {
         {/* Inline MetricManager - appears when quick action buttons are used */}
         {(showCreateMetricForm || showAddMetricModal) && editingSection && (
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/40 dark:bg-gray-800/40">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto px-3 sm:px-0">
               <MetricManager
                 sectionId={editingSection.id}
                 metrics={formData.website_metric || []}
@@ -1232,7 +1232,7 @@ export default function TemplateSectionEditModal() {
             
             {/* Translations Panel */}
             <div className="absolute left-0 right-0 bottom-0 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
-              <div className="max-w-7xl mx-auto px-6 py-6 h-full pb-24">
+              <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 h-full pb-20 sm:pb-24">
                 <TranslationsSection
                   formData={formData}
                   setFormData={setFormData}
@@ -1270,7 +1270,7 @@ export default function TemplateSectionEditModal() {
             
             {/* Forms Panel */}
             <div className="absolute left-0 right-0 bottom-0 shadow-2xl z-50 overflow-y-auto rounded-b-2xl" style={{ top: '132px' }}>
-              <div className="max-w-4xl mx-auto px-6 py-6 h-full pb-24">
+              <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 h-full pb-20 sm:pb-24">
                 <FormsTab
                   formId={formData.form_id}
                   onFormIdChange={(newFormId) => {

@@ -1,0 +1,1107 @@
+[
+  {
+    "name": "WordPress",
+    "logo_url": "https://cdn.codedharmony.app/6695b959-45ef-44b4-a68c-9cd0fe0e25a3/images/uncategorized/wordpress_icon-icons_com_53600_5QCW0TOIq7.png",
+    "website_url": "",
+    "pricing_plans": [
+      {
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "monthly": 25,
+        "yearly": 300,
+        "note": "WordPress.com Business plan (billed annually $25/month)"
+      }
+    ],
+    "features": [
+      {
+        "our_feature_id": "00ee4a18-3126-4cb9-9317-56f2a2779cce",
+        "our_feature_name": "Backup & Restore",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Real-time backups and one-click restore"
+      },
+      {
+        "our_feature_id": "03b97ba1-97e5-4e38-ba5a-bb18786a08a9",
+        "our_feature_name": "AI Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins"
+      },
+      {
+        "our_feature_id": "0ffd99a7-285f-49c8-8b9d-4e914882d6ca",
+        "our_feature_name": "AI Agent Boosts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via AI plugins"
+      },
+      {
+        "our_feature_id": "1a63e431-b251-46f2-85b5-70aa708da9e6",
+        "our_feature_name": "Customer Accounts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via WooCommerce or membership plugins"
+      },
+      {
+        "our_feature_id": "2b3c4f01-fa58-4c22-ad6c-10ffebf02428",
+        "our_feature_name": "Consent Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via GDPR/cookie plugins"
+      },
+      {
+        "our_feature_id": "2ca49b20-5e81-43de-9821-4477a8c5fb00",
+        "our_feature_name": "Blog",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "3bdd42c2-9155-4002-864b-de47cd3570fa",
+        "our_feature_name": "Reviews",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via WooCommerce extensions"
+      },
+      {
+        "our_feature_id": "54d79706-04db-4b47-99c2-65fc68c1aaa2",
+        "our_feature_name": "Shop",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Full eCommerce with WooCommerce"
+      },
+      {
+        "our_feature_id": "5b07e660-23b6-430b-be2f-1019262da91f",
+        "our_feature_name": "Banners",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "60b0218e-836f-4e83-8029-cb4a355588d1",
+        "our_feature_name": "Storage/Traffic Scaling",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "unlimited",
+        "unit": "storage",
+        "note": "Unlimited storage and bandwidth"
+      },
+      {
+        "our_feature_id": "69a90cc3-1b07-43c4-afd3-fa4b58cee97d",
+        "our_feature_name": "Forms",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins like Gravity Forms"
+      },
+      {
+        "our_feature_id": "6fa79728-d78b-40cb-89ad-166284a9e13b",
+        "our_feature_name": "Document Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via media library or plugins"
+      },
+      {
+        "our_feature_id": "78f93271-4b1b-4131-b50a-863380b4a6de",
+        "our_feature_name": "Custom Domain Support",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "7b7e2a83-ad3b-41d8-a9f7-37f1026a33f6",
+        "our_feature_name": "API Access",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "REST API and plugins"
+      },
+      {
+        "our_feature_id": "7cc3ba9d-83b2-4cb7-94d9-dc0a5eff6828",
+        "our_feature_name": "Email Campaigns",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins like Mailchimp"
+      },
+      {
+        "our_feature_id": "7e082c2b-d88e-4e88-9c9c-db80028b85b1",
+        "our_feature_name": "Chatbot",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins"
+      },
+      {
+        "our_feature_id": "880e4582-dc90-4902-ad7a-30d8f60d7d51",
+        "our_feature_name": "Transactional Email",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via SMTP plugins"
+      },
+      {
+        "our_feature_id": "88d0860f-06fe-4e32-9b7f-af9554c5de0b",
+        "our_feature_name": "Payments Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Multiple gateways via WooCommerce"
+      },
+      {
+        "our_feature_id": "8c462f10-84e2-4bff-9ec5-86ac2ed4c87e",
+        "our_feature_name": "Multi-Language Website Builder",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via WPML or Polylang"
+      },
+      {
+        "our_feature_id": "8f25af96-e3d8-4f3a-a428-79c25d03442e",
+        "our_feature_name": "Analytics & Reporting",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Google Analytics integration + plugins"
+      },
+      {
+        "our_feature_id": "9172bd84-5231-43c8-a68b-8e883d2902c7",
+        "our_feature_name": "White-Label Branding",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Full control"
+      },
+      {
+        "our_feature_id": "a205eafb-b750-4235-800c-d5765f748e56",
+        "our_feature_name": "CRM",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins"
+      },
+      {
+        "our_feature_id": "ab644e92-0b4b-49c0-a773-7c3712ddf51e",
+        "our_feature_name": "Inventory",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "WooCommerce inventory management"
+      },
+      {
+        "our_feature_id": "b2f6233b-ca0c-4753-9004-11d5a4f6425a",
+        "our_feature_name": "Onboarding Materials",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Documentation and community"
+      },
+      {
+        "our_feature_id": "b3b21c17-9ffa-4bf0-83a7-c6867d4fe612",
+        "our_feature_name": "Industry Templates",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Thousands of themes"
+      },
+      {
+        "our_feature_id": "ed346da0-a22f-4b3b-a320-a481ee0ffb6d",
+        "our_feature_name": "Tickets & Support System",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Via plugins like Zendesk"
+      }
+    ]
+  },
+  {
+    "name": "Webflow",
+    "logo_url": "https://cdn.codedharmony.app/6695b959-45ef-44b4-a68c-9cd0fe0e25a3/images/uncategorized/webflow_logo_icon_169218_lpDZ7_txpf.png",
+    "website_url": "",
+    "pricing_plans": [
+      {
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "monthly": 49,
+        "yearly": 468,
+        "note": "Business Site plan ($39/month annual, $49 monthly)"
+      }
+    ],
+    "features": [
+      {
+        "our_feature_id": "00ee4a18-3126-4cb9-9317-56f2a2779cce",
+        "our_feature_name": "Backup & Restore",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Site versions and backups"
+      },
+      {
+        "our_feature_id": "03b97ba1-97e5-4e38-ba5a-bb18786a08a9",
+        "our_feature_name": "AI Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Limited AI features"
+      },
+      {
+        "our_feature_id": "0ffd99a7-285f-49c8-8b9d-4e914882d6ca",
+        "our_feature_name": "AI Agent Boosts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "1a63e431-b251-46f2-85b5-70aa708da9e6",
+        "our_feature_name": "Customer Accounts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations (deprecated native)"
+      },
+      {
+        "our_feature_id": "2b3c4f01-fa58-4c22-ad6c-10ffebf02428",
+        "our_feature_name": "Consent Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "2ca49b20-5e81-43de-9821-4477a8c5fb00",
+        "our_feature_name": "Blog",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "CMS-powered"
+      },
+      {
+        "our_feature_id": "3bdd42c2-9155-4002-864b-de47cd3570fa",
+        "our_feature_name": "Reviews",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations"
+      },
+      {
+        "our_feature_id": "54d79706-04db-4b47-99c2-65fc68c1aaa2",
+        "our_feature_name": "Shop",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Requires Ecommerce plan"
+      },
+      {
+        "our_feature_id": "5b07e660-23b6-430b-be2f-1019262da91f",
+        "our_feature_name": "Banners",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "60b0218e-836f-4e83-8029-cb4a355588d1",
+        "our_feature_name": "Storage/Traffic Scaling",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "amount",
+        "amount": 400,
+        "unit": "GB bandwidth",
+        "note": "Scalable with add-ons"
+      },
+      {
+        "our_feature_id": "69a90cc3-1b07-43c4-afd3-fa4b58cee97d",
+        "our_feature_name": "Forms",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "unlimited",
+        "unit": "submissions",
+        "note": ""
+      },
+      {
+        "our_feature_id": "6fa79728-d78b-40cb-89ad-166284a9e13b",
+        "our_feature_name": "Document Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Asset manager"
+      },
+      {
+        "our_feature_id": "78f93271-4b1b-4131-b50a-863380b4a6de",
+        "our_feature_name": "Custom Domain Support",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "7b7e2a83-ad3b-41d8-a9f7-37f1026a33f6",
+        "our_feature_name": "API Access",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "REST API for CMS"
+      },
+      {
+        "our_feature_id": "7cc3ba9d-83b2-4cb7-94d9-dc0a5eff6828",
+        "our_feature_name": "Email Campaigns",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Integrations required"
+      },
+      {
+        "our_feature_id": "7e082c2b-d88e-4e88-9c9c-db80028b85b1",
+        "our_feature_name": "Chatbot",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations"
+      },
+      {
+        "our_feature_id": "880e4582-dc90-4902-ad7a-30d8f60d7d51",
+        "our_feature_name": "Transactional Email",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations"
+      },
+      {
+        "our_feature_id": "88d0860f-06fe-4e32-9b7f-af9554c5de0b",
+        "our_feature_name": "Payments Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Ecommerce plan needed"
+      },
+      {
+        "our_feature_id": "8c462f10-84e2-4bff-9ec5-86ac2ed4c87e",
+        "our_feature_name": "Multi-Language Website Builder",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Localization add-on"
+      },
+      {
+        "our_feature_id": "8f25af96-e3d8-4f3a-a428-79c25d03442e",
+        "our_feature_name": "Analytics & Reporting",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Built-in + Analyze add-on"
+      },
+      {
+        "our_feature_id": "9172bd84-5231-43c8-a68b-8e883d2902c7",
+        "our_feature_name": "White-Label Branding",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Agency plans"
+      },
+      {
+        "our_feature_id": "a205eafb-b750-4235-800c-d5765f748e56",
+        "our_feature_name": "CRM",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Integrations"
+      },
+      {
+        "our_feature_id": "ab644e92-0b4b-49c0-a773-7c3712ddf51e",
+        "our_feature_name": "Inventory",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Ecommerce plan"
+      },
+      {
+        "our_feature_id": "b2f6233b-ca0c-4753-9004-11d5a4f6425a",
+        "our_feature_name": "Onboarding Materials",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Webflow University"
+      },
+      {
+        "our_feature_id": "b3b21c17-9ffa-4bf0-83a7-c6867d4fe612",
+        "our_feature_name": "Industry Templates",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "ed346da0-a22f-4b3b-a320-a481ee0ffb6d",
+        "our_feature_name": "Tickets & Support System",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations"
+      }
+    ]
+  },
+  {
+    "name": "Wix",
+    "logo_url": "https://cdn.codedharmony.app/6695b959-45ef-44b4-a68c-9cd0fe0e25a3/images/uncategorized/wix_logo_icon_249169_pwHO6xYSQq.png",
+    "website_url": "https://wix.com",
+    "pricing_plans": [
+      {
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "monthly": 39,
+        "yearly": 468,
+        "note": "Business plan ($39/month annual)"
+      }
+    ],
+    "features": [
+      {
+        "our_feature_id": "00ee4a18-3126-4cb9-9317-56f2a2779cce",
+        "our_feature_name": "Backup & Restore",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "03b97ba1-97e5-4e38-ba5a-bb18786a08a9",
+        "our_feature_name": "AI Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "0ffd99a7-285f-49c8-8b9d-4e914882d6ca",
+        "our_feature_name": "AI Agent Boosts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "1a63e431-b251-46f2-85b5-70aa708da9e6",
+        "our_feature_name": "Customer Accounts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "2b3c4f01-fa58-4c22-ad6c-10ffebf02428",
+        "our_feature_name": "Consent Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "2ca49b20-5e81-43de-9821-4477a8c5fb00",
+        "our_feature_name": "Blog",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "3bdd42c2-9155-4002-864b-de47cd3570fa",
+        "our_feature_name": "Reviews",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Product reviews"
+      },
+      {
+        "our_feature_id": "54d79706-04db-4b47-99c2-65fc68c1aaa2",
+        "our_feature_name": "Shop",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Advanced eCommerce"
+      },
+      {
+        "our_feature_id": "5b07e660-23b6-430b-be2f-1019262da91f",
+        "our_feature_name": "Banners",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "60b0218e-836f-4e83-8029-cb4a355588d1",
+        "our_feature_name": "Storage/Traffic Scaling",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "amount",
+        "amount": 100,
+        "unit": "GB",
+        "note": ""
+      },
+      {
+        "our_feature_id": "69a90cc3-1b07-43c4-afd3-fa4b58cee97d",
+        "our_feature_name": "Forms",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "6fa79728-d78b-40cb-89ad-166284a9e13b",
+        "our_feature_name": "Document Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "78f93271-4b1b-4131-b50a-863380b4a6de",
+        "our_feature_name": "Custom Domain Support",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "7b7e2a83-ad3b-41d8-a9f7-37f1026a33f6",
+        "our_feature_name": "API Access",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Velo API"
+      },
+      {
+        "our_feature_id": "7cc3ba9d-83b2-4cb7-94d9-dc0a5eff6828",
+        "our_feature_name": "Email Campaigns",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Advanced marketing"
+      },
+      {
+        "our_feature_id": "7e082c2b-d88e-4e88-9c9c-db80028b85b1",
+        "our_feature_name": "Chatbot",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via apps"
+      },
+      {
+        "our_feature_id": "880e4582-dc90-4902-ad7a-30d8f60d7d51",
+        "our_feature_name": "Transactional Email",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "88d0860f-06fe-4e32-9b7f-af9554c5de0b",
+        "our_feature_name": "Payments Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Advanced"
+      },
+      {
+        "our_feature_id": "8c462f10-84e2-4bff-9ec5-86ac2ed4c87e",
+        "our_feature_name": "Multi-Language Website Builder",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "8f25af96-e3d8-4f3a-a428-79c25d03442e",
+        "our_feature_name": "Analytics & Reporting",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Advanced"
+      },
+      {
+        "our_feature_id": "9172bd84-5231-43c8-a68b-8e883d2902c7",
+        "our_feature_name": "White-Label Branding",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "a205eafb-b750-4235-800c-d5765f748e56",
+        "our_feature_name": "CRM",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "ab644e92-0b4b-49c0-a773-7c3712ddf51e",
+        "our_feature_name": "Inventory",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "b2f6233b-ca0c-4753-9004-11d5a4f6425a",
+        "our_feature_name": "Onboarding Materials",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "b3b21c17-9ffa-4bf0-83a7-c6867d4fe612",
+        "our_feature_name": "Industry Templates",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "ed346da0-a22f-4b3b-a320-a481ee0ffb6d",
+        "our_feature_name": "Tickets & Support System",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via apps"
+      }
+    ]
+  },
+  {
+    "name": "HubSpot",
+    "logo_url": "https://cdn.codedharmony.app/6695b959-45ef-44b4-a68c-9cd0fe0e25a3/images/uncategorized/hubspot_logo_icon_170009_BuVcvx8lUz.png",
+    "website_url": "",
+    "pricing_plans": [
+      {
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "monthly": 450,
+        "yearly": 5400,
+        "note": "Content Hub Professional ($450/month annual)"
+      }
+    ],
+    "features": [
+      {
+        "our_feature_id": "00ee4a18-3126-4cb9-9317-56f2a2779cce",
+        "our_feature_name": "Backup & Restore",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Content staging"
+      },
+      {
+        "our_feature_id": "03b97ba1-97e5-4e38-ba5a-bb18786a08a9",
+        "our_feature_name": "AI Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "AI content tools"
+      },
+      {
+        "our_feature_id": "0ffd99a7-285f-49c8-8b9d-4e914882d6ca",
+        "our_feature_name": "AI Agent Boosts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "1a63e431-b251-46f2-85b5-70aa708da9e6",
+        "our_feature_name": "Customer Accounts",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Enterprise for memberships"
+      },
+      {
+        "our_feature_id": "2b3c4f01-fa58-4c22-ad6c-10ffebf02428",
+        "our_feature_name": "Consent Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "2ca49b20-5e81-43de-9821-4477a8c5fb00",
+        "our_feature_name": "Blog",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "3bdd42c2-9155-4002-864b-de47cd3570fa",
+        "our_feature_name": "Reviews",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Via integrations"
+      },
+      {
+        "our_feature_id": "54d79706-04db-4b47-99c2-65fc68c1aaa2",
+        "our_feature_name": "Shop",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Payment links, not full shop"
+      },
+      {
+        "our_feature_id": "5b07e660-23b6-430b-be2f-1019262da91f",
+        "our_feature_name": "Banners",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "60b0218e-836f-4e83-8029-cb4a355588d1",
+        "our_feature_name": "Storage/Traffic Scaling",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Scalable hosting"
+      },
+      {
+        "our_feature_id": "69a90cc3-1b07-43c4-afd3-fa4b58cee97d",
+        "our_feature_name": "Forms",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "6fa79728-d78b-40cb-89ad-166284a9e13b",
+        "our_feature_name": "Document Management",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Asset management"
+      },
+      {
+        "our_feature_id": "78f93271-4b1b-4131-b50a-863380b4a6de",
+        "our_feature_name": "Custom Domain Support",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "7b7e2a83-ad3b-41d8-a9f7-37f1026a33f6",
+        "our_feature_name": "API Access",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Developer APIs"
+      },
+      {
+        "our_feature_id": "7cc3ba9d-83b2-4cb7-94d9-dc0a5eff6828",
+        "our_feature_name": "Email Campaigns",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Integrated with Marketing Hub"
+      },
+      {
+        "our_feature_id": "7e082c2b-d88e-4e88-9c9c-db80028b85b1",
+        "our_feature_name": "Chatbot",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Live chat and bots"
+      },
+      {
+        "our_feature_id": "880e4582-dc90-4902-ad7a-30d8f60d7d51",
+        "our_feature_name": "Transactional Email",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "88d0860f-06fe-4e32-9b7f-af9554c5de0b",
+        "our_feature_name": "Payments Integration",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Payment processing"
+      },
+      {
+        "our_feature_id": "8c462f10-84e2-4bff-9ec5-86ac2ed4c87e",
+        "our_feature_name": "Multi-Language Website Builder",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "8f25af96-e3d8-4f3a-a428-79c25d03442e",
+        "our_feature_name": "Analytics & Reporting",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Advanced"
+      },
+      {
+        "our_feature_id": "9172bd84-5231-43c8-a68b-8e883d2902c7",
+        "our_feature_name": "White-Label Branding",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "a205eafb-b750-4235-800c-d5765f748e56",
+        "our_feature_name": "CRM",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Integrated HubSpot CRM"
+      },
+      {
+        "our_feature_id": "ab644e92-0b4b-49c0-a773-7c3712ddf51e",
+        "our_feature_name": "Inventory",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "b2f6233b-ca0c-4753-9004-11d5a4f6425a",
+        "our_feature_name": "Onboarding Materials",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Academy and docs"
+      },
+      {
+        "our_feature_id": "b3b21c17-9ffa-4bf0-83a7-c6867d4fe612",
+        "our_feature_name": "Industry Templates",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Theme library"
+      },
+      {
+        "our_feature_id": "ed346da0-a22f-4b3b-a320-a481ee0ffb6d",
+        "our_feature_name": "Tickets & Support System",
+        "our_plan_id": "8ec8cb3a-5ea8-4d47-9499-c4834ccecdab",
+        "our_plan_name": "Pro",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Service Hub integration"
+      }
+    ]
+  }
+]
+

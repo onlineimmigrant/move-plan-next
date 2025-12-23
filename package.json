@@ -7,9 +7,9 @@
     "build": "NODE_OPTIONS='--no-deprecation' next build",
     "start": "NODE_OPTIONS='--no-deprecation' next start",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "jest --config jest.config.js",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:coverage": "jest --config jest.config.js --coverage"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

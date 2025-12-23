@@ -86,6 +86,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, name, logo_url, website_url, data, notes } = body;
 
+    console.log('PUT /api/comparison/competitors - Received body:', JSON.stringify(body, null, 2));
+
     if (!id) {
       return NextResponse.json(
         { error: 'id is required' },
@@ -100,8 +102,13 @@ export async function PUT(request: NextRequest) {
     if (name !== undefined) updates.name = name;
     if (logo_url !== undefined) updates.logo_url = logo_url;
     if (website_url !== undefined) updates.website_url = website_url;
-    if (data !== undefined) updates.data = data;
+    if (data !== undefined) {
+      updates.data = data;
+      console.log('Updating data field:', JSON.stringify(data, null, 2));
+    }
     if (notes !== undefined) updates.notes = notes;
+
+    console.log('Performing update with:', JSON.stringify(updates, null, 2));
 
     const { data: updated, error } = await supabase
       .from('comparison_competitor')
@@ -110,8 +117,12 @@ export async function PUT(request: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
 
+    console.log('Successfully updated competitor:', updated.id);
     return NextResponse.json({ competitor: updated });
   } catch (error: any) {
     console.error('Error updating competitor:', error);
@@ -125,8 +136,8 @@ export async function PUT(request: NextRequest) {
 // DELETE - Soft delete (set is_active to false)
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const body = await request.json();
+    const { id } = body;
 
     if (!id) {
       return NextResponse.json(

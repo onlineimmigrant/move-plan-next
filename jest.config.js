@@ -17,7 +17,7 @@ const customJestConfig = {
     '!src/components/pricing/**/*.d.ts',
     '!src/components/pricing/**/__tests__/**',
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,

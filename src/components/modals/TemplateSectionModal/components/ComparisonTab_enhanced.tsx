@@ -1,10 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ComparisonCompetitor, ComparisonSectionConfig } from '@/types/comparison';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ComparisonSectionConfig, ComparisonCompetitor, CompetitorFeatureStatus, CompetitorFeatureAmountUnit } from '@/types/comparison';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { PencilIcon, TrashIcon, CheckIcon, XMarkIcon, MinusIcon } from '@heroicons/react/24/outline';
+import { useCompetitorData } from '@/hooks/useCompetitorData';
+import { CompetitorList } from './CompetitorList';
+import { PricingConfig } from './PricingConfig';
+import { FeatureConfig } from './FeatureConfig';
+import { ComparisonPreview } from './ComparisonPreview';
 import ImageGalleryModal from '@/components/modals/ImageGalleryModal';
+import Button from '@/ui/Button';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+
+// Currency code to symbol mapping
+const getCurrencySymbol = (code: string): string => {
+  const currencyMap: { [key: string]: string } = {
+    'USD': '$',
+    'EUR': '€',
+    'GBP': '£',
+    'JPY': '¥',
+    'CNY': '¥',
+    'AUD': 'A$',
+    'CAD': 'C$',
+    'CHF': 'CHF',
+    'INR': '₹',
+    'RUB': '₽',
+    'BRL': 'R$',
+    'ZAR': 'R',
+    'KRW': '₩',
+    'MXN': 'MX$',
+    'SEK': 'kr',
+    'NOK': 'kr',
+    'DKK': 'kr',
+    'PLN': 'zł',
+    'TRY': '₺',
+    'AED': 'د.إ',
+    'SAR': 'ر.س',
+  };
+  return currencyMap[code.toUpperCase()] || code;
+};
 
 interface ComparisonTabProps {
   formData: any;
@@ -13,21 +47,53 @@ interface ComparisonTabProps {
 }
 
 export function ComparisonTab({ formData, setFormData, organizationId }: ComparisonTabProps) {
-  const [competitors, setCompetitors] = useState<ComparisonCompetitor[]>([]);
-  const [pricingPlans, setPricingPlans] = useState<any[]>([]);
-  const [features, setFeatures] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features' | 'preview'>('competitors');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingCompetitor, setEditingCompetitor] = useState<ComparisonCompetitor | null>(null);
+  const [editingCompetitor, setEditingCompetitor] = useState<any | null>(null);
   const [newCompetitor, setNewCompetitor] = useState({ name: '', logo_url: '', website_url: '' });
   const [saving, setSaving] = useState(false);
+  const [showCompetitorModal, setShowCompetitorModal] = useState(false);
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
   const [imageGalleryTarget, setImageGalleryTarget] = useState<'new' | string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [importProgress, setImportProgress] = useState<string | null>(null);
+  const [showImportDropdown, setShowImportDropdown] = useState(false);
+
+  // Initialize config from formData
+  const [config, setConfig] = useState<ComparisonSectionConfig>(() => {
+    return formData.comparison_config || {
+      competitor_ids: [],
+      mode: 'both',
+      selected_plan_id: undefined,
+      pricing: { show_interval: 'both' },
+      features: { filter: { display_on_product: false } },
+      ui: { highlight_ours: true, show_disclaimer: true },
+    };
+  });
+
+  const [showAllFeatures, setShowAllFeatures] = useState(() => {
+    // Initialize from config: if display_on_product is false, show all features
+    return !config.features?.filter?.display_on_product;
+  });
+
   const themeColors = useThemeColors();
+
+  // Use custom hooks
+  const {
+    competitors,
+    loading: competitorsLoading,
+    error: competitorsError,
+    fetchCompetitors,
+    createCompetitor,
+    updateCompetitor,
+    deleteCompetitor,
+    updateCompetitorFeature,
+    updateCompetitorPricing,
+  } = useCompetitorData(organizationId);
+
+  const [pricingPlans, setPricingPlans] = useState<any[]>([]);
+  const [features, setFeatures] = useState<any[]>([]);
+  const [currency, setCurrency] = useState<string>('$');
 
   // Validation helpers
   const validateURL = (url: string): boolean => {
@@ -62,6 +128,411 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // JSON Import Handler
+  const handleJSONImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportProgress('Reading file...');
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      if (!Array.isArray(data)) {
+        setErrorMessage('JSON file must contain an array of competitors');
+        setImportProgress(null);
+        return;
+      }
+
+      const results = { imported: 0, failed: 0, errors: [] as string[] };
+      
+      // Fetch existing competitors to check for duplicates
+      setImportProgress('Checking existing competitors...');
+      const existingCompetitors = competitors || [];
+      
+      for (let i = 0; i < data.length; i++) {
+        const item = data[i];
+        
+        if (!item.name) {
+          results.failed++;
+          results.errors.push(`Item ${i + 1}: Name is required`);
+          continue;
+        }
+
+        if (item.logo_url && !validateURL(item.logo_url)) {
+          results.failed++;
+          results.errors.push(`Item ${i + 1}: Invalid logo URL`);
+          continue;
+        }
+
+        if (item.website_url && !validateURL(item.website_url)) {
+          results.failed++;
+          results.errors.push(`Item ${i + 1}: Invalid website URL`);
+          continue;
+        }
+
+        setImportProgress(`Importing ${i + 1} of ${data.length}...`);
+
+        try {
+          // Build the data object with pricing_plans and features
+          const competitorData: any = {
+            plans: item.pricing_plans || [],
+            features: item.features || []
+          };
+
+          // Check if competitor already exists
+          const existingCompetitor = existingCompetitors.find(
+            c => c.name.toLowerCase() === item.name.toLowerCase()
+          );
+
+          let response;
+          if (existingCompetitor) {
+            // Merge imported data with existing data to preserve other plans/features
+            const existingData = existingCompetitor.data || { plans: [], features: [] };
+            const existingPlans = existingData.plans || [];
+            const existingFeatures = existingData.features || [];
+            
+            // Merge plans: Update existing plans or add new ones
+            const mergedPlans = [...existingPlans];
+            (competitorData.plans || []).forEach((newPlan: any) => {
+              const existingPlanIndex = mergedPlans.findIndex((p: any) => p.our_plan_id === newPlan.our_plan_id);
+              if (existingPlanIndex >= 0) {
+                // Update existing plan
+                mergedPlans[existingPlanIndex] = { ...mergedPlans[existingPlanIndex], ...newPlan };
+              } else {
+                // Add new plan
+                mergedPlans.push(newPlan);
+              }
+            });
+            
+            // Merge features: Update existing features or add new ones
+            const mergedFeatures = [...existingFeatures];
+            (competitorData.features || []).forEach((newFeature: any) => {
+              const existingFeatureIndex = mergedFeatures.findIndex((f: any) => 
+                f.our_feature_id === newFeature.our_feature_id && f.our_plan_id === newFeature.our_plan_id
+              );
+              if (existingFeatureIndex >= 0) {
+                // Update existing feature
+                mergedFeatures[existingFeatureIndex] = { ...mergedFeatures[existingFeatureIndex], ...newFeature };
+              } else {
+                // Add new feature
+                mergedFeatures.push(newFeature);
+              }
+            });
+            
+            const mergedData = {
+              plans: mergedPlans,
+              features: mergedFeatures
+            };
+            
+            // Update existing competitor with merged data
+            response = await fetch('/api/comparison/competitors', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: existingCompetitor.id,
+                name: item.name,
+                logo_url: item.logo_url || null,
+                website_url: item.website_url || null,
+                data: mergedData,
+              }),
+            });
+          } else {
+            // Create new competitor
+            response = await fetch('/api/comparison/competitors', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                organization_id: organizationId,
+                name: item.name,
+                logo_url: item.logo_url || null,
+                website_url: item.website_url || null,
+                data: competitorData,
+              }),
+            });
+          }
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            results.failed++;
+            results.errors.push(`Item ${i + 1}: ${item.name} - ${errorData.error || 'API error'}`);
+          } else {
+            results.imported++;
+          }
+        } catch (error) {
+          results.failed++;
+          results.errors.push(`Item ${i + 1}: ${item.name} - ${error instanceof Error ? error.message : 'Network error'}`);
+        }
+      }
+
+      setImportProgress(null);
+      
+      const message = `Import complete: ${results.imported} imported, ${results.failed} failed${
+        results.errors.length > 0 ? '\n\nErrors:\n' + results.errors.slice(0, 5).join('\n') + 
+        (results.errors.length > 5 ? `\n...and ${results.errors.length - 5} more` : '') : ''
+      }`;
+      
+      if (results.failed > 0) {
+        setErrorMessage(message);
+      } else {
+        setErrorMessage(null);
+      }
+
+      await fetchCompetitors();
+      event.target.value = '';
+    } catch (error) {
+      setErrorMessage('Invalid JSON file format');
+      setImportProgress(null);
+      event.target.value = '';
+    }
+  };
+
+  // Download CSV Sample
+  const downloadCSVSample = () => {
+    // Get the selected plan details
+    const selectedPlan = pricingPlans.find(p => p.id === config.selected_plan_id);
+    const planName = selectedPlan ? (selectedPlan.package || selectedPlan.product_name) : 'Not specified';
+    
+    // Headers: competitor info + only the selected plan (pricing + all features)
+    const planId = selectedPlan?.id || '';
+    const featureHeaders = features.map(f => [
+      `plan_${planId}_feature_${f.id}_status`,
+      `plan_${planId}_feature_${f.id}_amount`,
+      `plan_${planId}_feature_${f.id}_unit`,
+      `plan_${planId}_feature_${f.id}_note`
+    ]).flat();
+    
+    const planHeaders = [
+      `plan_${planId}_monthly`,
+      `plan_${planId}_yearly`,
+      `plan_${planId}_note`,
+      ...featureHeaders
+    ];
+    
+    const headers = `name,logo_url,website_url,${planHeaders.join(',')}`;
+    
+    // Get only selected competitors
+    const selectedCompetitors = competitors.filter(comp => config.competitor_ids?.includes(comp.id));
+    
+    // Add selected competitors as sample rows with their existing data
+    const rows = selectedCompetitors.map(comp => {
+      const compPlan = comp.data?.plans?.find((cp: any) => cp.our_plan_id === planId);
+      const featureData = features.flatMap(f => {
+        const compFeature = comp.data?.features?.find((cf: any) => 
+          cf.our_feature_id === f.id && cf.our_plan_id === planId
+        );
+        return [
+          compFeature?.status || 'unknown',
+          compFeature?.amount || '',
+          compFeature?.unit || '',
+          compFeature?.note || ''
+        ];
+      });
+      
+      const planData = [
+        compPlan?.monthly || '',
+        compPlan?.yearly || '',
+        compPlan?.note || '',
+        ...featureData
+      ];
+      
+      return [
+        comp.name,
+        comp.logo_url || '',
+        comp.website_url || '',
+        ...planData
+      ].join(',');
+    });
+    
+    // Create comprehensive instructions for AI agents
+    const instructions = [
+      '# ==================== AI AGENT INSTRUCTIONS ====================',
+      `# COMPARISON CONTEXT: You are comparing competitors against our "${planName}" plan ONLY`,
+      '# ',
+      '# TASK: Research and fill in competitor data for ONE plan and its features',
+      '# ',
+      `# CURRENCY: All prices should be in ${currency} (organization default currency)`,
+      '# ',
+      '# DATA STRUCTURE: Single plan with flat features array',
+      `# All columns are for the "${planName}" plan - no other plans included`,
+      '# This is the most efficient format - minimal tokens, clear scope',
+      '# ',
+      '# OUTPUT FORMAT: Return a CSV file with the exact same structure as this file.',
+      '# Keep all comment lines (starting with #), headers, and data rows.',
+      '# Only modify the data values in the competitor rows below.',
+      '# ',
+      `# COLUMN FORMAT: plan_{planId}_feature_{featureId}_{field}`,
+      `# Plan columns: monthly, yearly, note (for "${planName}" plan)`,
+      `# Feature columns: status, amount, unit, note (for each feature in "${planName}" plan)`,
+      '# ',
+      '# FEATURE STATUS VALUES:',
+      '#   - "available" = Feature is included in their offering',
+      '#   - "partial" = Feature is partially available or limited',
+      '#   - "unavailable" = Feature is not offered',
+      '#   - "amount" = Feature is available with a specific quantity/limit (fill amount & unit)',
+      '#   - "unknown" = Unable to determine availability',
+      '# ',
+      '# FEATURE AMOUNT: Numeric value when status is "amount" (e.g., 100, 50, unlimited)',
+      '# FEATURE UNIT: Unit for the amount (e.g., "users", "GB", "projects", "custom")',
+      '# FEATURE NOTE: Optional additional context or details',
+      '# ',
+      '# PRICING:',
+      `#   - currency: ${currency} (all prices in this currency)`,
+      '#   - monthly: Monthly price in numeric format (e.g., 29.99)',
+      '#   - yearly: Yearly price in numeric format (e.g., 299.99)',
+      '#   - note: Optional pricing details (e.g., "per user", "billed annually")',
+      '# ',
+      '# INSTRUCTIONS:',
+      '#   1. Research each competitor listed below',
+      `#   2. Find the competitor\'s plan equivalent to our "${planName}" plan`,
+      '#   3. Fill in monthly/yearly pricing for that equivalent plan',
+      '#   4. For EACH feature column, research that specific feature availability',
+      `#   5. All features are for "${planName}" plan equivalent at the competitor`,
+      '#   6. Save the completed file as CSV and upload it back',
+      '# ================================================================',
+      '',
+      '# COLUMN REFERENCE:',
+      `# Plan: ${planName}`,
+      `#   - Pricing: plan_${planId}_monthly, plan_${planId}_yearly, plan_${planId}_note`,
+      `#   - Features: ${features.map(f => f.name).join(', ')}`
+    ];
+
+    const csv = [...instructions, '', headers, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'competitors-sample.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowImportDropdown(false);
+  };
+
+  // Download JSON Sample
+  const downloadJSONSample = () => {
+    // Get the selected plan details
+    const selectedPlan = pricingPlans.find(p => p.id === config.selected_plan_id);
+    const planName = selectedPlan ? (selectedPlan.package || selectedPlan.product_name) : 'Not specified';
+    
+    // Get only selected competitors
+    const selectedCompetitors = competitors.filter(comp => config.competitor_ids?.includes(comp.id));
+    
+    // Only include the selected plan, not all plans
+    const selectedPlanData = selectedPlan ? {
+      our_plan_id: selectedPlan.id,
+      our_plan_name: selectedPlan.package || selectedPlan.product_name
+    } : null;
+
+    const sampleData = selectedCompetitors.map(comp => {
+      const compPlan = comp.data?.plans?.find((cp: any) => cp.our_plan_id === config.selected_plan_id);
+      
+      return {
+        name: comp.name,
+        logo_url: comp.logo_url || '',
+        website_url: comp.website_url || '',
+        pricing_plans: selectedPlanData ? [{
+          our_plan_id: selectedPlanData.our_plan_id,
+          our_plan_name: selectedPlanData.our_plan_name,
+          monthly: compPlan?.monthly || '',
+          yearly: compPlan?.yearly || '',
+          note: compPlan?.note || ''
+        }] : [],
+        features: features.map(f => {
+          const compFeature = comp.data?.features?.find((cf: any) => 
+            cf.our_feature_id === f.id && cf.our_plan_id === config.selected_plan_id
+          );
+          return {
+            our_feature_id: f.id,
+            our_feature_name: f.name,
+            our_plan_id: selectedPlanData?.our_plan_id || '',
+            our_plan_name: selectedPlanData?.our_plan_name || '',
+            status: compFeature?.status || 'unknown',
+            amount: compFeature?.amount || '',
+            unit: compFeature?.unit || '',
+            note: compFeature?.note || ''
+          };
+        })
+      };
+    });
+    
+    // Create comprehensive data structure with instructions
+    const jsonWithInstructions = {
+      _instructions: {
+        comparison_context: `You are comparing competitors against our "${planName}" plan`,
+        task: 'Research and fill in competitor data for the features and pricing below',
+        currency: `${currency} (organization default currency - all prices should be in this currency)`,
+        output_format: {
+          description: 'Return a JSON file with ONLY the "competitors" array',
+          example: 'Remove this entire _instructions object and return: [{ "name": "...", "logo_url": "...", "pricing_plans": [...], "features": [...] }]',
+          note: 'The result should be a JSON array of competitor objects, not an object with an instructions key'
+        },
+        data_structure: {
+          description: 'Features are in a FLAT ARRAY with plan reference',
+          note: `You are comparing ONLY the "${planName}" plan`,
+          structure: '{ pricing_plans: [one plan only], features: [{ our_plan_id: "same for all" }] }',
+          benefit: 'Minimal token usage - only one plan to research',
+          example: `All features reference the same plan: "${planName}"`
+        },
+        feature_status_values: {
+          available: 'Feature is included in their offering',
+          partial: 'Feature is partially available or limited',
+          unavailable: 'Feature is not offered',
+          amount: 'Feature is available with a specific quantity/limit (fill amount & unit)',
+          unknown: 'Unable to determine availability'
+        },
+        feature_fields: {
+          our_feature_id: 'Reference ID - do not modify',
+          our_feature_name: 'Reference name - do not modify',
+          our_plan_id: 'REQUIRED: Links feature to specific plan - do not modify',
+          our_plan_name: 'Reference name - do not modify',
+          status: 'One of: available, partial, unavailable, amount, unknown',
+          amount: 'Numeric value when status is "amount" (e.g., 100, 50, "unlimited")',
+          unit: 'Unit for the amount (e.g., "users", "GB", "projects", "custom")',
+          note: 'Optional additional context or details'
+        },
+        pricing_fields: {
+          our_plan_id: 'Reference ID - do not modify',
+          our_plan_name: 'Reference name - do not modify',
+          monthly: `Monthly price in numeric format in ${currency} (e.g., 29.99)`,
+          yearly: `Yearly price in numeric format in ${currency} (e.g., 299.99)`,
+          note: 'Optional pricing details (e.g., "per user", "billed annually")'
+        },
+        partial_updates: {
+          tip: 'To update only one plan, filter features array by our_plan_id',
+          example: 'features.filter(f => f.our_plan_id === "basic-plan-id")',
+          benefit: 'Saves 80%+ tokens when updating incrementally'
+        },
+        steps: [
+          'Research each competitor listed in the competitors array',
+          `Find the competitor\'s plan equivalent to our "${planName}" plan`,
+          'Fill in the monthly/yearly pricing in the single pricing_plans entry',
+          'For EACH feature in features array, research that competitor\'s feature availability',
+          `All features are for the "${planName}" plan only (our_plan_id is the same for all)`,
+          'Feature status: available/unavailable/partial/amount/unknown',
+          'Add notes where feature differs from ours or has special conditions',
+          'IMPORTANT: Remove this entire _instructions object from the final output',
+          'Return ONLY the competitors array: [{ "name": "...", "pricing_plans": [one plan], "features": [...] }]'
+        ]
+      },
+      competitors: sampleData
+    };
+    
+    const json = JSON.stringify(jsonWithInstructions, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'competitors-sample.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowImportDropdown(false);
   };
 
   // CSV Import Handler
@@ -180,18 +651,6 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     setIsImageGalleryOpen(true);
   };
 
-  // Initialize config from formData
-  const [config, setConfig] = useState<ComparisonSectionConfig>(() => {
-    return formData.comparison_config || {
-      competitor_ids: [],
-      mode: 'both',
-      selected_plan_id: undefined,
-      pricing: { show_interval: 'both' },
-      features: { filter: { display_on_product: false } },
-      ui: { highlight_ours: true, show_disclaimer: true },
-    };
-  });
-
   // Sync config to formData whenever it changes
   useEffect(() => {
     setFormData({
@@ -211,23 +670,10 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     if (organizationId) {
       fetchCompetitors();
       fetchPricingPlans();
+      fetchCurrency();
       fetchFeatures();
     }
   }, [organizationId]);
-
-  const fetchCompetitors = async () => {
-    if (!organizationId) return;
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/comparison/competitors?organization_id=${organizationId}`);
-      const data = await response.json();
-      setCompetitors(data.competitors || []);
-    } catch (error) {
-      console.error('Error fetching competitors:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchPricingPlans = async () => {
     if (!organizationId) return;
@@ -237,6 +683,20 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
       setPricingPlans(data || []);
     } catch (error) {
       console.error('Error fetching pricing plans:', error);
+    }
+  };
+
+  const fetchCurrency = async () => {
+    if (!organizationId) return;
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}`);
+      const data = await response.json();
+      if (data?.default_currency) {
+        setCurrency(data.default_currency);
+      }
+    } catch (error) {
+      console.error('Error fetching currency:', error);
+      // Keep default '$'
     }
   };
 
@@ -262,33 +722,33 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     }
   }, [config.selected_plan_id, organizationId]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showImportDropdown && !target.closest('.relative')) {
+        setShowImportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showImportDropdown]);
+
   const handleCreateCompetitor = async () => {
     if (!validateCompetitorForm() || !organizationId) return;
-    
+
     try {
       setSaving(true);
       setErrorMessage(null);
-      const response = await fetch('/api/comparison/competitors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organization_id: organizationId,
-          name: newCompetitor.name,
-          logo_url: newCompetitor.logo_url || null,
-          website_url: newCompetitor.website_url || null,
-        }),
+      await createCompetitor({
+        name: newCompetitor.name,
+        logo_url: newCompetitor.logo_url || undefined,
+        website_url: newCompetitor.website_url || undefined,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create competitor');
-      }
-
-      const result = await response.json();
-      setCompetitors([...competitors, result.competitor]);
       setNewCompetitor({ name: '', logo_url: '', website_url: '' });
       setValidationErrors({});
-      setShowAddForm(false);
+      setShowCompetitorModal(false);
     } catch (error: any) {
       console.error('Error creating competitor:', error);
       setErrorMessage(error.message || 'Failed to create competitor. Please try again.');
@@ -299,27 +759,17 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
 
   const handleUpdateCompetitor = async () => {
     if (!editingCompetitor || !validateCompetitorForm()) return;
-    
+
     try {
       setSaving(true);
-      const response = await fetch('/api/comparison/competitors', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingCompetitor.id,
-          name: newCompetitor.name,
-          logo_url: newCompetitor.logo_url || null,
-          website_url: newCompetitor.website_url || null,
-        }),
+      await updateCompetitor(editingCompetitor.id, {
+        name: newCompetitor.name,
+        logo_url: newCompetitor.logo_url || undefined,
+        website_url: newCompetitor.website_url || undefined,
       });
-
-      if (!response.ok) throw new Error('Failed to update competitor');
-
-      const result = await response.json();
-      setCompetitors(competitors.map(c => c.id === editingCompetitor.id ? result.competitor : c));
       setNewCompetitor({ name: '', logo_url: '', website_url: '' });
       setEditingCompetitor(null);
-      setShowAddForm(false);
+      setShowCompetitorModal(false);
     } catch (error) {
       console.error('Error updating competitor:', error);
       alert('Failed to update competitor');
@@ -330,17 +780,9 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
 
   const handleDeleteCompetitor = async (id: string) => {
     if (!confirm('Are you sure you want to delete this competitor?')) return;
-    
+
     try {
-      const response = await fetch('/api/comparison/competitors', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-
-      if (!response.ok) throw new Error('Failed to delete competitor');
-
-      setCompetitors(competitors.filter(c => c.id !== id));
+      await deleteCompetitor(id);
       const currentIds = config.competitor_ids || [];
       if (currentIds.includes(id)) {
         updateConfig({ competitor_ids: currentIds.filter(cid => cid !== id) });
@@ -358,13 +800,13 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
       logo_url: competitor.logo_url || '',
       website_url: competitor.website_url || '',
     });
-    setShowAddForm(true);
+    setShowCompetitorModal(true);
   };
 
   const cancelEdit = () => {
     setEditingCompetitor(null);
     setNewCompetitor({ name: '', logo_url: '', website_url: '' });
-    setShowAddForm(false);
+    setShowCompetitorModal(false);
   };
 
   const updateConfig = (updates: Partial<ComparisonSectionConfig>) => {
@@ -379,88 +821,42 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     updateConfig({ competitor_ids: newIds });
   };
 
-  const getCompetitorFeatureStatus = (competitorId: string, featureId: string): 'available' | 'partial' | 'unavailable' => {
+  const getCompetitorFeatureStatus = (competitorId: string, planId: string, featureId: string): 'available' | 'partial' | 'unavailable' => {
     const competitor = competitors.find(c => c.id === competitorId);
     if (!competitor?.data?.features) return 'unavailable';
-    const feature = competitor.data.features.find((f: any) => f.our_feature_id === featureId);
+    const feature = competitor.data.features.find((f: any) => 
+      f.our_feature_id === featureId && f.our_plan_id === planId
+    );
     const status = feature?.status || 'unavailable';
-    return status === 'unknown' ? 'unavailable' : status;
+    if (status === 'available' || status === 'amount') return 'available';
+    if (status === 'partial') return 'partial';
+    return 'unavailable';
   };
 
-  const setCompetitorFeatureStatus = async (competitorId: string, featureId: string, status: 'available' | 'partial' | 'unavailable') => {
+  const getCompetitorFeatureAmount = (competitorId: string, planId: string, featureId: string): string => {
     const competitor = competitors.find(c => c.id === competitorId);
-    if (!competitor) return;
+    if (!competitor?.data?.features) return '';
+    const feature = competitor.data.features.find((f: any) => 
+      f.our_feature_id === featureId && f.our_plan_id === planId
+    );
+    return feature?.amount || '';
+  };
 
-    const currentFeatures = competitor.data?.features || [];
-    const featureIndex = currentFeatures.findIndex((f: any) => f.our_feature_id === featureId);
+  const getCompetitorFeatureUnit = (competitorId: string, planId: string, featureId: string): CompetitorFeatureAmountUnit => {
+    const competitor = competitors.find(c => c.id === competitorId);
+    if (!competitor?.data?.features) return 'custom';
+    const feature = competitor.data.features.find((f: any) => 
+      f.our_feature_id === featureId && f.our_plan_id === planId
+    );
+    return feature?.unit || 'custom';
+  };
 
-    let newFeatures;
-    if (featureIndex >= 0) {
-      newFeatures = [...currentFeatures];
-      newFeatures[featureIndex] = { ...newFeatures[featureIndex], status };
-    } else {
-      newFeatures = [...currentFeatures, { our_feature_id: featureId, status }];
-    }
-
+  const setCompetitorFeatureStatus = async (competitorId: string, planId: string, featureId: string, status: CompetitorFeatureStatus, amount?: string, unit?: CompetitorFeatureAmountUnit, note?: string) => {
     try {
-      const response = await fetch('/api/comparison/competitors', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: competitorId,
-          data: { ...competitor.data, features: newFeatures },
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update competitor feature');
-
-      const result = await response.json();
-      setCompetitors(competitors.map(c => c.id === competitorId ? result.competitor : c));
+      await updateCompetitorFeature(competitorId, planId, featureId, status, amount, unit, note);
     } catch (error) {
       console.error('Error updating competitor feature:', error);
       alert('Failed to update competitor feature');
-    }
-  };
-
-  const updateCompetitorPricing = async (competitorId: string, planId: string, interval: 'monthly' | 'yearly' | 'price', price: number | undefined) => {
-    const competitor = competitors.find(c => c.id === competitorId);
-    if (!competitor) return;
-
-    const currentPlans = competitor.data?.plans || [];
-    const planIndex = currentPlans.findIndex((p: any) => p.our_plan_id === planId);
-
-    let newPlans;
-    if (planIndex >= 0) {
-      newPlans = [...currentPlans];
-      newPlans[planIndex] = { ...newPlans[planIndex], [interval]: price };
-      // Remove the plan entry if all price fields are empty
-      const plan = newPlans[planIndex];
-      if (!plan.monthly && !plan.yearly && !(plan as any).price) {
-        newPlans.splice(planIndex, 1);
-      }
-    } else if (price !== undefined) {
-      newPlans = [...currentPlans, { our_plan_id: planId, [interval]: price }];
-    } else {
-      return; // Nothing to update
-    }
-
-    try {
-      const response = await fetch('/api/comparison/competitors', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: competitorId,
-          data: { ...competitor.data, plans: newPlans },
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update competitor pricing');
-
-      const result = await response.json();
-      setCompetitors(competitors.map(c => c.id === competitorId ? result.competitor : c));
-    } catch (error) {
-      console.error('Error updating competitor pricing:', error);
-      alert('Failed to update competitor pricing');
     }
   };
 
@@ -503,10 +899,10 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto">
         <button
           onClick={() => setActiveTab('competitors')}
-          className={`px-4 py-2 -mb-px ${
+          className={`px-3 sm:px-4 py-2 -mb-px text-sm sm:text-base whitespace-nowrap ${
             activeTab === 'competitors'
               ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
@@ -521,7 +917,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         </button>
         <button
           onClick={() => setActiveTab('pricing')}
-          className={`px-4 py-2 -mb-px ${
+          className={`px-3 sm:px-4 py-2 -mb-px text-sm sm:text-base whitespace-nowrap ${
             activeTab === 'pricing'
               ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
@@ -536,7 +932,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         </button>
         <button
           onClick={() => setActiveTab('features')}
-          className={`px-4 py-2 -mb-px ${
+          className={`px-3 sm:px-4 py-2 -mb-px text-sm sm:text-base whitespace-nowrap ${
             activeTab === 'features'
               ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
@@ -551,7 +947,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         </button>
         <button
           onClick={() => setActiveTab('preview')}
-          className={`px-4 py-2 -mb-px ${
+          className={`px-3 sm:px-4 py-2 -mb-px text-sm sm:text-base whitespace-nowrap ${
             activeTab === 'preview'
               ? 'border-b-2 text-gray-900'
               : 'text-gray-600 hover:text-gray-900'
@@ -570,36 +966,96 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
       {/* Competitors Tab */}
       {activeTab === 'competitors' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center gap-4">
-            <h3 className="text-lg font-medium">Select Competitors</h3>
-            <div className="flex gap-2">
-              <label
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all cursor-pointer flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Import CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleCSVImport}
-                  className="hidden"
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+            <h3 className="text-base sm:text-lg font-medium">Select Competitors</h3>
+            <div className="flex gap-2 flex-wrap">
+              <div className="relative">
+                <button
+                  onClick={() => setShowImportDropdown(!showImportDropdown)}
+                  className="px-3 sm:px-4 py-2 hover:bg-gray-50 text-gray-700 rounded-lg transition-all flex items-center gap-2 text-sm"
+                  style={{ borderColor: themeColors.cssVars.primary.border, borderWidth: '1px' }}
                   disabled={!!importProgress}
-                />
-              </label>
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="whitespace-nowrap">Import</span>
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showImportDropdown && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[180px]">
+                    <label className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => { handleCSVImport(e); setShowImportDropdown(false); }}
+                        className="hidden"
+                        disabled={!!importProgress}
+                      />
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload .csv
+                      </div>
+                    </label>
+                    
+                    <label className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={(e) => { handleJSONImport(e); setShowImportDropdown(false); }}
+                        className="hidden"
+                        disabled={!!importProgress}
+                      />
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload .json
+                      </div>
+                    </label>
+                    
+                    <button
+                      onClick={downloadCSVSample}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Sample .csv
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={downloadJSONSample}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Sample .json
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+              
               <button
-                onClick={() =>
-                  showAddForm && !editingCompetitor
-                    ? cancelEdit()
-                    : editingCompetitor
-                    ? cancelEdit()
-                    : setShowAddForm(true)
-                }
-                className="px-4 py-2 text-white rounded-lg transition-all"
+                onClick={() => {
+                  setEditingCompetitor(null);
+                  setNewCompetitor({ name: '', logo_url: '', website_url: '' });
+                  setShowCompetitorModal(true);
+                }}
+                className="px-3 sm:px-4 py-2 text-white rounded-lg transition-all hover:opacity-90 text-sm whitespace-nowrap"
                 style={{ backgroundColor: themeColors.cssVars.primary.base }}
               >
-                {showAddForm ? 'Cancel' : 'Add Competitor'}
+                Add Competitor
               </button>
             </div>
           </div>
@@ -611,553 +1067,58 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
             </div>
           )}
 
-          {showAddForm && (
-            <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
-              <h4 className="font-medium text-gray-900">
-                {editingCompetitor ? 'Edit Competitor' : 'New Competitor'}
-              </h4>
-              
-              {errorMessage && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  {errorMessage}
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newCompetitor.name}
-                  onChange={(e) => {
-                    setNewCompetitor({ ...newCompetitor, name: e.target.value });
-                    setValidationErrors({ ...validationErrors, name: '' });
-                  }}
-                  placeholder="e.g., Competitor Inc."
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    validationErrors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {validationErrors.name && (
-                  <p className="mt-1 text-xs text-red-600">{validationErrors.name}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Logo URL (optional)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={newCompetitor.logo_url}
-                    onChange={(e) => {
-                      setNewCompetitor({ ...newCompetitor, logo_url: e.target.value });
-                      setValidationErrors({ ...validationErrors, logo_url: '' });
-                    }}
-                    placeholder="https://example.com/logo.png"
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      validationErrors.logo_url ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => openImageGallery('new')}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all whitespace-nowrap"
-                  >
-                    Browse Images
-                  </button>
-                </div>
-                {validationErrors.logo_url && (
-                  <p className="mt-1 text-xs text-red-600">{validationErrors.logo_url}</p>
-                )}
-                {newCompetitor.logo_url && !validationErrors.logo_url && (
-                  <img
-                    src={newCompetitor.logo_url}
-                    alt="Logo preview"
-                    className="mt-2 h-12 w-auto object-contain"
-                  />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Website URL (optional)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={newCompetitor.website_url}
-                    onChange={(e) => {
-                      setNewCompetitor({ ...newCompetitor, website_url: e.target.value });
-                      setValidationErrors({ ...validationErrors, website_url: '' });
-                    }}
-                    placeholder="https://competitor.com"
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      validationErrors.website_url ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {!editingCompetitor && newCompetitor.website_url && (
-                    <button
-                      onClick={async () => {
-                        setImportProgress('AI analyzing website...');
-                        try {
-                          const response = await fetch('/api/comparison/competitor/auto-fill', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              url: newCompetitor.website_url,
-                              organizationId,
-                            }),
-                          });
-
-                          const data = await response.json();
-                          
-                          if (response.ok) {
-                            setNewCompetitor({
-                              ...newCompetitor,
-                              name: data.name || newCompetitor.name,
-                              logo_url: data.logo_url || newCompetitor.logo_url,
-                            });
-                            setImportProgress(null);
-                          } else {
-                            throw new Error(data.error || 'Auto-fill failed');
-                          }
-                        } catch (error: any) {
-                          setImportProgress(null);
-                          setErrorMessage(error.message || 'Failed to auto-fill data');
-                        }
-                      }}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
-                      title="AI Auto-Fill from website"
-                      disabled={!!importProgress}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      AI Fill
-                    </button>
-                  )}
-                </div>
-                {validationErrors.website_url && (
-                  <p className="mt-1 text-xs text-red-600">{validationErrors.website_url}</p>
-                )}
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={editingCompetitor ? handleUpdateCompetitor : handleCreateCompetitor}
-                  disabled={!newCompetitor.name.trim() || saving}
-                  className="px-4 py-2 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: themeColors.cssVars.primary.base }}
-                >
-                  {saving ? 'Saving...' : editingCompetitor ? 'Update Competitor' : 'Create Competitor'}
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {errorMessage}
             </div>
           )}
 
-          {loading ? (
-            <p className="text-gray-500">Loading competitors...</p>
-          ) : competitors.length === 0 ? (
-            <p className="text-gray-500">No competitors added yet. Click "Add Competitor" to get started.</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {competitors.map((competitor) => (
-                <div
-                  key={competitor.id}
-                  className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={config.competitor_ids.includes(competitor.id)}
-                    onChange={() => toggleCompetitor(competitor.id)}
-                    className="h-4 w-4"
-                    style={{ accentColor: themeColors.cssVars.primary.base }}
-                  />
-                  {competitor.logo_url && (
-                    <img
-                      src={competitor.logo_url}
-                      alt={competitor.name}
-                      className="h-8 w-8 rounded object-contain"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium">{competitor.name}</p>
-                    {competitor.website_url && (
-                      <a
-                        href={competitor.website_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {competitor.website_url}
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(competitor)}
-                      className="p-2 text-gray-600 hover:text-blue-600 rounded transition-colors"
-                      title="Edit competitor"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCompetitor(competitor.id)}
-                      className="p-2 text-gray-600 hover:text-red-600 rounded transition-colors"
-                      title="Delete competitor"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <CompetitorList
+            competitors={competitors}
+            selectedIds={config.competitor_ids}
+            loading={competitorsLoading}
+            onToggleSelect={toggleCompetitor}
+            onEdit={startEdit}
+            onDelete={handleDeleteCompetitor}
+          />
         </div>
       )}
 
       {/* Pricing Tab */}
       {activeTab === 'pricing' && (
-        <div className="space-y-4">
-          {!config.selected_plan_id ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">Please select a pricing plan first</p>
-            </div>
-          ) : (
-            <>
-          <div>
-            <h3 className="text-lg font-medium mb-2">Configuration</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Configure how pricing is compared across competitors.
-            </p>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Display Interval
-            </label>
-            <select
-              value={config.pricing?.show_interval || 'both'}
-              onChange={(e) =>
-                updateConfig({
-                  pricing: {
-                    ...config.pricing,
-                    show_interval: e.target.value as any,
-                  },
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="monthly">Monthly only</option>
-              <option value="yearly">Yearly only</option>
-              <option value="both">Both (with toggle)</option>
-            </select>
-          </div>
-
-          {selectedCompetitors.length === 0 ? (
-            <p className="text-gray-500">Select competitors first to configure their pricing.</p>
-          ) : (
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Competitor Pricing</h4>
-              <p className="text-sm text-gray-600">
-                Enter competitor prices for the selected plan.
-              </p>
-              {(() => {
-                const plan = pricingPlans.find(p => p.id === config.selected_plan_id);
-                if (!plan) return <p className="text-gray-500">Selected plan not found</p>;
-                
-                const planName = plan.package ? `${plan.product_name} - ${plan.package}` : (plan.product_name || 'Unnamed Plan');
-                return (
-                <div key={plan.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="font-medium">{planName}</p>
-                    <div className="text-sm text-gray-600">
-                      Your price: 
-                      {plan.price && <span className="ml-1 font-medium">${(plan.price / 100).toFixed(2)}/mo</span>}
-                      {!plan.price && <span className="ml-1 text-gray-400">Not set</span>}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {selectedCompetitors.map((competitor) => {
-                      const competitorPlan: any = competitor.data?.plans?.find((p: any) => p.our_plan_id === plan.id) || {};
-                      const isRecurring = plan.type === 'recurring';
-                      return (
-                        <div key={competitor.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded bg-gray-50">
-                          <div className="font-medium text-sm flex items-center">
-                            {competitor.logo_url && (
-                              <img src={competitor.logo_url} alt="" className="h-5 w-5 mr-2 rounded object-contain" />
-                            )}
-                            {competitor.name}
-                          </div>
-                          {isRecurring ? (
-                            <>
-                              <div>
-                                <label className="block text-xs text-gray-600 mb-1">Monthly Price</label>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="999999"
-                                  placeholder="e.g. 29.99"
-                                  value={competitorPlan.monthly || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                                    if (validatePrice(value)) {
-                                      updateCompetitorPricing(competitor.id, plan.id, 'monthly', value);
-                                    }
-                                  }}
-                                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-gray-600 mb-1">Yearly Price</label>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="999999"
-                                  placeholder="e.g. 299.99"
-                                  value={competitorPlan.yearly || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                                    if (validatePrice(value)) {
-                                      updateCompetitorPricing(competitor.id, plan.id, 'yearly', value);
-                                    }
-                                  }}
-                                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded"
-                                />
-                              </div>
-                            </>
-                          ) : (
-                            <div className="md:col-span-2">
-                              <label className="block text-xs text-gray-600 mb-1">One-Time Price</label>
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="999999"
-                                placeholder="e.g. 99.99"
-                                value={competitorPlan.price || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                                  if (validatePrice(value)) {
-                                    updateCompetitorPricing(competitor.id, plan.id, 'price', value);
-                                  }
-                                }}
-                                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                );
-              })()}
-            </div>
-          )}
-          </>
-          )}
-        </div>
+        <PricingConfig
+          config={config}
+          pricingPlans={pricingPlans}
+          selectedCompetitors={selectedCompetitors}
+          onConfigUpdate={updateConfig}
+          onPricingUpdate={updateCompetitorPricing}
+          currency={currency}
+        />
       )}
 
       {/* Features Tab */}
       {activeTab === 'features' && (
-        <div className="space-y-4">
-          {!config.selected_plan_id ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">Please select a pricing plan first</p>
-            </div>
-          ) : (
-            <>
-          <div>
-            <h3 className="text-lg font-medium mb-2">Feature Configuration</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Mark which features each competitor has for the selected plan.
-            </p>
-          </div>
-
-          {selectedCompetitors.length === 0 ? (
-            <p className="text-gray-500">Select competitors first to configure their features.</p>
-          ) : (
-            <div className="space-y-4">
-              {features
-                .filter(f => !config.features?.filter?.display_on_product || f.display_on_product_card)
-                .map((feature) => (
-                  <div key={feature.id} className="border rounded-lg p-4">
-                    <p className="font-medium mb-2">{feature.name}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {selectedCompetitors.map((competitor) => {
-                        const status = getCompetitorFeatureStatus(competitor.id, feature.id);
-                        return (
-                          <div key={competitor.id} className="flex items-center justify-between p-2 border rounded">
-                            <span className="text-sm truncate">{competitor.name}</span>
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => setCompetitorFeatureStatus(competitor.id, feature.id, 'available')}
-                                className={`p-1 rounded ${
-                                  status === 'available'
-                                    ? 'bg-green-100 text-green-600'
-                                    : 'text-gray-400 hover:text-green-600'
-                                }`}
-                                title="Available"
-                              >
-                                <CheckIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => setCompetitorFeatureStatus(competitor.id, feature.id, 'partial')}
-                                className={`p-1 rounded ${
-                                  status === 'partial'
-                                    ? 'bg-yellow-100 text-yellow-600'
-                                    : 'text-gray-400 hover:text-yellow-600'
-                                }`}
-                                title="Partial"
-                              >
-                                <MinusIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => setCompetitorFeatureStatus(competitor.id, feature.id, 'unavailable')}
-                                className={`p-1 rounded ${
-                                  status === 'unavailable'
-                                    ? 'bg-red-100 text-red-600'
-                                    : 'text-gray-400 hover:text-red-600'
-                                }`}
-                                title="Unavailable"
-                              >
-                                <XMarkIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-          </>
-          )}
-        </div>
+        <FeatureConfig
+          config={config}
+          features={features}
+          selectedCompetitors={selectedCompetitors}
+          showAllFeatures={showAllFeatures}
+          onShowAllFeaturesChange={setShowAllFeatures}
+          onFeatureUpdate={setCompetitorFeatureStatus}
+          getCompetitorFeatureUnit={getCompetitorFeatureUnit}
+        />
       )}
       
       {/* Preview Tab */}
       {activeTab === 'preview' && (
-        <div className="space-y-4">
-          <div className="bg-gray-50 border rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2">Preview</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              This shows how the comparison will appear on your website.
-            </p>
-            
-            {!config.selected_plan_id ? (
-              <p className="text-gray-500">Please select a plan to preview</p>
-            ) : selectedCompetitors.length === 0 ? (
-              <p className="text-gray-500">Please add competitors to preview</p>
-            ) : (
-              <div className="bg-white p-6 rounded-lg border">
-                {/* Pricing Preview */}
-                {pricingPlans.find(p => p.id === config.selected_plan_id) && (
-                  <div className="mb-6">
-                    <h4 className="text-base font-semibold mb-3">Pricing Comparison</h4>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse text-sm">
-                        <thead>
-                          <tr className="border-b-2">
-                            <th className="text-left p-2">Plan</th>
-                            <th className="text-center p-2 bg-blue-50">Your Organization</th>
-                            {selectedCompetitors.map(comp => (
-                              <th key={comp.id} className="text-center p-2">
-                                <div className="flex flex-col items-center gap-1">
-                                  {comp.logo_url && (
-                                    <img src={comp.logo_url} alt={comp.name} className="h-6 w-auto" />
-                                  )}
-                                  <span className="text-xs">{comp.name}</span>
-                                </div>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(() => {
-                            const plan = pricingPlans.find(p => p.id === config.selected_plan_id);
-                            if (!plan) return null;
-                            const planName = plan.package ? `${plan.product_name} - ${plan.package}` : plan.product_name;
-                            const price = plan.price ? `$${(plan.price / 100).toFixed(0)}` : '—';
-                            
-                            return (
-                              <tr className="border-b">
-                                <td className="p-2 font-medium">{planName}</td>
-                                <td className="p-2 text-center bg-blue-50 font-semibold">{price}</td>
-                                {selectedCompetitors.map(comp => {
-                                  const compPlan: any = comp.data.plans?.find((p: any) => p.our_plan_id === plan.id);
-                                  const compPrice = compPlan?.monthly || compPlan?.price || '—';
-                                  return (
-                                    <td key={comp.id} className="p-2 text-center">{compPrice}</td>
-                                  );
-                                })}
-                              </tr>
-                            );
-                          })()}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Features Preview */}
-                {features.length > 0 && (
-                  <div>
-                    <h4 className="text-base font-semibold mb-3">Features Comparison</h4>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse text-sm">
-                        <thead>
-                          <tr className="border-b-2">
-                            <th className="text-left p-2">Feature</th>
-                            <th className="text-center p-2 bg-blue-50">Your Organization</th>
-                            {selectedCompetitors.map(comp => (
-                              <th key={comp.id} className="text-center p-2">
-                                <span className="text-xs">{comp.name}</span>
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {features.slice(0, 5).map(feature => (
-                            <tr key={feature.id} className="border-b">
-                              <td className="p-2">{feature.name}</td>
-                              <td className="p-2 text-center bg-blue-50">
-                                <span className="text-green-600">✓</span>
-                              </td>
-                              {selectedCompetitors.map(comp => {
-                                const compFeature = comp.data.features?.find((f: any) => f.our_feature_id === feature.id);
-                                const status = compFeature?.status || 'unknown';
-                                return (
-                                  <td key={comp.id} className="p-2 text-center">
-                                    {status === 'available' && <span className="text-green-600">✓</span>}
-                                    {status === 'partial' && <span className="text-yellow-600">~</span>}
-                                    {status === 'unavailable' && <span className="text-red-600">✕</span>}
-                                    {status === 'unknown' && <span className="text-gray-400">—</span>}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {features.length > 5 && (
-                      <p className="text-xs text-gray-500 mt-2">Showing first 5 features...</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <ComparisonPreview
+          config={config}
+          competitors={competitors}
+          pricingPlans={pricingPlans}
+          features={features}
+          currency={currency}
+          siteName={organizationId ? 'You' : 'Your Brand'}
+        />
       )}
     </div>
 
@@ -1171,6 +1132,191 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         }}
         onSelectImage={handleImageSelect}
       />
+    )}
+
+    {/* Competitor Add/Edit Modal */}
+    {showCompetitorModal && (
+      <div className="fixed inset-0 z-[10005] flex items-center justify-center p-4 bg-black/20">
+        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white px-6 py-4 flex justify-between items-center" style={{ borderBottomColor: themeColors.cssVars.primary.border, borderBottomWidth: '1px' }}>
+            <h3 className="text-lg font-semibold">
+              {editingCompetitor ? 'Edit Competitor' : 'Add Competitor'}
+            </h3>
+            <button
+              onClick={() => {
+                setShowCompetitorModal(false);
+                setEditingCompetitor(null);
+                setNewCompetitor({ name: '', logo_url: '', website_url: '' });
+                setValidationErrors({});
+                setErrorMessage(null);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {errorMessage && (
+              <div className="p-3 bg-red-50 rounded-lg text-sm text-red-700" style={{ borderColor: themeColors.cssVars.primary.border, borderWidth: '1px' }}>
+                {errorMessage}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newCompetitor.name}
+                onChange={(e) => {
+                  setNewCompetitor({ ...newCompetitor, name: e.target.value });
+                  setValidationErrors({ ...validationErrors, name: '' });
+                }}
+                placeholder="e.g., Competitor Inc."
+                className="w-full px-3 py-2 rounded-lg focus:ring-2 focus:border-transparent"
+                style={{ borderColor: validationErrors.name ? '#ef4444' : themeColors.cssVars.primary.border, borderWidth: '1px' }}
+              />
+              {validationErrors.name && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Logo URL (optional)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newCompetitor.logo_url}
+                  onChange={(e) => {
+                    setNewCompetitor({ ...newCompetitor, logo_url: e.target.value });
+                    setValidationErrors({ ...validationErrors, logo_url: '' });
+                  }}
+                  placeholder="https://example.com/logo.png"
+                  className="flex-1 px-3 py-2 rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{ borderColor: validationErrors.logo_url ? '#ef4444' : themeColors.cssVars.primary.border, borderWidth: '1px' }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => openImageGallery('new')}
+                  variant="outline"
+                  size="default"
+                >
+                  Browse
+                </Button>
+              </div>
+              {validationErrors.logo_url && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.logo_url}</p>
+              )}
+              {newCompetitor.logo_url && !validationErrors.logo_url && (
+                <img
+                  src={newCompetitor.logo_url}
+                  alt="Logo preview"
+                  className="mt-2 h-12 w-auto object-contain"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Website URL (optional)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newCompetitor.website_url}
+                  onChange={(e) => {
+                    setNewCompetitor({ ...newCompetitor, website_url: e.target.value });
+                    setValidationErrors({ ...validationErrors, website_url: '' });
+                  }}
+                  placeholder="https://competitor.com"
+                  className="flex-1 px-3 py-2 rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{ borderColor: validationErrors.website_url ? '#ef4444' : themeColors.cssVars.primary.border, borderWidth: '1px' }}
+                />
+                {!editingCompetitor && newCompetitor.website_url && (
+                  <button
+                    onClick={async () => {
+                      setImportProgress('AI analyzing website...');
+                      try {
+                        const response = await fetch('/api/comparison/competitor/auto-fill', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            url: newCompetitor.website_url,
+                            organizationId,
+                          }),
+                        });
+
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                          setNewCompetitor({
+                            ...newCompetitor,
+                            name: data.name || newCompetitor.name,
+                            logo_url: data.logo_url || newCompetitor.logo_url,
+                          });
+                          setImportProgress(null);
+                        } else {
+                          throw new Error(data.error || 'Auto-fill failed');
+                        }
+                      } catch (error: any) {
+                        setImportProgress(null);
+                        setErrorMessage(error.message || 'Failed to auto-fill data');
+                      }
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50"
+                    title="AI Auto-Fill from website"
+                    disabled={!!importProgress}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    AI Fill
+                  </button>
+                )}
+              </div>
+              {validationErrors.website_url && (
+                <p className="mt-1 text-xs text-red-600">{validationErrors.website_url}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex gap-3" style={{ borderTopColor: themeColors.cssVars.primary.border, borderTopWidth: '1px' }}>
+            <Button
+              onClick={async () => {
+                if (editingCompetitor) {
+                  await handleUpdateCompetitor();
+                } else {
+                  await handleCreateCompetitor();
+                }
+                if (!validationErrors.name && !validationErrors.logo_url && !validationErrors.website_url) {
+                  setShowCompetitorModal(false);
+                }
+              }}
+              disabled={!newCompetitor.name.trim() || saving}
+              variant="primary"
+              className="flex-1"
+            >
+              {saving ? 'Saving...' : (editingCompetitor ? 'Update Competitor' : 'Create Competitor')}
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCompetitorModal(false);
+                setEditingCompetitor(null);
+                setNewCompetitor({ name: '', logo_url: '', website_url: '' });
+                setValidationErrors({});
+                setErrorMessage(null);
+              }}
+              variant="outline"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
     )}
     </>
   );

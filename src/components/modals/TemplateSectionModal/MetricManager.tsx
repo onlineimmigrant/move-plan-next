@@ -695,7 +695,7 @@ export default function MetricManager({
               {/* Toggles */}
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <h5 className="text-sm font-semibold text-gray-700 mb-3">Display Options</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <EditableToggle
                     label="Show Title"
                     value={editingMetric.is_title_displayed}
@@ -790,7 +790,7 @@ export default function MetricManager({
           getEmbedUrl={getEmbedUrl}
         />
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 pt-12">
+        <div className="space-y-6 pt-12">
           {metrics.map((metric, index) => {
             // Skip metrics without valid IDs (not yet saved to database)
             if (!metric.id || typeof metric.id !== 'number') {
@@ -829,9 +829,9 @@ export default function MetricManager({
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               className={cn(
-                'group transition-all min-h-[350px] flex flex-col relative space-y-4 mx-auto',
-                // Fixed width for consistency
-                'w-[350px] flex-shrink-0',
+                'group transition-all min-h-[350px] flex flex-col relative space-y-4',
+                // Full width instead of fixed width
+                'w-full',
                 draggedIndex === index ? 'opacity-50' : 'opacity-100',
                 // Add edit mode border
                 'border-2 border-dashed border-gray-200 hover:border-sky-400',

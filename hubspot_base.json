@@ -1,0 +1,149 @@
+[
+  {
+    "name": "HubSpot",
+    "logo_url": "https://cdn.codedharmony.app/6695b959-45ef-44b4-a68c-9cd0fe0e25a3/images/uncategorized/hubspot_logo_icon_170009_BuVcvx8lUz.png",
+    "website_url": "",
+    "pricing_plans": [
+      {
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "monthly": 20,
+        "yearly": 240,
+        "note": "Content Hub Starter: ~$20/month (often bundled in Starter Customer Platform with promotional discounts to $9-10/month for first year)"
+      }
+    ],
+    "features": [
+      {
+        "our_feature_id": "03b97ba1-97e5-4e38-ba5a-bb18786a08a9",
+        "our_feature_name": "AI Integration",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Basic AI content support"
+      },
+      {
+        "our_feature_id": "041a30a7-018b-41a9-b76e-ee26ccca919c",
+        "our_feature_name": "20GB Storage",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "amount",
+        "amount": "unlimited",
+        "unit": "assets",
+        "note": "No explicit storage limit mentioned; file manager with reasonable limits"
+      },
+      {
+        "our_feature_id": "1a63e431-b251-46f2-85b5-70aa708da9e6",
+        "our_feature_name": "Customer Accounts",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Membership/login requires higher plans"
+      },
+      {
+        "our_feature_id": "2b3c4f01-fa58-4c22-ad6c-10ffebf02428",
+        "our_feature_name": "Consent Management",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "GDPR tools included"
+      },
+      {
+        "our_feature_id": "2ca49b20-5e81-43de-9821-4477a8c5fb00",
+        "our_feature_name": "Blog",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "54d79706-04db-4b47-99c2-65fc68c1aaa2",
+        "our_feature_name": "Shop",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Basic payments; full eCommerce in higher plans"
+      },
+      {
+        "our_feature_id": "54dcd26e-2034-4887-84f1-273a74fc8f50",
+        "our_feature_name": "Full Module & Suite Integration",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Basic integrations; advanced in Pro/Enterprise"
+      },
+      {
+        "our_feature_id": "69a90cc3-1b07-43c4-afd3-fa4b58cee97d",
+        "our_feature_name": "Forms",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "78f93271-4b1b-4131-b50a-863380b4a6de",
+        "our_feature_name": "Custom Domain Support",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": ""
+      },
+      {
+        "our_feature_id": "7e082c2b-d88e-4e88-9c9c-db80028b85b1",
+        "our_feature_name": "Chatbot",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "Basic live chat and bots"
+      },
+      {
+        "our_feature_id": "9172bd84-5231-43c8-a68b-8e883d2902c7",
+        "our_feature_name": "White-Label Branding",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "partial",
+        "amount": "",
+        "unit": "",
+        "note": "Removes HubSpot branding from assets"
+      },
+      {
+        "our_feature_id": "ab644e92-0b4b-49c0-a773-7c3712ddf51e",
+        "our_feature_name": "Inventory",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "unavailable",
+        "amount": "",
+        "unit": "",
+        "note": "Requires Commerce Hub add-on"
+      },
+      {
+        "our_feature_id": "b2f6233b-ca0c-4753-9004-11d5a4f6425a",
+        "our_feature_name": "Onboarding Materials",
+        "our_plan_id": "a2157d74-1e97-4d38-b69b-0f83f382d9a0",
+        "our_plan_name": "Basic",
+        "status": "available",
+        "amount": "",
+        "unit": "",
+        "note": "HubSpot Academy and docs"
+      }
+    ]
+  }
+]
+

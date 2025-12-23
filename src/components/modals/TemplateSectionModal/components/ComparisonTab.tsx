@@ -16,7 +16,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
   const [features, setFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features'>('competitors');
+  const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features' | 'scoring'>('competitors');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCompetitor, setEditingCompetitor] = useState<ComparisonCompetitor | null>(null);
   const [newCompetitor, setNewCompetitor] = useState({ name: '', logo_url: '', website_url: '' });
@@ -43,6 +43,17 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
       highlight_ours: savedConfig.ui?.highlight_ours ?? true,
       show_disclaimer: savedConfig.ui?.show_disclaimer ?? true,
       ...(savedConfig.ui || {})
+    },
+    scoring: {
+      enabled: savedConfig.scoring?.enabled ?? false,
+      weights: savedConfig.scoring?.weights || {
+        featureCoverage: 40,
+        priceCompetitiveness: 30,
+        valueRatio: 20,
+        transparency: 10,
+      },
+      show_breakdown: savedConfig.scoring?.show_breakdown ?? false,
+      ...(savedConfig.scoring || {})
     },
   };
 
@@ -220,6 +231,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         <button onClick={() => setActiveTab('competitors')} className={`px-4 py-2 -mb-px ${activeTab === 'competitors' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'competitors' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Competitors</button>
         <button onClick={() => setActiveTab('pricing')} className={`px-4 py-2 -mb-px ${activeTab === 'pricing' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'pricing' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Pricing</button>
         <button onClick={() => setActiveTab('features')} className={`px-4 py-2 -mb-px ${activeTab === 'features' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'features' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Features</button>
+        <button onClick={() => setActiveTab('scoring')} className={`px-4 py-2 -mb-px ${activeTab === 'scoring' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'scoring' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Scoring</button>
       </div>
 
       {activeTab === 'competitors' && (
@@ -263,6 +275,221 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         <div className="space-y-4">
           <div><h3 className="text-lg font-medium mb-2">Feature Configuration</h3><p className="text-sm text-gray-600 mb-4">Configure which features to compare across competitors.</p><label className="flex items-center gap-2"><input type="checkbox" checked={config.features?.filter?.display_on_product || false} onChange={(e) => updateConfig({ features: { ...config.features, filter: { ...config.features?.filter, display_on_product: e.target.checked } } })} className="h-4 w-4" style={{ accentColor: themeColors.cssVars.primary.base }} /><span className="text-sm font-medium text-gray-700">Only show features displayed on products</span></label></div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800"><strong>Selected Competitors:</strong> {config.competitor_ids.length} competitors selected. Feature availability for each competitor will be managed in a future update.</div>
+        </div>
+      )}
+
+      {activeTab === 'scoring' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Automated Scoring</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Enable automated competitor scoring to help visitors compare products objectively. Scores are calculated based on feature coverage, price competitiveness, value ratio, and pricing transparency.
+            </p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-amber-800 font-medium mb-2">⚠️ Important Guidelines</p>
+              <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+                <li>Scores are automatically calculated and displayed publicly when enabled</li>
+                <li>Methodology is shown transparently to visitors via an info button</li>
+                <li>Make sure competitor data is accurate and up-to-date before enabling</li>
+                <li>Consider competitive and legal implications of public scoring</li>
+              </ul>
+            </div>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50">
+              <input
+                type="checkbox"
+                checked={config.scoring?.enabled || false}
+                onChange={(e) => updateConfig({
+                  scoring: {
+                    ...config.scoring,
+                    enabled: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Enable automated scoring</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display overall scores for each competitor in the comparison table</p>
+              </div>
+            </label>
+          </div>
+
+          {config.scoring?.enabled && (
+            <>
+              <div>
+                <h4 className="text-md font-medium mb-3">Scoring Weights</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Customize how different criteria contribute to the overall score. Total must equal 100%.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium text-gray-700">Feature Coverage</label>
+                      <span className="text-sm font-semibold" style={{ color: themeColors.cssVars.primary.base }}>
+                        {config.scoring?.weights?.featureCoverage || 40}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={config.scoring?.weights?.featureCoverage || 40}
+                      onChange={(e) => updateConfig({
+                        scoring: {
+                          ...config.scoring,
+                          weights: {
+                            ...config.scoring?.weights,
+                            featureCoverage: Number(e.target.value)
+                          }
+                        }
+                      })}
+                      className="w-full"
+                      style={{ accentColor: themeColors.cssVars.primary.base }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Percentage of included vs. paid/unavailable features</p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium text-gray-700">Price Competitiveness</label>
+                      <span className="text-sm font-semibold" style={{ color: themeColors.cssVars.primary.base }}>
+                        {config.scoring?.weights?.priceCompetitiveness || 30}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={config.scoring?.weights?.priceCompetitiveness || 30}
+                      onChange={(e) => updateConfig({
+                        scoring: {
+                          ...config.scoring,
+                          weights: {
+                            ...config.scoring?.weights,
+                            priceCompetitiveness: Number(e.target.value)
+                          }
+                        }
+                      })}
+                      className="w-full"
+                      style={{ accentColor: themeColors.cssVars.primary.base }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">How competitor price compares to yours</p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium text-gray-700">Value Ratio</label>
+                      <span className="text-sm font-semibold" style={{ color: themeColors.cssVars.primary.base }}>
+                        {config.scoring?.weights?.valueRatio || 20}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={config.scoring?.weights?.valueRatio || 20}
+                      onChange={(e) => updateConfig({
+                        scoring: {
+                          ...config.scoring,
+                          weights: {
+                            ...config.scoring?.weights,
+                            valueRatio: Number(e.target.value)
+                          }
+                        }
+                      })}
+                      className="w-full"
+                      style={{ accentColor: themeColors.cssVars.primary.base }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Features per dollar (value for money)</p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium text-gray-700">Transparency</label>
+                      <span className="text-sm font-semibold" style={{ color: themeColors.cssVars.primary.base }}>
+                        {config.scoring?.weights?.transparency || 10}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={config.scoring?.weights?.transparency || 10}
+                      onChange={(e) => updateConfig({
+                        scoring: {
+                          ...config.scoring,
+                          weights: {
+                            ...config.scoring?.weights,
+                            transparency: Number(e.target.value)
+                          }
+                        }
+                      })}
+                      className="w-full"
+                      style={{ accentColor: themeColors.cssVars.primary.base }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Pricing clarity and availability of information</p>
+                  </div>
+
+                  <div className="bg-gray-100 p-3 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Total Weight</span>
+                      <span className={`text-sm font-bold ${
+                        ((config.scoring?.weights?.featureCoverage || 40) +
+                         (config.scoring?.weights?.priceCompetitiveness || 30) +
+                         (config.scoring?.weights?.valueRatio || 20) +
+                         (config.scoring?.weights?.transparency || 10)) === 100
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}>
+                        {(config.scoring?.weights?.featureCoverage || 40) +
+                         (config.scoring?.weights?.priceCompetitiveness || 30) +
+                         (config.scoring?.weights?.valueRatio || 20) +
+                         (config.scoring?.weights?.transparency || 10)}%
+                      </span>
+                    </div>
+                    {((config.scoring?.weights?.featureCoverage || 40) +
+                       (config.scoring?.weights?.priceCompetitiveness || 30) +
+                       (config.scoring?.weights?.valueRatio || 20) +
+                       (config.scoring?.weights?.transparency || 10)) !== 100 && (
+                      <p className="text-xs text-red-600 mt-1">⚠️ Weights must sum to 100%</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-md font-medium mb-3">Display Options</h4>
+                <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50">
+                  <input
+                    type="checkbox"
+                    checked={config.scoring?.show_breakdown || false}
+                    onChange={(e) => updateConfig({
+                      scoring: {
+                        ...config.scoring,
+                        show_breakdown: e.target.checked
+                      }
+                    })}
+                    className="h-5 w-5"
+                    style={{ accentColor: themeColors.cssVars.primary.base }}
+                  />
+                  <div>
+                    <span className="text-sm font-semibold text-gray-900">Show detailed breakdown</span>
+                    <p className="text-xs text-gray-600 mt-0.5">Display individual scores for each criterion below the overall score</p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>How it works:</strong> Visitors will see an "Overall Score" row in the comparison table with scores for each competitor. 
+                  An info button (ⓘ) next to "Overall Score" will show a modal explaining how scores are calculated, including disclaimers about data accuracy and methodology limitations.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
