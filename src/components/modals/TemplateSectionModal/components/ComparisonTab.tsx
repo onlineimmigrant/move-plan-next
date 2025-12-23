@@ -16,7 +16,7 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
   const [features, setFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features' | 'scoring'>('competitors');
+  const [activeTab, setActiveTab] = useState<'competitors' | 'pricing' | 'features' | 'display' | 'scoring'>('competitors');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCompetitor, setEditingCompetitor] = useState<ComparisonCompetitor | null>(null);
   const [newCompetitor, setNewCompetitor] = useState({ name: '', logo_url: '', website_url: '' });
@@ -42,6 +42,11 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     ui: {
       highlight_ours: savedConfig.ui?.highlight_ours ?? true,
       show_disclaimer: savedConfig.ui?.show_disclaimer ?? true,
+      show_features: savedConfig.ui?.show_features ?? true,
+      show_search: savedConfig.ui?.show_search ?? true,
+      show_title: savedConfig.ui?.show_title ?? true,
+      show_description: savedConfig.ui?.show_description ?? true,
+      show_visuals: savedConfig.ui?.show_visuals ?? true,
       ...(savedConfig.ui || {})
     },
     scoring: {
@@ -202,9 +207,46 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
   };
 
   const updateConfig = (updates: Partial<ComparisonSectionConfig>) => {
+    const mergedConfig = { ...config };
+    
+    // Deep merge for nested objects
+    if (updates.pricing) {
+      mergedConfig.pricing = { ...config.pricing, ...updates.pricing };
+    }
+    if (updates.features) {
+      mergedConfig.features = {
+        ...config.features,
+        ...updates.features,
+        filter: {
+          ...config.features?.filter,
+          ...updates.features?.filter,
+        },
+      };
+    }
+    if (updates.ui) {
+      mergedConfig.ui = { ...config.ui, ...updates.ui };
+    }
+    if (updates.scoring) {
+      mergedConfig.scoring = {
+        ...config.scoring,
+        ...updates.scoring,
+        weights: {
+          ...config.scoring?.weights,
+          ...updates.scoring?.weights,
+        },
+      };
+    }
+    
+    // Apply other top-level updates
+    Object.keys(updates).forEach(key => {
+      if (!['pricing', 'features', 'ui', 'scoring'].includes(key)) {
+        (mergedConfig as any)[key] = (updates as any)[key];
+      }
+    });
+    
     setFormData({
       ...formData,
-      comparison_config: { ...config, ...updates },
+      comparison_config: mergedConfig,
     });
   };
 
@@ -227,11 +269,12 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 border-b border-gray-200">
-        <button onClick={() => setActiveTab('competitors')} className={`px-4 py-2 -mb-px ${activeTab === 'competitors' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'competitors' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Competitors</button>
-        <button onClick={() => setActiveTab('pricing')} className={`px-4 py-2 -mb-px ${activeTab === 'pricing' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'pricing' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Pricing</button>
-        <button onClick={() => setActiveTab('features')} className={`px-4 py-2 -mb-px ${activeTab === 'features' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'features' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Features</button>
-        <button onClick={() => setActiveTab('scoring')} className={`px-4 py-2 -mb-px ${activeTab === 'scoring' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'scoring' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Scoring</button>
+      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
+        <button onClick={() => setActiveTab('competitors')} className={`px-4 py-2 -mb-px whitespace-nowrap ${activeTab === 'competitors' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'competitors' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Competitors</button>
+        <button onClick={() => setActiveTab('pricing')} className={`px-4 py-2 -mb-px whitespace-nowrap ${activeTab === 'pricing' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'pricing' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Pricing</button>
+        <button onClick={() => setActiveTab('features')} className={`px-4 py-2 -mb-px whitespace-nowrap ${activeTab === 'features' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'features' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Features</button>
+        <button onClick={() => setActiveTab('display')} className={`px-4 py-2 -mb-px whitespace-nowrap ${activeTab === 'display' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'display' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Display</button>
+        <button onClick={() => setActiveTab('scoring')} className={`px-4 py-2 -mb-px whitespace-nowrap ${activeTab === 'scoring' ? 'border-b-2 text-gray-900' : 'text-gray-600 hover:text-gray-900'}`} style={activeTab === 'scoring' ? { borderBottomColor: themeColors.cssVars.primary.base, color: themeColors.cssVars.primary.base } : {}}>Scoring</button>
       </div>
 
       {activeTab === 'competitors' && (
@@ -275,6 +318,158 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
         <div className="space-y-4">
           <div><h3 className="text-lg font-medium mb-2">Feature Configuration</h3><p className="text-sm text-gray-600 mb-4">Configure which features to compare across competitors.</p><label className="flex items-center gap-2"><input type="checkbox" checked={config.features?.filter?.display_on_product || false} onChange={(e) => updateConfig({ features: { ...config.features, filter: { ...config.features?.filter, display_on_product: e.target.checked } } })} className="h-4 w-4" style={{ accentColor: themeColors.cssVars.primary.base }} /><span className="text-sm font-medium text-gray-700">Only show features displayed on products</span></label></div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800"><strong>Selected Competitors:</strong> {config.competitor_ids.length} competitors selected. Feature availability for each competitor will be managed in a future update.</div>
+        </div>
+      )}
+
+      {activeTab === 'display' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Display Options</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Control which elements are shown in the comparison section. Useful for creating compact pricing tables for blog posts or pages.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_title ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_title: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show section title</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display the section heading at the top</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_description ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_description: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show description</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display descriptive text below the title</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_features ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_features: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show feature comparison table</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display detailed feature-by-feature comparison (disable for pricing-only view)</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_search ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_search: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show search & filters</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display feature search and "show differences only" toggle</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_visuals ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_visuals: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show visual elements</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display charts and other visual elements (when available)</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.highlight_ours ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    highlight_ours: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Highlight our column</span>
+                <p className="text-xs text-gray-600 mt-0.5">Use accent color to highlight your organization's column</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_disclaimer ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_disclaimer: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show disclaimer</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display disclaimer about data accuracy at the bottom</p>
+              </div>
+            </label>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>💡 Tip:</strong> For a compact pricing table perfect for blog posts, disable: Title, Description, Features, Search, and Visuals. Keep only the pricing table visible.
+            </p>
+          </div>
         </div>
       )}
 

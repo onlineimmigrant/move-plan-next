@@ -83,6 +83,12 @@ export interface ComparisonSectionConfig {
     highlight_ours?: boolean;
     show_disclaimer?: boolean;
     disclaimer_text?: string;
+    show_features?: boolean; // Toggle feature comparison table
+    show_search?: boolean; // Toggle search/filter controls
+    show_title?: boolean; // Toggle section title
+    show_description?: boolean; // Toggle description
+    show_visuals?: boolean; // Toggle charts/visual elements
+    allow_plan_selection?: boolean; // Allow users to select/switch between plans
   };
   scoring?: {
     enabled?: boolean;

@@ -653,11 +653,14 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
     <section className="py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
+        {((config.ui?.show_title ?? true) || (config.ui?.show_description ?? true)) && (
         <div className="text-center mb-8">
+          {(config.ui?.show_title ?? true) && (
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             {section.section_title || 'Compare Plans'}
           </h2>
-          {section.section_description && (
+          )}
+          {(config.ui?.show_description ?? true) && section.section_description && (
             <p className="text-xl text-gray-600">{section.section_description}</p>
           )}
           {searchQuery && (
@@ -666,11 +669,12 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
             </p>
           )}
         </div>
+        )}
 
 
 
         {/* Filter Controls */}
-        {showFeatures && ourFeatures.length > 0 && (
+        {(config.ui?.show_search ?? true) && showFeatures && ourFeatures.length > 0 && (
           <div className="mb-6 no-print flex justify-start md:justify-end">
             {/* CRM-Style Search */}
             <div className="relative w-full md:w-auto md:min-w-[320px] max-w-md">
@@ -735,7 +739,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
         {showPricing && ourPricingPlans.length > 0 && (() => {
           const plan = ourPricingPlans[0]; // Single plan only
           const isRecurring = plan.type === 'recurring';
-          const canSwitchPlans = (availablePricingPlans?.length || 0) > 1;
+          const canSwitchPlans = (config.ui?.allow_plan_selection ?? true) && (availablePricingPlans?.length || 0) > 1;
           const selectedPlanLabel = plan.package ? `${plan.product_name} - ${plan.package}` : plan.product_name;
 
           const addCompetitorControl = canAddCompetitors ? (
@@ -1211,7 +1215,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
         })()}
 
         {/* Feature Comparison */}
-        {showFeatures && filteredFeatures.length > 0 && (
+        {(config.ui?.show_features ?? true) && showFeatures && filteredFeatures.length > 0 && (
           <div>
             {searchQuery && (
               <div className="mb-3 text-sm font-normal text-gray-500">
@@ -1468,7 +1472,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
         )}
 
         {/* Visual Charts */}
-        {(priceChartData.length > 0 || featureCoverageData.length > 0) && (
+        {(config.ui?.show_visuals ?? true) && (priceChartData.length > 0 || featureCoverageData.length > 0) && (
           <div className="mt-12 mb-8 no-print">
             <Suspense fallback={
               <div className="flex items-center justify-center py-16">
