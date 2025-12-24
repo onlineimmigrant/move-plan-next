@@ -51,7 +51,7 @@ const formatMoney = (value: number): string => {
   return fixed.endsWith('.00') ? value.toFixed(0) : fixed;
 };
 
-const TABLE_CELL_PADDING = 'p-2 sm:p-3';
+const TABLE_CELL_PADDING = 'px-2 py-2.5 sm:px-4 sm:py-3';
 const TABLE_FIRST_COL_WIDTH = 'w-40 sm:w-48';
 const TABLE_COL_WIDTH = 'w-24 sm:w-32';
 const TABLE_HEADER_TEXT = 'text-xs sm:text-sm font-semibold';
@@ -298,7 +298,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
     return selected.map((competitor) => (
       <th
         key={competitor.id}
-        className={`group/competitor text-center ${TABLE_CELL_PADDING} ${TABLE_COL_WIDTH} ${TABLE_HEADER_TEXT} relative`}
+        className={`group/competitor text-center ${TABLE_CELL_PADDING} ${TABLE_COL_WIDTH} ${TABLE_HEADER_TEXT} relative overflow-hidden`}
       >
         <div className="flex flex-col items-center gap-1">
           {canRemoveCompetitors && (
@@ -327,7 +327,19 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
               className="h-6 sm:h-8 w-auto object-contain"
             />
           )}
-          <span className="text-xs sm:text-sm font-semibold">{competitor.name}</span>
+          {competitor.website_url ? (
+            <a 
+              href={competitor.website_url}
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+              className="text-xs sm:text-sm font-semibold hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {competitor.name}
+            </a>
+          ) : (
+            <span className="text-xs sm:text-sm font-semibold">{competitor.name}</span>
+          )}
         </div>
       </th>
     ));
@@ -655,8 +667,9 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
           }
         }
       `}</style>
-    <section className="py-10 px-4">
+    <section className="py-10">
       <div className="max-w-7xl mx-auto">
+        <div className="w-full overflow-hidden">
         {/* Header */}
         {((config.ui?.show_title ?? true) || (config.ui?.show_description ?? true)) && (
         <div className="text-center mb-8">
@@ -712,7 +725,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                     setShowAutocomplete(false);
                   }, 200);
                 }}
-                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white border-gray-100 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400"
                 style={{
                   '--tw-ring-color': themeColors.primary,
                 } as React.CSSProperties}
@@ -724,15 +737,15 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
                     aria-label="Clear search"
                   >
-                    <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <X className="h-4 w-4 text-gray-500" />
                   </button>
                 )}
                 
                 {/* Keyboard Shortcut Hint */}
-                <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-700 rounded-md">
+                <span className="hidden xl:flex items-center gap-0.5 px-2.5 py-1 text-xs text-gray-500 font-medium bg-gray-100 rounded-md">
                   <kbd>⌘</kbd><kbd>K</kbd>
                 </span>
               </div>
@@ -901,7 +914,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                         const planName = plan.package ? `${plan.product_name} - ${plan.package}` : plan.product_name;
                         return (
                         <tr className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className={`${TABLE_CELL_PADDING} ${TABLE_FIRST_COL_WIDTH} whitespace-normal wrap-break-word`}>
+                          <td className={`${TABLE_CELL_PADDING} ${TABLE_FIRST_COL_WIDTH} whitespace-normal break-words`}>
                             {canSwitchPlans ? (
                               <div className="relative">
                                 <select
@@ -1025,7 +1038,11 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                           return (isRecurring && showYearly) ? monthlyTotal * 12 : monthlyTotal;
                         };
 
+                        // Calculate organization's total cost (annual if showing yearly)
                         const ourPlanPrice = plan.price ? (plan.price / 100) : 0;
+                        const ourTotalCost = isRecurring && showYearly 
+                          ? ourPlanPrice * 12 * (1 - (plan.annual_size_discount || 0) / 100)
+                          : ourPlanPrice;
 
                         return (
                           <>
@@ -1066,7 +1083,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                     : 'inherit',
                                 }}
                               >
-                                {formatMoney(ourPlanPrice)}
+                                {formatMoney(ourTotalCost)}
                               </td>
                               {competitors.map((competitor) => {
                                 const competitorPlan = competitorPlanIndex
@@ -1189,7 +1206,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                             {/* Scoring Methodology Accordion */}
                             {config.scoring?.enabled && (config.ui?.show_scores ?? true) && showScoringMethodology && (
                               <tr className="bg-blue-50 border-b border-indigo-200">
-                                <td colSpan={2 + competitors.length} className="px-6 py-4">
+                                <td colSpan={2 + competitors.length} className="px-2 py-2.5 sm:px-6 sm:py-4">
                                   <div className="text-sm text-gray-700 space-y-3">
                                     <h4 className="font-semibold text-gray-900">How Scores Are Calculated</h4>
                                     <p className="text-xs text-gray-600">
@@ -1239,12 +1256,13 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                 ({filteredFeatures.length} of {ourFeatures.length} features)
               </div>
             )}
-            
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse table-fixed">
+
+            <div className="mb-6">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse table-fixed">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className={`text-left ${TABLE_CELL_PADDING} ${TABLE_HEADER_TEXT} md:sticky md:left-0 bg-white ${TABLE_FIRST_COL_WIDTH}`}>
+                    <th className={`text-left ${TABLE_CELL_PADDING} ${TABLE_HEADER_TEXT} ${TABLE_FIRST_COL_WIDTH}`}>
                       Feature
                     </th>
                     <th
@@ -1255,7 +1273,16 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                           : 'transparent',
                       }}
                     >
-                      {siteName}
+                      <div className="flex flex-col items-center gap-2">
+                        {viewModel?.organizationLogo && (
+                          <img 
+                            src={viewModel.organizationLogo} 
+                            alt={siteName} 
+                            className="h-8 w-8 object-contain"
+                          />
+                        )}
+                        <span>{siteName}</span>
+                      </div>
                     </th>
                     {competitorHeaders}
                   </tr>
@@ -1307,17 +1334,16 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                     : 'border-b border-gray-100 hover:bg-gray-50'
                                 }
                               >
-                                <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm md:sticky md:left-0 bg-white font-semibold ${TABLE_FIRST_COL_WIDTH}`}>
+                                <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm font-semibold ${TABLE_FIRST_COL_WIDTH}`}>
                                   <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0 whitespace-normal wrap-break-word">
+                                    <div className="flex-1 min-w-0 whitespace-normal break-words">
                                       {searchQuery ? highlightMatch(feature.name, searchQuery) : feature.name}
                                     </div>
                                     {showExpandIcon && (
                                       <button
                                         type="button"
                                         onClick={() => toggleFeatureExpansion(feature.id)}
-                                        className="shrink-0 mt-0.5 p-1 -mr-1 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-                                        style={{ outlineColor: themeColors.cssVars.primary.base }}
+                                        className="shrink-0 mt-0.5 p-1 text-gray-400 hover:text-blue-600 transition-colors focus-visible:outline-none"
                                         aria-label={`${isExpanded ? 'Hide' : 'Show'} details for ${feature.name}`}
                                         aria-expanded={isExpanded}
                                         aria-controls={detailsRowId}
@@ -1428,9 +1454,9 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                               {/* Expanded row for feature description and all competitor notes */}
                               {isExpanded && (
                                 <tr id={detailsRowId}>
-                                  <td className={`${TABLE_CELL_PADDING} pt-2 md:sticky md:left-0 bg-white align-top border-b border-gray-200 ${TABLE_FIRST_COL_WIDTH}`}>
+                                  <td className={`${TABLE_CELL_PADDING} pt-2 align-top border-b border-gray-200 ${TABLE_FIRST_COL_WIDTH}`}>
                                     {hasContent && (
-                                      <div className="text-xs text-gray-600 whitespace-normal wrap-break-word">
+                                      <div className="text-xs text-gray-600 whitespace-normal break-words">
                                         {feature.content}
                                       </div>
                                     )}
@@ -1448,7 +1474,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                               <div className="text-[11px] font-semibold text-gray-700">
                                                 {competitor.name}
                                               </div>
-                                              <div className="text-xs text-gray-600 whitespace-normal wrap-break-word">
+                                              <div className="text-xs text-gray-600 whitespace-normal break-words">
                                                 {note}
                                               </div>
                                             </div>
@@ -1467,7 +1493,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                     return (
                                       <td key={competitor.id} className={`${TABLE_CELL_PADDING} pt-2 align-top border-b border-gray-200 ${TABLE_COL_WIDTH} text-center`}>
                                         {note && (
-                                          <div className="hidden md:block text-xs text-gray-600 whitespace-normal wrap-break-word text-center">
+                                          <div className="hidden md:block text-xs text-gray-600 whitespace-normal break-words text-center">
                                             {note}
                                           </div>
                                         )}
@@ -1483,7 +1509,8 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                     ));
                   })()}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1527,6 +1554,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
               'Pricing and feature information is based on publicly available data and may not be current. Please verify with providers.'}
           </div>
         )}
+        </div>
       </div>
     </section>
     </>

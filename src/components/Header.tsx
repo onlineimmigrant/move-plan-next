@@ -415,9 +415,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             className={`cursor-pointer flex items-center text-gray-900 transition-all duration-200 flex-shrink-0 hover:opacity-80 ${pathname.includes('/blog') ? 'hidden sm:flex' : 'flex'}`}
             aria-label={t.goToHomepage}
           >
-            {settings?.image ? (
+            {headerStyle?.logo?.url ? (
               <Image
-                src={settings.image}
+                src={headerStyle.logo.url}
                 alt="Logo"
                 width={48}
                 height={48}
@@ -431,7 +431,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   // Image loaded successfully
                 }}
                 onError={(e) => {
-                  console.error('Failed to load logo:', settings.image);
+                  console.error('Failed to load logo:', headerStyle.logo.url);
                   e.currentTarget.src = companyLogo;
                 }}
               />
