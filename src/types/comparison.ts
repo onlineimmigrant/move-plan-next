@@ -89,6 +89,7 @@ export interface ComparisonSectionConfig {
     show_description?: boolean; // Toggle description
     show_visuals?: boolean; // Toggle charts/visual elements
     allow_plan_selection?: boolean; // Allow users to select/switch between plans
+    show_scores?: boolean; // Show competitor scores
   };
   scoring?: {
     enabled?: boolean;
@@ -112,4 +113,5 @@ export interface ComparisonViewModel {
   config: ComparisonSectionConfig;
   currency?: string;
   siteName?: string;
+  organizationLogo?: string;
 }

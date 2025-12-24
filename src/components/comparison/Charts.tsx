@@ -212,19 +212,19 @@ export function FeatureCoverageChart({
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-lg border border-gray-200 w-full">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h4 className="text-sm font-semibold text-gray-700">
             {mode === 'coverage' ? 'Feature Coverage' : 'Price Comparison'}
           </h4>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mt-1">
             {mode === 'coverage'
               ? 'Breakdown of features by availability status'
               : `Included vs add-ons${intervalLabel ? ` (${intervalLabel})` : ''}`}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mt-3 sm:mt-0">
           {(hasFeatureData && hasPriceData) && (
             <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
               <button
@@ -254,7 +254,7 @@ export function FeatureCoverageChart({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 sm:flex sm:flex-wrap sm:gap-8 sm:justify-center">
+      <div className="grid grid-cols-2 gap-6 sm:flex sm:flex-wrap sm:gap-8 sm:justify-center mt-6">
         {mode === 'coverage' && (featureData ?? []).map((item, index) => {
           const total = item.totalCount || 0;
           const available = item.availableCount || 0;
@@ -532,19 +532,19 @@ export function FeatureCoverageChart({
           <p className="text-xs font-semibold text-gray-600 mb-2">Legend:</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-700"></div>
+              <div className="w-3 h-3 rounded-full bg-gray-700 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Included:</strong> Fully available in base plan</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <div className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Partial:</strong> Limited or restricted availability</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Paid Extra:</strong> Available with additional cost</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+              <div className="w-3 h-3 rounded-full bg-gray-400 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Custom:</strong> Special conditions or custom setup</span>
             </div>
           </div>
@@ -554,11 +554,11 @@ export function FeatureCoverageChart({
           <p className="text-xs font-semibold text-gray-600 mb-2">Legend:</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-700"></div>
+              <div className="w-3 h-3 rounded-full bg-gray-700 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Included:</strong> darker ring segment</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+              <div className="w-3 h-3 rounded-full bg-gray-400 flex-shrink-0"></div>
               <span className="text-gray-600"><strong>Add-ons:</strong> lighter ring segment</span>
             </div>
           </div>

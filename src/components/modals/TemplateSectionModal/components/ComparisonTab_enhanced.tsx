@@ -61,20 +61,65 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
 
   // Initialize config from formData
   const [config, setConfig] = useState<ComparisonSectionConfig>(() => {
-    return formData.comparison_config || {
+    const existingConfig = formData.comparison_config;
+    console.log('[ComparisonTab] Initializing config from formData:', existingConfig);
+    
+    if (existingConfig) {
+      // Return existing config with defaults for any missing fields
+      return {
+        ...existingConfig,
+        ui: {
+          highlight_ours: existingConfig.ui?.highlight_ours ?? true,
+          show_disclaimer: existingConfig.ui?.show_disclaimer ?? true,
+          show_features: existingConfig.ui?.show_features ?? true,
+          show_search: existingConfig.ui?.show_search ?? true,
+          show_title: existingConfig.ui?.show_title ?? true,
+          show_description: existingConfig.ui?.show_description ?? true,
+          show_visuals: existingConfig.ui?.show_visuals ?? true,
+          allow_plan_selection: existingConfig.ui?.allow_plan_selection ?? true,
+          show_scores: existingConfig.ui?.show_scores ?? true,
+        },
+        scoring: existingConfig.scoring || {
+          enabled: false,
+          weights: {
+            featureCoverage: 40,
+            priceCompetitiveness: 30,
+            valueRatio: 20,
+            transparency: 10,
+          },
+          show_breakdown: false,
+        },
+      };
+    }
+    
+    console.log('[ComparisonTab] No existing config, using defaults');
+    // Default config for new sections
+    return {
       competitor_ids: [],
       mode: 'both',
       selected_plan_id: undefined,
       pricing: { show_interval: 'both' },
       features: { filter: { display_on_product: false } },
-      ui: { 
-        highlight_ours: true, 
+      ui: {
+        highlight_ours: true,
         show_disclaimer: true,
         show_features: true,
         show_search: true,
         show_title: true,
         show_description: true,
         show_visuals: true,
+        allow_plan_selection: true,
+        show_scores: true,
+      },
+      scoring: {
+        enabled: false,
+        weights: {
+          featureCoverage: 40,
+          priceCompetitiveness: 30,
+          valueRatio: 20,
+          transparency: 10,
+        },
+        show_breakdown: false,
       },
     };
   });
@@ -659,20 +704,27 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
     setIsImageGalleryOpen(true);
   };
 
-  // Sync config to formData whenever it changes
+  // Sync config to formData whenever config changes
   useEffect(() => {
-    setFormData({
-      ...formData,
-      comparison_config: config,
+    setFormData((prev: any) => {
+      // Only update if config has actually changed
+      if (JSON.stringify(prev.comparison_config) !== JSON.stringify(config)) {
+        console.log('[ComparisonTab] Syncing config to formData:', config);
+        return {
+          ...prev,
+          comparison_config: config,
+        };
+      }
+      return prev;
     });
   }, [config]);
 
-  // Load config from formData when it changes (handles reopening modal)
+  // Load config from formData only on initial mount
   useEffect(() => {
     if (formData.comparison_config) {
       setConfig(formData.comparison_config);
     }
-  }, [formData.comparison_config]);
+  }, []);
 
   useEffect(() => {
     if (organizationId) {
@@ -1331,6 +1383,25 @@ export function ComparisonTab({ formData, setFormData, organizationId }: Compari
               <div>
                 <span className="text-sm font-semibold text-gray-900">Allow plan selection</span>
                 <p className="text-xs text-gray-600 mt-0.5">Let users choose/switch between pricing plans (disable to show default plan only)</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.ui?.show_scores ?? true}
+                onChange={(e) => updateConfig({
+                  ui: {
+                    ...config.ui,
+                    show_scores: e.target.checked
+                  }
+                })}
+                className="h-5 w-5"
+                style={{ accentColor: themeColors.cssVars.primary.base }}
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-900">Show competitor scores</span>
+                <p className="text-xs text-gray-600 mt-0.5">Display overall scores and scoring methodology for competitors</p>
               </div>
             </label>
           </div>

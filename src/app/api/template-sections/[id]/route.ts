@@ -90,7 +90,8 @@ export async function PUT(
     console.log('Prepared update data:', {
       id,
       updateData,
-      updateDataKeys: Object.keys(updateData)
+      updateDataKeys: Object.keys(updateData),
+      comparison_config: updateData.comparison_config
     });
 
     // Update the template section
@@ -98,7 +99,7 @@ export async function PUT(
       .from('website_templatesection')
       .update(updateData)
       .eq('id', id)
-      .select()
+      .select('*, comparison_config')
       .single();
 
     if (error) {
@@ -115,7 +116,12 @@ export async function PUT(
       );
     }
 
-    console.log('Successfully updated template section:', data);
+    console.log('Successfully updated template section:', {
+      id: data.id,
+      section_title: data.section_title,
+      has_comparison_config: !!data.comparison_config,
+      comparison_config: data.comparison_config
+    });
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {

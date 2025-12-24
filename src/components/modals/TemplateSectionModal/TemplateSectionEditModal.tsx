@@ -234,6 +234,8 @@ export default function TemplateSectionEditModal() {
       setLocalTitle(title);
       setLocalDescription(description);
       
+      console.log('[TemplateSectionEditModal] Setting formData with comparison_config:', editingSection.comparison_config);
+      
       setFormData({
         section_title: title,
         section_description: description,

@@ -618,6 +618,11 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
   const availablePricingPlans = viewModel.availablePricingPlans || ourPricingPlans;
   const availableCompetitors = viewModel.availableCompetitors || competitors;
 
+  // Filter available plans to only show plans from the same product as the current plan
+  const filteredAvailablePlans = ourPricingPlans[0]?.product_name
+    ? availablePricingPlans.filter(p => p.product_name === ourPricingPlans[0].product_name)
+    : availablePricingPlans;
+
   const canAddCompetitors = (availableCompetitors?.length || 0) > (competitors?.length || 0);
   const remainingCompetitors = (availableCompetitors ?? []).filter((c) => !competitors.some((sel) => sel.id === c.id));
   
@@ -707,7 +712,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                     setShowAutocomplete(false);
                   }, 200);
                 }}
-                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-12 pr-24 py-3.5 text-base border bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 style={{
                   '--tw-ring-color': themeColors.primary,
                 } as React.CSSProperties}
@@ -739,7 +744,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
         {showPricing && ourPricingPlans.length > 0 && (() => {
           const plan = ourPricingPlans[0]; // Single plan only
           const isRecurring = plan.type === 'recurring';
-          const canSwitchPlans = (config.ui?.allow_plan_selection ?? true) && (availablePricingPlans?.length || 0) > 1;
+          const canSwitchPlans = (config.ui?.allow_plan_selection ?? true) && (filteredAvailablePlans?.length || 0) > 1;
           const selectedPlanLabel = plan.package ? `${plan.product_name} - ${plan.package}` : plan.product_name;
 
           const addCompetitorControl = canAddCompetitors ? (
@@ -874,7 +879,16 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                           : 'transparent',
                       }}
                     >
-                      {siteName}
+                      <div className="flex flex-col items-center gap-2">
+                        {viewModel?.organizationLogo && (
+                          <img 
+                            src={viewModel.organizationLogo} 
+                            alt={siteName} 
+                            className="h-8 w-8 object-contain"
+                          />
+                        )}
+                        <span>{siteName}</span>
+                      </div>
                     </th>
                     {competitorHeaders}
                   </tr>
@@ -908,7 +922,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                   onBlur={(e) => e.currentTarget.style.border = `2px solid ${themeColors.cssVars.primary.base}40`}
                                   aria-label="Select plan for comparison"
                                 >
-                                  {availablePricingPlans.map((p) => {
+                                  {filteredAvailablePlans.map((p) => {
                                     const label = p.package ? `${p.product_name} - ${p.package}` : p.product_name;
                                     return (
                                       <option 
@@ -941,7 +955,10 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                                 : 'inherit',
                             }}
                           >
-                            {displayPrice}
+                            <div>
+                              <div className="text-sm sm:text-base font-bold tabular-nums">{displayPrice}</div>
+                              <div className="text-xs text-gray-600 mt-1 font-normal">{planName}</div>
+                            </div>
                           </td>
                           {competitors.map((competitor) => {
                             const competitorPlan = competitorPlanIndex
@@ -1073,7 +1090,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                             </tr>
 
                             {/* Overall Score Row */}
-                            {config.scoring?.enabled && (
+                            {config.scoring?.enabled && (config.ui?.show_scores ?? true) && (
                               <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-t-2 border-indigo-200">
                                 <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm font-semibold`}>
                                   <div className="flex items-center gap-2">
@@ -1170,7 +1187,7 @@ function ComparisonSectionContent({ section }: ComparisonSectionProps) {
                             )}
 
                             {/* Scoring Methodology Accordion */}
-                            {config.scoring?.enabled && showScoringMethodology && (
+                            {config.scoring?.enabled && (config.ui?.show_scores ?? true) && showScoringMethodology && (
                               <tr className="bg-blue-50 border-b border-indigo-200">
                                 <td colSpan={2 + competitors.length} className="px-6 py-4">
                                   <div className="text-sm text-gray-700 space-y-3">

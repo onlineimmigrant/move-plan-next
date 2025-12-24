@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         .single(),
       supabase
         .from('settings')
-        .select('site')
+        .select('site, image, header_style')
         .eq('organization_id', organizationId)
         .single(),
       supabase
@@ -180,6 +180,14 @@ export async function GET(request: NextRequest) {
           ...plan,
           product_name: Array.isArray(plan.product) ? plan.product[0]?.product_name : plan.product?.product_name
         }));
+        
+        // Filter availablePricingPlans to only include plans from the same product
+        const selectedProductName = ourPricingPlans[0]?.product_name;
+        if (selectedProductName) {
+          availablePricingPlans = availablePricingPlans.filter(
+            (plan: any) => plan.product_name === selectedProductName
+          );
+        }
       }
       
       if (planFeatures && planFeatures.length > 0) {
@@ -236,6 +244,7 @@ export async function GET(request: NextRequest) {
       config,
       currency: organization?.default_currency || '$',
       siteName: settings?.site || 'You',
+      organizationLogo: settings?.image,
     };
 
     return NextResponse.json(responseData, {
