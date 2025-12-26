@@ -14,9 +14,9 @@ interface ChangeThumbnailModalProps {
   onClose: () => void;
   videoUrl: string;
   currentThumbnailUrl?: string;
-  mediaId: number;
+  mediaId: number | string; // Support both number (products/posts) and string (features)
   onThumbnailChanged: (newThumbnailUrl: string) => void;
-  entityType?: 'product' | 'post'; // Default to 'product' for backward compatibility
+  entityType?: 'product' | 'post' | 'feature'; // Default to 'product' for backward compatibility
 }
 
 export default function ChangeThumbnailModal({
@@ -162,8 +162,10 @@ export default function ChangeThumbnailModal({
 
       const { imageUrl: newThumbnailUrl } = await uploadResponse.json();
 
-      // Update media record (product_media or post_media)
-      const apiEndpoint = entityType === 'post' 
+      // Update media record (product_media, post_media, or feature_media)
+      const apiEndpoint = entityType === 'feature'
+        ? `/api/features/media/${mediaId}`
+        : entityType === 'post' 
         ? `/api/posts/media/${mediaId}` 
         : `/api/products/media/${mediaId}`;
       

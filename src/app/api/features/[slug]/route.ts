@@ -21,21 +21,21 @@ const envErrorResponse = () => {
 export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   if (!hasEnvVars) return envErrorResponse();
 
-  const { slug } = await context.params;
-  const { searchParams } = new URL(request.url);
-  let organizationId = searchParams.get('organization_id');
-
-  if (!organizationId) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    organizationId = await getOrganizationId(baseUrl);
-    if (!organizationId) {
-      console.error('Organization not found for baseUrl:', baseUrl);
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-    console.log('Using fallback organization_id:', organizationId);
-  }
-
   try {
+    const { slug } = await context.params;
+    const { searchParams } = new URL(request.url);
+    let organizationId = searchParams.get('organization_id');
+
+    if (!organizationId) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      organizationId = await getOrganizationId(baseUrl);
+      if (!organizationId) {
+        console.error('Organization not found for baseUrl:', baseUrl);
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      console.log('Using fallback organization_id:', organizationId);
+    }
+
     console.log('Fetching feature for slug:', slug, 'organization_id:', organizationId);
     const { data: feature, error: featureError } = await supabase
       .from('feature')
@@ -48,6 +48,25 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
       console.error('Feature not found or error:', featureError?.message);
       return NextResponse.json({ error: 'Feature not found' }, { status: 404 });
     }
+
+    // Fetch feature media (images/videos) ordered by display_order
+    const { data: featureMedia, error: mediaError } = await supabase
+      .from('feature_media')
+      .select('*')
+      .eq('feature_id', feature.id)
+      .order('display_order', { ascending: true });
+
+    if (mediaError) {
+      console.error('Feature media error:', mediaError);
+      // Don't fail the request, just log the error and continue without media
+    }
+
+    // Attach media to feature
+    const featureWithMedia = {
+      ...feature,
+      media: featureMedia || [],
+      primary_media: featureMedia?.find(m => m.is_primary) || featureMedia?.[0] || null,
+    };
 
     // Fetch associated pricing plans
     const { data: pricingPlansData, error: pricingPlansError } = await supabase
@@ -115,7 +134,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ slu
     });
 
     return NextResponse.json({
-      feature,
+      feature: featureWithMedia,
       pricingPlans: associatedPricingPlans,
     }, { status: 200 });
   } catch (error) {

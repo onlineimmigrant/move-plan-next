@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info } from 'lucide-react';
+import { Info, Minus } from 'lucide-react';
 import { calculateCompetitorScore, getScoreBadgeColor } from '@/lib/comparison/scoring';
 import { TABLE_CELL_PADDING, OURS_COL_BORDER, COMP_COL_BORDER } from '../../constants';
 
@@ -50,24 +50,16 @@ export const ScoreRow: React.FC<ScoreRowProps> = ({
         }}
       >
         <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm font-semibold`}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between">
             Overall Score
             <button
               onClick={() => setShowScoringMethodology(!showScoringMethodology)}
-              className="inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors"
-              style={{
-                backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.lighter} 30%, transparent)`,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = `color-mix(in srgb, ${themeColors.cssVars.primary.lighter} 45%, transparent)`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = `color-mix(in srgb, ${themeColors.cssVars.primary.lighter} 30%, transparent)`;
-              }}
+              className="shrink-0 mt-0.5 p-1 text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none"
               title="Show scoring methodology"
               aria-label="Toggle scoring methodology"
+              aria-expanded={showScoringMethodology}
             >
-              <Info className="w-3 h-3" style={{ color: themeColors.cssVars.primary.base }} />
+              {showScoringMethodology ? <Minus className="h-4 w-4" /> : <Info className="h-4 w-4" />}
             </button>
           </div>
         </td>

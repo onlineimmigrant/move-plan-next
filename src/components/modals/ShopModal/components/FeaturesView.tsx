@@ -15,6 +15,7 @@ import type { UnsplashAttribution } from '@/components/modals/ImageGalleryModal/
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import type { Feature, PricingPlanFeature } from '../types';
 import type { PricingPlan } from '@/types/pricingplan';
+import FeatureMediaCarouselAdmin, { FeatureMediaCarouselAdminHandle } from '@/components/features/FeatureMediaCarouselAdmin';
 
 interface FeaturesViewProps {
   features: Feature[];
@@ -60,12 +61,14 @@ function FeaturesView({
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
+  const [isMediaGalleryOpen, setIsMediaGalleryOpen] = useState(false);
   const [openDropdownFeatureId, setOpenDropdownFeatureId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'order' | 'type'>('order');
   const [expandedFeatureId, setExpandedFeatureId] = useState<string | null>(null);
   const [draggedFeature, setDraggedFeature] = useState<Feature | null>(null);
   const [dragOverFeature, setDragOverFeature] = useState<string | null>(null);
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
+  const carouselRef = useRef<FeatureMediaCarouselAdminHandle>(null);
 
   // Memoize helper functions
   const formatPlanBadge = useCallback((plan: PricingPlan) => {
@@ -143,6 +146,13 @@ function FeaturesView({
   const handleImageSelect = useCallback((url: string, attribution?: UnsplashAttribution | PexelsAttributionData) => {
     setFormData(prev => ({ ...prev, feature_image: url }));
     setIsImageGalleryOpen(false);
+  }, []);
+
+  const handleMediaSelect = useCallback(async (url: string, attribution?: UnsplashAttribution | PexelsAttributionData, isVideo?: boolean, videoData?: any) => {
+    if (carouselRef.current) {
+      await carouselRef.current.addMediaItem(url, attribution, isVideo, videoData);
+    }
+    setIsMediaGalleryOpen(false);
   }, []);
 
   // Group pricing plans by product - memoized
@@ -352,7 +362,26 @@ function FeaturesView({
                   placeholder="Feature description"
                 />
               </div>
-
+              {/* Media Section - Only show when editing existing feature with slug */}
+              {editingFeature && editingFeature.slug && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Media</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsMediaGalleryOpen(true)}
+                      className="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      +Add
+                    </button>
+                  </div>
+                  <FeatureMediaCarouselAdmin
+                    ref={carouselRef}
+                    featureSlug={editingFeature.slug}
+                    onAddMedia={() => setIsMediaGalleryOpen(true)}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
@@ -756,12 +785,21 @@ function FeaturesView({
         onAddFeature={handleCreate}
       />
 
-      {/* Image Gallery Modal */}
-      {isImageGalleryOpen && (
+      {/* Image Gallery Modal - For feature_image field */}
+      {isImageGalleryOpen && !editingFeature && (
         <ImageGalleryModal
           isOpen={isImageGalleryOpen}
           onClose={() => setIsImageGalleryOpen(false)}
           onSelectImage={handleImageSelect}
+        />
+      )}
+
+      {/* Media Gallery Modal - For media carousel */}
+      {isMediaGalleryOpen && editingFeature && (
+        <ImageGalleryModal
+          isOpen={isMediaGalleryOpen}
+          onClose={() => setIsMediaGalleryOpen(false)}
+          onSelectImage={handleMediaSelect}
         />
       )}
     </div>

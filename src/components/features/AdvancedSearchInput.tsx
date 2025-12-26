@@ -269,7 +269,7 @@ export default function AdvancedSearchInput({
                   const actualIndex = filteredRecent.length + index;
                   return (
                     <button
-                      key={suggestion}
+                      key={`suggestion-${index}-${suggestion}`}
                       id={`search-suggestion-${actualIndex}`}
                       onClick={() => {
                         handleSearchChange(suggestion);

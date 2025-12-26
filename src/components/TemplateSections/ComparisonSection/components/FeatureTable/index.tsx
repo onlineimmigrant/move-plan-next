@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, Info, Minus } from 'lucide-react';
 import { StatusDot } from '../StatusDot';
+import FeatureMediaClickModal from '@/components/features/FeatureMediaClickModal';
 import {
   TABLE_CELL_PADDING,
   TABLE_FIRST_COL_WIDTH,
@@ -109,6 +110,17 @@ export function FeatureTable({
   searchQuery,
   makeCompetitorFeatureKey,
 }: FeatureTableProps) {
+  // State for click modal
+  const [featureMediaModal, setFeatureMediaModal] = useState<{
+    isOpen: boolean;
+    featureId: string | null;
+    featureName: string | null;
+  }>({
+    isOpen: false,
+    featureId: null,
+    featureName: null,
+  });
+
   // Level 1 accordion: always keep one hub open when any hubs exist
   const firstHubName = sortedHierarchy[0]?.hubName ?? null;
   const renderExpandedHubs = 
@@ -120,6 +132,13 @@ export function FeatureTable({
 
   return (
     <>
+      <FeatureMediaClickModal
+        isOpen={featureMediaModal.isOpen}
+        featureId={featureMediaModal.featureId}
+        featureName={featureMediaModal.featureName}
+        onClose={() => setFeatureMediaModal({ isOpen: false, featureId: null, featureName: null })}
+      />
+      
       {sortedHierarchy.map(({ hubName, hubData, sortedModules }) => {
         const hubFeature = hubData.hubFeature;
         const isHubOpen = renderExpandedHubs.has(hubName);
@@ -457,6 +476,7 @@ export function FeatureTable({
                               )}
                             </td>
                             <td
+                              data-feature-media-hover-anchor="true"
                               className={`${TABLE_CELL_PADDING} text-center ${TABLE_COL_WIDTH} ${OURS_COL_BORDER}`}
                               style={{
                                 backgroundColor: config.ui?.highlight_ours
@@ -464,7 +484,20 @@ export function FeatureTable({
                                   : 'transparent',
                               }}
                             >
-                              <StatusDot status="available" primaryColor={themeColors.cssVars.primary.base} />
+                              <StatusDot 
+                                status="available" 
+                                primaryColor={themeColors.cssVars.primary.base}
+                                className=""
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFeatureMediaModal((prev) => {
+                                    if (prev.isOpen && prev.featureId === feature.id) {
+                                      return { isOpen: false, featureId: null, featureName: null };
+                                    }
+                                    return { isOpen: true, featureId: feature.id, featureName: feature.name };
+                                  });
+                                }}
+                              />
                             </td>
                             {competitors.map((competitor) => {
                               const competitorFeature = competitorFeatureIndex

@@ -4,18 +4,34 @@ export interface StatusDotProps {
   status: 'available' | 'partial' | 'unavailable' | 'unknown';
   primaryColor: string;
   label?: string;
+  onMouseEnter?: (event: React.MouseEvent<HTMLSpanElement>) => void;
+  onMouseLeave?: (event: React.MouseEvent<HTMLSpanElement>) => void;
+  onClick?: (event: React.MouseEvent<HTMLSpanElement>) => void;
+  className?: string;
 }
 
-export const StatusDot = memo<StatusDotProps>(({ status, primaryColor, label }) => {
+export const StatusDot = memo<StatusDotProps>(({ 
+  status, 
+  primaryColor, 
+  label,
+  onMouseEnter,
+  onMouseLeave,
+  onClick,
+  className = '',
+}) => {
   if (status === 'available') {
     return (
       <>
         <span className="sr-only">{label || 'Available'}</span>
         <span
           aria-hidden="true"
-          className="inline-block w-3 h-3 rounded-full"
+          data-feature-media-hover-anchor="true"
+          className={`inline-block w-3 h-3 rounded-full cursor-pointer hover:scale-150 transition-all duration-200 ${className}`}
           style={{ backgroundColor: primaryColor }}
           title={label || 'Available'}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onClick={onClick}
         />
       </>
     );
@@ -27,12 +43,16 @@ export const StatusDot = memo<StatusDotProps>(({ status, primaryColor, label }) 
         <span className="sr-only">{label || 'Partial'}</span>
         <span
           aria-hidden="true"
-          className="inline-block w-3 h-3 rounded-full border bg-transparent"
+          data-feature-media-hover-anchor="true"
+          className={`inline-block w-3 h-3 rounded-full border bg-transparent cursor-pointer hover:scale-150 transition-all duration-200 ${className}`}
           style={{
             borderColor: primaryColor,
             backgroundImage: `linear-gradient(to right, ${primaryColor} 50%, transparent 50%)`,
           }}
           title={label || 'Partial'}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onClick={onClick}
         />
       </>
     );

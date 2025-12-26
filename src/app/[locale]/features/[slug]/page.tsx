@@ -7,9 +7,28 @@ import ThemedRelatedFeatureCard from '../../../../components/features/ThemedRela
 import ThemedSectionDivider from '../../../../components/features/ThemedSectionDivider';
 import ThemedBackButton from '../../../../components/features/ThemedBackButton';
 import ThemedFeatureContent from '../../../../components/features/ThemedFeatureContent';
+import FeatureMediaCarousel from '../../../../components/features/FeatureMediaCarousel';
 import { getOrganizationId } from '@/lib/supabase';
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+
+interface FeatureMedia {
+  id: string;
+  media_type: 'image' | 'video';
+  media_url: string;
+  thumbnail_url?: string;
+  alt_text?: string;
+  display_order: number;
+  metadata?: {
+    width?: number;
+    height?: number;
+    duration?: number;
+    unsplash_attribution?: {
+      photographer: string;
+      photographer_url: string;
+    };
+  };
+}
 
 interface Feature {
   id: string;
@@ -24,7 +43,9 @@ interface Feature {
   package?: string;
   description?: string;
   type_display?: string;
-  organization_id: string | null; // Added
+  organization_id: string | null;
+  media?: FeatureMedia[];
+  primary_media?: FeatureMedia;
 }
 
 interface PricingPlan {
@@ -159,9 +180,16 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
   const { slug } = await params;
 
   try {
-    // Fetch organization_id
+    // Fetch organization_id with better error handling
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const organizationId = await getOrganizationId(baseUrl);
+    let organizationId: string | null = null;
+    
+    try {
+      organizationId = await getOrganizationId(baseUrl);
+    } catch (orgError) {
+      console.error('Error fetching organization ID:', orgError);
+      notFound();
+    }
     
     if (!organizationId) {
       console.error('Organization not found for baseUrl:', baseUrl);
@@ -173,20 +201,37 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
       ? `${baseUrl}/api/features/${slug}?organization_id=${organizationId}`
       : `http://localhost:3000/api/features/${slug}?organization_id=${organizationId}`;
 
-    const response = await fetch(apiUrl, { 
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+    console.log('Fetching feature from:', apiUrl);
 
-    if (!response.ok) {
-      console.error(`Error fetching feature: ${response.status} ${response.statusText}`);
+    let response;
+    try {
+      response = await fetch(apiUrl, { 
+        cache: 'no-store',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (fetchError) {
+      console.error('Network error fetching feature:', fetchError);
       notFound();
     }
 
-    const { feature, pricingPlans: associatedPricingPlans } = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error fetching feature: ${response.status} ${response.statusText}`, errorText);
+      notFound();
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Error parsing feature JSON:', jsonError);
+      notFound();
+    }
+
+    const { feature, pricingPlans: associatedPricingPlans } = data;
 
     if (!feature) {
       console.error('Feature not found for slug:', slug);
@@ -241,6 +286,12 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
           <div className="max-w-5xl mx-auto px-6 sm:px-8 py-12">
             <Suspense fallback={<FeatureContentSkeleton />}>
             <FeatureHeader feature={feature} />
+            
+            {/* Media Carousel */}
+            {feature.media && feature.media.length > 0 && (
+              <FeatureMediaCarousel media={feature.media} featureName={feature.name} />
+            )}
+            
             <ThemedFeatureContent content={feature.content} description={feature.description} />
             <SocialShare featureName={feature.name} slug={slug} />
 
