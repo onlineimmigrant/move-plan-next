@@ -11,6 +11,10 @@ import {
 import { mixWithTransparent } from '../../utils/colors';
 import { formatMoney } from '../../utils/formatting';
 
+/**
+ * FeatureTable component displays the hierarchical feature comparison table.
+ * Includes collapsible sections for hubs and modules.
+ */
 interface Feature {
   id: string;
   name: string;
@@ -158,7 +162,7 @@ export function FeatureTable({
                       e.stopPropagation();
                       toggleHub(hubName);
                     }}
-                    className="flex-1 min-w-0 whitespace-normal break-words text-left"
+                    className="flex-1 min-w-0 whitespace-normal text-left"
                     aria-expanded={isHubOpen}
                     aria-label={`Toggle ${hubName}`}
                   >
@@ -170,7 +174,7 @@ export function FeatureTable({
                         }
                         aria-hidden="true"
                       />
-                      <span className="min-w-0 whitespace-normal break-words uppercase">{hubName}</span>
+                      <span className="min-w-0 whitespace-normal uppercase">{hubName}</span>
                     </span>
                   </button>
                   {showHubExpandIcon && hubFeature && (
@@ -204,7 +208,7 @@ export function FeatureTable({
               >
                 <td className={`${TABLE_CELL_PADDING} pt-2 align-top ${TABLE_FIRST_COL_WIDTH}`}>
                   {hasHubContent && (
-                    <div className="text-xs text-gray-600 whitespace-normal break-words">
+                    <div className="text-xs text-gray-600 whitespace-normal">
                       {hubFeature.content}
                     </div>
                   )}
@@ -222,7 +226,7 @@ export function FeatureTable({
                             <div className="text-[11px] font-semibold text-gray-700">
                               {competitor.name}
                             </div>
-                            <div className="text-xs text-gray-600 whitespace-normal break-words">
+                            <div className="text-xs text-gray-600 whitespace-normal">
                               {note}
                             </div>
                           </div>
@@ -241,7 +245,7 @@ export function FeatureTable({
                   return (
                     <td key={competitor.id} className={`${TABLE_CELL_PADDING} pt-2 align-top ${TABLE_COL_WIDTH} text-center ${COMP_COL_BORDER}`}>
                       {note && (
-                        <div className="hidden md:block text-xs text-gray-600 whitespace-normal break-words text-center">
+                        <div className="hidden md:block text-xs text-gray-600 whitespace-normal text-center">
                           {note}
                         </div>
                       )}
@@ -288,7 +292,7 @@ export function FeatureTable({
                     >
                       <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm font-semibold ${TABLE_FIRST_COL_WIDTH}`}>
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0 whitespace-normal break-words">
+                          <div className="flex-1 min-w-0 whitespace-normal">
                             {moduleName}
                           </div>
                           <div className="flex items-center gap-1">
@@ -358,7 +362,7 @@ export function FeatureTable({
                       >
                         <td className={`${TABLE_CELL_PADDING} pt-2 align-top ${TABLE_FIRST_COL_WIDTH}`}>
                           {hasModuleContent && (
-                            <div className="text-xs text-gray-600 whitespace-normal break-words">
+                            <div className="text-xs text-gray-600 whitespace-normal">
                               {moduleFeature.content}
                             </div>
                           )}
@@ -376,7 +380,7 @@ export function FeatureTable({
                                     <div className="text-[11px] font-semibold text-gray-700">
                                       {competitor.name}
                                     </div>
-                                    <div className="text-xs text-gray-600 whitespace-normal break-words">
+                                    <div className="text-xs text-gray-600 whitespace-normal">
                                       {note}
                                     </div>
                                   </div>
@@ -395,7 +399,7 @@ export function FeatureTable({
                           return (
                             <td key={competitor.id} className={`${TABLE_CELL_PADDING} pt-2 align-top ${TABLE_COL_WIDTH} text-center ${COMP_COL_BORDER}`}>
                               {note && (
-                                <div className="hidden md:block text-xs text-gray-600 whitespace-normal break-words text-center">
+                                <div className="hidden md:block text-xs text-gray-600 whitespace-normal text-center">
                                   {note}
                                 </div>
                               )}
@@ -429,7 +433,7 @@ export function FeatureTable({
                           >
                             <td className={`${TABLE_CELL_PADDING} text-xs sm:text-sm font-normal ${TABLE_FIRST_COL_WIDTH}`}>
                               <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0 whitespace-normal break-words pl-4 font-normal text-gray-700">
+                                <div className="flex-1 min-w-0 whitespace-normal pl-4 font-normal text-gray-700">
                                   {searchQuery ? highlightMatch(feature.name, searchQuery) : feature.name}
                                 </div>
                                 {showExpandIcon && (
@@ -506,7 +510,7 @@ export function FeatureTable({
                             <tr id={detailsRowId}>
                               <td className={`${TABLE_CELL_PADDING} pt-2 align-top border-b border-gray-200 ${TABLE_FIRST_COL_WIDTH}`}>
                                 {hasContent && (
-                                  <div className="text-xs text-gray-600 whitespace-normal break-words">
+                                  <div className="text-xs text-gray-600 whitespace-normal">
                                     {feature.content}
                                   </div>
                                 )}
@@ -524,7 +528,7 @@ export function FeatureTable({
                                           <div className="text-[11px] font-semibold text-gray-700">
                                             {competitor.name}
                                           </div>
-                                          <div className="text-xs text-gray-600 whitespace-normal break-words">
+                                          <div className="text-xs text-gray-600 whitespace-normal">
                                             {note}
                                           </div>
                                         </div>
@@ -543,7 +547,7 @@ export function FeatureTable({
                                 return (
                                   <td key={competitor.id} className={`${TABLE_CELL_PADDING} pt-2 align-top border-b border-gray-200 ${TABLE_COL_WIDTH} text-center ${COMP_COL_BORDER}`}>
                                     {note && (
-                                      <div className="hidden md:block text-xs text-gray-600 whitespace-normal break-words text-center">
+                                      <div className="hidden md:block text-xs text-gray-600 whitespace-normal text-center">
                                         {note}
                                       </div>
                                     )}

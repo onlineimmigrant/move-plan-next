@@ -3,6 +3,10 @@ import { makeCompetitorFeatureKey } from '@/lib/comparison/indexes';
 import { ComparisonViewModel } from '@/types/comparison';
 import { trackFeatureSearch } from '../utils/analytics';
 
+/**
+ * useComparisonFilters manages search and filter state for comparison features.
+ * Optimized with useMemo to prevent unnecessary recalculations.
+ */
 export const useComparisonFilters = (
   viewModel: ComparisonViewModel | null,
   competitorFeatureIndex: Map<string, Map<string, any>>,
@@ -11,9 +15,14 @@ export const useComparisonFilters = (
   const [searchQuery, setSearchQuery] = useState('');
   const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
 
+  // Memoize features array to prevent recalculation
+  const ourFeatures = useMemo(() => viewModel?.ourFeatures || [], [viewModel?.ourFeatures]);
+  const competitors = useMemo(() => viewModel?.competitors || [], [viewModel?.competitors]);
+  const filterConfig = useMemo(() => viewModel?.config?.features?.filter, [viewModel?.config?.features?.filter]);
+
   const filteredFeatures = useMemo(() => {
-    if (!viewModel?.ourFeatures) return [];
-    let features = viewModel.ourFeatures;
+    if (!ourFeatures.length) return [];
+    let features = ourFeatures;
     
     // Filter by display_on_product_card setting
     if (viewModel?.config?.features?.filter?.display_on_product) {
@@ -48,7 +57,7 @@ export const useComparisonFilters = (
     }
     
     return features;
-  }, [viewModel?.ourFeatures, viewModel?.competitors, viewModel?.config?.features?.filter?.display_on_product, searchQuery, showDifferencesOnly, sectionId, competitorFeatureIndex]);
+  }, [ourFeatures, competitors, filterConfig, searchQuery, showDifferencesOnly, sectionId, competitorFeatureIndex]);
 
   const clearSearch = useCallback(() => {
     setSearchQuery('');

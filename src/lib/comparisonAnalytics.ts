@@ -64,6 +64,22 @@ class ComparisonAnalytics {
     this.track('competitor_clicked', data);
   }
 
+  trackCompetitorAdd(data: {
+    sectionId: string;
+    competitorId: string;
+    competitorName: string;
+  }) {
+    this.track('competitor_added', data);
+  }
+
+  trackCompetitorRemove(data: {
+    sectionId: string;
+    competitorId: string;
+    competitorName: string;
+  }) {
+    this.track('competitor_removed', data);
+  }
+
   private track(event: string, properties: Record<string, any> = {}) {
     if (!this.isEnabled) {
       console.log('[Analytics]', event, properties);

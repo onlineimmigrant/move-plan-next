@@ -6,6 +6,10 @@ import { formatMoney } from '../../utils/formatting';
 import { makeCompetitorFeatureKey } from '@/lib/comparison/indexes';
 import { TABLE_CELL_PADDING, OURS_COL_BORDER, COMP_COL_BORDER } from '../../constants';
 
+/**
+ * PricingTable component displays the pricing comparison table.
+ * Includes plan selection, pricing display, total costs, and scoring.
+ */
 export interface PricingTableProps {
   plan: any;
   competitors: any[];
@@ -30,7 +34,7 @@ export interface PricingTableProps {
   filteredFeatures: any[];
 }
 
-export const PricingTable: React.FC<PricingTableProps> = ({
+const PricingTableComponent: React.FC<PricingTableProps> = ({
   plan,
   competitors,
   competitorPlanIndex,
@@ -204,3 +208,5 @@ export const PricingTable: React.FC<PricingTableProps> = ({
     </div>
   );
 };
+
+export const PricingTable = React.memo(PricingTableComponent);

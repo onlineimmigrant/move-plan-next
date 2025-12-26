@@ -19,7 +19,8 @@ export interface OurFeature {
   id: string;
   plan_id: string;
   name: string;
-  type?: string;
+  package?: string | null;
+  type?: string | null;
   order?: number;
   description?: string;
   content?: string;

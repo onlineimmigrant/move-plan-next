@@ -9,17 +9,19 @@ export const trackFeatureSearch = (sectionId: string, query: string, resultsCoun
 };
 
 // TODO: Implement trackCompetitorAdd and trackCompetitorRemove in @/lib/comparisonAnalytics
-// export const trackCompetitorAdd = (sectionId: string, competitorId: string) => {
-//   comparisonAnalytics.trackCompetitorAdd({
-//     sectionId,
-//     competitorId,
-//   });
-// };
+export const trackCompetitorAdd = (sectionId: string, competitorId: string, competitorName: string) => {
+  comparisonAnalytics.trackCompetitorAdd({
+    sectionId,
+    competitorId,
+    competitorName,
+  });
+};
 
-// export const trackCompetitorRemove = (sectionId: string, competitorId: string) => {
-//   comparisonAnalytics.trackCompetitorRemove({
-//     sectionId,
-//     competitorId,
-//   });
-// };
+export const trackCompetitorRemove = (sectionId: string, competitorId: string, competitorName: string) => {
+  comparisonAnalytics.trackCompetitorRemove({
+    sectionId,
+    competitorId,
+    competitorName,
+  });
+};
 

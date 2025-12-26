@@ -16,59 +16,27 @@ import TestStructuredData from '@/components/TestStructuredData';
 import SimpleLayoutSEO from '@/components/SimpleLayoutSEO';
 import LanguageSuggestionBanner from '@/components/LanguageSuggestionBanner';
 import { supabaseServer } from '@/lib/supabaseServerSafe';
-import localFont from 'next/font/local';
-import { JetBrains_Mono } from 'next/font/google';
+import { Inter, Poppins, JetBrains_Mono } from 'next/font/google';
 
 import { cache } from 'react';
 import { layoutCache } from '@/lib/layoutCache';
 
-// Self-hosted Inter font for maximum performance - no external requests!
-const inter = localFont({
-  src: [
-    {
-      path: '../../public/fonts/inter-400.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/inter-600.woff2',
-      weight: '600',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/inter-700.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-inter',
+// Inter + Poppins loaded via next/font/google.
+// Next downloads and self-hosts these at build time, and we include heavier weights
+// so Tailwind `font-bold` / `font-extrabold` have real font files to use.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   display: 'optional',
-  preload: true,
+  variable: '--font-inter',
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
-// Self-hosted Poppins font
-const poppins = localFont({
-  src: [
-    {
-      path: '../../public/fonts/poppins-400.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/poppins-600.woff2',
-      weight: '600',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/poppins-700.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-poppins',
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   display: 'optional',
-  preload: true,
+  variable: '--font-poppins',
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
@@ -425,20 +393,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           .animate-fade-in-up{animation:fade-in-up .6s cubic-bezier(.4,0,.2,1)}
         `}} />
         
-        {/* Preload critical self-hosted fonts for instant render */}
-        {selectedFont === 'Poppins' ? (
-          <>
-            <link rel="preload" href="/fonts/poppins-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-            <link rel="preload" href="/fonts/poppins-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-            <link rel="preload" href="/fonts/poppins-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-          </>
-        ) : (
-          <>
-            <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-            <link rel="preload" href="/fonts/inter-600.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-            <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-          </>
-        )}
+        {/* Fonts are handled by next/font (preload + self-host) */}
         
         {/* Conditionally load Google Fonts ONLY when selected (zero performance impact when not used) */}
         {selectedFont !== 'Inter' && selectedFont !== 'Poppins' && (

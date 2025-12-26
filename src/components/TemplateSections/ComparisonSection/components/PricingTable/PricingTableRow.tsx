@@ -3,6 +3,10 @@ import { ChevronDown } from 'lucide-react';
 import { formatMoney } from '../../utils/formatting';
 import { TABLE_CELL_PADDING, TABLE_FIRST_COL_WIDTH, TABLE_COL_WIDTH, OURS_COL_BORDER, COMP_COL_BORDER } from '../../constants';
 
+/**
+ * PricingTableRow component displays a row in the pricing comparison table.
+ * Includes plan selection dropdown and pricing display with monthly/annual toggle.
+ */
 export interface PricingTableRowProps {
   plan: any;
   competitors: any[];
@@ -20,7 +24,7 @@ export interface PricingTableRowProps {
   prefetchPlanData: (planId: string) => void;
 }
 
-export const PricingTableRow: React.FC<PricingTableRowProps> = ({
+const PricingTableRowComponent: React.FC<PricingTableRowProps> = ({
   plan,
   competitors,
   competitorPlanIndex,
@@ -43,7 +47,7 @@ export const PricingTableRow: React.FC<PricingTableRowProps> = ({
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50">
-      <td className={`${TABLE_CELL_PADDING} ${TABLE_FIRST_COL_WIDTH} whitespace-normal break-words`}>
+      <td className={`${TABLE_CELL_PADDING} ${TABLE_FIRST_COL_WIDTH} whitespace-normal`} style={{ overflowWrap: 'break-word' }}>
         {canSwitchPlans ? (
           <div className="relative">
             <select
@@ -137,3 +141,5 @@ export const PricingTableRow: React.FC<PricingTableRowProps> = ({
     </tr>
   );
 };
+
+export const PricingTableRow = React.memo(PricingTableRowComponent);

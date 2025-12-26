@@ -1,6 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 
+/**
+ * SearchBar component for filtering comparison features.
+ * Features CRM-style design with keyboard shortcuts and accessibility.
+ */
 export interface SearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -14,7 +18,7 @@ export interface SearchBarProps {
   onSearchChange?: (value: string) => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({
+const SearchBarComponent: React.FC<SearchBarProps> = ({
   searchQuery,
   setSearchQuery,
   showDifferencesOnly,
@@ -99,3 +103,5 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     </div>
   );
 };
+
+export const SearchBar = React.memo(SearchBarComponent);

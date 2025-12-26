@@ -1,6 +1,10 @@
 import React from 'react';
 import { TABLE_CELL_PADDING, TABLE_HEADER_TEXT, TABLE_FIRST_COL_WIDTH, TABLE_COL_WIDTH, OURS_COL_BORDER } from '../../constants';
 
+/**
+ * FeatureTableHeader component displays the header row of the comparison table.
+ * Shows organization logo and competitor headers.
+ */
 export interface FeatureTableHeaderProps {
   config: any;
   themeColors: any;
@@ -9,7 +13,7 @@ export interface FeatureTableHeaderProps {
   competitorHeaders: React.ReactNode;
 }
 
-export const FeatureTableHeader: React.FC<FeatureTableHeaderProps> = ({
+const FeatureTableHeaderComponent: React.FC<FeatureTableHeaderProps> = ({
   config,
   themeColors,
   siteName,
@@ -45,3 +49,5 @@ export const FeatureTableHeader: React.FC<FeatureTableHeaderProps> = ({
     </thead>
   );
 };
+
+export const FeatureTableHeader = React.memo(FeatureTableHeaderComponent);
