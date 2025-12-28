@@ -64,7 +64,8 @@ export default function FeaturesToolbar({
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Feature
+            <span className="hidden sm:inline">Add Feature</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>

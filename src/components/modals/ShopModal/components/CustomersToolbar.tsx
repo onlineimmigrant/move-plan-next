@@ -75,7 +75,8 @@ export default function CustomersToolbar({
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Customer
+            <span className="hidden sm:inline">Add Customer</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>

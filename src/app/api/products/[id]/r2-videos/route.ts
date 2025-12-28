@@ -11,6 +11,13 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
 
+const toTime = (value: unknown): number => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value as any);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
 // Lists R2 videos for the organization that owns the product.
 // Authorization: user must either belong to that organization or have elevated role (admin/owner).
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -88,14 +95,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       sampleKeys: objects.slice(0, 5).map((o: any) => o.key) 
     });
     const folders = new Set<string>();
-    
+    const folderLatest = new Map<string, number>();
+
+    // Include empty folders created via marker files: orgId/videos/<folder>/.folder
+    for (const o of objects) {
+      if (typeof o?.key !== 'string') continue;
+      if (!o.key.endsWith('/.folder')) continue;
+      const keyParts = o.key.split('/');
+      const folder = keyParts.length >= 4 ? keyParts[2] : '';
+      if (!folder || folder === 'uncategorized') continue;
+      folders.add(folder);
+
+      const uploaded = o.last_modified || o.uploaded;
+      const uploadedTime = toTime(uploaded);
+      const prevLatest = folderLatest.get(folder) || 0;
+      if (uploadedTime > prevLatest) folderLatest.set(folder, uploadedTime);
+    }
+
     const videos = objects
-      .filter((o: any) => typeof o.key === 'string' && (o.key.endsWith('.mp4') || o.key.endsWith('.webm') || o.key.endsWith('.mov')))
+      .filter((o: any) => typeof o.key === 'string' && /\.(mp4|webm|mov)$/i.test(o.key))
       .map((o: any) => {
         // Extract folder from key: orgId/videos/folder/file.mp4
         const keyParts = o.key.split('/');
         const folder = keyParts.length >= 4 ? keyParts[2] : 'uncategorized';
         folders.add(folder);
+
+        const uploaded = o.last_modified || o.uploaded;
+        const uploadedTime = toTime(uploaded);
+        const prevLatest = folderLatest.get(folder) || 0;
+        if (uploadedTime > prevLatest) folderLatest.set(folder, uploadedTime);
         
         return {
           url: `${R2_PUBLIC_URL}/${o.key}`,
@@ -103,14 +131,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           folder,
           fullKey: o.key,
           size: o.size,
-          uploaded: o.last_modified || o.uploaded,
+          uploaded,
         };
       });
+
+    videos.sort((a: any, b: any) => {
+      const diff = toTime(b.uploaded) - toTime(a.uploaded);
+      if (diff !== 0) return diff;
+      const aName = typeof a.fileName === 'string' ? a.fileName : '';
+      const bName = typeof b.fileName === 'string' ? b.fileName : '';
+      return aName.localeCompare(bName);
+    });
+
+    const sortedFolders = Array.from(folders).sort((a, b) => {
+      const diff = (folderLatest.get(b) || 0) - (folderLatest.get(a) || 0);
+      if (diff !== 0) return diff;
+      return a.localeCompare(b);
+    });
 
     return NextResponse.json({ 
       success: true, 
       videos, 
-      folders: Array.from(folders).sort(),
+      folders: sortedFolders,
       count: videos.length, 
       organization_id: productOrgId 
     });

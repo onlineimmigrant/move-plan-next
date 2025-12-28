@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import MediaAttribution from '@/components/MediaAttribution';
 import { SliderNavigation } from '@/ui/SliderNavigation';
@@ -41,9 +40,31 @@ interface FeatureMediaCarouselProps {
   media: FeatureMedia[];
   featureName: string;
   compact?: boolean;
+  enableKeyboardNavigation?: boolean;
+  thumbnailSelectOnHover?: boolean;
+  enableHoverVideoPreview?: boolean;
+  enableVideoSnapshots?: boolean;
+  preferLightEmbeds?: boolean;
+  onDelete?: (mediaId: string) => void;
+  canDelete?: boolean;
+  onChangeThumbnail?: (mediaId: string) => void;
+  canChangeThumbnail?: boolean;
 }
 
-export default function FeatureMediaCarousel({ media, featureName, compact = false }: FeatureMediaCarouselProps) {
+export default function FeatureMediaCarousel({
+  media,
+  featureName,
+  compact = false,
+  enableKeyboardNavigation = true,
+  thumbnailSelectOnHover = true,
+  enableHoverVideoPreview = true,
+  enableVideoSnapshots = true,
+  preferLightEmbeds = false,
+  onDelete,
+  canDelete = false,
+  onChangeThumbnail,
+  canChangeThumbnail = false,
+}: FeatureMediaCarouselProps) {
   const [activeMedia, setActiveMedia] = useState<FeatureMedia | null>(
     media.length > 0 ? media[0] : null
   );
@@ -57,10 +78,10 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
 
   // Capture current video frame as snapshot
   const captureVideoSnapshot = useCallback((mediaId: string) => {
+    if (!enableVideoSnapshots) return;
     const videoElement = videoElementsRef.current.get(`hover-${mediaId}`) || videoElementsRef.current.get(`player-${mediaId}`);
     
     if (!videoElement) {
-      console.log('[Snapshot] No video element found for media:', mediaId);
       return;
     }
 
@@ -89,14 +110,16 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
     } catch (error) {
       console.error('Failed to capture video snapshot:', error);
     }
-  }, []);
+  }, [enableVideoSnapshots]);
 
   // Helper to compute a thumbnail when missing
   const getDerivedThumbnail = (mediaItem: FeatureMedia): string | null => {
     if (!mediaItem) return null;
     if (mediaItem.thumbnail_url && mediaItem.thumbnail_url.trim()) return mediaItem.thumbnail_url.trim();
-    const snapshot = videoSnapshotsRef.current.get(mediaItem.id);
-    if (snapshot) return snapshot;
+    if (enableVideoSnapshots) {
+      const snapshot = videoSnapshotsRef.current.get(mediaItem.id);
+      if (snapshot) return snapshot;
+    }
     if (mediaItem.storage_provider === 'youtube' && mediaItem.media_url) {
       return `https://img.youtube.com/vi/${mediaItem.media_url}/hqdefault.jpg`;
     }
@@ -111,6 +134,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
 
   // Keyboard navigation
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (!enableKeyboardNavigation) return;
     if (media.length <= 1 || !activeMedia) return;
     
     const currentIndex = media.findIndex(item => item.id === activeMedia.id);
@@ -141,12 +165,13 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
     
     event.preventDefault();
     setActiveMedia(media[newIndex]);
-  }, [media, activeMedia, showFullPlayer, captureVideoSnapshot]);
+  }, [enableKeyboardNavigation, media, activeMedia, showFullPlayer, captureVideoSnapshot]);
 
   useEffect(() => {
+    if (!enableKeyboardNavigation) return;
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [enableKeyboardNavigation, handleKeyDown]);
 
   if (!media || media.length === 0) {
     return null;
@@ -167,15 +192,17 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
       {/* Main media display */}
       <div className="w-full">
         <div 
-          className="w-full aspect-[4/3] rounded-none md:rounded-lg overflow-hidden relative bg-gray-50"
+          className="w-full aspect-4/3 rounded-none md:rounded-lg overflow-hidden relative"
           onMouseEnter={() => {
+            if (!enableHoverVideoPreview) return;
             if (!showFullPlayer && (videoPlayer === 'pexels' || videoPlayer === 'r2') && isVideo) {
               setHoveredVideoId(currentMedia.id);
             }
           }}
           onMouseLeave={() => {
+            if (!enableHoverVideoPreview) return;
             if (!showFullPlayer) {
-              if (videoPlayer === 'pexels' || videoPlayer === 'r2') {
+              if (enableVideoSnapshots && (videoPlayer === 'pexels' || videoPlayer === 'r2')) {
                 captureVideoSnapshot(currentMedia.id);
               }
               setHoveredVideoId(null);
@@ -225,6 +252,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                     height="100%"
                     controls
                     playing={false}
+                    light={preferLightEmbeds}
                     config={{
                       youtube: { 
                         playerVars: { 
@@ -338,14 +366,16 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                   ) : (
                     /* Show thumbnail when not hovering */
                     <>
-                      {videoSnapshotsRef.current.get(currentMedia.id) || getDerivedThumbnail(currentMedia) ? (
+                      {(enableVideoSnapshots && videoSnapshotsRef.current.get(currentMedia.id)) || getDerivedThumbnail(currentMedia) ? (
                         <img
-                          src={(videoSnapshotsRef.current.get(currentMedia.id) || getDerivedThumbnail(currentMedia))!}
+                          decoding="async"
+                          src={((enableVideoSnapshots && videoSnapshotsRef.current.get(currentMedia.id)) || getDerivedThumbnail(currentMedia))!}
                           alt={currentMedia.alt_text || `${featureName} video`}
                           className="w-full h-full object-contain"
+                          loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <div className="w-full h-full flex items-center justify-center">
                           <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
@@ -422,10 +452,10 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                 return (
                   <div
                     key={mediaItem.id}
-                    onMouseEnter={() => setActiveMedia(mediaItem)}
+                    onMouseEnter={thumbnailSelectOnHover ? () => setActiveMedia(mediaItem) : undefined}
                     onClick={() => setActiveMedia(mediaItem)}
                     className={`
-                      relative cursor-pointer flex-shrink-0 w-24 md:w-32 aspect-[4/3] rounded-lg mx-1
+                      relative cursor-pointer shrink-0 w-24 md:w-32 aspect-4/3 rounded-lg mx-1 group
                       transition-all duration-200 ease-out
                       ${
                         isActive
@@ -444,8 +474,8 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                     }}
                   >
                     {isVideoItem ? (
-                      <div className="relative w-full h-full rounded-md overflow-hidden bg-gray-100">
-                        {videoSnapshotsRef.current.get(mediaItem.id) ? (
+                      <div className="relative w-full h-full rounded-md overflow-hidden">
+                        {enableVideoSnapshots && videoSnapshotsRef.current.get(mediaItem.id) ? (
                           <img
                             key={`carousel-thumb-${mediaItem.id}-${snapshotVersion}`}
                             src={videoSnapshotsRef.current.get(mediaItem.id)}
@@ -453,6 +483,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                             className="w-full h-full"
                             style={{ objectFit: 'cover' }}
                             loading="lazy"
+                            decoding="async"
                             onLoad={(e) => {
                               const img = e.currentTarget;
                               if (img.naturalHeight > img.naturalWidth) {
@@ -467,6 +498,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                             className="w-full h-full"
                             style={{ objectFit: 'cover' }}
                             loading="lazy"
+                            decoding="async"
                             onLoad={(e) => {
                               const img = e.currentTarget;
                               if (img.naturalHeight > img.naturalWidth) {
@@ -496,7 +528,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                         </div>
                       </div>
                     ) : (
-                      <div className="relative w-full h-full rounded-md overflow-hidden bg-gray-100">
+                      <div className="relative w-full h-full rounded-md overflow-hidden">
                         {mediaItem.media_url ? (
                           <img
                             src={mediaItem.thumbnail_url || mediaItem.media_url}
@@ -504,6 +536,7 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                             className="w-full h-full"
                             style={{ objectFit: 'cover' }}
                             loading="lazy"
+                            decoding="async"
                             onLoad={(e) => {
                               const img = e.currentTarget;
                               if (img.naturalHeight > img.naturalWidth) {
@@ -515,11 +548,50 @@ export default function FeatureMediaCarousel({ media, featureName, compact = fal
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                          <div className="w-full h-full flex items-center justify-center">
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Action buttons - only show if can perform actions */}
+                    {(canChangeThumbnail || canDelete) && (
+                      <div className="absolute top-1 right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Change thumbnail button */}
+                        {canChangeThumbnail && onChangeThumbnail && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onChangeThumbnail(mediaItem.id);
+                            }}
+                            className="bg-blue-600/90 hover:bg-blue-600 text-white rounded-full p-1 transition-colors"
+                            aria-label="Change thumbnail"
+                            title="Change thumbnail"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        )}
+                        
+                        {/* Delete button */}
+                        {canDelete && onDelete && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(mediaItem.id);
+                            }}
+                            className="bg-red-600/90 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                            aria-label="Delete media"
+                            title="Delete media"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
                       </div>
                     )}

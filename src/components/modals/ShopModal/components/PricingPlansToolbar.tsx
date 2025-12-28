@@ -71,7 +71,8 @@ export default function PricingPlansToolbar({
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Pricing Plan
+            <span className="hidden sm:inline">Add Pricing Plan</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>

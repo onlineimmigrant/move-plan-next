@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { MagnifyingGlassIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import MediaTabToolbar from './MediaTabToolbar';
 
 interface UnsplashImage {
   id: string;
@@ -222,54 +223,53 @@ const UnsplashImageSearch = React.memo(function UnsplashImageSearch({ onSelectIm
     loadFeaturedImages();
   }, [loadFeaturedImages]);
 
-  return (
-    <div className="flex flex-col h-full p-6">
-      {/* Search Header */}
-      <div className="flex-shrink-0 mb-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search free high-resolution photos..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:border-transparent outline-none transition-shadow"
-              style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
-            />
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Photos provided by{' '}
-          <a
-            href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline font-medium"
-            style={{ color: themeColors.cssVars.primary.base }}
-          >
-            Unsplash
-          </a>
-        </p>
-      </div>
+  const countsText = images.length > 0
+    ? `${images.length} ${images.length === 1 ? 'photo' : 'photos'}`
+    : undefined;
 
-      {/* Image Grid */}
-      <div className="flex-1 overflow-y-auto -mx-6 px-6">
+  return (
+    <div className="flex flex-col h-full">
+      <MediaTabToolbar
+        searchValue={searchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          if (!value.trim()) {
+            loadFeaturedImages();
+            setError(null);
+          }
+        }}
+        searchPlaceholder="Search free high-resolution photos..."
+        onRefresh={() => {
+          if (searchQuery.trim()) {
+            searchImages(searchQuery, 1);
+          } else {
+            loadFeaturedImages();
+          }
+        }}
+        isRefreshing={isLoading}
+        countsText={countsText}
+        onSearchKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            if (searchQuery.trim()) {
+              searchImages(searchQuery, 1);
+            }
+          }
+        }}
+      />
+
+      {error && (
+        <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
               <p className="text-gray-600 dark:text-gray-400">Searching Unsplash...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <PhotoIcon className="w-16 h-16 text-red-300 mx-auto mb-4" />
-              <p className="text-red-600 font-medium">{error}</p>
-              <Button onClick={() => searchImages(searchQuery, page)} variant="outline" className="mt-4">
-                Try Again
-              </Button>
             </div>
           </div>
         ) : images.length === 0 ? (

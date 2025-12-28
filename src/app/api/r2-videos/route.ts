@@ -11,6 +11,13 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
+const toTime = (value: unknown): number => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value as any);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
 // Generic R2 listing.
 // Behavior:
 //  - Regular users: scoped to organization determined by base_url/base_url_local.
@@ -134,13 +141,34 @@ export async function GET(request: NextRequest) {
     
     // Transform R2 objects to video data with folder information
     const folders = new Set<string>();
+    const folderLatest = new Map<string, number>();
+
+    // Include empty folders created via marker files: orgId/videos/<folder>/.folder
+    for (const obj of allObjects) {
+      if (typeof obj?.key !== 'string') continue;
+      if (!obj.key.endsWith('/.folder')) continue;
+      const keyParts = obj.key.split('/');
+      const folder = keyParts.length >= 4 ? keyParts[2] : '';
+      if (!folder || folder === 'uncategorized') continue;
+      folders.add(folder);
+      const uploaded = obj.last_modified || obj.uploaded;
+      const uploadedTime = toTime(uploaded);
+      const prevLatest = folderLatest.get(folder) || 0;
+      if (uploadedTime > prevLatest) folderLatest.set(folder, uploadedTime);
+    }
+
     const videos = allObjects
-      .filter((obj: any) => obj.key.endsWith('.mp4') || obj.key.endsWith('.webm') || obj.key.endsWith('.mov'))
+      .filter((obj: any) => typeof obj.key === 'string' && /\.(mp4|webm|mov)$/i.test(obj.key))
       .map((obj: any) => {
         // Extract folder from key: orgId/videos/folder/file.mp4
         const keyParts = obj.key.split('/');
         const folder = keyParts.length >= 4 ? keyParts[2] : 'uncategorized';
         folders.add(folder);
+
+        const uploaded = obj.last_modified || obj.uploaded;
+        const uploadedTime = toTime(uploaded);
+        const prevLatest = folderLatest.get(folder) || 0;
+        if (uploadedTime > prevLatest) folderLatest.set(folder, uploadedTime);
         
         return {
           url: `${R2_PUBLIC_URL}/${obj.key}`,
@@ -148,14 +176,28 @@ export async function GET(request: NextRequest) {
           folder,
           fullKey: obj.key,
           size: obj.size,
-          uploaded: obj.last_modified || obj.uploaded,
+          uploaded,
         };
       });
+
+    videos.sort((a: any, b: any) => {
+      const diff = toTime(b.uploaded) - toTime(a.uploaded);
+      if (diff !== 0) return diff;
+      const aName = typeof a.fileName === 'string' ? a.fileName : '';
+      const bName = typeof b.fileName === 'string' ? b.fileName : '';
+      return aName.localeCompare(bName);
+    });
+
+    const sortedFolders = Array.from(folders).sort((a, b) => {
+      const diff = (folderLatest.get(b) || 0) - (folderLatest.get(a) || 0);
+      if (diff !== 0) return diff;
+      return a.localeCompare(b);
+    });
 
     return NextResponse.json({
       success: true,
       videos,
-      folders: Array.from(folders).sort(),
+      folders: sortedFolders,
       count: videos.length,
       organization_id: effectiveOrgId,
       override_applied: effectiveOrgId !== organizationId,

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MagnifyingGlassIcon, PlayIcon } from '@heroicons/react/24/outline';
+import { PlayIcon } from '@heroicons/react/24/outline';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import MediaTabToolbar from './MediaTabToolbar';
 
 interface YouTubeVideo {
   id: string;
@@ -69,37 +71,46 @@ export default function YouTubeVideoSearch({ onSelectVideo }: YouTubeVideoSearch
     onSelectVideo(video.id, video);
   };
 
+  const themeColors = useThemeColors();
+
+  const countsText = videos.length > 0
+    ? `${videos.length} ${videos.length === 1 ? 'video' : 'videos'}`
+    : undefined;
+
   return (
     <div className="flex flex-col h-full">
-      {/* Search Bar */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search YouTube videos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            />
-          </div>
-          <button
-            onClick={searchYouTube}
-            disabled={isLoading || !searchQuery.trim()}
-            className="px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {isLoading ? 'Searching...' : 'Search'}
-          </button>
+      <MediaTabToolbar
+        searchValue={searchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          if (!value.trim()) {
+            setVideos([]);
+            setError(null);
+          }
+        }}
+        searchPlaceholder="Search YouTube videos..."
+        onRefresh={() => {
+          if (searchQuery.trim()) {
+            searchYouTube();
+          }
+        }}
+        isRefreshing={isLoading}
+        countsText={countsText}
+        onSearchKeyDown={(e) => {
+          if (e.key === 'Enter' && searchQuery.trim()) {
+            searchYouTube();
+          }
+        }}
+      />
+
+      {error && (
+        <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
-        {error && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
-      </div>
+      )}
 
       {/* Results Grid */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-24">
         {videos.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <PlayIcon className="w-16 h-16 mb-4 opacity-50" />

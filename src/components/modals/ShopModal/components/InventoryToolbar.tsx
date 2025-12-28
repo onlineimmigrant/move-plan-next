@@ -38,7 +38,8 @@ export default function InventoryToolbar({
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Inventory
+            <span className="hidden sm:inline">Add Inventory</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>

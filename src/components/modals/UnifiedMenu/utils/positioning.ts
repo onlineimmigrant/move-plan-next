@@ -153,7 +153,7 @@ export function getAnimationClasses(direction: MenuDirection, isMobile: boolean)
  * Calculate button position styles based on position preference
  */
 export function getButtonPositionStyles(position: string): React.CSSProperties {
-  const baseZ = 9998; // Same as existing floating buttons
+  const baseZ = 10004; // Above modals (modal backdrop: 10000, modal: 10001, dropdown: 10002, tooltip: 10003)
 
   switch (position) {
     case 'bottom-right':

@@ -11,6 +11,13 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!;
 
+const toTime = (value: unknown): number => {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value as any);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
 export async function GET(request: NextRequest) {
   try {
     // Check if R2 credentials are configured
@@ -33,10 +40,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's organization
+    // Get user's organization + role
     const { data: profile } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
@@ -106,6 +113,7 @@ export async function GET(request: NextRequest) {
     // Extract unique folders and images
     const foldersSet = new Set<string>();
     const images: any[] = [];
+    const folderLatest = new Map<string, number>();
 
     allObjects.forEach((obj: any) => {
       const key = obj.key as string;
@@ -125,7 +133,11 @@ export async function GET(request: NextRequest) {
       const fileName = parts[parts.length - 1];
       
       // Check if this is an image file
-      const isImageFile = fileName && /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+      const allowSvg = profile?.role === 'superadmin';
+      const isImageFile = fileName && (allowSvg
+        ? /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileName)
+        : /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName)
+      );
       
       if (!filterFolder) {
         // At root level - show folders and files
@@ -137,34 +149,56 @@ export async function GET(request: NextRequest) {
         // Add all image files found
         if (isImageFile) {
           const imageFolder = parts.length > 1 ? parts[0] : 'uncategorized';
+          const uploaded = obj.last_modified || obj.uploaded;
+          const uploadedTime = toTime(uploaded);
+          const prevLatest = folderLatest.get(imageFolder) || 0;
+          if (uploadedTime > prevLatest) folderLatest.set(imageFolder, uploadedTime);
           images.push({
             url: `${R2_PUBLIC_URL}/${key}`,
             fileName,
             fullKey: key,
             folder: imageFolder,
             size: obj.size,
-            uploaded: obj.last_modified || obj.uploaded,
+            uploaded,
           });
         }
       } else {
         // Inside a folder - show only files in this folder
         if (isImageFile && parts.length === 1) {
           // Direct file in this folder
+          const uploaded = obj.last_modified || obj.uploaded;
+          const uploadedTime = toTime(uploaded);
+          const prevLatest = folderLatest.get(filterFolder) || 0;
+          if (uploadedTime > prevLatest) folderLatest.set(filterFolder, uploadedTime);
           images.push({
             url: `${R2_PUBLIC_URL}/${key}`,
             fileName,
             fullKey: key,
             folder: filterFolder,
             size: obj.size,
-            uploaded: obj.last_modified || obj.uploaded,
+            uploaded,
           });
         }
       }
     });
 
+    images.sort((a, b) => {
+      const diff = toTime(b.uploaded) - toTime(a.uploaded);
+      if (diff !== 0) return diff;
+      const aName = typeof a.fileName === 'string' ? a.fileName : '';
+      const bName = typeof b.fileName === 'string' ? b.fileName : '';
+      return aName.localeCompare(bName);
+    });
+
+    const sortedFolders = Array.from(foldersSet).sort((a, b) => {
+      const diff = (folderLatest.get(b) || 0) - (folderLatest.get(a) || 0);
+      if (diff !== 0) return diff;
+      return a.localeCompare(b);
+    });
+
     return NextResponse.json({
       images,
-      folders: Array.from(foldersSet).sort(),
+      folders: sortedFolders,
     });
 
   } catch (error) {

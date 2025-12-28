@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { MagnifyingGlassIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import Button from '@/ui/Button';
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import MediaTabToolbar from './MediaTabToolbar';
 
 interface PexelsPhoto {
   id: number;
@@ -41,9 +42,10 @@ interface PexelsVideo {
 
 interface PexelsImageSearchProps {
   onSelectImage: (url: string, attribution?: PexelsAttributionData, isVideo?: boolean, videoData?: any) => void;
+  includeAttribution: boolean;
 }
 
-export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchProps) {
+export default function PexelsImageSearch({ onSelectImage, includeAttribution }: PexelsImageSearchProps) {
   const [mediaType, setMediaType] = useState<'photos' | 'videos'>('photos');
   const [query, setQuery] = useState('');
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
@@ -52,11 +54,18 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [includeAttribution, setIncludeAttribution] = useState(false); // Optional attribution
   const [hoveredVideoId, setHoveredVideoId] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
   const themeColors = useThemeColors();
   const { primary } = themeColors;
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const searchMedia = useCallback(async (searchQuery: string, pageNum: number = 1, type: 'photos' | 'videos' = mediaType) => {
     if (!searchQuery.trim()) return;
@@ -194,77 +203,88 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
 
   const currentMedia = mediaType === 'photos' ? photos : videos;
 
+  const countsText = currentMedia.length > 0
+    ? `${currentMedia.length} ${currentMedia.length === 1 ? mediaType.slice(0, -1) : mediaType}`
+    : undefined;
+
+  const radioButtons = (
+    <div className="flex gap-3">
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="pexels-media-type"
+          value="photos"
+          checked={mediaType === 'photos'}
+          onChange={() => handleMediaTypeChange('photos')}
+          className="w-3.5 h-3.5 focus:ring-2"
+          style={{ color: themeColors.cssVars.primary.base, '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+        />
+        <PhotoIcon className="w-4 h-4" style={{ color: mediaType === 'photos' ? themeColors.cssVars.primary.base : undefined }} />
+        <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Photos</span>
+      </label>
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="pexels-media-type"
+          value="videos"
+          checked={mediaType === 'videos'}
+          onChange={() => handleMediaTypeChange('videos')}
+          className="w-3.5 h-3.5 focus:ring-2"
+          style={{ color: themeColors.cssVars.primary.base, '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+        />
+        <VideoCameraIcon className="w-4 h-4" style={{ color: mediaType === 'videos' ? themeColors.cssVars.primary.base : undefined }} />
+        <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Videos</span>
+      </label>
+    </div>
+  );
+
   return (
-    <div className="h-full flex flex-col p-6">
-      {/* Media Type Toggle & Attribution Option */}
-      <div className="mb-4 space-y-3">
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleMediaTypeChange('photos')}
-            className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
-              mediaType === 'photos'
-                ? 'text-white shadow-sm'
-                : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-            }`}
-            style={mediaType === 'photos' ? { backgroundColor: themeColors.cssVars.primary.base } : undefined}
-          >
-            <PhotoIcon className="w-4 h-4 inline-block mr-2" />
-            Photos
-          </button>
-          <button
-            onClick={() => handleMediaTypeChange('videos')}
-            className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
-              mediaType === 'videos'
-                ? 'text-white shadow-sm'
-                : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-            }`}
-            style={mediaType === 'videos' ? { backgroundColor: themeColors.cssVars.primary.base } : undefined}
-          >
-            <VideoCameraIcon className="w-4 h-4 inline-block mr-2" />
-            Videos
-          </button>
-        </div>
+    <div className="h-full flex flex-col">
+      <MediaTabToolbar
+        searchValue={query}
+        onSearchChange={(value) => {
+          setQuery(value);
+          if (!value.trim()) {
+            setPhotos([]);
+            setVideos([]);
+            setError(null);
+          }
+        }}
+        searchPlaceholder={`Search free ${mediaType} on Pexels...`}
+        onRefresh={() => {
+          if (query.trim()) {
+            searchMedia(query, 1, mediaType);
+          }
+        }}
+        isRefreshing={isLoading}
+        countsText={countsText}
+        onSearchKeyDown={(e) => {
+          if (e.key === 'Enter' && query.trim()) {
+            handleSearch();
+          }
+        }}
+        extraControls={!isMobile ? (
+          <div className="flex gap-3 border-r border-gray-300 dark:border-gray-600 pr-3">
+            {radioButtons}
+          </div>
+        ) : undefined}
+      />
 
-        {/* Attribution Toggle */}
-        <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 3%, transparent)`, borderWidth: '1px', borderColor: `color-mix(in srgb, ${themeColors.cssVars.primary.base} 20%, transparent)` }}>
-          <input
-            type="checkbox"
-            id="pexels-attribution"
-            checked={includeAttribution}
-            onChange={(e) => setIncludeAttribution(e.target.checked)}
-            className="w-4 h-4 rounded focus:ring-2"
-            style={{ color: themeColors.cssVars.primary.base, '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
-          />
-          <label htmlFor="pexels-attribution" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-            Include attribution (optional - Pexels license allows use without attribution)
-          </label>
+      {/* Mobile radio buttons below search */}
+      {isMobile && (
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+          {radioButtons}
         </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder={`Search free ${mediaType} on Pexels...`}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:border-transparent transition-shadow"
-            style={{ '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
-          />
-          <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-        </div>
-      </div>
+      )}
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
-          {error}
+        <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
       {/* Media Grid */}
-      <div className="flex-1 overflow-y-auto -mx-6 px-6">
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
         {currentMedia.length === 0 && !isLoading ? (
           <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
             {query ? `No ${mediaType} found` : `Search for free ${mediaType} from Pexels`}
@@ -369,23 +389,6 @@ export default function PexelsImageSearch({ onSelectImage }: PexelsImageSearchPr
             )}
           </>
         )}
-      </div>
-
-      {/* Pexels Attribution */}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
-        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          Free {mediaType} provided by{' '}
-          <a
-            href="https://www.pexels.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline font-medium"
-            style={{ color: themeColors.cssVars.primary.base }}
-          >
-            Pexels
-          </a>
-          {' '}• No attribution required
-        </p>
       </div>
     </div>
   );

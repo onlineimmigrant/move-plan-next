@@ -7,6 +7,7 @@ import {
   NewspaperIcon,
   GlobeAltIcon,
   Cog6ToothIcon,
+  VideoCameraIcon,
   RectangleGroupIcon,
   MapIcon,
   Bars3Icon,
@@ -45,6 +46,7 @@ import { MenuPosition } from './types';
 interface SiteActionsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenScreenRecorder: () => void;
   position?: MenuPosition;
 }
 
@@ -56,7 +58,7 @@ interface QuickAction {
   shortcut?: string;
 }
 
-export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }: SiteActionsModalProps) {
+export function SiteActionsModal({ isOpen, onClose, onOpenScreenRecorder, position = 'bottom-right' }: SiteActionsModalProps) {
   const { isAdmin, isSuperadmin } = useAuth();
   const themeColors = useThemeColors();
   const primary = themeColors.cssVars.primary;
@@ -216,6 +218,15 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       },
     },
     {
+      id: 'screen_record',
+      label: 'Record Screen',
+      icon: VideoCameraIcon,
+      action: () => {
+        onClose();
+        onOpenScreenRecorder();
+      },
+    },
+    {
       id: 'settings',
       label: 'Settings',
       icon: Cog6ToothIcon,
@@ -327,7 +338,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[9999] animate-in fade-in duration-200"
+        className="fixed inset-0 z-9999 animate-in fade-in duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -336,7 +347,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
       <div
         ref={modalRef}
         tabIndex={-1}
-        className={`fixed z-[10000] bg-white/30 dark:bg-gray-900/30 backdrop-blur-3xl border border-white/10 dark:border-gray-700/10 shadow-2xl rounded-3xl overflow-hidden ${animationClass}
+        className={`fixed z-10000 bg-white/30 dark:bg-gray-900/30 backdrop-blur-3xl border border-white/10 dark:border-gray-700/10 shadow-2xl rounded-3xl overflow-hidden ${animationClass}
                    max-md:w-[90vw] max-md:max-h-[80vh] max-md:left-1/2 max-md:-translate-x-1/2 max-md:bottom-4`}
         style={{
           ...positionStyles,
@@ -364,7 +375,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
               `}
             >
               {/* Icon */}
-              <div className="flex-shrink-0 transition-all duration-200 group-hover:scale-110">
+              <div className="shrink-0 transition-all duration-200 group-hover:scale-110">
                 <action.icon 
                   className="w-6 h-6 text-gray-900 dark:text-white transition-colors duration-200"
                   style={{
@@ -386,7 +397,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
               {/* Keyboard Shortcut */}
               {action.shortcut && (
                 <div
-                  className="flex-shrink-0 text-[12px] font-light opacity-50"
+                  className="shrink-0 text-[12px] font-light opacity-50"
                   style={{
                     fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
                   }}
@@ -432,7 +443,7 @@ export function SiteActionsModal({ isOpen, onClose, position = 'bottom-right' }:
                 `}
               >
                 {/* Icon */}
-                <div className="flex-shrink-0 transition-all duration-200 group-hover:scale-110">
+                <div className="shrink-0 transition-all duration-200 group-hover:scale-110">
                   <action.icon 
                     className="w-6 h-6 text-gray-900 dark:text-white transition-colors duration-200"
                     style={{

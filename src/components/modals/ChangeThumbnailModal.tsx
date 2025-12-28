@@ -17,6 +17,8 @@ interface ChangeThumbnailModalProps {
   mediaId: number | string; // Support both number (products/posts) and string (features)
   onThumbnailChanged: (newThumbnailUrl: string) => void;
   entityType?: 'product' | 'post' | 'feature'; // Default to 'product' for backward compatibility
+  skipEntityUpdate?: boolean;
+  uploadFolder?: string;
 }
 
 export default function ChangeThumbnailModal({
@@ -27,6 +29,8 @@ export default function ChangeThumbnailModal({
   mediaId,
   onThumbnailChanged,
   entityType = 'product',
+  skipEntityUpdate = false,
+  uploadFolder = 'thumbnails',
 }: ChangeThumbnailModalProps) {
   const themeColors = useThemeColors();
   const { primary } = themeColors;
@@ -113,7 +117,7 @@ export default function ChangeThumbnailModal({
         setPreviewUrl(url);
         setError(null);
       }
-    }, 'image/jpeg', quality);
+    }, 'image/webp', quality);
   };
 
   const handleSave = async () => {
@@ -140,13 +144,13 @@ export default function ChangeThumbnailModal({
         canvas.toBlob((b) => {
           if (b) resolve(b);
           else reject(new Error('Failed to create blob'));
-        }, 'image/jpeg', quality);
+        }, 'image/webp', quality);
       });
 
       // Upload to R2
       const formData = new FormData();
-      formData.append('file', blob, `thumbnail-${mediaId}.jpg`);
-      formData.append('folder', 'thumbnails');
+      formData.append('file', blob, `thumbnail-${mediaId}.webp`);
+      formData.append('folder', uploadFolder);
 
       const uploadResponse = await fetch('/api/upload-image-r2', {
         method: 'POST',
@@ -162,25 +166,27 @@ export default function ChangeThumbnailModal({
 
       const { imageUrl: newThumbnailUrl } = await uploadResponse.json();
 
-      // Update media record (product_media, post_media, or feature_media)
-      const apiEndpoint = entityType === 'feature'
-        ? `/api/features/media/${mediaId}`
-        : entityType === 'post' 
-        ? `/api/posts/media/${mediaId}` 
-        : `/api/products/media/${mediaId}`;
-      
-      const updateResponse = await fetch(apiEndpoint, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ thumbnail_url: newThumbnailUrl }),
-      });
+      if (!skipEntityUpdate) {
+        // Update media record (product_media, post_media, or feature_media)
+        const apiEndpoint = entityType === 'feature'
+          ? `/api/features/media/${mediaId}`
+          : entityType === 'post'
+          ? `/api/posts/media/${mediaId}`
+          : `/api/products/media/${mediaId}`;
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text();
-        console.error('[ChangeThumbnail] Update failed:', updateResponse.status, errorText);
-        throw new Error(`Failed to update media record: ${updateResponse.status} - ${errorText}`);
+        const updateResponse = await fetch(apiEndpoint, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ thumbnail_url: newThumbnailUrl }),
+        });
+
+        if (!updateResponse.ok) {
+          const errorText = await updateResponse.text();
+          console.error('[ChangeThumbnail] Update failed:', updateResponse.status, errorText);
+          throw new Error(`Failed to update media record: ${updateResponse.status} - ${errorText}`);
+        }
       }
 
       onThumbnailChanged(newThumbnailUrl);
@@ -197,14 +203,14 @@ export default function ChangeThumbnailModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-[10003]"
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-10006"
       role="dialog"
       aria-modal="true"
       aria-labelledby="thumbnail-modal-title"
     >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -212,13 +218,13 @@ export default function ChangeThumbnailModal({
       {/* Modal - Draggable & Resizable */}
       <Rnd
         default={{
-          x: (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2 - 450,
-          y: (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 - 400,
-          width: 900,
-          height: 800,
+          x: (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2 - 337.5,
+          y: (typeof window !== 'undefined' ? window.innerHeight : 900) / 2 - 453.5,
+          width: 675,
+          height: 907,
         }}
-        minWidth={700}
-        minHeight={600}
+        minWidth={525}
+        minHeight={680}
         bounds="window"
         dragHandleClassName="modal-drag-handle"
         enableResizing={true}
@@ -230,7 +236,7 @@ export default function ChangeThumbnailModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Fixed */}
-          <div className="modal-drag-handle flex-shrink-0 px-6 py-4 border-b border-white/20 dark:border-gray-700/20 
+          <div className="modal-drag-handle shrink-0 px-6 py-4 border-b border-white/20 dark:border-gray-700/20 
                         bg-white/30 dark:bg-gray-800/30 backdrop-blur-xl cursor-move">
             <div className="flex items-center justify-between">
               <h2 id="thumbnail-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -255,7 +261,7 @@ export default function ChangeThumbnailModal({
             <div className="p-4 bg-red-50/80 dark:bg-red-900/30 border border-red-200/50 dark:border-red-800/50 
                           rounded-xl text-red-700 dark:text-red-400 text-sm backdrop-blur-sm animate-in fade-in slide-in-from-top-2">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{error}</span>
@@ -265,29 +271,6 @@ export default function ChangeThumbnailModal({
 
         {/* Video Player with Scrubber */}
         <div className="space-y-4">
-          <div className="relative aspect-video bg-gradient-to-br from-black/80 to-black/60 
-                        rounded-xl overflow-hidden border border-white/10 dark:border-gray-700/20 
-                        shadow-2xl backdrop-blur-sm">
-            {!isVideoLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <ArrowPathIcon className="w-8 h-8 text-white/60 animate-spin" />
-                  <p className="text-sm text-white/60">Loading video...</p>
-                </div>
-              </div>
-            )}
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              crossOrigin="anonymous"
-              className="w-full h-full object-contain"
-              onLoadedMetadata={(e) => {
-                setCurrentTime(Math.min(1, e.currentTarget.duration * 0.1));
-                setIsVideoLoaded(true);
-              }}
-            />
-          </div>
-
           {/* Preset Position Buttons */}
           {isVideoLoaded && (
             <div className="grid grid-cols-4 gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -310,23 +293,6 @@ export default function ChangeThumbnailModal({
               ))}
             </div>
           )}
-
-          {/* Capture Button */}
-          <Button
-            variant="outline"
-            onClick={captureFrame}
-            className={`w-full backdrop-blur-sm 
-                     border-white/30 dark:border-gray-700/30 shadow-lg transition-all duration-300
-                     hover:shadow-xl hover:scale-[1.02] bg-${primary.bgLight} hover:bg-${primary.bg} 
-                     text-${primary.text} border-${primary.border}`}
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Capture Current Frame
-            <kbd className="ml-auto px-2 py-0.5 text-xs bg-white/20 dark:bg-gray-700/30 rounded border border-white/20">Space</kbd>
-          </Button>
 
           {/* Time Scrubber */}
           <div className="space-y-3 bg-white/30 dark:bg-gray-800/30 backdrop-blur-xl 
@@ -351,11 +317,11 @@ export default function ChangeThumbnailModal({
               step="0.1"
               value={currentTime}
               onChange={(e) => setCurrentTime(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gradient-to-r from-gray-200/50 to-gray-300/50 
+              className="w-full h-2 bg-linear-to-r from-gray-200/50 to-gray-300/50 
                        dark:from-gray-700/50 dark:to-gray-600/50 rounded-full appearance-none cursor-pointer
                        [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
                        [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full 
-                       [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-blue-500 
+                       [&::-webkit-slider-thumb]:bg-linear-to-br [&::-webkit-slider-thumb]:from-blue-500 
                        [&::-webkit-slider-thumb]:to-blue-600 [&::-webkit-slider-thumb]:shadow-lg
                        [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/50
                        hover:[&::-webkit-slider-thumb]:scale-110 transition-transform"
@@ -390,7 +356,7 @@ export default function ChangeThumbnailModal({
                   onClick={() => setQuality(value)}
                   className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
                            ${quality === value
-                             ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
+                             ? 'bg-linear-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
                              : 'bg-white/30 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
                            }`}
                 >
@@ -399,6 +365,45 @@ export default function ChangeThumbnailModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="relative aspect-video bg-linear-to-br from-black/80 to-black/60 
+                        rounded-xl overflow-hidden border border-white/10 dark:border-gray-700/20 
+                        shadow-2xl backdrop-blur-sm">
+            {!isVideoLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <ArrowPathIcon className="w-8 h-8 text-white/60 animate-spin" />
+                  <p className="text-sm text-white/60">Loading video...</p>
+                </div>
+              </div>
+            )}
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              crossOrigin="anonymous"
+              className="w-full h-full object-contain"
+              onLoadedMetadata={(e) => {
+                setCurrentTime(Math.min(1, e.currentTarget.duration * 0.1));
+                setIsVideoLoaded(true);
+              }}
+            />
+          </div>
+
+          {/* Capture Button */}
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={captureFrame}
+              className="backdrop-blur-sm shadow-lg"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Capture Frame
+              <kbd className="ml-2 px-2 py-0.5 text-xs bg-white/20 dark:bg-gray-700/30 rounded border border-white/20">Space</kbd>
+            </Button>
           </div>
         </div>        {/* Before/After Comparison */}
         {previewUrl && currentThumbnailUrl && (
@@ -412,7 +417,7 @@ export default function ChangeThumbnailModal({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Current</p>
-                <div className="relative aspect-video bg-gradient-to-br from-gray-100/60 to-gray-50/60 
+                <div className="relative aspect-video bg-linear-to-br from-gray-100/60 to-gray-50/60 
                               dark:from-gray-800/60 dark:to-gray-900/60 rounded-lg overflow-hidden 
                               border border-gray-300/30 dark:border-gray-700/30 shadow-lg backdrop-blur-sm">
                   <img src={currentThumbnailUrl} alt="Current thumbnail" className="w-full h-full object-contain" />
@@ -420,7 +425,7 @@ export default function ChangeThumbnailModal({
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-medium text-blue-600 dark:text-blue-400">New Preview</p>
-                <div className="relative aspect-video bg-gradient-to-br from-gray-100/80 to-gray-50/80 
+                <div className="relative aspect-video bg-linear-to-br from-gray-100/80 to-gray-50/80 
                               dark:from-gray-800/80 dark:to-gray-900/80 rounded-lg overflow-hidden 
                               border-2 border-blue-500/40 dark:border-blue-400/40 shadow-2xl 
                               backdrop-blur-sm ring-4 ring-blue-500/20">
@@ -441,7 +446,7 @@ export default function ChangeThumbnailModal({
               </svg>
               Preview
             </label>
-            <div className="relative aspect-video bg-gradient-to-br from-gray-100/80 to-gray-50/80 
+            <div className="relative aspect-video bg-linear-to-br from-gray-100/80 to-gray-50/80 
                           dark:from-gray-800/80 dark:to-gray-900/80 rounded-xl overflow-hidden 
                           border-2 border-blue-500/30 dark:border-blue-400/30 shadow-2xl 
                           backdrop-blur-sm ring-4 ring-blue-500/10">
@@ -459,7 +464,7 @@ export default function ChangeThumbnailModal({
         </div>
 
         {/* Footer - Fixed at bottom */}
-        <div className="flex-shrink-0 px-6 py-4 border-t border-white/20 dark:border-gray-700/20 
+        <div className="shrink-0 px-6 py-4 border-t border-white/20 dark:border-gray-700/20 
                       bg-white/30 dark:bg-gray-800/30 backdrop-blur-xl rounded-b-2xl">
           <div className="flex items-center justify-between">
           {/* Status indicator */}
@@ -497,7 +502,7 @@ export default function ChangeThumbnailModal({
               variant="primary"
               onClick={handleSave}
               disabled={!previewUrl || isGenerating}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 
+              className="px-6 py-2 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 
                        hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 
                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02]"
             >

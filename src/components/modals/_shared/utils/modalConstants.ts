@@ -87,6 +87,6 @@ export const GLASS_MORPHISM_STYLES = {
  * Backdrop styles
  */
 export const BACKDROP_STYLES = {
-  base: 'bg-black/20 backdrop-blur-[1px]',
+  base: 'bg-transparent',
   animation: 'transition-opacity duration-200',
 } as const;

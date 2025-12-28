@@ -63,7 +63,7 @@ export function UnifiedMenuDropdown({
       {/* Backdrop for mobile */}
       {isMobile && (
         <div
-          className="fixed inset-0 bg-black/50 z-[9999] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/50 z-[10003] animate-in fade-in duration-200"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -78,7 +78,7 @@ export function UnifiedMenuDropdown({
       <div
         ref={dropdownRef}
         className={`
-          z-[10000]
+          z-[10004]
           bg-white/30 dark:bg-gray-900/30
           backdrop-blur-2xl
           border border-white/20 dark:border-gray-700/20

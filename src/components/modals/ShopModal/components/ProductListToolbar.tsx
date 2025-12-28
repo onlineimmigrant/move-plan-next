@@ -69,7 +69,8 @@ export default function ProductListToolbar({
             }}
           >
             <Plus className="w-4 h-4" />
-            Add Product
+            <span className="hidden sm:inline">Add Product</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>

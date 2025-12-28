@@ -8,6 +8,7 @@ import Button from '@/ui/Button';
 import { supabase } from '@/lib/supabaseClient';
 import type { PexelsAttributionData } from '@/components/MediaAttribution';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/context/AuthContext';
 
 // Lazy load tab components (only those without refs)
 const UnsplashImageSearch = lazy(() => import('./UnsplashImageSearch'));
@@ -24,8 +25,15 @@ import type { R2VideoUploadHandle } from './R2VideoUploadNew';
 import type { R2ImageUploadHandle } from './R2ImageUpload';
 
 // Global cache for fetchAllImages to avoid refetching
-let globalImageCache: StorageImage[] | null = null;
-let isFetchingGlobalCache = false;
+type GlobalGalleryIndexCache = {
+  revision: number;
+  builtAt: number;
+  images: StorageImage[];
+};
+
+let globalGalleryIndexCache: GlobalGalleryIndexCache | null = null;
+let globalGalleryIndexPromise: Promise<StorageImage[]> | null = null;
+let globalGalleryRevision = 0;
 
 interface ImageGalleryModalProps {
   isOpen: boolean;
@@ -55,6 +63,8 @@ type ViewMode = 'grid' | 'list';
 type GridSize = 'compact' | 'comfortable' | 'large';
 
 export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, productId, defaultTab = 'r2images' }: ImageGalleryModalProps) {
+  const isDev = process.env.NODE_ENV !== 'production';
+  const { isSuperadmin, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'r2images' | 'upload' | 'unsplash' | 'pexels' | 'youtube' | 'gallery'>(defaultTab === 'videos' ? 'youtube' : defaultTab);
   const [images, setImages] = useState<StorageImage[]>([]);
   const [folders, setFolders] = useState<StorageFolder[]>([]);
@@ -76,11 +86,21 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
   const [gridSize, setGridSize] = useState<GridSize>('comfortable');
   const [mounted, setMounted] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(20); // Pagination for gallery tab
+  const [hasOpenedR2Images, setHasOpenedR2Images] = useState(() => (defaultTab === 'r2images'));
+  const [hasOpenedR2Video, setHasOpenedR2Video] = useState(() => (defaultTab === 'upload'));
+  const [pexelsIncludeAttribution, setPexelsIncludeAttribution] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const r2ImageRef = useRef<R2ImageUploadHandle>(null);
   const r2VideoRef = useRef<R2VideoUploadHandle>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const globalIndexAbortRef = useRef<AbortController | null>(null);
+  const isOpenRef = useRef<boolean>(false);
+  const rndDefaultRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const navigateUpRef = useRef<(() => void) | null>(null);
+  const handleInsertRef = useRef<(() => void) | null>(null);
+  const handleCloseRef = useRef<(() => void) | null>(null);
+  const fetchImagesRef = useRef<(() => void) | null>(null);
   
   const themeColors = useThemeColors();
   const { primary } = themeColors;
@@ -88,6 +108,28 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    if (!isOpen) {
+      globalIndexAbortRef.current?.abort();
+      globalIndexAbortRef.current = null;
+      rndDefaultRef.current = null;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (activeTab === 'r2images') setHasOpenedR2Images(true);
+    if (activeTab === 'upload') setHasOpenedR2Video(true);
+  }, [activeTab]);
+
+  // Restrict the "My Gallery" tab to superadmins only.
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isSuperadmin && activeTab === 'gallery') {
+      setActiveTab('r2images');
+    }
+  }, [authLoading, isSuperadmin, activeTab]);
 
   // Debounce search query
   useEffect(() => {
@@ -116,19 +158,19 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     // Navigate up folder with Backspace
     if (e.key === 'Backspace' && activeTab === 'gallery' && currentPath && !searchQuery && document.activeElement !== searchInputRef.current) {
       e.preventDefault();
-      navigateUp();
+      navigateUpRef.current?.();
     }
     
     // Insert with Ctrl+Enter
     if (e.ctrlKey && e.key === 'Enter' && selectedImages.size > 0) {
       e.preventDefault();
-      handleInsert();
+      handleInsertRef.current?.();
     }
     
     // Close with Escape
     if (e.key === 'Escape') {
       e.preventDefault();
-      handleClose();
+      handleCloseRef.current?.();
     }
   }, [activeTab, currentPath, searchQuery, selectedImages.size]);
 
@@ -138,30 +180,21 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
-  // Fetch images from Supabase storage
+  // Fetch folder images for Supabase storage (fast).
   useEffect(() => {
     if (isOpen && activeTab === 'gallery') {
-      fetchImages();
-      // Use global cache for search
-      if (globalImageCache) {
-        setAllImages(globalImageCache);
-      } else if (!isFetchingGlobalCache) {
-        isFetchingGlobalCache = true;
-        setIsSearching(true);
-        fetchAllImages().then(results => {
-          globalImageCache = results;
-          setAllImages(results);
-          setIsSearching(false);
-          isFetchingGlobalCache = false;
-          console.log('Global search index built:', results.length, 'images');
-        });
-      }
+      fetchImagesRef.current?.();
     }
   }, [isOpen, currentPath, activeTab]);
 
   // Fetch all images recursively for global search
-  const fetchAllImages = useCallback(async (path = '', accumulated: StorageImage[] = []): Promise<StorageImage[]> => {
+  const fetchAllImages = useCallback(async (
+    path = '',
+    accumulated: StorageImage[] = [],
+    signal?: AbortSignal
+  ): Promise<StorageImage[]> => {
     try {
+      if (signal?.aborted) return accumulated;
       const { data, error: storageError } = await supabase.storage
         .from('gallery')
         .list(path, {
@@ -176,10 +209,11 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
       }
 
       for (const item of data) {
+        if (signal?.aborted) break;
         if (item.id === null) {
           // It's a folder - recurse into it
           const folderPath = path ? `${path}/${item.name}` : item.name;
-          const subImages = await fetchAllImages(folderPath, accumulated);
+          const subImages = await fetchAllImages(folderPath, accumulated, signal);
           accumulated = subImages;
         } else {
           // It's a file - check if it's an image
@@ -207,12 +241,91 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     }
   }, []);
 
+  // Build global search index only when user actually searches.
+  useEffect(() => {
+    if (!isOpen || activeTab !== 'gallery') return;
+
+    const query = debouncedSearchQuery.trim();
+    const shouldIndex = query.length > 0;
+
+    if (!shouldIndex) {
+      globalIndexAbortRef.current?.abort();
+      globalIndexAbortRef.current = null;
+      setIsSearching(false);
+      return;
+    }
+
+    // Use cache if it matches current revision.
+    if (globalGalleryIndexCache?.revision === globalGalleryRevision) {
+      setAllImages(globalGalleryIndexCache.images);
+      return;
+    }
+
+    const startOrJoin = () => {
+      if (!isOpenRef.current) return;
+
+      // Join in-flight build if present.
+      if (globalGalleryIndexPromise) {
+        setIsSearching(true);
+        globalGalleryIndexPromise
+          .then((images) => {
+            if (!isOpenRef.current) return;
+            setAllImages(images);
+          })
+          .finally(() => {
+            if (isOpenRef.current) setIsSearching(false);
+          });
+        return;
+      }
+
+      globalIndexAbortRef.current?.abort();
+      const controller = new AbortController();
+      globalIndexAbortRef.current = controller;
+
+      setIsSearching(true);
+      const promise = fetchAllImages('', [], controller.signal);
+      globalGalleryIndexPromise = promise;
+
+      promise
+        .then((images) => {
+          if (controller.signal.aborted) return images;
+          globalGalleryIndexCache = {
+            revision: globalGalleryRevision,
+            builtAt: Date.now(),
+            images,
+          };
+          return images;
+        })
+        .then((images) => {
+          if (!isOpenRef.current || controller.signal.aborted) return;
+          setAllImages(images);
+        })
+        .catch((err) => {
+          if (controller.signal.aborted) return;
+          console.error('Error building global gallery index:', err);
+        })
+        .finally(() => {
+          if (globalGalleryIndexPromise === promise) {
+            globalGalleryIndexPromise = null;
+          }
+          if (isOpenRef.current) setIsSearching(false);
+        });
+    };
+
+    // Yield until idle so opening/styling stays snappy.
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(startOrJoin, { timeout: 1000 });
+    } else {
+      setTimeout(startOrJoin, 0);
+    }
+  }, [isOpen, activeTab, debouncedSearchQuery, fetchAllImages]);
+
   const fetchImages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('Fetching from path:', currentPath || '(root)');
+      if (isDev) console.log('Fetching from path:', currentPath || '(root)');
       
       // List files from the gallery bucket at current path
       const { data, error: storageError } = await supabase.storage
@@ -223,13 +336,15 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
           sortBy: { column: 'name', order: 'asc' },
         });
 
-      console.log('Storage response:', { 
-        path: currentPath,
-        data, 
-        error: storageError, 
-        dataLength: data?.length,
-        items: data?.map(f => ({ name: f.name, id: f.id }))
-      });
+      if (isDev) {
+        console.log('Storage response:', {
+          path: currentPath,
+          data,
+          error: storageError,
+          dataLength: data?.length,
+          items: data?.map((f) => ({ name: f.name, id: f.id })),
+        });
+      }
 
       if (storageError) {
         console.error('Storage error:', storageError);
@@ -237,14 +352,14 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
       }
 
       if (!data || data.length === 0) {
-        console.warn('No files found in current path');
+        if (isDev) console.warn('No files found in current path');
         setImages([]);
         setFolders([]);
         setIsLoading(false);
         return;
       }
 
-      console.log('Items found:', data.length);
+      if (isDev) console.log('Items found:', data.length);
 
       // Separate folders and files
       const folderList: StorageFolder[] = [];
@@ -275,7 +390,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
         }
       });
 
-      console.log('Found:', folderList.length, 'folders,', imageList.length, 'images');
+      if (isDev) console.log('Found:', folderList.length, 'folders,', imageList.length, 'images');
       setFolders(folderList);
       setImages(imageList);
     } catch (err) {
@@ -285,19 +400,20 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     } finally {
       setIsLoading(false);
     }
-  }, [currentPath]);
+  }, [currentPath, isDev]);
 
   // Memoize filtered images - use debounced query
   const filteredImages = useMemo(() => {
-    const query = debouncedSearchQuery;
+    const query = debouncedSearchQuery.trim();
+    const lowerQuery = query.toLowerCase();
     if (query) {
       return allImages.filter(image =>
-        image.name.toLowerCase().includes(query.toLowerCase()) ||
-        (image.path && image.path.toLowerCase().includes(query.toLowerCase()))
+        image.name.toLowerCase().includes(lowerQuery) ||
+        (image.path && image.path.toLowerCase().includes(lowerQuery))
       );
     }
     return images.filter(image =>
-      image.name.toLowerCase().includes(query.toLowerCase())
+      image.name.toLowerCase().includes(lowerQuery)
     );
   }, [debouncedSearchQuery, allImages, images]);
 
@@ -403,6 +519,8 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
   }, [handleInsert]);
 
   const handleClose = useCallback(() => {
+    globalIndexAbortRef.current?.abort();
+    globalIndexAbortRef.current = null;
     setSelectedImage(null);
     setSelectedImages(new Set());
     setSearchQuery('');
@@ -410,6 +528,23 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     setPathHistory(['']);
     onClose();
   }, [onClose]);
+
+  // Keep latest callbacks in refs for keyboard shortcuts/effects.
+  useEffect(() => {
+    navigateUpRef.current = navigateUp;
+  }, [navigateUp]);
+
+  useEffect(() => {
+    handleInsertRef.current = handleInsert;
+  }, [handleInsert]);
+
+  useEffect(() => {
+    handleCloseRef.current = handleClose;
+  }, [handleClose]);
+
+  useEffect(() => {
+    fetchImagesRef.current = fetchImages;
+  }, [fetchImages]);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -451,7 +586,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
         const baseName = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '-');
         const fileName = `${baseName}-${timestamp}-${random}.${fileExt}`;
 
-        console.log(`Uploading ${file.name} as ${fileName}...`);
+        if (isDev) console.log(`Uploading ${file.name} as ${fileName}...`);
 
         // Upload via API route (uses service role key on server side)
         const formData = new FormData();
@@ -475,13 +610,18 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
           });
           errorCount++;
         } else {
-          console.log(`✅ ${file.name} uploaded successfully`);
+          if (isDev) console.log(`✅ ${file.name} uploaded successfully`);
           successCount++;
         }
       }
 
       // Refresh the gallery
       await fetchImages();
+
+      // Invalidate global search index so search stays correct after uploads.
+      globalGalleryRevision += 1;
+      globalGalleryIndexCache = null;
+      globalGalleryIndexPromise = null;
       
       // Clear the file input
       if (fileInputRef.current) {
@@ -503,7 +643,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
     } finally {
       setIsUploading(false);
     }
-  }, [currentPath, fetchImages]);
+  }, [currentPath, fetchImages, isDev]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -520,7 +660,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
   }, [onSelectImage, onClose]);
 
   const handleYouTubeSelect = useCallback((videoId: string, videoData: any) => {
-    console.log('🎥 handleYouTubeSelect called with:', { videoId, videoData });
+    if (isDev) console.log('🎥 handleYouTubeSelect called with:', { videoId, videoData });
     onSelectImage(
       `https://www.youtube.com/watch?v=${videoId}`,
       undefined,
@@ -534,7 +674,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
       }
     );
     onClose();
-  }, [onSelectImage, onClose]);
+  }, [onSelectImage, onClose, isDev]);
 
   // Get grid columns class based on size
   const getGridCols = useCallback(() => {
@@ -547,33 +687,66 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
 
   if (!isOpen) return null;
 
+  // Detect mobile/tablet screens
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const isTablet = typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024;
+
+  if (!rndDefaultRef.current) {
+    if (isMobile) {
+      // Full screen on mobile
+      rndDefaultRef.current = {
+        x: 0,
+        y: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    } else if (isTablet) {
+      // Larger on tablet
+      rndDefaultRef.current = {
+        x: 20,
+        y: 20,
+        width: window.innerWidth - 40,
+        height: window.innerHeight - 40,
+      };
+    } else {
+      // Default desktop size
+      const desktopWidth = 822.25;
+      const desktopHeight = Math.min(window.innerHeight - 40, 750 * 1.25);
+      rndDefaultRef.current = {
+        x: window.innerWidth / 2 - desktopWidth / 2,
+        y: window.innerHeight / 2 - desktopHeight / 2,
+        width: desktopWidth,
+        height: desktopHeight,
+      };
+    }
+  }
+
   const modalContent = (
     <>
-      {/* Backdrop overlay to prevent interaction with other modals */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10004]"
-        onClick={handleClose}
-      />
-      
-      <Rnd
-      default={{
-        x: window.innerWidth / 2 - 411.125,
-        y: window.innerHeight / 2 - 375 + window.scrollY,
-        width: 822.25,
-        height: 750,
-      }}
-      minWidth={500}
-      minHeight={600}
-      bounds="window"
-      dragHandleClassName="drag-handle"
-      className="z-[10005]"
-    >
-      <div className="h-full flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+      {/* Fixed viewport layer so the modal doesn't move when the page scrolls behind it */}
+      <div className="fixed inset-0 z-[10004]">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/20 dark:bg-black/40"
+          onClick={handleClose}
+        />
+
+        <Rnd
+          default={rndDefaultRef.current}
+          minWidth={isMobile ? window.innerWidth : isTablet ? 600 : 500}
+          minHeight={isMobile ? window.innerHeight : isTablet ? 500 : 600}
+          bounds="window"
+          dragHandleClassName="drag-handle"
+          className="z-[10005]"
+          disableDragging={isMobile}
+          enableResizing={!isMobile}
+        >
+      <div className={`h-full flex flex-col ${isMobile ? 'bg-white dark:bg-gray-900' : 'bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl'} ${isMobile ? '' : 'rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50'} overflow-hidden`}>
         {/* Fixed Header with Drag Handle */}
-        <div className="drag-handle cursor-move bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 border-b border-gray-200/30 dark:border-gray-700/30 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <PhotoIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Media Gallery</h2>
+        <div className={`${isMobile ? '' : 'drag-handle cursor-move'} bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 border-b border-gray-200/30 dark:border-gray-700/30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between`}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Media Gallery</h2>
           </div>
           <button
             onClick={handleClose}
@@ -584,146 +757,150 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200/30 dark:border-gray-700/30 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm px-6">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200/50 bg-transparent">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {/* Images Tab (r2images) */}
           <button
             onClick={() => setActiveTab('r2images')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'r2images'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
-              }
-            `}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+            style={
+              activeTab === 'r2images'
+                ? {
+                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: themeColors.cssVars.primary.base,
+                    border: '1px solid',
+                    borderColor: `${themeColors.cssVars.primary.base}40`,
+                  }
+            }
           >
-            <div className="flex items-center gap-2">
-              <PhotoIcon className="w-5 h-5" />
-              <span>Images</span>
-            </div>
-            {activeTab === 'r2images' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
+            <PhotoIcon className="w-4 h-4" />
+            <span>Images</span>
           </button>
           
           {/* Video Tab (upload) */}
           <button
             onClick={() => setActiveTab('upload')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'upload'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
-              }
-            `}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+            style={
+              activeTab === 'upload'
+                ? {
+                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: themeColors.cssVars.primary.base,
+                    border: '1px solid',
+                    borderColor: `${themeColors.cssVars.primary.base}40`,
+                  }
+            }
           >
-            <div className="flex items-center gap-2">
-              <PlayIcon className="w-5 h-5" />
-              <span>Video</span>
-            </div>
-            {activeTab === 'upload' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
+            <PlayIcon className="w-4 h-4" />
+            <span>Video</span>
           </button>
           
           {/* Unsplash Tab */}
           <button
             onClick={() => setActiveTab('unsplash')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'unsplash'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
-              }
-            `}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+            style={
+              activeTab === 'unsplash'
+                ? {
+                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: themeColors.cssVars.primary.base,
+                    border: '1px solid',
+                    borderColor: `${themeColors.cssVars.primary.base}40`,
+                  }
+            }
           >
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor">
-                <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
-              </svg>
-              <span>Unsplash</span>
-            </div>
-            {activeTab === 'unsplash' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
+            <svg className="w-4 h-4" viewBox="0 0 32 32" fill="currentColor">
+              <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+            </svg>
+            <span>Unsplash</span>
           </button>
           
           {/* Pexels Tab */}
           <button
             onClick={() => setActiveTab('pexels')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'pexels'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
-              }
-            `}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+            style={
+              activeTab === 'pexels'
+                ? {
+                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: themeColors.cssVars.primary.base,
+                    border: '1px solid',
+                    borderColor: `${themeColors.cssVars.primary.base}40`,
+                  }
+            }
           >
-            <div className="flex items-center gap-2">
-              <PhotoIcon className="w-5 h-5" />
-              <span>Pexels</span>
-            </div>
-            {activeTab === 'pexels' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
+            <PhotoIcon className="w-4 h-4" />
+            <span>Pexels</span>
           </button>
           
           {/* YouTube Tab */}
           <button
             onClick={() => setActiveTab('youtube')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'youtube'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
-              }
-            `}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+            style={
+              activeTab === 'youtube'
+                ? {
+                    background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: themeColors.cssVars.primary.base,
+                    border: '1px solid',
+                    borderColor: `${themeColors.cssVars.primary.base}40`,
+                  }
+            }
           >
-            <div className="flex items-center gap-2">
-              <PlayIcon className="w-5 h-5" />
-              <span>YouTube</span>
-            </div>
-            {activeTab === 'youtube' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
+            <PlayIcon className="w-4 h-4" />
+            <span>YouTube</span>
           </button>
           
-          {/* My Gallery Tab */}
-          <button
-            onClick={() => setActiveTab('gallery')}
-            className={`
-              px-6 py-3 font-medium text-sm transition-all relative
-              ${activeTab === 'gallery'
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-800/30'
+          {/* My Gallery Tab (superadmin only) */}
+          {isSuperadmin && (
+            <button
+              onClick={() => setActiveTab('gallery')}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-sm"
+              style={
+                activeTab === 'gallery'
+                  ? {
+                      background: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.hover})`,
+                      color: 'white',
+                      boxShadow: `0 4px 12px ${themeColors.cssVars.primary.base}40`,
+                    }
+                  : {
+                      backgroundColor: 'transparent',
+                      color: themeColors.cssVars.primary.base,
+                      border: '1px solid',
+                      borderColor: `${themeColors.cssVars.primary.base}40`,
+                    }
               }
-            `}
-          >
-            <div className="flex items-center gap-2">
-              <FolderIcon className="w-5 h-5" />
+            >
+              <FolderIcon className="w-4 h-4" />
               <span>My Gallery</span>
-            </div>
-            {activeTab === 'gallery' && (
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})` }}
-              />
-            )}
-          </button>
+            </button>
+          )}
+          </div>
         </div>
 
         {/* Scrollable Body */}
@@ -1019,29 +1196,39 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
                 )}
               </div>
             </>
-          ) : activeTab === 'r2images' ? (
-            /* Images Tab - R2 Image Upload with Gallery UI */
-            <R2ImageUpload 
-              ref={r2ImageRef}
-              onSelectImage={(imageData) => {
-                onSelectImage(imageData.image_url, undefined, false);
-                onClose();
-              }}
-              productId={productId}
-              onSelectionChange={setR2ImageHasSelection}
-            />
-          ) : activeTab === 'upload' ? (
-            /* Video Tab - R2 Video Upload with Gallery UI */
-            <R2VideoUpload 
-              ref={r2VideoRef}
-              onSelectVideo={(videoData) => {
-                onSelectImage('', undefined, true, videoData);
-                onClose();
-              }}
-              productId={productId}
-              onSelectionChange={setR2VideoHasSelection}
-            />
-          ) : activeTab === 'unsplash' ? (
+          ) : null}
+
+          {/* Images Tab - mount once, then hide/show to avoid refetch on tab switch */}
+          {hasOpenedR2Images ? (
+            <div className={activeTab === 'r2images' ? 'h-full' : 'hidden'}>
+              <R2ImageUpload 
+                ref={r2ImageRef}
+                onSelectImage={(imageData) => {
+                  onSelectImage(imageData.image_url, undefined, false);
+                  onClose();
+                }}
+                productId={productId}
+                onSelectionChange={setR2ImageHasSelection}
+              />
+            </div>
+          ) : null}
+
+          {/* Video Tab - mount once, then hide/show to avoid refetch on tab switch */}
+          {hasOpenedR2Video ? (
+            <div className={activeTab === 'upload' ? 'h-full' : 'hidden'}>
+              <R2VideoUpload 
+                ref={r2VideoRef}
+                onSelectVideo={(videoData) => {
+                  onSelectImage('', undefined, true, videoData);
+                  onClose();
+                }}
+                productId={productId}
+                onSelectionChange={setR2VideoHasSelection}
+              />
+            </div>
+          ) : null}
+
+          {activeTab === 'unsplash' ? (
             /* Unsplash Tab */
             <Suspense fallback={
               <div className="flex items-center justify-center h-64">
@@ -1057,7 +1244,7 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: themeColors.cssVars.primary.base }}></div>
               </div>
             }>
-              <PexelsImageSearch onSelectImage={handlePexelsSelect} />
+              <PexelsImageSearch onSelectImage={handlePexelsSelect} includeAttribution={pexelsIncludeAttribution} />
             </Suspense>
           ) : activeTab === 'youtube' ? (
             /* YouTube Tab */
@@ -1082,10 +1269,52 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
                     {selectedImages.size} {selectedImages.size === 1 ? 'image' : 'images'} selected
                   </span>
                 </>
+              ) : activeTab === 'unsplash' ? (
+                <span className="text-xs">
+                  Free photos provided by{' '}
+                  <a
+                    href="https://unsplash.com/?utm_source=codedharmony&utm_medium=referral"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline font-medium"
+                    style={{ color: themeColors.cssVars.primary.base }}
+                  >
+                    Unsplash
+                  </a>
+                </span>
+              ) : activeTab === 'pexels' ? (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="text-xs">
+                    Free photos & videos by{' '}
+                    <a
+                      href="https://www.pexels.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline font-medium"
+                      style={{ color: themeColors.cssVars.primary.base }}
+                    >
+                      Pexels
+                    </a>
+                    <span className="hidden sm:inline">{' • No attribution required'}</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={pexelsIncludeAttribution}
+                        onChange={(e) => setPexelsIncludeAttribution(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded focus:ring-2"
+                        style={{ color: themeColors.cssVars.primary.base, '--tw-ring-color': themeColors.cssVars.primary.base } as React.CSSProperties}
+                      />
+                      <span className="text-gray-600 dark:text-gray-400">include optional</span>
+                    </label>
+                  </div>
+                </div>
               ) : (
                 <>
                   <PhotoIcon className="w-5 h-5" />
-                  <span>Select an image to continue</span>
+                  <span className="text-xs">Select an object to continue</span>
                 </>
               )}
             </div>
@@ -1105,17 +1334,13 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
                   activeTab === 'upload' ? !r2VideoHasSelection :
                   selectedImages.size === 0
                 }
-                className="px-6 bg-gradient-to-r hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={
-                  (activeTab === 'r2images' && r2ImageHasSelection) ||
-                  (activeTab === 'upload' && r2VideoHasSelection) ||
-                  selectedImages.size > 0 ? {
-                    backgroundImage: `linear-gradient(135deg, ${themeColors.cssVars.primary.base}, ${themeColors.cssVars.primary.light})`
-                  } : undefined
-                }
+                className="px-6 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: themeColors.cssVars.primary.base
+                }}
               >
                 <span className="flex items-center gap-2">
-                  Insert Image
+                  Insert
                   {selectedImages.size > 0 && (
                     <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white/20 border border-white/30 rounded">
                       ^⏎
@@ -1127,7 +1352,8 @@ export default function ImageGalleryModal({ isOpen, onClose, onSelectImage, prod
           </div>
         </div>
       </div>
-    </Rnd>
+        </Rnd>
+      </div>
     </>
   );
 

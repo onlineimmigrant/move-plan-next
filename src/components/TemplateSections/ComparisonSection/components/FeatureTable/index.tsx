@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ChevronRight, Info, Minus } from 'lucide-react';
 import { StatusDot } from '../StatusDot';
-import FeatureMediaClickModal from '@/components/features/FeatureMediaClickModal';
+const FeatureMediaClickModal = dynamic(
+  () => import('@/components/features/FeatureMediaClickModal'),
+  { ssr: false }
+);
 import {
   TABLE_CELL_PADDING,
   TABLE_FIRST_COL_WIDTH,

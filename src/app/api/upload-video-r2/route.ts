@@ -14,7 +14,7 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!;
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     const organizationId = profile?.organization_id;
-    
+
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 403 });
     }
@@ -57,31 +57,32 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const folder = (formData.get('folder') as string) || 'uncategorized';
+    const folder = (formData.get('folder') as string) || 'Videos';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate image type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-    if (profile.role === 'superadmin') {
-      allowedTypes.push('image/svg+xml');
-    }
+    // Validate video type (allow common formats + webm for screen recordings)
+    const allowedTypes = [
+      'video/mp4',
+      'video/webm',
+      'video/quicktime', // .mov
+      'video/x-matroska', // .mkv (some browsers)
+      'video/ogg',
+    ];
+
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({
-        error: profile.role === 'superadmin'
-          ? 'Invalid file type. Only JPEG, PNG, WebP, GIF, and SVG are allowed.'
-          : 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.'
-      }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid file type. Only MP4, WebM, MOV, OGG are allowed.' },
+        { status: 400 }
+      );
     }
 
-    // Check file size (max 10MB for images)
-    const maxSize = 10 * 1024 * 1024;
+    // Check file size (max 500MB to match UI)
+    const maxSize = 500 * 1024 * 1024;
     if (file.size > maxSize) {
-      return NextResponse.json({ 
-        error: 'File too large. Maximum size is 10MB.' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'File too large. Maximum size is 500MB.' }, { status: 400 });
     }
 
     // Generate unique filename
@@ -89,9 +90,9 @@ export async function POST(request: NextRequest) {
     const uniqueId = nanoid(10);
     const sanitizedName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '_');
     const fileName = `${sanitizedName}_${uniqueId}.${ext}`;
-    
-    // Build R2 key: {organizationId}/images/{folder}/{fileName}
-    const folderPath = `images/${folder}`;
+
+    // Build R2 key: {organizationId}/videos/{folder}/{fileName}
+    const folderPath = `videos/${folder}`;
     const objectKey = `${organizationId}/${folderPath}/${fileName}`;
 
     // Upload to R2
@@ -99,11 +100,11 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     const uploadUrl = `https://api.cloudflare.com/client/v4/accounts/${R2_ACCOUNT_ID}/r2/buckets/${R2_BUCKET_NAME}/objects/${encodeURIComponent(objectKey)}`;
-    
+
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
         'Content-Type': file.type,
         'Content-Length': buffer.length.toString(),
       },
@@ -112,25 +113,20 @@ export async function POST(request: NextRequest) {
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      console.error('[upload-image-r2] Upload failed:', errorText);
-      return NextResponse.json({ 
-        error: 'Failed to upload image to R2' 
-      }, { status: 500 });
+      console.error('[upload-video-r2] Upload failed:', errorText);
+      return NextResponse.json({ error: 'Failed to upload video to R2' }, { status: 500 });
     }
 
-    const imageUrl = `${R2_PUBLIC_URL}/${objectKey}`;
+    const videoUrl = `${R2_PUBLIC_URL}/${objectKey}`;
 
     return NextResponse.json({
-      imageUrl,
+      videoUrl,
       fileName,
       folder,
       size: file.size,
     });
-
   } catch (error) {
-    console.error('[upload-image-r2] Error:', error);
-    return NextResponse.json({ 
-      error: 'Upload failed' 
-    }, { status: 500 });
+    console.error('[upload-video-r2] Error:', error);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

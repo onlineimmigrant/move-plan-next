@@ -14,6 +14,7 @@ import { useUnreadEmailCount } from './hooks/useUnreadEmailCount';
 import { triggerBadgeRefresh } from './hooks/useBadgeRefresh';
 import { useCrmModal } from '../CrmModal/context';
 import { useEmailModalStore } from '../EmailModal/EmailModalManager';
+import ScreenRecordingModal from '../ScreenRecordingModal';
 
 // Lazy load modals for better performance
 const MeetingsBookingModal = dynamic(
@@ -185,7 +186,7 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
     <>
       {/* Loading skeleton during navigation */}
       {isPending && (
-        <div className="fixed inset-0 z-[10001] bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-10001 bg-linear-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-200">
           <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl rounded-2xl border border-white/20">
               
@@ -285,7 +286,17 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
         <SiteActionsModal
           isOpen={true}
           onClose={() => setOpenModal(null)}
+          onOpenScreenRecorder={() => setOpenModal('screen-recording')}
           position={position}
+        />
+      )}
+
+      {/* Screen Recorder (global) */}
+      {openModal === 'screen-recording' && (
+        <ScreenRecordingModal
+          isOpen={true}
+          onClose={() => setOpenModal(null)}
+          defaultFolder="Videos"
         />
       )}
 
