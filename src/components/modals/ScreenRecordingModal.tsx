@@ -928,7 +928,7 @@ export default function ScreenRecordingModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-10004"
+      className="fixed inset-0 flex items-center justify-center p-4 animate-in fade-in duration-200 z-10010"
       role="dialog"
       aria-modal="true"
     >
@@ -948,7 +948,7 @@ export default function ScreenRecordingModal({
         dragHandleClassName="modal-drag-handle"
         disableDragging={isMobile}
         enableResizing={!isMobile && recordingState === 'preview'}
-        className="pointer-events-auto z-10005"
+        className="pointer-events-auto z-10011"
       >
         <div 
           className={`relative h-full flex flex-col ${isMobile ? 'bg-white dark:bg-gray-900' : 'bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl'} ${isMobile ? '' : 'rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50'} overflow-hidden`}

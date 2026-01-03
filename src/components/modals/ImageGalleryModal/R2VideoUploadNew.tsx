@@ -15,6 +15,7 @@ import {
   FolderPlusIcon,
   ArrowsRightLeftIcon,
   VideoCameraIcon,
+  ScissorsIcon,
 } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabaseClient';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -23,11 +24,13 @@ import { generateAndUploadThumbnail } from '@/lib/videoThumbnail';
 import MediaTabToolbar from './MediaTabToolbar';
 import ScreenRecordingModal from '../ScreenRecordingModal';
 import ChangeThumbnailModal from '../ChangeThumbnailModal';
+import { useVideoStudio } from '../VideoStudioModal/context';
 
 interface R2VideoUploadProps {
   onSelectVideo: (videoData: any) => void;
   productId?: number;
   onSelectionChange?: (hasSelection: boolean) => void;
+  isWideLayout?: boolean;
 }
 
 interface VideoFile {
@@ -50,7 +53,7 @@ export interface R2VideoUploadHandle {
   hasSelection: () => boolean;
 }
 
-const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onSelectVideo, productId, onSelectionChange }, ref) => {
+const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onSelectVideo, productId, onSelectionChange, isWideLayout }, ref) => {
   const isDev = process.env.NODE_ENV !== 'production';
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
@@ -83,6 +86,7 @@ const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onS
   const folderRenameInputRef = useRef<HTMLInputElement>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
+  const videoStudio = useVideoStudio();
   const themeColors = useThemeColors();
 
   useEffect(() => {
@@ -720,7 +724,13 @@ const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onS
             {/* Folders Section */}
             {(!currentFolder && (filteredFolders.length > 0 || creatingFolder)) && (
               <div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
+                <div
+                  className={
+                    isWideLayout
+                      ? 'grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-3 sm:gap-4'
+                      : 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4'
+                  }
+                >
                   {/* Create new folder button */}
                   {!creatingFolder ? (
                     <button
@@ -892,7 +902,7 @@ const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onS
                 {filteredFolders.length > 0 && !currentFolder && (
                   <h3 className="text-xs sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wider">Videos</h3>
                 )}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className={isWideLayout ? 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4' : 'grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4'}>
                   {displayedVideos.map((video) => (
                     <div
                       key={video.url}
@@ -1034,6 +1044,23 @@ const R2VideoUpload = forwardRef<R2VideoUploadHandle, R2VideoUploadProps>(({ onS
                         <div className="absolute top-2 right-2 flex gap-1 opacity-100">
                           <button
                             onClick={(e) => {
+                              videoStudio.openModal({
+                                url: video.url,
+                                name: video.fileName,
+                                folder: video.folder,
+                              });
+                            }}
+                            onMouseEnter={() => setHoveredControl(`video:${video.url}:clip`)}
+                            onMouseLeave={() => setHoveredControl((prev) => (prev === `video:${video.url}:clip` ? null : prev))}
+                            className="w-7 h-7 rounded-full flex items-center justify-center transition-colors bg-gray-200/90 dark:bg-gray-700/70"
+                            style={hoveredControl === `video:${video.url}:clip` ? { backgroundColor: themeColors.cssVars.primary.base } : undefined}
+                            title="Edit clip"
+                          >
+                            <ScissorsIcon className={`w-4 h-4 ${hoveredControl === `video:${video.url}:clip` ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               e.stopPropagation();
                               setChangingThumbnailVideo(video);
                             }}

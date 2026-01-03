@@ -23,6 +23,7 @@ import { SettingsModalProvider } from '@/components/modals/SettingsModal/context
 import { ShopModalProvider } from '@/components/modals/ShopModal/context';
 import { ProfileDataManagerModalProvider } from '@/components/modals/ProfileDataManagerModal/context';
 import { CrmModalProvider } from '@/components/modals/CrmModal/context';
+import { VideoStudioProvider } from '@/components/modals/VideoStudioModal/context';
 import { ToastProvider } from '@/components/Shared/ToastContainer';
 import { MeetingProvider, useMeetingContext } from '@/context/MeetingContext';
 import { PageSectionsProvider } from '@/context/PageSectionsContext';
@@ -422,9 +423,10 @@ function ClientProviders({
                                             <ShopModalProvider>
                                               <ProfileDataManagerModalProvider>
                                                 <CrmModalProvider>
-                                                  <DynamicLanguageUpdater />
-                                                  <DefaultLocaleCookieManager />
-                                                  <CookieSettingsProvider>
+                                                  <VideoStudioProvider>
+                                                    <DynamicLanguageUpdater />
+                                                    <DefaultLocaleCookieManager />
+                                                    <CookieSettingsProvider>
                                                     {/* VideoCall Modal - Only load when meeting is active */}
                                                     <VideoCallLoader />
                                                     <BannerAwareContent
@@ -458,9 +460,10 @@ function ClientProviders({
                                                     {/* Admin modal components - only rendered for admin users (checked inside gate) */}
                                                     <AdminModalsGate />
                                                   </CookieSettingsProvider>
-                                                </CrmModalProvider>
-                                              </ProfileDataManagerModalProvider>
-                                            </ShopModalProvider>
+                                                </VideoStudioProvider>
+                                              </CrmModalProvider>
+                                            </ProfileDataManagerModalProvider>
+                                          </ShopModalProvider>
                                           </GlobalSettingsModalProvider>
                                         </SiteMapModalProvider>
                                       </PageCreationProvider>

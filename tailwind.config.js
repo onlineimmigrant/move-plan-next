@@ -89,6 +89,9 @@ module.exports = {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
+      gridTemplateColumns: {
+        16: 'repeat(16, minmax(0, 1fr))',
+      },
     },
   },
   plugins: [],

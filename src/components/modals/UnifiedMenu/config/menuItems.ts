@@ -15,6 +15,7 @@ import {
   GlobeAltIcon,
   ArrowLeftOnRectangleIcon,
   UsersIcon,
+  ScissorsIcon,
 } from '@heroicons/react/24/outline';
 import { MenuItemConfig } from '../types';
 
@@ -26,8 +27,8 @@ export type BadgeGetter = () => number | string | null;
 
 /**
  * Menu items for ADMIN and SUPERADMIN users
- * Visual order (top to bottom): Admin → Site → CRM → Email → Appointments → (AI Agent + Support in one row)
- * Array order: Admin, Site, CRM, Email, Appointments, AI Agent, Support (last 2 = bottom row)
+ * Visual order (top to bottom): Admin → Site → CRM → Email → Appointments → Video Studio → (AI Agent + Support in one row)
+ * Array order: Admin, Site, CRM, Email, Appointments, Video Studio, AI Agent, Support (last 2 = bottom row)
  */
 export const getAdminMenuItems = (
   unreadTicketsBadge?: BadgeGetter,
@@ -72,6 +73,14 @@ export const getAdminMenuItems = (
     label: 'Appointments',
     icon: VideoCameraIcon,
     badge: unreadMeetingsBadge,
+    action: () => {},
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    id: 'video-studio',
+    label: 'Video Studio',
+    icon: ScissorsIcon,
     action: () => {},
     requireAuth: true,
     requireAdmin: true,

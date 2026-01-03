@@ -48,6 +48,15 @@ const nextConfig = {
     webpackMemoryOptimizations: true,
     // Enable more aggressive tree-shaking
     optimizeServerReact: true,
+
+  },
+  // Ensure native binaries used by server routes are included in standalone output
+  // (Next output file tracing can miss non-JS assets like ffmpeg)
+  outputFileTracingIncludes: {
+    '/api/trim-video-r2': [
+      './node_modules/ffmpeg-static/ffmpeg',
+      './node_modules/ffmpeg-static/ffmpeg.exe',
+    ],
   },
   // Exclude polyfills - target modern browsers only
   transpilePackages: [],

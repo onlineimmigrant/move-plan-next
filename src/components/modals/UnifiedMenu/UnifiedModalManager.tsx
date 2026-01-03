@@ -14,6 +14,7 @@ import { useUnreadEmailCount } from './hooks/useUnreadEmailCount';
 import { triggerBadgeRefresh } from './hooks/useBadgeRefresh';
 import { useCrmModal } from '../CrmModal/context';
 import { useEmailModalStore } from '../EmailModal/EmailModalManager';
+import { useVideoStudio } from '../VideoStudioModal/context';
 import ScreenRecordingModal from '../ScreenRecordingModal';
 
 // Lazy load modals for better performance
@@ -67,6 +68,11 @@ const EmailModal = dynamic(
   { ssr: false }
 );
 
+const VideoStudioModal = dynamic(
+  () => import('../VideoStudioModal/VideoStudioModal').then(m => ({ default: m.default })),
+  { ssr: false }
+);
+
 /**
  * UnifiedModalManager Component
  * 
@@ -101,6 +107,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
   
   // Email modal store
   const emailModal = useEmailModalStore();
+  
+  // VideoStudio modal context
+  const videoStudio = useVideoStudio();
 
   // Get unread counts for badges - only when authenticated
   const unreadTicketCount = useUnreadTicketCount(isAuthenticated);
@@ -169,6 +178,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
           break;
         case 'email':
           emailModal.openEmailModal();
+          break;
+        case 'video-studio':
+          videoStudio.openModal();
           break;
         case 'sign-in':
           setOpenModal('login');
@@ -332,6 +344,9 @@ export function UnifiedModalManager({ forceShow = false, position = 'bottom-righ
 
       {/* Email Modal */}
       <EmailModal />
+
+      {/* VideoStudio Modal */}
+      <VideoStudioModal />
     </>
   );
 }

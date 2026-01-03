@@ -23,6 +23,7 @@ import { SettingsModalProvider } from '@/components/modals/SettingsModal/context
 import { ShopModalProvider } from '@/components/modals/ShopModal/context';
 import { ProfileDataManagerModalProvider } from '@/components/modals/ProfileDataManagerModal/context';
 import { CrmModalProvider } from '@/components/modals/CrmModal/context';
+import { VideoStudioProvider } from '@/components/modals/VideoStudioModal/context';
 
 interface AdminModalProvidersProps {
   children: React.ReactNode;
@@ -48,7 +49,9 @@ export function AdminModalProviders({ children }: AdminModalProvidersProps) {
                           <ShopModalProvider>
                             <ProfileDataManagerModalProvider>
                               <CrmModalProvider>
-                                {children}
+                                <VideoStudioProvider>
+                                  {children}
+                                </VideoStudioProvider>
                               </CrmModalProvider>
                             </ProfileDataManagerModalProvider>
                           </ShopModalProvider>
